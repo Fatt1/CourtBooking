@@ -1,0 +1,56 @@
+services:
+
+  # ─────────────────────────────────────────────
+  # SQL Server 2022 – primary database
+  # ─────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: courtbooking-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: ${MSSQL_PID:-Developer}
+    ports:
+      - "${MSSQL_PORT:-1433}:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $$MSSQL_SA_PASSWORD -Q 'SELECT 1' -No -l 5 || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks:
+      - courtbooking-network
+
+  # ─────────────────────────────────────────────
+  # Seq – structured log server (Serilog sink)
+  # ─────────────────────────────────────────────
+  seq:
+    image: datalust/seq:latest
+    container_name: courtbooking-seq
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "true"
+      # SEQ_FIRSTRUN_ADMINPASSWORDHASH: ${SEQ_ADMIN_PASSWORD_HASH}
+    ports:
+      - "${SEQ_UI_PORT:-5341}:80"          # Seq web UI
+      - "${SEQ_INGESTION_PORT:-5342}:5341" # Serilog ingestion endpoint
+    volumes:
+      - seq_data:/data
+    networks:
+      - courtbooking-network
+
+volumes:
+  sqlserver_data:
+    driver: local
+  seq_data:
+    driver: local
+
+networks:
+  courtbooking-network:
+    driver: bridge

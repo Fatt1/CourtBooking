@@ -1,0 +1,17 @@
+services:
+  courtbooking.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      # HTTPS is only available when launched from Visual Studio (requires dev cert).
+      # Comment out when running standalone with `docker compose up`.
+      # - ASPNETCORE_HTTPS_PORTS=8081
+    ports:
+      - "8080:8080"
+      # - "8081:8081"
+    # Uncomment volumes below only when running from Visual Studio:
+    # volumes:
+    #   - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+    #   - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+    #   - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+    #   - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro

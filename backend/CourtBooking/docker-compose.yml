@@ -1,0 +1,85 @@
+services:
+
+  # ─────────────────────────────────────────────
+  # SQL Server 2022 – primary database
+  # ─────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: courtbooking-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: ${MSSQL_PID:-Developer}    # Developer | Express | Standard | Enterprise
+    ports:
+      - "${MSSQL_PORT:-1433}:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $$MSSQL_SA_PASSWORD -Q 'SELECT 1' -No -l 5 || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks:
+      - courtbooking-network
+
+  # ─────────────────────────────────────────────
+  # Seq – structured log server (Serilog sink)
+  # ─────────────────────────────────────────────
+  seq:
+    image: datalust/seq:latest
+    container_name: courtbooking-seq
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      # For local dev: disable authentication so Seq starts without a password.
+      # For production: comment the line below and set SEQ_FIRSTRUN_ADMINPASSWORDHASH instead.
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "true"
+      # SEQ_FIRSTRUN_ADMINPASSWORDHASH: ${SEQ_ADMIN_PASSWORD_HASH}
+    ports:
+      - "${SEQ_UI_PORT:-5341}:80"          # Seq web UI
+      - "${SEQ_INGESTION_PORT:-5342}:5341" # Serilog ingestion endpoint
+    volumes:
+      - seq_data:/data
+    networks:
+      - courtbooking-network
+
+  # ─────────────────────────────────────────────
+  # CourtBooking API
+  # ─────────────────────────────────────────────
+  courtbooking.api:
+    image: ${DOCKER_REGISTRY-}courtbookingapi
+    container_name: courtbooking-api
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: CourtBooking.API/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=${MSSQL_DB};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      Serilog__WriteTo__0__Name: "Seq"
+      Serilog__WriteTo__0__Args__serverUrl: "http://seq:5341"
+      Serilog__WriteTo__0__Args__apiKey: ${SEQ_API_KEY:-}
+    ports:
+      - "${API_HTTP_PORT:-8080}:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    networks:
+      - courtbooking-network
+
+volumes:
+  sqlserver_data:
+    driver: local
+  seq_data:
+    driver: local
+
+networks:
+  courtbooking-network:
+    driver: bridge

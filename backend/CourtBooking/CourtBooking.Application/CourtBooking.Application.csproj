@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Serilog" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CourtBooking.Domain\CourtBooking.Domain.csproj" />
+    <ProjectReference Include="..\CourtBooking.SharedKernel\CourtBooking.SharedKernel.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Features\Products\Queries\" />
+  </ItemGroup>
+</Project>

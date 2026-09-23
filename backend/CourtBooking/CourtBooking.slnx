@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="CourtBooking.API/CourtBooking.API.csproj" />
+    <Project Path="CourtBooking.Application/CourtBooking.Application.csproj" />
+    <Project Path="CourtBooking.Domain/CourtBooking.Domain.csproj" Id="944600fd-4f8f-4377-ab85-5082db99bf8a" />
+    <Project Path="CourtBooking.Infrastructure/CourtBooking.Infrastructure.csproj" />
+    <Project Path="CourtBooking.SharedKernel/CourtBooking.SharedKernel.csproj" Id="15f55911-0adf-4e46-8d5b-21f062431882" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+</Solution>
