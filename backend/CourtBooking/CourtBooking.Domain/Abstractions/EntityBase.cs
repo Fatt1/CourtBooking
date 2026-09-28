@@ -7,5 +7,5 @@ public abstract class EntityBase<TKey>
     // Parameterless ctor for EF Core
     protected EntityBase() { }
 
-    public TKey Id { get; private set; } = default!;
+    public TKey Id { get; protected set; } = default!;
 }
