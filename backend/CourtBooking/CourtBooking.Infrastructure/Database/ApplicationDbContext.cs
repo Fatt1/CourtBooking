@@ -1,3 +1,4 @@
+using CourtBooking.Application.Data;
 using CourtBooking.Domain.Abstractions;
 using CourtBooking.Domain.Entities.Courts;
 using CourtBooking.Domain.Entities.Events;
@@ -16,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CourtBooking.Infrastructure.Database;
 
 public class ApplicationDbContext
-    : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
+    : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>, IApplicationDbContext
 {
     private readonly IPublisher _publisher;
 

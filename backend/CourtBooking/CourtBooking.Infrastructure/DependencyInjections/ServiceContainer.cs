@@ -1,5 +1,7 @@
 using Amazon.S3;
 using CourtBooking.Application.Abstractions.Storage;
+using CourtBooking.Application.Data;
+using CourtBooking.Infrastructure.BackgroundJobs;
 using CourtBooking.Infrastructure.Database;
 using CourtBooking.Infrastructure.Interceptors;
 using CourtBooking.Infrastructure.Storage;
@@ -12,6 +14,21 @@ namespace CourtBooking.Infrastructure.DependencyInjections;
 public static class ServiceContainer
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
+    {
+        services.AddDatabase()
+            .AddStorage();
+
+
+
+        // ── Background Jobs ──────────────────────────────────────────
+        services.AddHostedService<CleanUpImagesBackgroundService>();
+
+        return services;
+    }
+
+
+
+    private static IServiceCollection AddDatabase(this IServiceCollection services)
     {
         // ── Options — validated at startup ───────────────────────────
         services.AddOptions<DatabaseOptions>()
@@ -41,8 +58,16 @@ public static class ServiceContainer
             });
 
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
-        });
 
+
+
+        });
+        services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
+        return services;
+    }
+
+    private static IServiceCollection AddStorage(this IServiceCollection services)
+    {
         // ── Object Storage — SeaweedFS / S3 ─────────────────────────
         services.AddOptions<StorageOptions>()
             .BindConfiguration(StorageOptions.SectionName)
@@ -62,10 +87,12 @@ public static class ServiceContainer
             return new AmazonS3Client(options.AccessKey, options.SecretKey, config);
         });
 
-
         services.AddScoped<IStorageService, S3StorageService>();
-
         return services;
     }
 }
+
+
+
+
 

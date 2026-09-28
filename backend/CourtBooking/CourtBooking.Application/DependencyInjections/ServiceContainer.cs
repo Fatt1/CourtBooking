@@ -1,7 +1,6 @@
-using FluentValidation;
-using MediatR;
-using Microsoft.Extensions.DependencyInjection;
 using CourtBooking.Application.Behaviors;
+using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CourtBooking.Application.DependencyInjections;
 
@@ -10,6 +9,8 @@ public static class ServiceContainer
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         var assembly = typeof(ServiceContainer).Assembly;
+
+
 
         // Register MediatR — scans this assembly for all IRequestHandler<,> implementations
         services.AddMediatR(cfg =>

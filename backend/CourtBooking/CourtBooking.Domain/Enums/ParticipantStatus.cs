@@ -6,9 +6,5 @@ namespace CourtBooking.Domain.Enums;
 public enum ParticipantStatus
 {
     PendingApproval = 0,
-    PendingPayment = 1,
-    Confirmed = 2,
-    Rejected = 3,
-    Cancelled = 4,
-    Expired = 5
+    Confirmed = 1,
 }

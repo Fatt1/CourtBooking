@@ -77,6 +77,35 @@ public class Branch : AggregateRoot<Guid>, IAuditable
     public void UpdateOpenHours(TimeOnly openTime, TimeOnly closeTime) { }
     public void UpdateLocation(decimal latitude, decimal longitude) { }
     public void UpdatePolicy(string? policy) { }
+
+    public (IReadOnlyList<Guid> AddedImages, IReadOnlyList<Guid> RemovedImages) UpdateImages(IEnumerable<Guid>? newImageIds)
+    {
+        var targetIds = (newImageIds ?? []).Distinct().ToList();
+        var currentIds = _images.Select(x => x.ImageId).ToHashSet();
+        // 1. Phân loại ảnh thêm mới và ảnh bị gỡ
+        var added = targetIds.Where(id => !currentIds.Contains(id)).ToList();
+        var removed = currentIds.Where(id => !targetIds.Contains(id)).ToList();
+        // 2. Xóa các ảnh cũ
+        _images.RemoveAll(x => removed.Contains(x.ImageId));
+        // 3. Thêm các ảnh mới và cập nhật thứ tự
+        for (int i = 0; i < targetIds.Count; i++)
+        {
+            var imageId = targetIds[i];
+            if (added.Contains(imageId))
+            {
+                _images.Add(BranchImage.Create(Id, imageId, i));
+            }
+            else
+            {
+                var existing = _images.FirstOrDefault(x => x.ImageId == imageId);
+                existing?.UpdateDisplayOrder(i);
+            }
+        }
+        // 4. Trả về Tuple trực tiếp:
+        return (added, removed);
+    }
+
+
     public void Activate() { }
     public void Deactivate() { }
     public void AddImage(Guid imageId, int displayOrder) { }

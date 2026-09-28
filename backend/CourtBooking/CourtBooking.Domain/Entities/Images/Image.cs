@@ -21,12 +21,11 @@ public class Image : AggregateRoot<Guid>
     public DateTime? AttachedAt { get; private set; }
 
     // --- Factory ---
-    public static Image Create(string url, StorageProvider storageProvider, string storageKey)
+    public static Image Create(StorageProvider storageProvider, string storageKey)
     {
         return new Image
         {
             Id = Guid.NewGuid(),
-            Url = url,
             StorageProvider = storageProvider,
             StorageKey = storageKey,
             Status = ImageStatus.Pending,
@@ -34,7 +33,16 @@ public class Image : AggregateRoot<Guid>
         };
     }
 
+    public void MarkDeleted()
+    {
+        Status = ImageStatus.Deleted;
+    }
+
     // --- Domain Methods ---
-    public void MarkAsAttached() { }
-    public void MarkAsPending() { }
+    public void MarkAsAttached()
+    {
+        Status = ImageStatus.Attached;
+        AttachedAt = DateTime.UtcNow;
+    }
+
 }

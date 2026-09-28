@@ -5,8 +5,6 @@ namespace CourtBooking.Domain.Enums;
 /// </summary>
 public enum OrderChannel
 {
-    PlayerOnline = 0,
-    WalkIn = 1,
-    CourtOwnerCreated = 2,
-    CourtOwnerSocialMatch = 3
+    Online = 0,
+    Pos = 1,
 }

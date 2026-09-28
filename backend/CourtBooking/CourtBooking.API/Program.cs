@@ -1,6 +1,7 @@
 using CourtBooking.API.Extensions;
 using CourtBooking.API.Infrastructure;
 using CourtBooking.Application.DependencyInjections;
+using CourtBooking.Infrastructure.Database;
 using CourtBooking.Infrastructure.DependencyInjections;
 using Scalar.AspNetCore;
 using Serilog;
@@ -97,6 +98,10 @@ try
     app.MapControllers();
 
     app.MapEndpoints();
+
+    // Automatically apply pending database migrations and seed data on startup
+    await DatabaseInitializer.ApplyMigrationsAndSeedAsync(app.Services);
+
     await app.RunAsync();
 }
 catch (Exception ex)

@@ -46,6 +46,6 @@ public record ConflictError(string Message)
 public record ForbiddenError(string Message)
     : Error("Forbidden", Message);
 
-/// <summary>A catch-all for unexpected domain failures — maps to HTTP 500.</summary>
+/// <summary>A catch-all for unexpected domain failures — maps to HTTP 400.</summary>
 public record BadError(string Message)
     : Error("BadRequest", Message);
