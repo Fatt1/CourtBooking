@@ -1,0 +1,20 @@
+{
+  "identities": [
+    {
+      "name": "courtbooking",
+      "credentials": [
+        {
+          "accessKey": "courtbooking_key",
+          "secretKey": "courtbooking_secret"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "Write",
+        "List",
+        "Tagging"
+      ]
+    }
+  ]
+}

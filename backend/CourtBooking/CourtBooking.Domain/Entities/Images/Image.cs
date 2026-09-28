@@ -11,7 +11,6 @@ public class Image : AggregateRoot<Guid>
 {
     private Image() { } // EF Core
 
-    public string Url { get; private set; } = null!;
     public StorageProvider StorageProvider { get; private set; }
 
     /// <summary>public_id / object key - dùng để gọi API xóa file thật trên storage</summary>

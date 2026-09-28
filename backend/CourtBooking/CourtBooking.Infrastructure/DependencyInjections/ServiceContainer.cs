@@ -1,5 +1,8 @@
+using Amazon.S3;
+using CourtBooking.Application.Abstractions.Storage;
 using CourtBooking.Infrastructure.Database;
 using CourtBooking.Infrastructure.Interceptors;
+using CourtBooking.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -40,6 +43,29 @@ public static class ServiceContainer
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
         });
 
+        // ── Object Storage — SeaweedFS / S3 ─────────────────────────
+        services.AddOptions<StorageOptions>()
+            .BindConfiguration(StorageOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddSingleton<IAmazonS3>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<StorageOptions>>().Value;
+            var config = new AmazonS3Config
+            {
+                ServiceURL = options.ServiceUrl,
+                ForcePathStyle = options.ForcePathStyle,
+                UseHttp = true,
+            };
+
+            return new AmazonS3Client(options.AccessKey, options.SecretKey, config);
+        });
+
+
+        services.AddScoped<IStorageService, S3StorageService>();
+
         return services;
     }
 }
+

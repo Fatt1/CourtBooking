@@ -13,10 +13,6 @@ public class ImageConfiguration : IEntityTypeConfiguration<Image>
 
         builder.HasKey(i => i.Id);
 
-        builder.Property(i => i.Url)
-            .HasMaxLength(500)
-            .IsRequired();
-
         builder.Property(i => i.StorageProvider)
             .HasConversion<byte>()
             .IsRequired()

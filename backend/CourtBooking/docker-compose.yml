@@ -48,6 +48,30 @@ services:
       - courtbooking-network
 
   # ─────────────────────────────────────────────
+  # SeaweedFS – Distributed S3 Object Storage
+  # ─────────────────────────────────────────────
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: courtbooking-seaweedfs
+    restart: unless-stopped
+    command: "server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json"
+    ports:
+      - "${STORAGE_S3_PORT:-8333}:8333"      # S3 API endpoint
+      - "${STORAGE_FILER_PORT:-8888}:8888"   # Filer UI / Web API
+      - "${STORAGE_MASTER_PORT:-9333}:9333"  # Master Web UI
+    volumes:
+      - seaweedfs_data:/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8333/ || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - courtbooking-network
+
+  # ─────────────────────────────────────────────
   # CourtBooking API
   # ─────────────────────────────────────────────
   courtbooking.api:
@@ -64,6 +88,11 @@ services:
       Serilog__WriteTo__0__Name: "Seq"
       Serilog__WriteTo__0__Args__serverUrl: "http://seq:5341"
       Serilog__WriteTo__0__Args__apiKey: ${SEQ_API_KEY:-}
+      Storage__ServiceUrl: "http://seaweedfs:8333"
+      Storage__AccessKey: ${STORAGE_ACCESS_KEY:-courtbooking_key}
+      Storage__SecretKey: ${STORAGE_SECRET_KEY:-courtbooking_secret}
+      Storage__BucketName: ${STORAGE_BUCKET_NAME:-courtbooking}
+      Storage__ForcePathStyle: "true"
     ports:
       - "${API_HTTP_PORT:-8080}:8080"
     depends_on:
@@ -71,6 +100,8 @@ services:
         condition: service_healthy
       seq:
         condition: service_started
+      seaweedfs:
+        condition: service_healthy
     networks:
       - courtbooking-network
 
@@ -79,7 +110,11 @@ volumes:
     driver: local
   seq_data:
     driver: local
+  seaweedfs_data:
+    driver: local
 
 networks:
   courtbooking-network:
     driver: bridge
+
+
