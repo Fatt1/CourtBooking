@@ -9,7 +9,7 @@ public sealed record UploadImageCommand(
     long SizeBytes) : ICommand<UploadImageResponse>;
 
 public sealed record UploadImageResponse(
-    string Key,
+    Guid Id,
     string OriginalFileName,
     string ContentType,
     long SizeBytes,

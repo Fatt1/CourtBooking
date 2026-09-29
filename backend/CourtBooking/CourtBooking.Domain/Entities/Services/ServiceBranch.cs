@@ -16,18 +16,30 @@ public class ServiceBranch
     // Navigation
     public Service Service { get; private set; } = null!;
 
-    internal static ServiceBranch Create(Guid serviceId, Guid branchId, decimal price)
+    internal static ServiceBranch Create(Guid serviceId, Guid branchId, decimal price, bool isActive = true)
     {
         return new ServiceBranch
         {
             ServiceId = serviceId,
             BranchId = branchId,
             Price = price,
-            IsActive = true
+            IsActive = isActive
         };
     }
 
-    internal void UpdatePrice(decimal price) { }
-    internal void Activate() { }
-    internal void Deactivate() { }
+    internal void UpdatePrice(decimal price)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(price);
+        Price = price;
+    }
+
+    internal void Activate()
+    {
+        IsActive = true;
+    }
+
+    internal void Deactivate()
+    {
+        IsActive = false;
+    }
 }

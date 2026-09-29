@@ -45,7 +45,7 @@ public sealed class UploadImageHandler : ICommandHandler<UploadImageCommand, Upl
         await _applicationDbContext.SaveChangesAsync(cancellationToken);
 
         var response = new UploadImageResponse(
-            Key: uploadedKey,
+            Id: image.Id,
             OriginalFileName: request.FileName,
             ContentType: request.ContentType,
             SizeBytes: request.SizeBytes,

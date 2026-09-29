@@ -1,6 +1,8 @@
 using Amazon.S3;
+using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Storage;
 using CourtBooking.Application.Data;
+using CourtBooking.Infrastructure.Authentication;
 using CourtBooking.Infrastructure.BackgroundJobs;
 using CourtBooking.Infrastructure.Database;
 using CourtBooking.Infrastructure.Interceptors;
@@ -18,7 +20,10 @@ public static class ServiceContainer
         services.AddDatabase()
             .AddStorage();
 
-
+        // ── Authentication & User Context ────────────────────────────
+        services.AddHttpContextAccessor();
+        services.AddScoped<IUserContext, UserContext>();
+        services.AddScoped<CourtBooking.Application.Abstractions.Authorization.IBranchAuthorizationService, CourtBooking.Infrastructure.Authorization.BranchAuthorizationService>();
 
         // ── Background Jobs ──────────────────────────────────────────
         services.AddHostedService<CleanUpImagesBackgroundService>();

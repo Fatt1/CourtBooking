@@ -35,10 +35,68 @@ public class Service : AggregateRoot<Guid>, IAuditable
     }
 
     // --- Domain Methods ---
-    public void UpdateInfo(string name, string unit, Guid? imageId) { }
-    public void AssignToBranch(Guid branchId, decimal price) { }
-    public void UnassignFromBranch(Guid branchId) { }
-    public void UpdateBranchPrice(Guid branchId, decimal price) { }
-    public void ActivateInBranch(Guid branchId) { }
-    public void DeactivateInBranch(Guid branchId) { }
+    public Guid? UpdateInfo(Guid categoryId, string name, string unit, Guid? newImageId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(unit);
+
+        CategoryId = categoryId;
+        Name = name.Trim();
+        Unit = unit.Trim();
+
+        var oldImageId = ImageId;
+        if (ImageId != newImageId)
+        {
+            ImageId = newImageId;
+            return oldImageId;
+        }
+
+        return null;
+    }
+
+    public void AssignToBranch(Guid branchId, decimal price, bool isActive = true)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(price);
+
+
+        _branches.Add(ServiceBranch.Create(Id, branchId, price, isActive));
+    }
+
+    public bool UnassignFromBranch(Guid branchId)
+    {
+        var existing = _branches.Find(b => b.BranchId == branchId);
+        if (existing is not null)
+        {
+            return _branches.Remove(existing);
+        }
+
+        return false;
+    }
+
+    public void UpdateBranchPrice(Guid branchId, decimal price)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(price);
+
+        var existing = _branches.Find(b => b.BranchId == branchId)
+            ?? throw new InvalidOperationException($"Dịch vụ '{Name}' chưa được liên kết với chi nhánh '{branchId}'.");
+
+        existing.UpdatePrice(price);
+    }
+
+    public void ActivateInBranch(Guid branchId)
+    {
+        var existing = _branches.Find(b => b.BranchId == branchId)
+            ?? throw new InvalidOperationException($"Dịch vụ '{Name}' chưa được liên kết với chi nhánh '{branchId}'.");
+
+        existing.Activate();
+    }
+
+
+    public void DeactivateInBranch(Guid branchId)
+    {
+        var existing = _branches.Find(b => b.BranchId == branchId)
+            ?? throw new InvalidOperationException($"Dịch vụ '{Name}' chưa được liên kết với chi nhánh '{branchId}'.");
+
+        existing.Deactivate();
+    }
 }
