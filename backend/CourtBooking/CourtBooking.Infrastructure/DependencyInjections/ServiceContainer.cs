@@ -1,3 +1,4 @@
+using System.Text;
 using Amazon.S3;
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Storage;
@@ -7,9 +8,11 @@ using CourtBooking.Infrastructure.BackgroundJobs;
 using CourtBooking.Infrastructure.Database;
 using CourtBooking.Infrastructure.Interceptors;
 using CourtBooking.Infrastructure.Storage;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CourtBooking.Infrastructure.DependencyInjections;
 
@@ -18,7 +21,8 @@ public static class ServiceContainer
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
     {
         services.AddDatabase()
-            .AddStorage();
+            .AddStorage()
+            .AddJwtAuthentication();
 
         // ── Authentication & User Context ────────────────────────────
         services.AddHttpContextAccessor();
@@ -31,7 +35,49 @@ public static class ServiceContainer
         return services;
     }
 
+    private static IServiceCollection AddJwtAuthentication(this IServiceCollection services)
+    {
+        services.AddOptions<JwtOptions>()
+            .BindConfiguration(JwtOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IAuthCookieService, AuthCookieService>();
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer();
+
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<JwtOptions>>((options, jwtOptions) =>
+            {
+                var opt = jwtOptions.Value;
+                var key = Encoding.UTF8.GetBytes(opt.SecretKey);
+
+                options.SaveToken = true;
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = opt.Issuer,
+                    ValidAudience = opt.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
+        services.AddAuthorization();
+
+        return services;
+    }
 
     private static IServiceCollection AddDatabase(this IServiceCollection services)
     {
@@ -46,7 +92,6 @@ public static class ServiceContainer
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-
             var db = sp.GetRequiredService<IOptions<DatabaseOptions>>().Value;
 
             options.UseSqlServer(db.DefaultConnection, sqlOptions =>
@@ -63,10 +108,8 @@ public static class ServiceContainer
             });
 
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
-
-
-
         });
+
         services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
         return services;
     }
@@ -96,8 +139,3 @@ public static class ServiceContainer
         return services;
     }
 }
-
-
-
-
-

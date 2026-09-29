@@ -93,6 +93,12 @@ services:
       Storage__SecretKey: ${STORAGE_SECRET_KEY:-courtbooking_secret}
       Storage__BucketName: ${STORAGE_BUCKET_NAME:-courtbooking}
       Storage__ForcePathStyle: "true"
+      Jwt__Issuer: ${JWT_ISSUER:-CourtBooking}
+      Jwt__Audience: ${JWT_AUDIENCE:-CourtBookingClient}
+      Jwt__SecretKey: ${JWT_SECRET_KEY}
+      Jwt__AccessTokenExpirationInMinutes: ${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:-60}
+      Jwt__RefreshTokenExpirationInDays: ${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:-30}
+      Jwt__CookieName: ${JWT_COOKIE_NAME:-refreshToken}
     ports:
       - "${API_HTTP_PORT:-8080}:8080"
     depends_on:

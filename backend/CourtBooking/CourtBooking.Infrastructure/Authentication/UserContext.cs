@@ -7,19 +7,15 @@ namespace CourtBooking.Infrastructure.Authentication;
 
 internal sealed class UserContext(IHttpContextAccessor httpContextAccessor) : IUserContext
 {
+    private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
+
     public Guid UserId
     {
         get
         {
             // 1. Thử lấy từ JWT Token nếu có đăng nhập
-            var userIdClaim = httpContextAccessor
-                .HttpContext?
-                .User?
-                .FindFirst(ClaimTypes.NameIdentifier)?.Value
-                ?? httpContextAccessor
-                    .HttpContext?
-                    .User?
-                    .FindFirst("sub")?.Value;
+            var userIdClaim = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User?.FindFirst("sub")?.Value;
 
             if (!string.IsNullOrWhiteSpace(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
             {
@@ -37,5 +33,12 @@ internal sealed class UserContext(IHttpContextAccessor httpContextAccessor) : IU
             return DatabaseSeeder.CourtOwnerUserId;
         }
     }
-}
 
+    public string? Email => User?.FindFirst(ClaimTypes.Email)?.Value
+                         ?? User?.FindFirst("email")?.Value;
+
+    public string? Role => User?.FindFirst(ClaimTypes.Role)?.Value
+                        ?? User?.FindFirst("role")?.Value;
+
+    public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
+}
