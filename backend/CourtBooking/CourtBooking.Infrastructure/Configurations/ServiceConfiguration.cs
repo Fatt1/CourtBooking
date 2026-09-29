@@ -26,6 +26,16 @@ public class ServiceConfiguration : IEntityTypeConfiguration<Service>
         builder.Property(s => s.UpdatedAt).IsRequired();
 
         // Relationships
+        builder.HasOne(s => s.Category)
+            .WithMany(c => c.Services)
+            .HasForeignKey(s => s.CategoryId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne(s => s.Image)
+            .WithMany()
+            .HasForeignKey(s => s.ImageId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasMany(s => s.Branches)
             .WithOne(sb => sb.Service)
             .HasForeignKey(sb => sb.ServiceId)

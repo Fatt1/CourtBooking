@@ -4,39 +4,22 @@ namespace CourtBooking.Domain.Entities.Subscriptions;
 
 /// <summary>
 /// Đăng ký gói dịch vụ của chủ sân.
-/// Aggregate Root.
 /// </summary>
-public class CourtOwnerSubscription : AggregateRoot<Guid>
+public class CourtOwnerSubscription : EntityBase<Guid>
 {
-    private CourtOwnerSubscription() { } // EF Core
+    public CourtOwnerSubscription() { }
 
-    public Guid CourtOwnerId { get; private set; }
-    public Guid ServicePackageId { get; private set; }
-    public decimal PricePaid { get; private set; }
-    public DateOnly StartDate { get; private set; }
-    public DateOnly EndDate { get; private set; }
-    public DateTime CreatedAt { get; private set; }
+    public Guid CourtOwnerId { get; set; }
+    public Guid ServicePackageId { get; set; }
+    public decimal PricePaid { get; set; }
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    // Navigation properties
+    public Users.CourtOwner CourtOwner { get; set; } = null!;
+    public ServicePackage ServicePackage { get; set; } = null!;
 
     public bool IsActive => DateOnly.FromDateTime(DateTime.UtcNow) >= StartDate
                          && DateOnly.FromDateTime(DateTime.UtcNow) <= EndDate;
-
-    // --- Factory ---
-    public static CourtOwnerSubscription Create(
-        Guid courtOwnerId,
-        Guid servicePackageId,
-        decimal pricePaid,
-        DateOnly startDate,
-        DateOnly endDate)
-    {
-        return new CourtOwnerSubscription
-        {
-            Id = Guid.NewGuid(),
-            CourtOwnerId = courtOwnerId,
-            ServicePackageId = servicePackageId,
-            PricePaid = pricePaid,
-            StartDate = startDate,
-            EndDate = endDate,
-            CreatedAt = DateTime.UtcNow
-        };
-    }
 }

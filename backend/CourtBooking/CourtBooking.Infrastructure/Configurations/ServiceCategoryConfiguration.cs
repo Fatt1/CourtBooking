@@ -27,5 +27,11 @@ public class ServiceCategoryConfiguration : IEntityTypeConfiguration<ServiceCate
 
         builder.Property(c => c.CreatedAt).IsRequired();
         builder.Property(c => c.UpdatedAt).IsRequired();
+
+        // Relationships
+        builder.HasMany(c => c.Services)
+            .WithOne(s => s.Category)
+            .HasForeignKey(s => s.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

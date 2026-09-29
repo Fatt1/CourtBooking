@@ -34,5 +34,10 @@ public class PriceTableConfiguration : IEntityTypeConfiguration<PriceTable>
 
         builder.HasIndex(p => p.CourtTypeId)
             .HasDatabaseName("IX_PriceTables_CourtTypeId");
+
+        builder.HasOne(p => p.CourtType)
+            .WithMany(ct => ct.PriceTables)
+            .HasForeignKey(p => p.CourtTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -18,94 +18,57 @@ internal sealed class GetOwnerServicesHandler(
     {
         var currentUserId = userContext.UserId;
 
-        // 1. Query danh sách dịch vụ của chủ sân (lọc theo các chi nhánh thuộc chủ sân)
-        var query = dbContext.Services
+        // 1. Base query lọc các dịch vụ theo chi nhánh của chủ sân
+        var baseQuery = dbContext.Services
             .AsNoTracking()
-            .Where(s => s.Branches.Any(sb => dbContext.Branches.Any(b => b.Id == sb.BranchId && b.CourtOwnerId == currentUserId)));
+            .Where(s => s.Branches.Any(sb => sb.Branch.CourtOwnerId == currentUserId));
 
         if (request.BranchId.HasValue)
         {
-            query = query.Where(s => s.Branches.Any(sb => sb.BranchId == request.BranchId.Value));
+            baseQuery = baseQuery.Where(s => s.Branches.Any(sb => sb.BranchId == request.BranchId.Value));
         }
 
         if (request.CategoryId.HasValue)
         {
-            query = query.Where(s => s.CategoryId == request.CategoryId.Value);
+            baseQuery = baseQuery.Where(s => s.CategoryId == request.CategoryId.Value);
         }
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var term = request.SearchTerm.Trim().ToLower();
-            query = query.Where(s => s.Name.ToLower().Contains(term));
+            baseQuery = baseQuery.Where(s => s.Name.ToLower().Contains(term));
         }
 
-        var projectedQuery = query
+        // 2. Đếm tổng số bản ghi
+        var totalCount = await baseQuery.CountAsync(cancellationToken);
+
+        // 3. Phân trang và chiếu trực tiếp sang DTO thông qua Navigation properties
+        var items = await baseQuery
             .OrderByDescending(s => s.CreatedAt)
-            .Select(s => new OwnerServiceItem(
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(s => new OwnerServiceDto(
                 s.Id,
                 s.Name,
                 s.Unit,
                 s.CategoryId,
-                s.ImageId,
+                s.Image != null ? new ImageDto(s.Image.StorageKey, s.Image.Id) : null,
                 s.CreatedAt,
                 s.UpdatedAt,
                 s.Branches
-                    .Where(sb => dbContext.Branches.Any(b => b.Id == sb.BranchId && b.CourtOwnerId == currentUserId))
+                    .Where(sb => sb.Branch.CourtOwnerId == currentUserId)
                     .Select(sb => new OwnerServiceBranchDto(
                         sb.BranchId,
-                        dbContext.Branches.Where(b => b.Id == sb.BranchId).Select(b => b.Name).FirstOrDefault()!,
+                        sb.Branch.Name,
                         sb.Price,
                         sb.IsActive
                     ))
                     .ToList()
-            ));
+            ))
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
 
-        // Câu Query 1: Phân trang dùng PagedList.CreateAsync
-        var pagedServices = await PagedList<OwnerServiceItem>.CreateAsync(
-            projectedQuery, request.Page, request.PageSize, cancellationToken);
-
-        // Câu Query 2: Lấy hình ảnh dùng WHERE IN
-        var imageIds = pagedServices.Items
-            .Where(s => s.ImageId.HasValue)
-            .Select(s => s.ImageId!.Value)
-            .Distinct()
-            .ToList();
-
-        var imageDict = imageIds.Count > 0
-            ? await dbContext.Images
-                .AsNoTracking()
-                .Where(i => imageIds.Contains(i.Id))
-                .ToDictionaryAsync(i => i.Id, i => new ImageDto(i.StorageKey, i.Id), cancellationToken)
-            : [];
-
-        // Ghép Image vào DTO kết quả
-        var items = pagedServices.Items.Select(s => new OwnerServiceDto(
-            s.Id,
-            s.Name,
-            s.Unit,
-            s.CategoryId,
-            s.ImageId.HasValue && imageDict.TryGetValue(s.ImageId.Value, out var img) ? img : null,
-            s.CreatedAt,
-            s.UpdatedAt,
-            s.Branches
-        )).ToList();
-
-        var result = new PagedList<OwnerServiceDto>(
-            items,
-            pagedServices.TotalCount,
-            pagedServices.Page,
-            pagedServices.PageSize);
-
-        return Result.Success(result);
+        var pagedList = new PagedList<OwnerServiceDto>(items, totalCount, request.Page, request.PageSize);
+        return Result.Success(pagedList);
     }
-
-    private sealed record OwnerServiceItem(
-        Guid Id,
-        string Name,
-        string Unit,
-        Guid CategoryId,
-        Guid? ImageId,
-        DateTime CreatedAt,
-        DateTime UpdatedAt,
-        IReadOnlyList<OwnerServiceBranchDto> Branches);
 }

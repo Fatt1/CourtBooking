@@ -4,36 +4,21 @@ using CourtBooking.Domain.Enums;
 namespace CourtBooking.Domain.Entities.Courts;
 
 /// <summary>
-/// Sân thể thao cụ thể (VD: Sân 1, Sân 2, Sân VIP) - Aggregate Root độc lập.
-/// Quản lý thông tin và trạng thái hoạt động của từng sân.
-/// Tham chiếu CourtType qua CourtTypeId (Guid).
+/// Sân thể thao cụ thể (VD: Sân 1, Sân 2, Sân VIP)
 /// </summary>
-public class Court : AggregateRoot<Guid>, IAuditable
+public class Court : EntityBase<Guid>, IAuditable
 {
-    private Court() { } // EF Core
+    public Court() { }
 
-    public Guid CourtTypeId { get; private set; }
-    public string Name { get; private set; } = null!;
-    public CourtStatus Status { get; private set; }
+    public Guid CourtTypeId { get; set; }
+    public string Name { get; set; } = null!;
+    public CourtStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    // --- Factory ---
-    public static Court Create(Guid courtTypeId, string name)
-    {
-        return new Court
-        {
-            Id = Guid.NewGuid(),
-            CourtTypeId = courtTypeId,
-            Name = name,
-            Status = CourtStatus.Available
-        };
-    }
-
-    // --- Domain Methods ---
-    public void Rename(string name) { }
-    public void SetMaintenance() { }
-    public void SetAvailable() { }
-    public void Deactivate() { }
+    // Navigation properties
+    public CourtType CourtType { get; set; } = null!;
+    public List<Orders.OrderDetail> OrderDetails { get; set; } = [];
+    public List<FixedTimeBlockCourt> FixedTimeBlockCourts { get; set; } = [];
+    public List<Orders.FixedOrderConfigCourt> FixedOrderConfigCourts { get; set; } = [];
 }
-

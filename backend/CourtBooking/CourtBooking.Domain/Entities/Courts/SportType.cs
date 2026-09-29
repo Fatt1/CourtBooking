@@ -5,28 +5,18 @@ namespace CourtBooking.Domain.Entities.Courts;
 /// <summary>
 /// Loại hình thể thao (Cầu lông, Pickleball, v.v.)
 /// </summary>
-public class SportType : AggregateRoot<Guid>
+public class SportType : EntityBase<Guid>
 {
-    private SportType() { } // EF Core
+    public SportType() { }
 
-    public string Name { get; private set; } = null!;
-    public Guid? ImageId { get; private set; }
-    public bool IsActive { get; private set; }
+    public string Name { get; set; } = null!;
+    public Guid? ImageId { get; set; }
+    public bool IsActive { get; set; }
 
-    // --- Factory ---
-    public static SportType Create(string name, Guid? imageId = null)
-    {
-        return new SportType
-        {
-            Id = Guid.NewGuid(),
-            Name = name,
-            ImageId = imageId,
-            IsActive = true
-        };
-    }
+    // Navigation properties
+    public Images.Image? Image { get; set; }
 
-    // --- Domain Methods ---
-    public void UpdateInfo(string name, Guid? imageId) { }
-    public void Activate() { }
-    public void Deactivate() { }
+    public List<Branch> Branches { get; set; } = [];
+    public List<Events.SportEvent> Events { get; set; } = [];
+    public List<Matches.SocialMatch> SocialMatches { get; set; } = [];
 }

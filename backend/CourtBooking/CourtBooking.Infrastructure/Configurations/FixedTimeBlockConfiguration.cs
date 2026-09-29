@@ -27,5 +27,10 @@ public class FixedTimeBlockConfiguration : IEntityTypeConfiguration<FixedTimeBlo
 
         builder.HasIndex(f => f.CourtTypeId)
             .HasDatabaseName("IX_FixedTimeBlock_CourtTypeId");
+
+        builder.HasOne(f => f.CourtType)
+            .WithMany(ct => ct.FixedTimeBlocks)
+            .HasForeignKey(f => f.CourtTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

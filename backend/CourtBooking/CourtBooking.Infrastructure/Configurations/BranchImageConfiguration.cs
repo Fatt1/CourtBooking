@@ -23,5 +23,10 @@ public class BranchImageConfiguration : IEntityTypeConfiguration<BranchImage>
 
         builder.HasIndex(i => i.ImageId)
             .HasDatabaseName("IX_BranchImages_ImageId");
+
+        builder.HasOne(i => i.Image)
+            .WithMany()
+            .HasForeignKey(i => i.ImageId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

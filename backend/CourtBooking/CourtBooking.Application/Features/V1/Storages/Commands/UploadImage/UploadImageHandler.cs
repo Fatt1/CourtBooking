@@ -40,7 +40,14 @@ public sealed class UploadImageHandler : ICommandHandler<UploadImageCommand, Upl
             expiryInSeconds: 3600,
             cancellationToken: cancellationToken);
 
-        var image = Image.Create(StorageProvider.S3, uploadedKey);
+        var image = new Image
+        {
+            Id = Guid.NewGuid(),
+            StorageProvider = StorageProvider.S3,
+            StorageKey = uploadedKey,
+            Status = ImageStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
         _applicationDbContext.Images.Add(image);
         await _applicationDbContext.SaveChangesAsync(cancellationToken);
 

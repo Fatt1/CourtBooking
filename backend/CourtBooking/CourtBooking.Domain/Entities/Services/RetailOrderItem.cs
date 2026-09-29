@@ -4,31 +4,17 @@ namespace CourtBooking.Domain.Entities.Services;
 
 /// <summary>
 /// Chi tiết item trong đơn bán lẻ.
-/// Child entity của RetailOrder aggregate.
 /// </summary>
 public class RetailOrderItem : EntityBase<Guid>
 {
-    private RetailOrderItem() { } // EF Core
+    public RetailOrderItem() { }
 
-    public Guid RetailOrderId { get; private set; }
-    public Guid ServiceId { get; private set; }
-    public int Quantity { get; private set; }
-    public decimal UnitPrice { get; private set; }
+    public Guid RetailOrderId { get; set; }
+    public Guid ServiceId { get; set; }
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
 
     // Navigation
-    public RetailOrder RetailOrder { get; private set; } = null!;
-
-    internal static RetailOrderItem Create(Guid retailOrderId, Guid serviceId, int quantity, decimal unitPrice)
-    {
-        return new RetailOrderItem
-        {
-            Id = Guid.NewGuid(),
-            RetailOrderId = retailOrderId,
-            ServiceId = serviceId,
-            Quantity = quantity,
-            UnitPrice = unitPrice
-        };
-    }
-
-    internal void UpdateQuantity(int quantity) { }
+    public RetailOrder RetailOrder { get; set; } = null!;
+    public Service Service { get; set; } = null!;
 }

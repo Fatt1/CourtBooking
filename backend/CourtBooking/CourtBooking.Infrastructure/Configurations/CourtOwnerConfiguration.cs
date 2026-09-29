@@ -27,5 +27,11 @@ public class CourtOwnerConfiguration : IEntityTypeConfiguration<CourtOwner>
 
         builder.Property(c => c.CreatedAt).IsRequired();
         builder.Property(c => c.UpdatedAt).IsRequired();
+
+        // Relationships
+        builder.HasOne(c => c.QrImage)
+            .WithMany()
+            .HasForeignKey(c => c.QrImageId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

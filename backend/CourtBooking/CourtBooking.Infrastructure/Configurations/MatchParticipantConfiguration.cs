@@ -24,5 +24,10 @@ public class MatchParticipantConfiguration : IEntityTypeConfiguration<MatchParti
 
         builder.HasIndex(p => p.PlayerId)
             .HasDatabaseName("IX_MatchParticipants_PlayerId");
+
+        builder.HasOne(p => p.Player)
+            .WithMany(u => u.MatchParticipants)
+            .HasForeignKey(p => p.PlayerId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

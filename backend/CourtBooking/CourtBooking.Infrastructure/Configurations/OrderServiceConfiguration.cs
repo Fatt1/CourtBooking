@@ -23,5 +23,11 @@ public class OrderServiceConfiguration : IEntityTypeConfiguration<OrderService>
 
         builder.HasIndex(s => s.ServiceId)
             .HasDatabaseName("IX_OrderServices_ServiceId");
+
+        // Relationships
+        builder.HasOne(s => s.Service)
+            .WithMany()
+            .HasForeignKey(s => s.ServiceId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

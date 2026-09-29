@@ -4,6 +4,7 @@ using CourtBooking.Application.Features.V1.Services.Dtos;
 using CourtBooking.Application.Features.V1.Storages.Events.AttachImages;
 using CourtBooking.Application.Features.V1.Storages.Events.DeleteImages;
 using CourtBooking.Application.Messaging;
+using CourtBooking.Domain.Entities.Services;
 using CourtBooking.SharedKernel;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -58,7 +59,6 @@ internal sealed class UpdateServiceHandler(
             incomingBranches = request.Branches;
         }
 
-
         if (incomingBranches is not null)
         {
             var incomingBranchIds = incomingBranches.Select(b => b.BranchId).ToHashSet();
@@ -78,43 +78,44 @@ internal sealed class UpdateServiceHandler(
             }
 
             // 4.2 Tìm các chi nhánh bị gỡ bỏ khỏi dịch vụ
-            var branchesToRemove = existingBranchIds.Except(incomingBranchIds).ToList();
-
+            var branchesToRemove = existingBranchIds.Except(incomingBranchIds).ToHashSet();
             if (branchesToRemove.Count > 0)
             {
-                foreach (var branchId in branchesToRemove)
-                {
-                    service.UnassignFromBranch(branchId);
-                }
+                service.Branches.RemoveAll(b => branchesToRemove.Contains(b.BranchId));
             }
 
             // 4.3 Cập nhật thông tin cho các chi nhánh đã tồn tại
             var branchesToUpdate = incomingBranches.Where(b => existingBranchIds.Contains(b.BranchId));
             foreach (var branch in branchesToUpdate)
             {
-                service.UpdateBranchPrice(branch.BranchId, branch.Price);
-                if (branch.IsActive)
+                var existing = service.Branches.FirstOrDefault(b => b.BranchId == branch.BranchId);
+                if (existing is not null)
                 {
-                    service.ActivateInBranch(branch.BranchId);
-
+                    existing.Price = branch.Price;
+                    existing.IsActive = branch.IsActive;
                 }
-                else
-                {
-                    service.DeactivateInBranch(branch.BranchId);
-                }
-
             }
-            // 4.4 Thêm mới các chi nhánh với cùng trạng thái hoạt động (IsActive = true)
+
+            // 4.4 Thêm mới các chi nhánh
             var branchesToAdd = incomingBranches.Where(b => !existingBranchIds.Contains(b.BranchId));
             foreach (var branch in branchesToAdd)
             {
-                service.AssignToBranch(branch.BranchId, branch.Price, branch.IsActive);
-
+                service.Branches.Add(new ServiceBranch
+                {
+                    ServiceId = service.Id,
+                    BranchId = branch.BranchId,
+                    Price = branch.Price,
+                    IsActive = branch.IsActive
+                });
             }
         }
 
         // 5. Cập nhật thông tin dịch vụ và lấy ảnh cũ (nếu có thay đổi)
-        var oldImageId = service.UpdateInfo(request.CategoryId, request.Name, request.Unit, request.ImageId);
+        var oldImageId = service.ImageId;
+        service.CategoryId = request.CategoryId;
+        service.Name = request.Name.Trim();
+        service.Unit = request.Unit.Trim();
+        service.ImageId = request.ImageId;
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

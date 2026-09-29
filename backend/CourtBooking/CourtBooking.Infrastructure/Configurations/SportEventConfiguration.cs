@@ -39,6 +39,16 @@ public class SportEventConfiguration : IEntityTypeConfiguration<SportEvent>
             .HasMaxLength(500);
 
         // Relationships
+        builder.HasOne(e => e.Order)
+            .WithOne(o => o.SportEvent)
+            .HasForeignKey<SportEvent>(e => e.OrderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.SportType)
+            .WithMany(s => s.Events)
+            .HasForeignKey(e => e.SportTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(e => e.Tickets)
             .WithOne(t => t.Event)
             .HasForeignKey(t => t.EventId)

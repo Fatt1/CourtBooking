@@ -7,18 +7,7 @@ namespace CourtBooking.Domain.Entities.Users;
 /// </summary>
 public class ApplicationRole : IdentityRole<Guid>
 {
-    private ApplicationRole() { } // EF Core
+    public ApplicationRole() { }
 
-    public string? Description { get; private set; }
-
-    public static ApplicationRole Create(string roleName, string? description = null)
-    {
-        return new ApplicationRole
-        {
-            Id = Guid.NewGuid(),
-            Name = roleName,
-            NormalizedName = roleName.ToUpperInvariant(),
-            Description = description
-        };
-    }
+    public string? Description { get; set; }
 }

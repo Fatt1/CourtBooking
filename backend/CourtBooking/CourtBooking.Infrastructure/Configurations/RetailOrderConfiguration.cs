@@ -31,5 +31,10 @@ public class RetailOrderConfiguration : IEntityTypeConfiguration<RetailOrder>
 
         builder.HasIndex(r => r.BranchId)
             .HasDatabaseName("IX_RetailOrder_BranchId");
+
+        builder.HasOne(r => r.Branch)
+            .WithMany(b => b.RetailOrders)
+            .HasForeignKey(r => r.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

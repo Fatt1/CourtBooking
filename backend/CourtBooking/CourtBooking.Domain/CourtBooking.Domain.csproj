@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Folder Include="Events\" />
     <Folder Include="Repositories\" />
@@ -8,8 +8,4 @@
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
   </ItemGroup>
-<ItemGroup>
-	 <InternalsVisibleTo Include="CourtBooking.Infrastructure" />
-  <InternalsVisibleTo Include="CourtBooking.Application" />
-</ItemGroup>
 </Project>

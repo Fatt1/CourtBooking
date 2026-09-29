@@ -22,5 +22,11 @@ public class OrderDetailConfiguration : IEntityTypeConfiguration<OrderDetail>
 
         builder.HasIndex(d => new { d.CourtId, d.Date, d.StartTime })
             .HasDatabaseName("IX_OrdersDetails_CourtId_Date_StartTime");
+
+        // Relationships
+        builder.HasOne(d => d.Court)
+            .WithMany(c => c.OrderDetails)
+            .HasForeignKey(d => d.CourtId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

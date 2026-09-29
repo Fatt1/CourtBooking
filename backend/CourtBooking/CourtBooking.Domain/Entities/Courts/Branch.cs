@@ -3,112 +3,77 @@ using CourtBooking.Domain.Abstractions;
 namespace CourtBooking.Domain.Entities.Courts;
 
 /// <summary>
-/// Chi nhánh sân (Branch) - Aggregate Root NHỎ.
-/// Branch chỉ quản lý thông tin của chính nó và hình ảnh.
-/// CourtType là Aggregate Root riêng, tham chiếu Branch qua BranchId.
+/// Chi nhánh sân (Branch)
 /// </summary>
-public class Branch : AggregateRoot<Guid>, IAuditable
+public class Branch : EntityBase<Guid>, IAuditable
 {
-    private Branch() { } // EF Core
+    public Branch() { }
 
-    private readonly List<BranchImage> _images = [];
-
-    public Guid CourtOwnerId { get; private set; }
-    public Guid SportTypeId { get; private set; }
-    public string Name { get; private set; } = null!;
-    public string GgMapUrl { get; private set; } = null!;
-    public string Province { get; private set; } = null!;
-    public string District { get; private set; } = null!;
-    public string Street { get; private set; } = null!;
-    public decimal? Latitude { get; private set; }
-    public decimal? Longitude { get; private set; }
-    public bool IsActive { get; private set; }
-    public int ReviewTotal { get; private set; }
-    public TimeOnly OpenTime { get; private set; }
-    public TimeOnly CloseTime { get; private set; }
-    public string? Policy { get; private set; }
-    public Guid QrImageId { get; private set; }
-    public string AccountNumber { get; private set; } = null!;
-    public string AccountName { get; private set; } = null!;
+    public Guid CourtOwnerId { get; set; }
+    public Guid SportTypeId { get; set; }
+    public string Name { get; set; } = null!;
+    public string GgMapUrl { get; set; } = null!;
+    public string Province { get; set; } = null!;
+    public string District { get; set; } = null!;
+    public string Street { get; set; } = null!;
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
+    public bool IsActive { get; set; }
+    public int ReviewTotal { get; set; }
+    public TimeOnly OpenTime { get; set; }
+    public TimeOnly CloseTime { get; set; }
+    public string? Policy { get; set; }
+    public Guid QrImageId { get; set; }
+    public string AccountNumber { get; set; } = null!;
+    public string AccountName { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    // Branch chỉ own BranchImage — CourtType là aggregate riêng
-    public IReadOnlyList<BranchImage> Images => _images.AsReadOnly();
+    // Navigation properties
+    public Users.CourtOwner CourtOwner { get; set; } = null!;
+    public SportType SportType { get; set; } = null!;
+    public Images.Image QrImage { get; set; } = null!;
 
-    // --- Factory ---
-    public static Branch Create(
-        Guid courtOwnerId,
-        Guid sportTypeId,
-        string name,
-        string ggMapUrl,
-        string province,
-        string district,
-        string street,
-        TimeOnly openTime,
-        TimeOnly closeTime,
-        Guid qrImageId,
-        string accountNumber,
-        string accountName)
-    {
-        return new Branch
-        {
-            Id = Guid.NewGuid(),
-            CourtOwnerId = courtOwnerId,
-            SportTypeId = sportTypeId,
-            Name = name,
-            GgMapUrl = ggMapUrl,
-            Province = province,
-            District = district,
-            Street = street,
-            OpenTime = openTime,
-            CloseTime = closeTime,
-            QrImageId = qrImageId,
-            AccountNumber = accountNumber,
-            AccountName = accountName,
-            IsActive = true,
-            ReviewTotal = 0
-        };
-    }
+    public List<CourtType> CourtTypes { get; set; } = [];
+    public List<Services.ServiceBranch> ServiceBranches { get; set; } = [];
+    public List<Reviews.Review> Reviews { get; set; } = [];
+    public List<Orders.Order> Orders { get; set; } = [];
+    public List<Matches.SocialMatch> SocialMatches { get; set; } = [];
+    public List<Services.RetailOrder> RetailOrders { get; set; } = [];
+    public List<BranchImage> Images { get; set; } = [];
 
-    // --- Domain Methods ---
-    public void UpdateInfo(string name, string province, string district, string street, string ggMapUrl) { }
-    public void UpdateBankInfo(string accountNumber, string accountName, Guid qrImageId) { }
-    public void UpdateOpenHours(TimeOnly openTime, TimeOnly closeTime) { }
-    public void UpdateLocation(decimal latitude, decimal longitude) { }
-    public void UpdatePolicy(string? policy) { }
 
     public (IReadOnlyList<Guid> AddedImages, IReadOnlyList<Guid> RemovedImages) UpdateImages(IEnumerable<Guid>? newImageIds)
     {
         var targetIds = (newImageIds ?? []).Distinct().ToList();
-        var currentIds = _images.Select(x => x.ImageId).ToHashSet();
+        var currentIds = Images.Select(x => x.ImageId).ToHashSet();
         // 1. Phân loại ảnh thêm mới và ảnh bị gỡ
         var added = targetIds.Where(id => !currentIds.Contains(id)).ToList();
         var removed = currentIds.Where(id => !targetIds.Contains(id)).ToList();
         // 2. Xóa các ảnh cũ
-        _images.RemoveAll(x => removed.Contains(x.ImageId));
+        Images.RemoveAll(x => removed.Contains(x.ImageId));
         // 3. Thêm các ảnh mới và cập nhật thứ tự
         for (int i = 0; i < targetIds.Count; i++)
         {
             var imageId = targetIds[i];
             if (added.Contains(imageId))
             {
-                _images.Add(BranchImage.Create(Id, imageId, i));
+                Images.Add(new BranchImage
+                {
+                    BranchId = Id,
+                    ImageId = imageId,
+                    DisplayOrder = i
+                });
+
             }
             else
             {
-                var existing = _images.FirstOrDefault(x => x.ImageId == imageId);
-                existing?.UpdateDisplayOrder(i);
+                var existing = Images.FirstOrDefault(x => x.ImageId == imageId)!;
+                existing.DisplayOrder = i;
             }
+            // 4. Trả về Tuple trực tiếp:
+
         }
-        // 4. Trả về Tuple trực tiếp:
         return (added, removed);
     }
-
-
-    public void Activate() { }
-    public void Deactivate() { }
-    public void AddImage(Guid imageId, int displayOrder) { }
-    public void RemoveImage(Guid imageId) { }
-    public void IncrementReviewTotal() { }
 }

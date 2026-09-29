@@ -29,5 +29,11 @@ public class ServicePackageConfiguration : IEntityTypeConfiguration<ServicePacka
 
         builder.Property(p => p.CreatedAt).IsRequired();
         builder.Property(p => p.UpdatedAt).IsRequired();
+
+        // Relationships
+        builder.HasMany(p => p.Subscriptions)
+            .WithOne(s => s.ServicePackage)
+            .HasForeignKey(s => s.ServicePackageId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -41,5 +41,16 @@ public class EventTicketConfiguration : IEntityTypeConfiguration<EventTicket>
 
         builder.HasIndex(t => t.PlayerId)
             .HasDatabaseName("IX_EventTickets_PlayerId");
+
+        // Relationships
+        builder.HasOne(t => t.Player)
+            .WithMany(u => u.EventTickets)
+            .HasForeignKey(t => t.PlayerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(t => t.ProofImage)
+            .WithMany()
+            .HasForeignKey(t => t.ProofImageId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

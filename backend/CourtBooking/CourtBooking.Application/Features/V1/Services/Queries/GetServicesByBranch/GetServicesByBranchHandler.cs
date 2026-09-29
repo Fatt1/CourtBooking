@@ -41,25 +41,21 @@ internal sealed class GetServicesByBranchHandler(
             query = query.Where(sb => sb.Service.Name.ToLower().Contains(search));
         }
 
-        var projectedQuery = from sb in query
-                             join img in dbContext.Images.AsNoTracking()
-                                 on sb.Service.ImageId equals (Guid?)img.Id into imgGroup
-                             from img in imgGroup.DefaultIfEmpty()
-                             orderby sb.Service.Name
-                             select new ServiceByBranchDto(
-                                 sb.ServiceId,
-                                 sb.Service.Name,
-                                 sb.Service.Unit,
-                                 sb.Service.CategoryId,
-                                 img != null ? new ImageDto(img.StorageKey, img.Id) : null,
-                                 sb.BranchId,
-                                 sb.Price,
-                                 sb.IsActive,
-                                 sb.Service.CreatedAt,
-                                 sb.Service.UpdatedAt
-                             );
-
-        var result = await projectedQuery.ToListAsync(cancellationToken);
+        var result = await query
+            .OrderBy(sb => sb.Service.Name)
+            .Select(sb => new ServiceByBranchDto(
+                sb.ServiceId,
+                sb.Service.Name,
+                sb.Service.Unit,
+                sb.Service.CategoryId,
+                sb.Service.Image != null ? new ImageDto(sb.Service.Image.StorageKey, sb.Service.Image.Id) : null,
+                sb.BranchId,
+                sb.Price,
+                sb.IsActive,
+                sb.Service.CreatedAt,
+                sb.Service.UpdatedAt
+            ))
+            .ToListAsync(cancellationToken);
 
         return Result.Success(result);
     }

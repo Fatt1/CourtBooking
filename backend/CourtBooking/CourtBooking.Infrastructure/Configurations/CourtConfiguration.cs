@@ -30,5 +30,26 @@ public class CourtConfiguration : IEntityTypeConfiguration<Court>
 
         builder.HasIndex(c => c.CourtTypeId)
             .HasDatabaseName("IX_Courts_CourtTyped");
+
+        // Relationships
+        builder.HasOne(c => c.CourtType)
+            .WithMany(ct => ct.Courts)
+            .HasForeignKey(c => c.CourtTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(c => c.OrderDetails)
+            .WithOne(od => od.Court)
+            .HasForeignKey(od => od.CourtId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(c => c.FixedTimeBlockCourts)
+            .WithOne(ftbc => ftbc.Court)
+            .HasForeignKey(ftbc => ftbc.CourtId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(c => c.FixedOrderConfigCourts)
+            .WithOne(focc => focc.Court)
+            .HasForeignKey(focc => focc.CourtId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

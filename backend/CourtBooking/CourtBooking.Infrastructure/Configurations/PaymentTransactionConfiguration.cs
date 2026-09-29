@@ -33,5 +33,16 @@ public class PaymentTransactionConfiguration : IEntityTypeConfiguration<PaymentT
 
         builder.HasIndex(p => p.OrderId)
             .HasDatabaseName("IX_PaymentTransactions_OrderId");
+
+        // Relationships
+        builder.HasOne(p => p.Order)
+            .WithMany(o => o.PaymentTransactions)
+            .HasForeignKey(p => p.OrderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(p => p.ProofImage)
+            .WithMany()
+            .HasForeignKey(p => p.ProofImageId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

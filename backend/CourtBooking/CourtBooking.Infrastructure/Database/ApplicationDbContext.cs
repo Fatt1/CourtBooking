@@ -10,7 +10,6 @@ using CourtBooking.Domain.Entities.Reviews;
 using CourtBooking.Domain.Entities.Services;
 using CourtBooking.Domain.Entities.Subscriptions;
 using CourtBooking.Domain.Entities.Users;
-using MediatR;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,12 +18,9 @@ namespace CourtBooking.Infrastructure.Database;
 public class ApplicationDbContext
     : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>, IApplicationDbContext
 {
-    private readonly IPublisher _publisher;
-
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IPublisher publisher)
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
-        _publisher = publisher;
     }
 
     // ── Identity / Users ──────────────────────────────────────
@@ -82,27 +78,5 @@ public class ApplicationDbContext
     {
         base.OnModelCreating(modelBuilder); // Required for Identity tables
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
-    }
-
-    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
-    {
-        // Collect events BEFORE saving
-        var aggregates = ChangeTracker.Entries<IAggregateRoot>()
-            .Where(e => e.Entity.DomainEvents.Count > 0)
-            .Select(e => e.Entity)
-            .ToList();
-
-        var result = await base.SaveChangesAsync(ct);
-
-        // Dispatch AFTER saving so events fire on committed data
-        foreach (var aggregate in aggregates)
-        {
-            foreach (var @event in aggregate.DomainEvents)
-                await _publisher.Publish(@event, ct);
-
-            aggregate.ClearDomainEvents();
-        }
-
-        return result;
     }
 }

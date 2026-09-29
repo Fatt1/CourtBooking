@@ -5,21 +5,12 @@ namespace CourtBooking.Domain.Entities.Courts;
 /// </summary>
 public class FixedTimeBlockCourt
 {
-    private FixedTimeBlockCourt() { } // EF Core
+    public FixedTimeBlockCourt() { }
 
-    public Guid FixedTimeBlockId { get; private set; }
-    public Guid CourtId { get; private set; }
+    public Guid FixedTimeBlockId { get; set; }
+    public Guid CourtId { get; set; }
 
     // Navigation
-    public FixedTimeBlock FixedTimeBlock { get; private set; } = null!;
-    public Court Court { get; private set; } = null!;
-
-    internal static FixedTimeBlockCourt Create(Guid fixedTimeBlockId, Guid courtId)
-    {
-        return new FixedTimeBlockCourt
-        {
-            FixedTimeBlockId = fixedTimeBlockId,
-            CourtId = courtId
-        };
-    }
+    public FixedTimeBlock FixedTimeBlock { get; set; } = null!;
+    public Court Court { get; set; } = null!;
 }

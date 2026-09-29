@@ -2,10 +2,8 @@ namespace CourtBooking.Domain.Abstractions;
 
 public abstract class EntityBase<TKey>
 {
+    public TKey Id { get; set; } = default!;
+
     protected EntityBase(TKey id) => Id = id;
-
-    // Parameterless ctor for EF Core
     protected EntityBase() { }
-
-    public TKey Id { get; protected set; } = default!;
 }

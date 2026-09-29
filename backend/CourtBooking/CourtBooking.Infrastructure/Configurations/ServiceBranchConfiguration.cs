@@ -22,5 +22,11 @@ public class ServiceBranchConfiguration : IEntityTypeConfiguration<ServiceBranch
 
         builder.HasIndex(sb => sb.BranchId)
             .HasDatabaseName("IX_ServiceBranches_BranchId");
+
+        // Relationships
+        builder.HasOne(sb => sb.Branch)
+            .WithMany(b => b.ServiceBranches)
+            .HasForeignKey(sb => sb.BranchId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

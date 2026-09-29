@@ -23,10 +23,30 @@ public class CourtTypeConfiguration : IEntityTypeConfiguration<CourtType>
         builder.Property(ct => ct.MinutesConfig)
             .IsRequired();
 
-        // BranchId là FK tham chiếu Branch aggregate — không cấu hình navigation ngược
         builder.Property(ct => ct.BranchId).IsRequired();
 
         builder.HasIndex(ct => ct.BranchId)
             .HasDatabaseName("IX_CourtTypes_BranchId");
+
+        // Relationships
+        builder.HasOne(ct => ct.Branch)
+            .WithMany(b => b.CourtTypes)
+            .HasForeignKey(ct => ct.BranchId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(ct => ct.Courts)
+            .WithOne(c => c.CourtType)
+            .HasForeignKey(c => c.CourtTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(ct => ct.PriceTables)
+            .WithOne(pt => pt.CourtType)
+            .HasForeignKey(pt => pt.CourtTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(ct => ct.FixedTimeBlocks)
+            .WithOne(ftb => ftb.CourtType)
+            .HasForeignKey(ftb => ftb.CourtTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

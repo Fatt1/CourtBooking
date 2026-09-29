@@ -7,25 +7,13 @@ namespace CourtBooking.Domain.Entities.Courts;
 /// </summary>
 public class BranchImage : EntityBase<Guid>
 {
-    private BranchImage() { } // EF Core
+    public BranchImage() { }
 
-    public Guid BranchId { get; private set; }
-    public Guid ImageId { get; private set; }
-    public int DisplayOrder { get; private set; }
+    public Guid BranchId { get; set; }
+    public Guid ImageId { get; set; }
+    public int DisplayOrder { get; set; }
 
     // Navigation
-    public Branch Branch { get; private set; } = null!;
-
-    internal static BranchImage Create(Guid branchId, Guid imageId, int displayOrder)
-    {
-        return new BranchImage
-        {
-            Id = Guid.NewGuid(),
-            BranchId = branchId,
-            ImageId = imageId,
-            DisplayOrder = displayOrder
-        };
-    }
-
-    internal void UpdateDisplayOrder(int displayOrder) { }
+    public Branch Branch { get; set; } = null!;
+    public Images.Image Image { get; set; } = null!;
 }

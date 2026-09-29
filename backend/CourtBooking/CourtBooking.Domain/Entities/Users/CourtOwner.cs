@@ -8,33 +8,19 @@ namespace CourtBooking.Domain.Entities.Users;
 /// </summary>
 public class CourtOwner : EntityBase<Guid>, IAuditable
 {
-    private CourtOwner() { } // EF Core
+    public CourtOwner() { }
 
-    public string BusinessName { get; private set; } = null!;
-    public string? TaxCode { get; private set; }
-    public bool MustChangePwd { get; private set; }
-    public Guid QrImageId { get; private set; }
+    public string BusinessName { get; set; } = null!;
+    public string? TaxCode { get; set; }
+    public bool MustChangePwd { get; set; }
+    public Guid QrImageId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
     // Navigation
-    public ApplicationUser User { get; private set; } = null!;
+    public ApplicationUser User { get; set; } = null!;
+    public Images.Image QrImage { get; set; } = null!;
 
-    // --- Factory ---
-    public static CourtOwner Create(Guid userId, string businessName, Guid qrImageId, string? taxCode = null)
-    {
-        return new CourtOwner
-        {
-            Id = userId,
-            BusinessName = businessName,
-            QrImageId = qrImageId,
-            TaxCode = taxCode,
-            MustChangePwd = true
-        };
-    }
-
-    // --- Domain Methods ---
-    public void UpdateBusinessInfo(string businessName, string? taxCode) { }
-    public void UpdateQrImage(Guid qrImageId) { }
-    public void MarkPasswordChanged() { }
+    public List<Courts.Branch> Branches { get; set; } = [];
+    public List<Subscriptions.CourtOwnerSubscription> Subscriptions { get; set; } = [];
 }

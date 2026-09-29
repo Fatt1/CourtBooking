@@ -49,13 +49,21 @@ internal sealed class CreateServiceHandler(
             }
         }
 
-        // 4. Tạo Service và gán chi nhánh theo DDD Aggregate
-        var service = Service.Create(request.CategoryId, request.Name, request.Unit, request.ImageId);
-
-        foreach (var branch in request.Branches)
+        // 4. Tạo Service và gán chi nhánh
+        var service = new Service
         {
-            service.AssignToBranch(branch.BranchId, branch.Price, branch.IsActive);
-        }
+            Id = Guid.NewGuid(),
+            CategoryId = request.CategoryId,
+            Name = request.Name.Trim(),
+            Unit = request.Unit.Trim(),
+            ImageId = request.ImageId,
+            Branches = request.Branches.Select(branch => new ServiceBranch
+            {
+                BranchId = branch.BranchId,
+                Price = branch.Price,
+                IsActive = branch.IsActive
+            }).ToList()
+        };
 
         await dbContext.Services.AddAsync(service, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);

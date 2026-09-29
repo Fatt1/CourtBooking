@@ -31,5 +31,26 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
 
         builder.Property(r => r.CreatedAt)
             .IsRequired();
+
+        // Relationships
+        builder.HasOne(r => r.Branch)
+            .WithMany(b => b.Reviews)
+            .HasForeignKey(r => r.BranchId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(r => r.Order)
+            .WithMany(o => o.Reviews)
+            .HasForeignKey(r => r.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(r => r.Player)
+            .WithMany(u => u.Reviews)
+            .HasForeignKey(r => r.PlayerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(r => r.Image)
+            .WithMany()
+            .HasForeignKey(r => r.ImageId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

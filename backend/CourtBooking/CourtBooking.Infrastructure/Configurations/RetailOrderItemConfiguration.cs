@@ -23,5 +23,11 @@ public class RetailOrderItemConfiguration : IEntityTypeConfiguration<RetailOrder
 
         builder.HasIndex(i => i.ServiceId)
             .HasDatabaseName("IX_RetailOrderItems_ServiceId");
+
+        // Relationships
+        builder.HasOne(i => i.Service)
+            .WithMany()
+            .HasForeignKey(i => i.ServiceId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

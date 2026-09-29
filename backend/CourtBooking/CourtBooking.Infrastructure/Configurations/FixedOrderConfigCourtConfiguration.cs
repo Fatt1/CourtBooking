@@ -14,5 +14,11 @@ public class FixedOrderConfigCourtConfiguration : IEntityTypeConfiguration<Fixed
 
         builder.HasIndex(f => f.CourtId)
             .HasDatabaseName("IX_FixedOrderConfigCourts_CourtId");
+
+        // Relationships
+        builder.HasOne(f => f.Court)
+            .WithMany(c => c.FixedOrderConfigCourts)
+            .HasForeignKey(f => f.CourtId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

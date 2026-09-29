@@ -21,5 +21,16 @@ public class CourtOwnerSubscriptionConfiguration : IEntityTypeConfiguration<Cour
 
         builder.HasIndex(s => s.ServicePackageId)
             .HasDatabaseName("IX_CourtOwnerSubscriptions_ServicePackageId");
+
+        // Relationships
+        builder.HasOne(s => s.CourtOwner)
+            .WithMany(c => c.Subscriptions)
+            .HasForeignKey(s => s.CourtOwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(s => s.ServicePackage)
+            .WithMany(p => p.Subscriptions)
+            .HasForeignKey(s => s.ServicePackageId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

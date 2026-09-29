@@ -61,6 +61,16 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.UpdatedAt).IsRequired();
 
         // Relationships
+        builder.HasOne(o => o.Branch)
+            .WithMany(b => b.Orders)
+            .HasForeignKey(o => o.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(o => o.Player)
+            .WithMany(u => u.Orders)
+            .HasForeignKey(o => o.PlayerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(o => o.Details)
             .WithOne(d => d.Order)
             .HasForeignKey(d => d.OrderId)
@@ -74,6 +84,16 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasMany(o => o.FixedConfigs)
             .WithOne(f => f.Order)
             .HasForeignKey(f => f.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(o => o.PaymentTransactions)
+            .WithOne(p => p.Order)
+            .HasForeignKey(p => p.OrderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(o => o.Reviews)
+            .WithOne(r => r.Order)
+            .HasForeignKey(r => r.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Indexes

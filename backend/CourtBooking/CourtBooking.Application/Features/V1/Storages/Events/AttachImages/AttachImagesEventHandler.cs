@@ -40,7 +40,8 @@ public sealed class AttachImagesEventHandler : INotificationHandler<AttachImages
 
         foreach (var image in pendingImages)
         {
-            image.MarkAsAttached();
+            image.Status = ImageStatus.Attached;
+            image.AttachedAt = DateTime.UtcNow;
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);

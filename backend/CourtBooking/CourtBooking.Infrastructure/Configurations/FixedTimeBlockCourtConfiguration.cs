@@ -14,7 +14,7 @@ public class FixedTimeBlockCourtConfiguration : IEntityTypeConfiguration<FixedTi
         builder.HasKey(f => new { f.FixedTimeBlockId, f.CourtId });
 
         builder.HasOne(f => f.Court)
-            .WithMany()
+            .WithMany(c => c.FixedTimeBlockCourts)
             .HasForeignKey(f => f.CourtId)
             .OnDelete(DeleteBehavior.Cascade);
 

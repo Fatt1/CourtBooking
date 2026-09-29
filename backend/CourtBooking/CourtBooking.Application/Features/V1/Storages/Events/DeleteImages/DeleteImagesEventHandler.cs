@@ -1,4 +1,4 @@
-﻿using CourtBooking.Application.Data;
+using CourtBooking.Application.Data;
 using CourtBooking.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,7 @@ public sealed class DeleteImagesEventHandler(
             return;
         foreach (var image in imagesToDelete)
         {
-            image.MarkDeleted(); // Chuyển sang ImageStatus.Deleted
+            image.Status = ImageStatus.Deleted;
         }
         await dbContext.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Marked {Count} images as Deleted.", imagesToDelete.Count);
