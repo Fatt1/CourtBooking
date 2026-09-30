@@ -1,4 +1,5 @@
 using CourtBooking.Application.Abstractions.Authorization;
+using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Services.Dtos;
 using CourtBooking.Application.Features.V1.Storages.Events.AttachImages;
@@ -14,6 +15,7 @@ namespace CourtBooking.Application.Features.V1.Services.Commands.UpdateService;
 internal sealed class UpdateServiceHandler(
     IApplicationDbContext dbContext,
     IBranchAuthorizationService branchAuth,
+    IUserContext userContext,
     IPublisher publisher) : ICommandHandler<UpdateServiceCommand>
 {
     public async Task<Result> Handle(
@@ -30,9 +32,11 @@ internal sealed class UpdateServiceHandler(
             return Result.Failure(new NotFoundError("Service", request.Id));
         }
 
-        // 2. Kiểm tra danh mục tồn tại
+        // 2. Kiểm tra danh mục thuộc chủ sân hiện tại và đang hoạt động
         var categoryExists = await dbContext.ServiceCategories
-            .AnyAsync(c => c.Id == request.CategoryId, cancellationToken);
+            .AnyAsync(c => c.Id == request.CategoryId
+                && c.CourtOwnerId == userContext.UserId
+                && c.IsActive, cancellationToken);
 
         if (!categoryExists)
         {
