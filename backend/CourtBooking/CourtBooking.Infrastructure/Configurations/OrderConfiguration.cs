@@ -45,7 +45,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.Property(o => o.Status)
             .HasConversion<byte>()
-            .HasDefaultValue(OrderStatus.Pending);
+            .HasDefaultValue(OrderStatus.AwaitingPayment);
 
         builder.Property(o => o.OrderType)
             .HasConversion<byte>()
