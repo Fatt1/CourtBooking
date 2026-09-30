@@ -546,6 +546,7 @@ public static class DatabaseSeeder
         var catBeverage = new ServiceCategory
         {
             Id = Guid.NewGuid(),
+            CourtOwnerId = userOwner.Id,
             Name = "Nước giải khát & Năng lượng",
             Description = "Các loại nước uống giải nhiệt và bù khoáng",
             IsActive = true,
@@ -556,6 +557,7 @@ public static class DatabaseSeeder
         var catEquipment = new ServiceCategory
         {
             Id = Guid.NewGuid(),
+            CourtOwnerId = userOwner.Id,
             Name = "Dụng cụ thể thao & Phụ kiện",
             Description = "Quả cầu, vợt, quấn cán, cước đan vợt",
             IsActive = true,
@@ -566,6 +568,7 @@ public static class DatabaseSeeder
         var catRental = new ServiceCategory
         {
             Id = Guid.NewGuid(),
+            CourtOwnerId = userOwner.Id,
             Name = "Dịch vụ cho thuê",
             Description = "Thuê vợt thi đấu, giày thể thao",
             IsActive = true,

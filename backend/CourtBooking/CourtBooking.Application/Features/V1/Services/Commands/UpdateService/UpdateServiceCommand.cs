@@ -9,5 +9,4 @@ public sealed record UpdateServiceCommand(
     string Name,
     string Unit,
     Guid? ImageId,
-    List<ServiceBranchItemDto>? Branches,
-    List<Guid>? BranchIds = null) : ICommand;
+    List<ServiceBranchItemDto>? Branches) : ICommand;

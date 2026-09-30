@@ -22,5 +22,6 @@ public class CourtOwner : EntityBase<Guid>, IAuditable
     public Images.Image QrImage { get; set; } = null!;
 
     public List<Courts.Branch> Branches { get; set; } = [];
+    public List<Services.ServiceCategory> ServiceCategories { get; set; } = [];
     public List<Subscriptions.CourtOwnerSubscription> Subscriptions { get; set; } = [];
 }

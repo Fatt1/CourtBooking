@@ -1,3 +1,4 @@
+using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Storages.Events.AttachImages;
@@ -12,15 +13,18 @@ namespace CourtBooking.Application.Features.V1.Services.Commands.CreateService;
 internal sealed class CreateServiceHandler(
     IApplicationDbContext dbContext,
     IBranchAuthorizationService branchAuth,
+    IUserContext userContext,
     IPublisher publisher) : ICommandHandler<CreateServiceCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(
         CreateServiceCommand request,
         CancellationToken cancellationToken)
     {
-        // 1. Kiểm tra danh mục dịch vụ tồn tại
+        // 1. Chỉ cho phép sử dụng danh mục đang hoạt động
         var categoryExists = await dbContext.ServiceCategories
-            .AnyAsync(c => c.Id == request.CategoryId, cancellationToken);
+            .AnyAsync(c => c.Id == request.CategoryId
+                && c.CourtOwnerId == userContext.UserId
+                && c.IsActive, cancellationToken);
 
         if (!categoryExists)
         {

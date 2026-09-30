@@ -51,7 +51,8 @@ internal sealed class DeleteServiceHandler(
             return Result.Failure(new ConflictError("Không thể xóa dịch vụ vì đã có đơn hàng sử dụng dịch vụ này."));
         }
 
-        // 4. Nếu chưa từng có đơn hàng nào -> Cho phép xóa vĩnh viễn
+        // 4. Xóa bảng nối trước vì quan hệ ServiceBranch dùng DeleteBehavior.NoAction
+        dbContext.ServiceBranches.RemoveRange(service.Branches);
         dbContext.Services.Remove(service);
         await dbContext.SaveChangesAsync(cancellationToken);
 
