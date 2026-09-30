@@ -1,0 +1,19 @@
+using CourtBooking.Application.Extensions.Paginations;
+using CourtBooking.Application.Features.V1.Orders.Dtos;
+using CourtBooking.Application.Messaging;
+using CourtBooking.Domain.Enums;
+
+namespace CourtBooking.Application.Features.V1.Orders.Queries.GetOrdersByBranch;
+
+/// <summary>
+/// Query lấy danh sách đơn hàng của chủ sân tại một chi nhánh có phân trang và bộ lọc.
+/// </summary>
+public sealed record GetOrdersByBranchQuery(
+    Guid BranchId,
+    OrderStatus? Status = null,
+    OrderType? OrderType = null,
+    DateOnly? FromDate = null,
+    DateOnly? ToDate = null,
+    string? SearchTerm = null,
+    int Page = 1,
+    int PageSize = 10) : PaginationQuery(Page, PageSize), IQuery<PagedList<OrderDto>>;

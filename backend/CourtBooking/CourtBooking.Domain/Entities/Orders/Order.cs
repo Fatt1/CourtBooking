@@ -75,6 +75,36 @@ public class Order : EntityBase<Guid>, IAuditable
     }
 
 
+    public static Order CreateOrderByOwner(
+        Guid branchId,
+        Guid? playerId,
+        string customerName,
+        string customerPhone,
+        string? note,
+        decimal discountAmount = 0)
+    {
+        string orderCode = $"ORD-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid().ToString().Substring(0, 8)}";
+        var orderDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        return new Order
+        {
+            Id = Guid.CreateVersion7(),
+            OrderCode = orderCode,
+            BranchId = branchId,
+            PlayerId = playerId,
+            CustomerName = customerName,
+            CustomerPhone = customerPhone,
+            Channel = OrderChannel.Pos,
+            TotalCourtAmount = 0,
+            TotalServiceAmount = 0,
+            DiscountAmount = discountAmount,
+            Status = OrderStatus.Confirmed,
+            HoldExpiresAt = DateTime.UtcNow.AddYears(100),
+            OrderDate = orderDate,
+            OrderType = OrderType.Normal,
+            Note = note
+        };
+    }
+
     public void ConfirmOrder()
     {
         Status = OrderStatus.Confirmed;
@@ -147,6 +177,7 @@ public class Order : EntityBase<Guid>, IAuditable
 
     public void ApplyDiscount(decimal discountAmount)
     {
+
         DiscountAmount = discountAmount;
     }
 
