@@ -41,4 +41,118 @@ public class Order : EntityBase<Guid>, IAuditable
     public List<FixedOrderConfig> FixedConfigs { get; set; } = [];
 
     public decimal TotalAmount => TotalCourtAmount + TotalServiceAmount - DiscountAmount;
+
+
+    public static Order CreateOrderOnline(
+        Guid branchId,
+        Guid? playerId,
+        string customerName,
+        string customerPhone,
+        string? note
+       )
+    {
+        string orderCode = $"ORD-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid().ToString().Substring(0, 8)}";
+        var orderDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        return new Order
+        {
+            Id = Guid.CreateVersion7(),
+            OrderCode = orderCode,
+            BranchId = branchId,
+            PlayerId = playerId,
+            CustomerName = customerName,
+            CustomerPhone = customerPhone,
+            Channel = OrderChannel.Online,
+            TotalCourtAmount = 0,
+            TotalServiceAmount = 0,
+            DiscountAmount = 0,
+            Status = OrderStatus.AwaitingPayment, // Mặc định là PendingPayment cho đơn đặt sân online
+            HoldExpiresAt = GetHoldExpiresAt(),
+            OrderDate = orderDate,
+            OrderType = OrderType.Normal,
+            Note = note
+
+        };
+    }
+
+
+    public void ConfirmOrder()
+    {
+        Status = OrderStatus.Confirmed;
+    }
+
+    public void CancelOrder(string cancelReason)
+    {
+        Status = OrderStatus.Cancelled;
+        CancelReason = cancelReason;
+    }
+
+    public decimal CalculateRemainingAmount()
+    {
+        return TotalAmount - PaymentTransactions.Sum(t => t.Amount);
+    }
+
+    public void AddOrderDetail(Guid CourtId,
+       TimeOnly StartTime,
+       TimeOnly EndTime,
+       decimal Price,
+       DateOnly Date)
+    {
+        var oderDetail = new OrderDetail
+        {
+            Id = Guid.CreateVersion7(),
+            OrderId = Id,
+            CourtId = CourtId,
+            StartTime = StartTime,
+            EndTime = EndTime,
+            Price = Price,
+            Date = Date
+        };
+        Details.Add(oderDetail);
+        TotalCourtAmount += Price;
+    }
+
+    public void AddOrderService(Guid ServiceId, decimal Price, int Quantity)
+    {
+        var orderService = new OrderService
+        {
+            Id = Guid.CreateVersion7(),
+            OrderId = Id,
+            ServiceId = ServiceId,
+            UnitPrice = Price,
+            Quantity = Quantity
+        };
+        Services.Add(orderService);
+        TotalServiceAmount += Price * Quantity;
+    }
+
+    public void RemoveOrderService(Guid orderServiceId)
+    {
+        var orderService = Services.FirstOrDefault(s => s.Id == orderServiceId);
+        if (orderService != null)
+        {
+            TotalServiceAmount -= orderService.UnitPrice * orderService.Quantity;
+            Services.Remove(orderService);
+        }
+    }
+
+    public void RemoveOrderDetail(Guid orderDetailId)
+    {
+        var orderDetail = Details.FirstOrDefault(d => d.Id == orderDetailId);
+        if (orderDetail != null)
+        {
+            TotalCourtAmount -= orderDetail.Price;
+            Details.Remove(orderDetail);
+        }
+    }
+
+    public void ApplyDiscount(decimal discountAmount)
+    {
+        DiscountAmount = discountAmount;
+    }
+
+    private static DateTime GetHoldExpiresAt()
+    {
+        // Giả sử thời gian giữ chỗ là 10 phút kể từ thời điểm tạo đơn
+        return DateTime.UtcNow.AddMinutes(10);
+    }
 }

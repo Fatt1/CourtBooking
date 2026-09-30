@@ -1,4 +1,6 @@
+using AsyncKeyedLock;
 using CourtBooking.Application.Behaviors;
+using CourtBooking.Application.Services;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,6 +30,12 @@ public static class ServiceContainer
 
         // Register all FluentValidation validators in this assembly
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
+
+        // Register AsyncKeyedLocker for concurrency control (anti-double booking)
+        services.AddSingleton<AsyncKeyedLocker<string>>();
+
+        // Register domain calculation services
+        services.AddScoped<CourtBooking.Application.Abstractions.Courts.IPriceCalculator, PriceCalculator>();
 
         return services;
     }

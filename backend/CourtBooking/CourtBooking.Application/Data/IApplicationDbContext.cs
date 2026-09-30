@@ -1,4 +1,4 @@
-﻿using CourtBooking.Domain.Entities.Courts;
+using CourtBooking.Domain.Entities.Courts;
 using CourtBooking.Domain.Entities.Events;
 using CourtBooking.Domain.Entities.Images;
 using CourtBooking.Domain.Entities.Matches;
@@ -66,5 +66,8 @@ public interface IApplicationDbContext
 
     // ── Images ────────────────────────────────────────────────
     DbSet<Image> Images { get; }
+
+    // ── Database / Transactions ──────────────────────────────
+    Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
