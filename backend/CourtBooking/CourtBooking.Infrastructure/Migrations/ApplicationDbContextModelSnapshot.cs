@@ -939,29 +939,14 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CustomerName")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
                     b.Property<decimal>("DiscountAmount")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m);
 
-                    b.Property<string>("OrderCode")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<DateOnly>("OrderDate")
                         .HasColumnType("date");
-
-                    b.Property<int>("PaymentMethod")
-                        .HasColumnType("int");
 
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)
@@ -974,13 +959,6 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.HasIndex("BranchId")
                         .HasDatabaseName("IX_RetailOrder_BranchId");
-
-                    b.HasIndex("CreatedByUserId")
-                        .HasDatabaseName("IX_RetailOrder_CreatedByUserId");
-
-                    b.HasIndex("OrderCode")
-                        .IsUnique()
-                        .HasDatabaseName("UX_RetailOrder_OrderCode");
 
                     b.ToTable("RetailOrder", (string)null);
                 });

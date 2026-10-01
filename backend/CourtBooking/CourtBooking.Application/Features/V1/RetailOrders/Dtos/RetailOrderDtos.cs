@@ -1,5 +1,3 @@
-using CourtBooking.Domain.Enums;
-
 namespace CourtBooking.Application.Features.V1.RetailOrders.Dtos;
 
 public sealed record RetailOrderItemDto(
@@ -12,11 +10,8 @@ public sealed record RetailOrderItemDto(
 
 public sealed record RetailOrderDto(
     Guid Id,
-    string OrderCode,
     Guid BranchId,
     string BranchName,
-    string? CustomerName,
-    PaymentMethod PaymentMethod,
     decimal Subtotal,
     decimal DiscountAmount,
     decimal TotalAmount,
@@ -26,11 +21,8 @@ public sealed record RetailOrderDto(
 
 public sealed record RetailOrderListItemDto(
     Guid Id,
-    string OrderCode,
     Guid BranchId,
     string BranchName,
-    string? CustomerName,
-    PaymentMethod PaymentMethod,
     int TotalQuantity,
     decimal Subtotal,
     decimal DiscountAmount,
