@@ -29,12 +29,16 @@ public sealed class RetailOrderEndpoints : IEndpointGroup
         group.MapGet("/", GetAllAsync)
             .WithName("GetRetailOrders")
             .WithSummary("Lấy danh sách hóa đơn bán lẻ")
-            .Produces<PagedList<RetailOrderListItemDto>>();
+            .Produces<PagedList<RetailOrderListItemDto>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
         group.MapGet("/summary", GetSummaryAsync)
             .WithName("GetRetailOrderSummary")
             .WithSummary("Thống kê doanh thu bán lẻ")
-            .Produces<RetailOrderSummaryDto>();
+            .Produces<RetailOrderSummaryDto>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
         group.MapGet("/{id:guid}", GetByIdAsync)
             .WithName("GetRetailOrderById")
@@ -48,7 +52,9 @@ public sealed class RetailOrderEndpoints : IEndpointGroup
         var command = new CreateRetailOrderCommand(
             request.BranchId,
             request.DiscountAmount,
-            request.Items.Select(item => new CreateRetailOrderItem(item.ServiceId, item.Quantity)).ToList());
+            request.Items?
+                .Select(item => new CreateRetailOrderItem(item.ServiceId, item.Quantity))
+                .ToList() ?? []);
         var result = await sender.Send(command, ct);
         return result.IsSuccess
             ? Results.Created($"/api/v1/owner/retail-orders/{result.Value.Id}", result.Value)

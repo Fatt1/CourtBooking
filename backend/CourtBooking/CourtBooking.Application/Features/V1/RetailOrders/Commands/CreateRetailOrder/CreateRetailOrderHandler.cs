@@ -20,15 +20,34 @@ internal sealed class CreateRetailOrderHandler(
             return Result.Failure<RetailOrderDto>(authorization.Error!);
         }
 
+        if (request.Items.Count == 0)
+        {
+            return Result.Failure<RetailOrderDto>(new BadError(
+                "Đơn hàng phải có ít nhất một dịch vụ."));
+        }
+
         var serviceIds = request.Items.Select(item => item.ServiceId).ToList();
+        if (serviceIds.Distinct().Count() != serviceIds.Count)
+        {
+            return Result.Failure<RetailOrderDto>(new BadError(
+                "Mỗi dịch vụ chỉ được xuất hiện một lần trong đơn hàng."));
+        }
+
         var availableServices = await dbContext.ServiceBranches
             .AsNoTracking()
             .Where(sb => sb.BranchId == request.BranchId
                 && serviceIds.Contains(sb.ServiceId)
                 && sb.IsActive
                 && sb.Service.Category.IsActive)
-            .Select(sb => new { sb.ServiceId, sb.Price, sb.Service.Name, sb.Service.Unit })
-            .ToListAsync(cancellationToken);
+            .Select(sb => new
+            {
+                sb.ServiceId,
+                sb.Price,
+                ServiceName = sb.Service.Name,
+                sb.Service.Unit,
+                BranchName = sb.Branch.Name
+            })
+            .ToDictionaryAsync(service => service.ServiceId, cancellationToken);
 
         if (availableServices.Count != serviceIds.Count)
         {
@@ -36,8 +55,8 @@ internal sealed class CreateRetailOrderHandler(
                 "Một hoặc nhiều dịch vụ không tồn tại, không hoạt động hoặc chưa được bán tại chi nhánh này."));
         }
 
-        var subtotal = request.Items.Sum(item =>
-            availableServices.Single(service => service.ServiceId == item.ServiceId).Price * item.Quantity);
+        decimal subtotal = request.Items.Sum(item =>
+            availableServices[item.ServiceId].Price * item.Quantity);
         if (request.DiscountAmount > subtotal)
         {
             return Result.Failure<RetailOrderDto>(new BadError("Tiền giảm giá không được lớn hơn tiền hàng."));
@@ -51,22 +70,17 @@ internal sealed class CreateRetailOrderHandler(
 
         foreach (var item in request.Items)
         {
-            var service = availableServices.Single(s => s.ServiceId == item.ServiceId);
+            var service = availableServices[item.ServiceId];
             order.AddItem(item.ServiceId, item.Quantity, service.Price);
         }
 
         await dbContext.RetailOrders.AddAsync(order, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var branchName = await dbContext.Branches
-            .Where(branch => branch.Id == request.BranchId)
-            .Select(branch => branch.Name)
-            .SingleAsync(cancellationToken);
-
         return Result.Success(new RetailOrderDto(
             order.Id,
             order.BranchId,
-            branchName,
+            availableServices.Values.First().BranchName,
             subtotal,
             order.DiscountAmount,
             order.TotalAmount,
@@ -74,8 +88,8 @@ internal sealed class CreateRetailOrderHandler(
             order.CreatedAt,
             order.Items.Select(item =>
             {
-                var service = availableServices.Single(s => s.ServiceId == item.ServiceId);
-                return new RetailOrderItemDto(item.ServiceId, service.Name, service.Unit, item.Quantity,
+                var service = availableServices[item.ServiceId];
+                return new RetailOrderItemDto(item.ServiceId, service.ServiceName, service.Unit, item.Quantity,
                     item.UnitPrice, item.Quantity * item.UnitPrice);
             }).ToList()));
     }

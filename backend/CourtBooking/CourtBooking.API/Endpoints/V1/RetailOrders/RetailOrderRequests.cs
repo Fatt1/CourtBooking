@@ -5,4 +5,4 @@ public sealed record CreateRetailOrderItemRequest(Guid ServiceId, int Quantity);
 public sealed record CreateRetailOrderRequest(
     Guid BranchId,
     decimal DiscountAmount,
-    IReadOnlyList<CreateRetailOrderItemRequest> Items);
+    IReadOnlyList<CreateRetailOrderItemRequest>? Items);
