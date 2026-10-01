@@ -16,11 +16,8 @@ internal sealed class GetRetailOrderByIdHandler(IApplicationDbContext dbContext,
             .Where(item => item.Id == request.Id && item.Branch.CourtOwnerId == userContext.UserId)
             .Select(item => new RetailOrderDto(
                 item.Id,
-                item.OrderCode,
                 item.BranchId,
                 item.Branch.Name,
-                item.CustomerName,
-                item.PaymentMethod,
                 item.Items.Sum(detail => detail.Quantity * detail.UnitPrice),
                 item.DiscountAmount,
                 item.TotalAmount,

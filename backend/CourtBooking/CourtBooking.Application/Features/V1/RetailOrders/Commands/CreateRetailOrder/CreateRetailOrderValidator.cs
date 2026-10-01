@@ -8,8 +8,6 @@ public sealed class CreateRetailOrderValidator : AbstractValidator<CreateRetailO
     {
         RuleFor(x => x.BranchId).NotEmpty();
         RuleFor(x => x.DiscountAmount).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.PaymentMethod).IsInEnum();
-        RuleFor(x => x.CustomerName).MaximumLength(255);
         RuleFor(x => x.Items).NotEmpty();
         RuleFor(x => x.Items)
             .Must(items => items.Select(item => item.ServiceId).Distinct().Count() == items.Count)

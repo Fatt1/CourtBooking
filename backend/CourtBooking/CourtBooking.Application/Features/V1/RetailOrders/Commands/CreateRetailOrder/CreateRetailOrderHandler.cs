@@ -1,4 +1,3 @@
-using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.RetailOrders.Dtos;
@@ -11,8 +10,7 @@ namespace CourtBooking.Application.Features.V1.RetailOrders.Commands.CreateRetai
 
 internal sealed class CreateRetailOrderHandler(
     IApplicationDbContext dbContext,
-    IBranchAuthorizationService branchAuthorization,
-    IUserContext userContext) : ICommandHandler<CreateRetailOrderCommand, RetailOrderDto>
+    IBranchAuthorizationService branchAuthorization) : ICommandHandler<CreateRetailOrderCommand, RetailOrderDto>
 {
     public async Task<Result<RetailOrderDto>> Handle(CreateRetailOrderCommand request, CancellationToken cancellationToken)
     {
@@ -48,9 +46,6 @@ internal sealed class CreateRetailOrderHandler(
         var now = DateTime.UtcNow;
         var order = RetailOrder.Create(
             request.BranchId,
-            userContext.UserId,
-            request.CustomerName,
-            request.PaymentMethod,
             request.DiscountAmount,
             now);
 
@@ -70,11 +65,8 @@ internal sealed class CreateRetailOrderHandler(
 
         return Result.Success(new RetailOrderDto(
             order.Id,
-            order.OrderCode,
             order.BranchId,
             branchName,
-            order.CustomerName,
-            order.PaymentMethod,
             subtotal,
             order.DiscountAmount,
             order.TotalAmount,
