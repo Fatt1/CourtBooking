@@ -5,7 +5,7 @@ using CourtBooking.Domain.Enums;
 namespace CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderByOwner;
 
 /// <summary>
-/// Command dành cho chủ sân / nhân viên đặt lịch trực tiếp cho khách vãng lai tại quầy hoặc qua điện thoại.
+/// Command dành cho chủ sân / nhân viên đặt lịch trực tiếp cho khách vãng lai tại quầy
 /// </summary>
 /// <param name="BranchId">ID chi nhánh</param>
 /// <param name="CustomerName">Tên khách hàng</param>
