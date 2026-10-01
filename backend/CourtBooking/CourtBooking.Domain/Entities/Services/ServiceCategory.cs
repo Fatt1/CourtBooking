@@ -9,6 +9,7 @@ public class ServiceCategory : EntityBase<Guid>, IAuditable
 {
     public ServiceCategory() { }
 
+    public Guid CourtOwnerId { get; set; }
     public string Name { get; set; } = null!;
     public string? Description { get; set; }
     public bool IsActive { get; set; }
@@ -16,5 +17,6 @@ public class ServiceCategory : EntityBase<Guid>, IAuditable
     public DateTime UpdatedAt { get; set; }
 
     // Navigation properties
+    public Users.CourtOwner CourtOwner { get; set; } = null!;
     public List<Service> Services { get; set; } = [];
 }

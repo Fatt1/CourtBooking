@@ -1,0 +1,55 @@
+using CourtBooking.Application.Abstractions.Authorization;
+using CourtBooking.Application.Data;
+using CourtBooking.Application.Messaging;
+using CourtBooking.SharedKernel;
+using Microsoft.EntityFrameworkCore;
+
+namespace CourtBooking.Application.Features.V1.Pricing.Commands.PriceTables.UpdatePriceTable;
+
+internal sealed class UpdatePriceTableHandler(
+    IApplicationDbContext dbContext,
+    IBranchAuthorizationService branchAuth) : ICommandHandler<UpdatePriceTableCommand>
+{
+    public async Task<Result> Handle(
+        UpdatePriceTableCommand request,
+        CancellationToken cancellationToken)
+    {
+        // 1. Kiểm tra quyền sở hữu chi nhánh
+        var authResult = await branchAuth.EnsureOwnerAsync(request.BranchId, cancellationToken);
+        if (authResult.IsFailure)
+        {
+            return authResult;
+        }
+
+        // 2. Tải bảng giá và kiểm tra thuộc chi nhánh
+        var priceTable = await dbContext.PriceTables
+            .Include(pt => pt.CourtType)
+            .FirstOrDefaultAsync(pt => pt.Id == request.PriceTableId, cancellationToken);
+
+        if (priceTable is null || priceTable.CourtType.BranchId != request.BranchId)
+        {
+            return Result.Failure(new NotFoundError("PriceTable", request.PriceTableId));
+        }
+
+        // 3. Kiểm tra trùng tên với bảng giá khác trong cùng Loại sân
+        var normalizedName = request.Name.Trim();
+        var nameExists = await dbContext.PriceTables
+            .AnyAsync(pt => pt.CourtTypeId == priceTable.CourtTypeId
+                         && pt.Id != priceTable.Id
+                         && pt.Name.ToLower() == normalizedName.ToLower(), cancellationToken);
+
+        if (nameExists)
+        {
+            return Result.Failure(new ConflictError($"Bảng giá '{normalizedName}' đã tồn tại trong loại sân này."));
+        }
+
+        // 4. Cập nhật thông tin
+        priceTable.Name = normalizedName;
+        priceTable.DefaultPrice = request.DefaultPrice;
+        priceTable.IsActive = request.IsActive;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+}

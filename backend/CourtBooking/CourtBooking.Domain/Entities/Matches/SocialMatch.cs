@@ -27,6 +27,8 @@ public class SocialMatch : EntityBase<Guid>
     /// <summary>0 = Tự động duyệt, 1 = Chủ kèo duyệt tay</summary>
     public byte ApprovalMode { get; set; }
 
+    public int AvailableSlots { get; set; }
+
     public SocialMatchStatus Status { get; set; }
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; }

@@ -546,6 +546,7 @@ public static class DatabaseSeeder
         var catBeverage = new ServiceCategory
         {
             Id = Guid.NewGuid(),
+            CourtOwnerId = userOwner.Id,
             Name = "Nước giải khát & Năng lượng",
             Description = "Các loại nước uống giải nhiệt và bù khoáng",
             IsActive = true,
@@ -556,6 +557,7 @@ public static class DatabaseSeeder
         var catEquipment = new ServiceCategory
         {
             Id = Guid.NewGuid(),
+            CourtOwnerId = userOwner.Id,
             Name = "Dụng cụ thể thao & Phụ kiện",
             Description = "Quả cầu, vợt, quấn cán, cước đan vợt",
             IsActive = true,
@@ -566,6 +568,7 @@ public static class DatabaseSeeder
         var catRental = new ServiceCategory
         {
             Id = Guid.NewGuid(),
+            CourtOwnerId = userOwner.Id,
             Name = "Dịch vụ cho thuê",
             Description = "Thuê vợt thi đấu, giày thể thao",
             IsActive = true,
@@ -653,7 +656,7 @@ public static class DatabaseSeeder
             OrderDate = today,
             HoldExpiresAt = DateTime.UtcNow.AddMinutes(30),
             PlayerId = userPlayer1.Id,
-            Status = OrderStatus.Pending,
+            Status = OrderStatus.AwaitingPayment,
             TotalCourtAmount = 0,
             TotalServiceAmount = 0,
             DiscountAmount = 0,
@@ -674,7 +677,7 @@ public static class DatabaseSeeder
             OrderDate = today.AddDays(2),
             HoldExpiresAt = DateTime.UtcNow.AddHours(2),
             PlayerId = userPlayer1.Id,
-            Status = OrderStatus.Pending,
+            Status = OrderStatus.AwaitingPayment,
             TotalCourtAmount = 0,
             TotalServiceAmount = 0,
             DiscountAmount = 0,
@@ -695,7 +698,7 @@ public static class DatabaseSeeder
             OrderDate = today.AddDays(14),
             HoldExpiresAt = DateTime.UtcNow.AddDays(1),
             PlayerId = userOwner.Id,
-            Status = OrderStatus.Pending,
+            Status = OrderStatus.AwaitingPayment,
             TotalCourtAmount = 0,
             TotalServiceAmount = 0,
             DiscountAmount = 0,
@@ -779,8 +782,12 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             BranchId = branch1.Id,
+            OrderCode = "POS-SEED-0001",
+            CreatedByUserId = userOwner.Id,
+            CustomerName = "Khách lẻ",
+            PaymentMethod = PaymentMethod.Cash,
             OrderDate = today,
-            TotalAmount = 0,
+            TotalAmount = 35000m,
             DiscountAmount = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

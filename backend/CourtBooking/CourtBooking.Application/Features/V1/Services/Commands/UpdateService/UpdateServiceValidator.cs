@@ -22,6 +22,12 @@ public sealed class UpdateServiceValidator : AbstractValidator<UpdateServiceComm
 
         When(x => x.Branches is not null, () =>
         {
+            RuleFor(x => x.Branches)
+                .NotEmpty().WithMessage("Dịch vụ cần được gán cho ít nhất một chi nhánh.")
+                .Must(branches => branches is not null
+                    && branches.Select(branch => branch.BranchId).Distinct().Count() == branches.Count)
+                .WithMessage("Danh sách chi nhánh không được chứa BranchId trùng nhau.");
+
             RuleForEach(x => x.Branches).ChildRules(b =>
             {
                 b.RuleFor(x => x.BranchId)
@@ -32,10 +38,5 @@ public sealed class UpdateServiceValidator : AbstractValidator<UpdateServiceComm
             });
         });
 
-        When(x => x.BranchIds is not null, () =>
-        {
-            RuleForEach(x => x.BranchIds)
-                .NotEmpty().WithMessage("BranchId không được để trống.");
-        });
     }
 }

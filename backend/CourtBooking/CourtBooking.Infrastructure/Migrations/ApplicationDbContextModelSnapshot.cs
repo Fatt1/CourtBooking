@@ -571,6 +571,9 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasDefaultValue((byte)0)
                         .HasComment("0: Tự động duyệt, 1: Chủ kèo duyệt tay");
 
+                    b.Property<int>("AvailableSlots")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("BranchId")
                         .HasColumnType("uniqueidentifier");
 
@@ -936,14 +939,29 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CustomerName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<decimal>("DiscountAmount")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m);
 
+                    b.Property<string>("OrderCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<DateOnly>("OrderDate")
                         .HasColumnType("date");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)
@@ -956,6 +974,13 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.HasIndex("BranchId")
                         .HasDatabaseName("IX_RetailOrder_BranchId");
+
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("IX_RetailOrder_CreatedByUserId");
+
+                    b.HasIndex("OrderCode")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RetailOrder_OrderCode");
 
                     b.ToTable("RetailOrder", (string)null);
                 });
@@ -1059,6 +1084,9 @@ namespace CourtBooking.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CourtOwnerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1081,7 +1109,7 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("CourtOwnerId", "Name")
                         .IsUnique();
 
                     b.ToTable("ServiceCategories", (string)null);
@@ -1911,6 +1939,17 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Navigation("Service");
                 });
 
+            modelBuilder.Entity("CourtBooking.Domain.Entities.Services.ServiceCategory", b =>
+                {
+                    b.HasOne("CourtBooking.Domain.Entities.Users.CourtOwner", "CourtOwner")
+                        .WithMany("ServiceCategories")
+                        .HasForeignKey("CourtOwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CourtOwner");
+                });
+
             modelBuilder.Entity("CourtBooking.Domain.Entities.Subscriptions.CourtOwnerSubscription", b =>
                 {
                     b.HasOne("CourtBooking.Domain.Entities.Users.CourtOwner", "CourtOwner")
@@ -2155,6 +2194,8 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Users.CourtOwner", b =>
                 {
                     b.Navigation("Branches");
+
+                    b.Navigation("ServiceCategories");
 
                     b.Navigation("Subscriptions");
                 });
