@@ -4,6 +4,7 @@ using CourtBooking.Application.Features.V1.Orders.Commands.ConfirmOrder;
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderByOwner;
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderOnline;
 using CourtBooking.Application.Features.V1.Orders.Dtos;
+using CourtBooking.Application.Features.V1.Orders.Queries.GetDailyOrderById;
 using CourtBooking.Application.Features.V1.Orders.Queries.GetOrdersByBranch;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
@@ -98,6 +99,25 @@ public class OrderEndpoints : IEndpointGroup
             .WithDescription("Dành cho chủ sân xác nhận đơn đặt lịch online cho khách")
             .WithTags(OrderTag)
             .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        // GET /api/v1/owner/orders/{orderId:guid} — Xem chi tiết đơn hàng đặt sân
+        group.MapGet("/daily/{orderId:guid}", async (
+                [FromRoute] Guid orderId,
+                ISender sender = default!,
+                CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new GetDailyOrderByIdQuery(orderId), ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .WithName("GetDailyOrderById")
+            .WithSummary("Lấy thông tin chi tiết đơn hàng đặt sân")
+            .WithDescription("Trả về chi tiết đơn hàng bao gồm danh sách slot sân, dịch vụ, hóa đơn chiết tính và thanh toán.")
+            .WithTags(OrderTag)
+            .Produces<CourtBooking.Application.Features.V1.Orders.Queries.GetDailyOrderById.DailyOrderResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status403Forbidden);
     }

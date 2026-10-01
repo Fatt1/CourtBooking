@@ -1,5 +1,6 @@
 using CourtBooking.Application.Features.V1.Orders.SharedInputs;
 using CourtBooking.Application.Messaging;
+using CourtBooking.Domain.Enums;
 
 namespace CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderByOwner;
 
@@ -20,6 +21,7 @@ public sealed record CreateOrderByOwnerCommand(
     string CustomerPhone,
     string? Note,
     decimal DiscountAmount,
+    PaymentMethod PaymentMethod,
     List<CourtBookingSlot> CourtSlots,
     List<OrderServiceItem>? Services = null,
     Guid? PlayerId = null) : ICommand<Guid>;
