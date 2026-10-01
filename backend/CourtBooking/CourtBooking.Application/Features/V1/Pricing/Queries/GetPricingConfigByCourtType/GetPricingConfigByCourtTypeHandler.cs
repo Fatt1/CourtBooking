@@ -25,6 +25,7 @@ internal sealed class GetPricingConfigByCourtTypeHandler(
         // 2. Tải Loại sân kèm các Sân con, Bảng giá, Quy tắc giá và Khung giờ bắt buộc
         var courtType = await dbContext.CourtTypes
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(ct => ct.Courts)
             .Include(ct => ct.PriceTables)
                 .ThenInclude(pt => pt.Rules)
