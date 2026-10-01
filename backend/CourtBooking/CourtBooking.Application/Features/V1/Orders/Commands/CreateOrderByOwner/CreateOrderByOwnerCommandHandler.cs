@@ -4,7 +4,6 @@ using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Orders.Common;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Entities.Orders;
-using CourtBooking.Domain.Entities.Payments;
 using CourtBooking.SharedKernel;
 
 namespace CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderByOwner;
@@ -88,17 +87,8 @@ public sealed class CreateOrderByOwnerCommandHandler(
                 }
             }
 
-            var paymentTransation = new PaymentTransaction
-            {
-                Amount = order.TotalAmount,
-                CreatedAt = DateTime.UtcNow,
-                Id = Guid.CreateVersion7(),
-                Method = request.PaymentMethod,
-                OrderId = order.Id,
-                ProofImageId = null,
-                Type = Domain.Enums.PaymentTransactionType.Payment
-            };
-            dbContext.PaymentTransactions.Add(paymentTransation);
+
+            order.AddPaymentTransaction(order.TotalAmount, request.PaymentMethod, null, Domain.Enums.PaymentTransactionType.Payment);
             dbContext.Orders.Add(order);
 
             await dbContext.SaveChangesAsync(cancellationToken);

@@ -121,6 +121,12 @@ public class Order : EntityBase<Guid>, IAuditable
         return TotalAmount - PaymentTransactions.Sum(t => t.Amount);
     }
 
+    public void ClearOrderDetails()
+    {
+        Details.Clear();
+        TotalCourtAmount = 0;
+    }
+
     public void AddOrderDetail(Guid CourtId,
        TimeOnly StartTime,
        TimeOnly EndTime,
@@ -173,6 +179,33 @@ public class Order : EntityBase<Guid>, IAuditable
             TotalCourtAmount -= orderDetail.Price;
             Details.Remove(orderDetail);
         }
+    }
+
+    public void AddPaymentTransaction(decimal Amount,
+                PaymentMethod Method,
+                Guid? ProofImageId,
+                PaymentTransactionType type)
+    {
+        PaymentTransactions.Add(new Payments.PaymentTransaction
+        {
+            Amount = Amount,
+            Method = Method,
+            ProofImageId = ProofImageId,
+            Type = type,
+            Id = Guid.CreateVersion7(),
+            OrderId = Id,
+            CreatedAt = DateTime.UtcNow
+
+        });
+    }
+
+    public void PendingConfirmOrder()
+    {
+        if (Status != OrderStatus.AwaitingPayment)
+        {
+            throw new DomainException("Đơn của bạn đang được xử lý, không thể xác nhận thêm");
+        }
+        Status = OrderStatus.PendingConfirmation;
     }
 
     public void ApplyDiscount(decimal discountAmount)

@@ -13,6 +13,8 @@ public class MatchParticipantConfiguration : IEntityTypeConfiguration<MatchParti
 
         builder.HasKey(p => p.Id);
 
+        builder.Property(p => p.Id).ValueGeneratedNever();
+
         builder.HasIndex(p => new { p.MatchId, p.PlayerId })
             .IsUnique()
             .HasDatabaseName("UQ_MatchParticipants_MatchId_PlayerId");

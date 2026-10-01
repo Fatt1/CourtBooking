@@ -6,12 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.Orders.Queries.GetDailyOrderById;
 
-public class GetDailyOrderByIdHandler : IQueryHandler<GetDailyOrderByIdQuery, DailyOrderResponse>
+public class GetDailyOrderByIdQueryHandler : IQueryHandler<GetDailyOrderByIdQuery, DailyOrderResponse>
 {
     private readonly IApplicationDbContext _dbContext;
     private readonly IBranchAuthorizationService _branchAuthorizationService;
 
-    public GetDailyOrderByIdHandler(IApplicationDbContext dbContext, IBranchAuthorizationService branchAuthorizationService)
+    public GetDailyOrderByIdQueryHandler(IApplicationDbContext dbContext, IBranchAuthorizationService branchAuthorizationService)
     {
         _dbContext = dbContext;
         _branchAuthorizationService = branchAuthorizationService;
@@ -43,6 +43,7 @@ public class GetDailyOrderByIdHandler : IQueryHandler<GetDailyOrderByIdQuery, Da
                     OrderDetailId: od.Id,
                     CourtId: od.CourtId,
                     CourtName: od.Court.Name,
+                     CourTypeId: od.Court.CourtTypeId,
                     CourtTypeName: od.Court.CourtType.Name,
                     Date: od.Date,
                     StartTime: od.StartTime,

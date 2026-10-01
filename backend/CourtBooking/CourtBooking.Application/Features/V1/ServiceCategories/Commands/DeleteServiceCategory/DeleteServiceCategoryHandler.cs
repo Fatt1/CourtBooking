@@ -30,7 +30,7 @@ internal sealed class DeleteServiceCategoryHandler(
         if (isInUse)
         {
             return Result.Failure(new ConflictError(
-                "Loại dịch vụ đang được sử dụng. Hãy chuyển sang trạng thái ngừng hoạt động thay vì xóa."));
+                "Loại dịch vụ đang được sử dụng."));
         }
 
         dbContext.ServiceCategories.Remove(category);

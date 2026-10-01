@@ -13,6 +13,8 @@ public class SocialMatchConfiguration : IEntityTypeConfiguration<SocialMatch>
 
         builder.HasKey(m => m.Id);
 
+        builder.Property(m => m.Id).ValueGeneratedNever();
+
         builder.HasIndex(m => m.OrderId)
             .IsUnique();
 

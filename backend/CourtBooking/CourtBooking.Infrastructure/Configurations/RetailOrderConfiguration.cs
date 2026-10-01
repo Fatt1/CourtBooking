@@ -12,6 +12,8 @@ public class RetailOrderConfiguration : IEntityTypeConfiguration<RetailOrder>
 
         builder.HasKey(r => r.Id);
 
+        builder.Property(r => r.Id).ValueGeneratedNever();
+
         builder.Property(r => r.TotalAmount)
             .HasPrecision(18, 2)
             .IsRequired();

@@ -13,6 +13,8 @@ public class PaymentTransactionConfiguration : IEntityTypeConfiguration<PaymentT
 
         builder.HasKey(p => p.Id);
 
+        builder.Property(p => p.Id).ValueGeneratedNever();
+
         builder.Property(p => p.OrderId)
             .HasComment("Nullable: null nếu đây là giao dịch của người chơi tham gia kèo");
 
