@@ -1,5 +1,4 @@
 using CourtBooking.API.Extensions;
-using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.ServiceCategories.Commands.CreateServiceCategory;
 using CourtBooking.Application.Features.V1.ServiceCategories.Commands.DeleteServiceCategory;
 using CourtBooking.Application.Features.V1.ServiceCategories.Commands.UpdateServiceCategory;
@@ -25,7 +24,7 @@ public sealed class ServiceCategoryEndpoints : IEndpointGroup
             .WithName("GetServiceCategories")
             .WithSummary("Lấy danh sách loại dịch vụ của chủ sân")
             .WithTags(ServiceCategoryTag)
-            .Produces<PagedList<ServiceCategoryDto>>(StatusCodes.Status200OK)
+            .Produces<IReadOnlyList<ServiceCategoryDto>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden);
@@ -74,13 +73,11 @@ public sealed class ServiceCategoryEndpoints : IEndpointGroup
     private static async Task<IResult> GetServiceCategories(
         [FromQuery] string? search,
         [FromQuery] bool? isActive,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
         ISender sender = default!,
         CancellationToken cancellationToken = default)
     {
         var result = await sender.Send(
-            new GetServiceCategoriesQuery(search, isActive, page, pageSize),
+            new GetServiceCategoriesQuery(search, isActive),
             cancellationToken);
 
         return result.IsSuccess
