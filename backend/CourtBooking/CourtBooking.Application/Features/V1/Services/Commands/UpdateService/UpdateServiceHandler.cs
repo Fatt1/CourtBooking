@@ -1,3 +1,4 @@
+using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
@@ -32,7 +33,18 @@ internal sealed class UpdateServiceHandler(
             return Result.Failure(new NotFoundError("Service", request.Id));
         }
 
-        // 2. Kiểm tra danh mục thuộc chủ sân hiện tại và đang hoạt động
+        // 2. Dịch vụ phải thuộc toàn bộ chi nhánh của chủ sân hiện tại
+        var existingBranchAuthResult = await branchAuth.EnsureOwnerOfAllAsync(
+            service.Branches.Select(branch => branch.BranchId),
+            cancellationToken);
+
+        if (existingBranchAuthResult.IsFailure)
+        {
+            return existingBranchAuthResult;
+        }
+
+        // 3. Chỉ cho phép sử dụng danh mục đang hoạt động
+
         var categoryExists = await dbContext.ServiceCategories
             .AnyAsync(c => c.Id == request.CategoryId
                 && c.CourtOwnerId == userContext.UserId
@@ -43,7 +55,7 @@ internal sealed class UpdateServiceHandler(
             return Result.Failure(new NotFoundError("ServiceCategory", request.CategoryId));
         }
 
-        // 3. Kiểm tra ảnh mới nếu có thay đổi
+        // 4. Kiểm tra ảnh mới nếu có thay đổi
         if (request.ImageId.HasValue && request.ImageId != service.ImageId)
         {
             var imageExists = await dbContext.Images
@@ -55,7 +67,7 @@ internal sealed class UpdateServiceHandler(
             }
         }
 
-        // 4. Đồng bộ danh sách chi nhánh (Thêm mới, Cập nhật, Xóa)
+        // 5. Đồng bộ danh sách chi nhánh (Thêm mới, Cập nhật, Xóa)
         List<ServiceBranchItemDto>? incomingBranches = null;
 
         if (request.Branches is not null)
@@ -68,7 +80,7 @@ internal sealed class UpdateServiceHandler(
             var incomingBranchIds = incomingBranches.Select(b => b.BranchId).ToHashSet();
             var existingBranchIds = service.Branches.Select(b => b.BranchId).ToHashSet();
 
-            // 4.1 Kiểm tra quyền sở hữu các chi nhánh mới/cập nhật
+            // 5.1 Kiểm tra quyền sở hữu các chi nhánh mới/cập nhật
             if (incomingBranchIds.Count > 0)
             {
                 var branchAuthResult = await branchAuth.EnsureOwnerOfAllAsync(
@@ -81,14 +93,28 @@ internal sealed class UpdateServiceHandler(
                 }
             }
 
-            // 4.2 Tìm các chi nhánh bị gỡ bỏ khỏi dịch vụ
+            // 5.2 Không gỡ khỏi chi nhánh đã phát sinh đơn hàng
             var branchesToRemove = existingBranchIds.Except(incomingBranchIds).ToHashSet();
             if (branchesToRemove.Count > 0)
             {
+                var isUsedByBooking = await dbContext.OrderServices
+                    .AnyAsync(orderService => orderService.ServiceId == service.Id
+                        && branchesToRemove.Contains(orderService.Order.BranchId), cancellationToken);
+
+                var isUsedByRetailOrder = await dbContext.RetailOrderItems
+                    .AnyAsync(orderItem => orderItem.ServiceId == service.Id
+                        && branchesToRemove.Contains(orderItem.RetailOrder.BranchId), cancellationToken);
+
+                if (isUsedByBooking || isUsedByRetailOrder)
+                {
+                    return Result.Failure(new ConflictError(
+                        "Không thể gỡ dịch vụ khỏi chi nhánh đã phát sinh đơn hàng."));
+                }
+
                 service.Branches.RemoveAll(b => branchesToRemove.Contains(b.BranchId));
             }
 
-            // 4.3 Cập nhật thông tin cho các chi nhánh đã tồn tại
+            // 5.3 Cập nhật thông tin cho các chi nhánh đã tồn tại
             var branchesToUpdate = incomingBranches.Where(b => existingBranchIds.Contains(b.BranchId));
             foreach (var branch in branchesToUpdate)
             {
@@ -100,7 +126,7 @@ internal sealed class UpdateServiceHandler(
                 }
             }
 
-            // 4.4 Thêm mới các chi nhánh
+            // 5.4 Thêm mới các chi nhánh
             var branchesToAdd = incomingBranches.Where(b => !existingBranchIds.Contains(b.BranchId));
             foreach (var branch in branchesToAdd)
             {
@@ -114,7 +140,7 @@ internal sealed class UpdateServiceHandler(
             }
         }
 
-        // 5. Cập nhật thông tin dịch vụ và lấy ảnh cũ (nếu có thay đổi)
+        // 6. Cập nhật thông tin dịch vụ và lấy ảnh cũ (nếu có thay đổi)
         var oldImageId = service.ImageId;
         service.CategoryId = request.CategoryId;
         service.Name = request.Name.Trim();
@@ -123,7 +149,7 @@ internal sealed class UpdateServiceHandler(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // 6. Quản lý sự kiện hình ảnh:
+        // 7. Quản lý sự kiện hình ảnh
         if (request.ImageId.HasValue && request.ImageId != oldImageId)
         {
             await publisher.Publish(new AttachImagesEvent([request.ImageId.Value]), cancellationToken);
@@ -134,7 +160,6 @@ internal sealed class UpdateServiceHandler(
             await publisher.Publish(new DeleteImagesEvent([oldImageId.Value]), cancellationToken);
         }
 
-        // 7. Trả về thành công
         return Result.Success();
     }
 }

@@ -1,3 +1,4 @@
+using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
@@ -20,7 +21,8 @@ internal sealed class CreateServiceHandler(
         CreateServiceCommand request,
         CancellationToken cancellationToken)
     {
-        // 1. Kiểm tra danh mục thuộc chủ sân hiện tại và đang hoạt động
+        // 1. Chỉ cho phép sử dụng danh mục đang hoạt động
+
         var categoryExists = await dbContext.ServiceCategories
             .AnyAsync(c => c.Id == request.CategoryId
                 && c.CourtOwnerId == userContext.UserId

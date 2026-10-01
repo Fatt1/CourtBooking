@@ -30,7 +30,7 @@ public class ServiceCategoryConfiguration : IEntityTypeConfiguration<ServiceCate
 
         // Relationships
         builder.HasOne(c => c.CourtOwner)
-            .WithMany(o => o.ServiceCategories)
+            .WithMany(owner => owner.ServiceCategories)
             .HasForeignKey(c => c.CourtOwnerId)
             .OnDelete(DeleteBehavior.Restrict);
 
