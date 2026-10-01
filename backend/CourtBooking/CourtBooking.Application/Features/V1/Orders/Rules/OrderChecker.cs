@@ -1,29 +1,24 @@
-using AsyncKeyedLock;
-using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Courts;
 using CourtBooking.Application.Data;
-using CourtBooking.Application.Messaging;
+using CourtBooking.Application.Features.V1.Orders.SharedInputs;
 using CourtBooking.Domain.Entities.Courts;
-using CourtBooking.Domain.Entities.Orders;
 using CourtBooking.Domain.Entities.Services;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
-namespace CourtBooking.Application.Features.V1.Orders.CreateOrderOnline;
+namespace CourtBooking.Application.Features.V1.Orders.Common;
 
-public sealed class CreateOrderOnlineCommandHandler(
+/// <summary>
+/// Triển khai service dùng chung xử lý việc thẩm định dữ liệu đặt sân và kiểm tra trùng lịch.
+/// </summary>
+public sealed class OrderChecker(
     IApplicationDbContext dbContext,
-    IPriceCalculator priceCalculator,
-    IUserContext userContext,
-    AsyncKeyedLocker<string> keyedLocker) : ICommandHandler<CreateOrderOnlineCommand, CreateOrderOnlineResponse>
+    IPriceCalculator priceCalculator) : IOrderChecker
 {
-    public async Task<Result<CreateOrderOnlineResponse>> Handle(
-        CreateOrderOnlineCommand request,
-        CancellationToken cancellationToken)
+    public List<FlatSlotItem> FlattenSlots(List<CourtBookingSlot> courtSlots)
     {
-        // 1. Chuẩn bị danh sách slot làm phẳng (Flattened slots) để phục vụ kiểm tra và xử lý
-        var allSlots = request.CourtSlots
+        return courtSlots
             .SelectMany(group => group.Slots.Select(slot => new FlatSlotItem(
                 group.CourtTypeId,
                 group.PriceTableId,
@@ -32,127 +27,57 @@ public sealed class CreateOrderOnlineCommandHandler(
                 slot.StartTime,
                 slot.EndTime)))
             .ToList();
-
-        // 2. Validate chi nhánh & giờ mở cửa (Ngoài Lock)
-        var branchResult = await ValidateBranchAsync(request.BranchId, allSlots, cancellationToken);
-        if (branchResult.IsFailure)
-        {
-            return Result.Failure<CreateOrderOnlineResponse>(branchResult.Error!);
-        }
-        var branch = branchResult.Value;
-
-        // 3. Validate danh sách sân, chi nhánh sở hữu và loại sân (Ngoài Lock)
-        var courtsResult = await ValidateCourtsAsync(request.BranchId, allSlots, cancellationToken);
-        if (courtsResult.IsFailure)
-        {
-            return Result.Failure<CreateOrderOnlineResponse>(courtsResult.Error!);
-        }
-
-        // 4. Validate các bảng giá & tính toán trước giá sân cho từng slot (Ngoài Lock)
-        var priceResult = await ValidatePriceTablesAndCalculatePricesAsync(request.CourtSlots, cancellationToken);
-        if (priceResult.IsFailure)
-        {
-            return Result.Failure<CreateOrderOnlineResponse>(priceResult.Error!);
-        }
-        var calculatedSlots = priceResult.Value;
-
-        // 5. Validate dịch vụ đính kèm & lấy đơn giá tại chi nhánh (Ngoài Lock)
-        var servicesResult = await ValidateServicesAsync(request.BranchId, request.Services, cancellationToken);
-        if (servicesResult.IsFailure)
-        {
-            return Result.Failure<CreateOrderOnlineResponse>(servicesResult.Error!);
-        }
-        var serviceBranches = servicesResult.Value;
-
-        // ── 6. KHU VỰC ĐỒNG BỘ (CRITICAL SECTION BẢO VỆ BỞI KEYED LOCK) ──
-        // Chỉ acquire lock khi tất cả thông tin đầu vào đã hợp lệ và sẵn sàng kiểm tra conflict + lưu đơn
-        var lockKeys = allSlots
-            .Select(s => $"court:{s.CourtId}:{s.Date:yyyyMMdd}")
-            .Distinct()
-            .OrderBy(k => k, StringComparer.Ordinal)
-            .ToList();
-
-        var releasers = new List<IDisposable>(lockKeys.Count);
-
-        try
-        {
-            foreach (var key in lockKeys)
-            {
-                releasers.Add(await keyedLocker.LockAsync(key, cancellationToken));
-            }
-
-            // 6.1 Kiểm tra trùng lịch / giữ chỗ trong DB
-            var conflictResult = await CheckConflictsAsync(allSlots, cancellationToken);
-            if (conflictResult.IsFailure)
-            {
-                return Result.Failure<CreateOrderOnlineResponse>(conflictResult.Error!);
-            }
-
-            // 6.2 Khởi tạo Order và thêm các chi tiết đã tính toán sẵn
-            var playerId = request.PlayerId;
-            if (!playerId.HasValue && userContext.IsAuthenticated && userContext.UserId != Guid.Empty)
-            {
-                playerId = userContext.UserId;
-            }
-
-            var order = Order.CreateOrderOnline(
-                request.BranchId,
-                playerId,
-                request.CustomerName.Trim(),
-                request.CustomerPhone.Trim(),
-                request.Note?.Trim());
-
-            foreach (var slot in calculatedSlots)
-            {
-                order.AddOrderDetail(
-                    slot.CourtId,
-                    slot.StartTime,
-                    slot.EndTime,
-                    slot.Price,
-                    slot.Date);
-            }
-
-            if (request.Services != null)
-            {
-                foreach (var serviceItem in request.Services)
-                {
-                    var serviceBranch = serviceBranches.First(sb => sb.ServiceId == serviceItem.ServiceId);
-                    order.AddOrderService(
-                        serviceItem.ServiceId,
-                        serviceBranch.Price,
-                        serviceItem.Quantity);
-                }
-            }
-
-            // 6.3 Lưu vào Database
-            await dbContext.Orders.AddAsync(order, cancellationToken);
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            // 6.4 Trả về kết quả
-            return Result<CreateOrderOnlineResponse>.Success(
-                new CreateOrderOnlineResponse(
-                    branch.QrImage?.StorageKey ?? string.Empty,
-                    order.Id,
-                    order.OrderCode,
-                    order.TotalAmount,
-                    order.HoldExpiresAt));
-        }
-        finally
-        {
-            // Luôn giải phóng tất cả các lock theo thứ tự ngược lại
-            for (int i = releasers.Count - 1; i >= 0; i--)
-            {
-                releasers[i].Dispose();
-            }
-        }
     }
 
-    #region Private Validation & Helper Methods
+    public async Task<Result<BookingValidationContext>> ValidateBookingAsync(
+        Guid branchId,
+        List<CourtBookingSlot> courtSlots,
+        List<OrderServiceItem>? services,
+        bool isFixedCustomer,
+        CancellationToken cancellationToken)
+    {
+        var allSlots = FlattenSlots(courtSlots);
 
-    /// <summary>
-    /// Kiểm tra chi nhánh tồn tại, đang hoạt động và khung giờ đặt nằm trong giờ mở cửa.
-    /// </summary>
-    private async Task<Result<Branch>> ValidateBranchAsync(
+        // 1. Validate chi nhánh & giờ mở cửa
+        var branchResult = await ValidateBranchAsync(branchId, allSlots, cancellationToken);
+        if (branchResult.IsFailure)
+        {
+            return Result.Failure<BookingValidationContext>(branchResult.Error!);
+        }
+
+        // 2. Validate danh sách sân
+        var courtsResult = await ValidateCourtsAsync(branchId, allSlots, cancellationToken);
+        if (courtsResult.IsFailure)
+        {
+            return Result.Failure<BookingValidationContext>(courtsResult.Error!);
+        }
+
+        // 3. Validate bảng giá và tính giá
+        var calculatedSlotsResult = await ValidatePriceTablesAndCalculatePricesAsync(
+            courtSlots,
+            isFixedCustomer,
+            cancellationToken);
+        if (calculatedSlotsResult.IsFailure)
+        {
+            return Result.Failure<BookingValidationContext>(calculatedSlotsResult.Error!);
+        }
+
+        // 4. Validate dịch vụ
+        var servicesResult = await ValidateServicesAsync(branchId, services, cancellationToken);
+        if (servicesResult.IsFailure)
+        {
+            return Result.Failure<BookingValidationContext>(servicesResult.Error!);
+        }
+
+        return Result<BookingValidationContext>.Success(new BookingValidationContext(
+            branchResult.Value,
+            courtsResult.Value,
+            calculatedSlotsResult.Value,
+            servicesResult.Value,
+            allSlots));
+    }
+
+    public async Task<Result<Branch>> ValidateBranchAsync(
         Guid branchId,
         List<FlatSlotItem> allSlots,
         CancellationToken cancellationToken)
@@ -187,10 +112,7 @@ public sealed class CreateOrderOnlineCommandHandler(
         return Result<Branch>.Success(branch);
     }
 
-    /// <summary>
-    /// Kiểm tra danh sách sân tồn tại, thuộc chi nhánh, đúng loại sân và đang khả dụng (Available).
-    /// </summary>
-    private async Task<Result<List<Court>>> ValidateCourtsAsync(
+    public async Task<Result<List<Court>>> ValidateCourtsAsync(
         Guid branchId,
         List<FlatSlotItem> allSlots,
         CancellationToken cancellationToken)
@@ -236,11 +158,9 @@ public sealed class CreateOrderOnlineCommandHandler(
         return Result<List<Court>>.Success(courts);
     }
 
-    /// <summary>
-    /// Kiểm tra các bảng giá hợp lệ, đang kích hoạt, khớp loại sân và tính giá trước cho từng slot.
-    /// </summary>
-    private async Task<Result<List<CalculatedSlotItem>>> ValidatePriceTablesAndCalculatePricesAsync(
-        List<CourtBookingSlotDto> courtSlots,
+    public async Task<Result<List<CalculatedSlotItem>>> ValidatePriceTablesAndCalculatePricesAsync(
+        List<CourtBookingSlot> courtSlots,
+        bool isFixedCustomer,
         CancellationToken cancellationToken)
     {
         var priceTableIds = courtSlots.Select(g => g.PriceTableId).Distinct().ToList();
@@ -281,7 +201,7 @@ public sealed class CreateOrderOnlineCommandHandler(
                     slot.Date,
                     slot.StartTime,
                     slot.EndTime,
-                    isFixedCustomer: false);
+                    isFixedCustomer);
 
                 calculatedSlots.Add(new CalculatedSlotItem(slot.CourtId, slot.StartTime, slot.EndTime, price, slot.Date));
             }
@@ -290,12 +210,9 @@ public sealed class CreateOrderOnlineCommandHandler(
         return Result<List<CalculatedSlotItem>>.Success(calculatedSlots);
     }
 
-    /// <summary>
-    /// Kiểm tra dịch vụ tồn tại và đang kinh doanh tại chi nhánh.
-    /// </summary>
-    private async Task<Result<List<ServiceBranch>>> ValidateServicesAsync(
+    public async Task<Result<List<ServiceBranch>>> ValidateServicesAsync(
         Guid branchId,
-        List<OrderServiceItemDto>? services,
+        List<OrderServiceItem>? services,
         CancellationToken cancellationToken)
     {
         if (services == null || services.Count == 0)
@@ -326,10 +243,7 @@ public sealed class CreateOrderOnlineCommandHandler(
         return Result<List<ServiceBranch>>.Success(serviceBranches);
     }
 
-    /// <summary>
-    /// Kiểm tra trùng lịch hoặc giữ chỗ còn hiệu lực trong database (thực thi bên trong Lock).
-    /// </summary>
-    private async Task<Result> CheckConflictsAsync(
+    public async Task<Result> CheckConflictsAsync(
         List<FlatSlotItem> allSlots,
         CancellationToken cancellationToken)
     {
@@ -370,25 +284,4 @@ public sealed class CreateOrderOnlineCommandHandler(
 
         return Result.Success();
     }
-
-    #endregion
-
-    #region Internal Helper Records
-
-    private sealed record FlatSlotItem(
-        Guid CourtTypeId,
-        Guid PriceTableId,
-        Guid CourtId,
-        DateOnly Date,
-        TimeOnly StartTime,
-        TimeOnly EndTime);
-
-    private sealed record CalculatedSlotItem(
-        Guid CourtId,
-        TimeOnly StartTime,
-        TimeOnly EndTime,
-        decimal Price,
-        DateOnly Date);
-
-    #endregion
 }

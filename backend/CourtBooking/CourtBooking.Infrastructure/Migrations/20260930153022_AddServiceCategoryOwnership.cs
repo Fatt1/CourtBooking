@@ -75,5 +75,6 @@ public partial class AddServiceCategoryOwnership : Migration
             table: "ServiceCategories",
             column: "Name",
             unique: true);
+
     }
 }

@@ -19,7 +19,8 @@ public sealed class ServiceEndpoints : IEndpointGroup
 
     public void Map(IEndpointRouteBuilder app)
     {
-        var groupOwner = app.MapApiV1Group("owner/services");
+        var groupOwner = app.MapApiV1Group("owner/services")
+            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
         MapToOwner(groupOwner);
 
         var group = app.MapApiV1Group("services");
@@ -32,13 +33,15 @@ public sealed class ServiceEndpoints : IEndpointGroup
         // GET /api/v1/services — Danh sách dịch vụ công khai (có phân trang & lọc)
         group.MapGet("/{branchId:guid}", async (
                 Guid branchId,
+                [FromQuery] string? search,
+                [FromQuery] Guid? categoryId,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
         {
-            var query = new GetServicesByBranchQuery(branchId, null, null, true);
+            var query = new GetServicesByBranchQuery(branchId, search, categoryId, true);
             var result = await sender.Send(query, ct);
             return result.IsSuccess
-                ? Results.Ok(result.Value)
+                ? TypedResults.Ok(result.Value)
                 : result.ToProblemDetails();
         })
             .WithName("GetPublicServices")
@@ -66,7 +69,7 @@ public sealed class ServiceEndpoints : IEndpointGroup
             var result = await sender.Send(query, ct);
 
             return result.IsSuccess
-                ? Results.Ok(result.Value)
+                ? TypedResults.Ok(result.Value)
                 : result.ToProblemDetails();
         })
             .WithName("GetOwnerServices")
@@ -74,7 +77,9 @@ public sealed class ServiceEndpoints : IEndpointGroup
             .WithDescription("Trả về danh sách dịch vụ của chủ sân, mỗi dịch vụ kèm theo danh sách các chi nhánh đang áp dụng, giá và trạng thái.")
             .WithTags(ServiceTag)
             .Produces<PagedList<OwnerServiceDto>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest);
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
 
 
@@ -88,7 +93,7 @@ public sealed class ServiceEndpoints : IEndpointGroup
             var result = await sender.Send(query, ct);
 
             return result.IsSuccess
-                ? Results.Ok(result.Value)
+                ? TypedResults.Ok(result.Value)
                 : result.ToProblemDetails();
         })
             .WithName("GetServiceById")
@@ -97,6 +102,8 @@ public sealed class ServiceEndpoints : IEndpointGroup
             .WithTags(ServiceTag)
             .Produces<OwnerServiceDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         // POST /api/v1/owner/services — Tạo mới dịch vụ kèm giá theo các chi nhánh
@@ -115,15 +122,16 @@ public sealed class ServiceEndpoints : IEndpointGroup
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
-                ? Results.Ok()
+                ? TypedResults.Created($"/api/v1/owner/services/{result.Value}", result.Value)
                 : result.ToProblemDetails();
         })
             .WithName("CreateService")
             .WithSummary("Tạo mới dịch vụ và gán giá cho các chi nhánh")
             .WithDescription("Nếu có truyền ImageId, hệ thống sẽ tự động kích hoạt event AttachImages để chuyển trạng thái ảnh.")
             .WithTags(ServiceTag)
-            .Produces<ServiceResponseDto>(StatusCodes.Status201Created)
+            .Produces<Guid>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
@@ -145,7 +153,7 @@ public sealed class ServiceEndpoints : IEndpointGroup
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
-                ? Results.NoContent()
+                ? TypedResults.NoContent()
                 : result.ToProblemDetails();
         })
             .WithName("UpdateService")
@@ -154,6 +162,7 @@ public sealed class ServiceEndpoints : IEndpointGroup
             .WithTags(ServiceTag)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
@@ -168,7 +177,7 @@ public sealed class ServiceEndpoints : IEndpointGroup
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
-                ? Results.NoContent()
+                ? TypedResults.NoContent()
                 : result.ToProblemDetails();
         })
             .WithName("DeleteService")
@@ -177,6 +186,7 @@ public sealed class ServiceEndpoints : IEndpointGroup
             .WithTags(ServiceTag)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
