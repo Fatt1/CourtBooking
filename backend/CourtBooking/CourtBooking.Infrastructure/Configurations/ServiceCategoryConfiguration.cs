@@ -16,7 +16,7 @@ public class ServiceCategoryConfiguration : IEntityTypeConfiguration<ServiceCate
             .HasMaxLength(150)
             .IsRequired();
 
-        builder.HasIndex(c => c.Name)
+        builder.HasIndex(c => new { c.CourtOwnerId, c.Name })
             .IsUnique();
 
         builder.Property(c => c.Description)
@@ -29,6 +29,11 @@ public class ServiceCategoryConfiguration : IEntityTypeConfiguration<ServiceCate
         builder.Property(c => c.UpdatedAt).IsRequired();
 
         // Relationships
+        builder.HasOne(c => c.CourtOwner)
+            .WithMany(owner => owner.ServiceCategories)
+            .HasForeignKey(c => c.CourtOwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(c => c.Services)
             .WithOne(s => s.Category)
             .HasForeignKey(s => s.CategoryId)
