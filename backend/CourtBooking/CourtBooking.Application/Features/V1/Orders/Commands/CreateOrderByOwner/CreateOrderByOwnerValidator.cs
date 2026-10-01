@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace CourtBooking.Application.Features.V1.Orders.CreateOrderOnline;
+namespace CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderByOwner;
 
-public sealed class CreateOrderOnlineValidator : AbstractValidator<CreateOrderOnlineCommand>
+public sealed class CreateOrderByOwnerValidator : AbstractValidator<CreateOrderByOwnerCommand>
 {
-    public CreateOrderOnlineValidator()
+    public CreateOrderByOwnerValidator()
     {
         RuleFor(x => x.BranchId)
             .NotEmpty().WithMessage("Chi nhánh không được để trống.");
@@ -17,6 +17,9 @@ public sealed class CreateOrderOnlineValidator : AbstractValidator<CreateOrderOn
             .NotEmpty().WithMessage("Số điện thoại không được để trống.")
             .Matches(@"^(0|\+84)[0-9]{9,10}$").WithMessage("Số điện thoại không đúng định dạng hợp lệ.");
 
+        RuleFor(x => x.DiscountAmount)
+            .GreaterThanOrEqualTo(0).WithMessage("Số tiền giảm giá không được âm.");
+
         When(x => !string.IsNullOrWhiteSpace(x.Note), () =>
         {
             RuleFor(x => x.Note)
@@ -25,7 +28,6 @@ public sealed class CreateOrderOnlineValidator : AbstractValidator<CreateOrderOn
 
         RuleFor(x => x.CourtSlots)
             .NotEmpty().WithMessage("Đơn đặt sân phải có ít nhất một nhóm đặt sân.");
-
 
         RuleForEach(x => x.CourtSlots).ChildRules(group =>
         {
@@ -53,6 +55,8 @@ public sealed class CreateOrderOnlineValidator : AbstractValidator<CreateOrderOn
             });
         });
 
+
+
         When(x => x.Services != null && x.Services.Count > 0, () =>
         {
             RuleFor(x => x.Services!)
@@ -69,6 +73,4 @@ public sealed class CreateOrderOnlineValidator : AbstractValidator<CreateOrderOn
             });
         });
     }
-
-
 }

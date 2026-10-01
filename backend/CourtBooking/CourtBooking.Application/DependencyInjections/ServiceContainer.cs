@@ -36,6 +36,7 @@ public static class ServiceContainer
 
         // Register domain calculation services
         services.AddScoped<CourtBooking.Application.Abstractions.Courts.IPriceCalculator, PriceCalculator>();
+        services.AddScoped<CourtBooking.Application.Features.V1.Orders.Common.IOrderChecker, CourtBooking.Application.Features.V1.Orders.Common.OrderChecker>();
 
         return services;
     }
