@@ -782,8 +782,12 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             BranchId = branch1.Id,
+            OrderCode = "POS-SEED-0001",
+            CreatedByUserId = userOwner.Id,
+            CustomerName = "Khách lẻ",
+            PaymentMethod = PaymentMethod.Cash,
             OrderDate = today,
-            TotalAmount = 0,
+            TotalAmount = 35000m,
             DiscountAmount = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
