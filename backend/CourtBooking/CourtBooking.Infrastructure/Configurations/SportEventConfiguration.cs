@@ -13,6 +13,8 @@ public class SportEventConfiguration : IEntityTypeConfiguration<SportEvent>
 
         builder.HasKey(e => e.Id);
 
+        builder.Property(e => e.Id).ValueGeneratedNever();
+
         builder.HasIndex(e => e.OrderId)
             .IsUnique();
 

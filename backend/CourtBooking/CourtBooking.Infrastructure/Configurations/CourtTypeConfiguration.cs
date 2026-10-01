@@ -16,6 +16,8 @@ public class CourtTypeConfiguration : IEntityTypeConfiguration<CourtType>
 
         builder.HasKey(ct => ct.Id);
 
+        builder.Property(ct => ct.Id).ValueGeneratedNever();
+
         builder.Property(ct => ct.Name)
             .HasMaxLength(255)
             .IsRequired();

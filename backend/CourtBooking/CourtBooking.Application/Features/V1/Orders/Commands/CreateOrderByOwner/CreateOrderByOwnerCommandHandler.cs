@@ -38,6 +38,7 @@ public sealed class CreateOrderByOwnerCommandHandler(
             return Result.Failure<Guid>(validationResult.Error!);
         }
 
+
         var bookingContext = validationResult.Value;
 
         // 4. Keyed Locking để chống trùng lịch (Anti-double booking)
@@ -86,7 +87,10 @@ public sealed class CreateOrderByOwnerCommandHandler(
                 }
             }
 
+
+            order.AddPaymentTransaction(order.TotalAmount, request.PaymentMethod, null, Domain.Enums.PaymentTransactionType.Payment);
             dbContext.Orders.Add(order);
+
             await dbContext.SaveChangesAsync(cancellationToken);
 
             return Result<Guid>.Success(order.Id);

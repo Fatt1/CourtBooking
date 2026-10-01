@@ -12,6 +12,8 @@ public class FixedOrderConfigConfiguration : IEntityTypeConfiguration<FixedOrder
 
         builder.HasKey(f => f.Id);
 
+        builder.Property(f => f.Id).ValueGeneratedNever();
+
         builder.Property(f => f.OrderId)
             .IsRequired();
 

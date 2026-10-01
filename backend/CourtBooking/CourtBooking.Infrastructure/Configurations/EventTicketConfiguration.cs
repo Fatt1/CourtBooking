@@ -13,6 +13,8 @@ public class EventTicketConfiguration : IEntityTypeConfiguration<EventTicket>
 
         builder.HasKey(t => t.Id);
 
+        builder.Property(t => t.Id).ValueGeneratedNever();
+
         builder.Property(t => t.Quantity)
             .HasDefaultValue(1);
 

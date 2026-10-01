@@ -12,6 +12,8 @@ public class OrderDetailConfiguration : IEntityTypeConfiguration<OrderDetail>
 
         builder.HasKey(d => d.Id);
 
+        builder.Property(d => d.Id).ValueGeneratedNever();
+
         builder.Property(d => d.Price)
             .HasPrecision(18, 2)
             .IsRequired();

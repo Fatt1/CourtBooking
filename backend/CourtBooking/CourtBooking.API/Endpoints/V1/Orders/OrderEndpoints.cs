@@ -3,7 +3,10 @@ using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Orders.Commands.ConfirmOrder;
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderByOwner;
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderOnline;
+using CourtBooking.Application.Features.V1.Orders.Commands.SubmitPaymentProof;
+using CourtBooking.Application.Features.V1.Orders.Commands.UpdateOrderDetail;
 using CourtBooking.Application.Features.V1.Orders.Dtos;
+using CourtBooking.Application.Features.V1.Orders.Queries.GetDailyOrderById;
 using CourtBooking.Application.Features.V1.Orders.Queries.GetOrdersByBranch;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
@@ -100,6 +103,48 @@ public class OrderEndpoints : IEndpointGroup
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        // GET /api/v1/owner/orders/{orderId:guid} — Xem chi tiết đơn hàng đặt sân
+        group.MapGet("/{id:guid}", async (
+                [FromRoute] Guid id,
+                ISender sender = default!,
+                CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new GetDailyOrderByIdQuery(id), ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .WithName("GetDailyOrderById")
+            .WithSummary("Lấy thông tin chi tiết đơn hàng đặt sân")
+            .WithDescription("Trả về chi tiết đơn hàng bao gồm danh sách slot sân, dịch vụ, hóa đơn chiết tính và thanh toán.")
+            .WithTags(OrderTag)
+            .Produces<DailyOrderResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+
+        group.MapPut("/{id:guid}/items", async (
+            [FromRoute] Guid id,
+            [FromBody] UpdateOrderDetailCommand command,
+            ISender sender
+            ) =>
+        {
+            var result = await sender.Send(command);
+            return result.IsSuccess
+            ? Results.NoContent()
+            : result.ToProblemDetails();
+        })
+            .WithName("UpdateOrderDetail")
+            .WithSummary("Cập nhật chi tiết đơn hàng ngày")
+            .WithDescription("Cập nhật chi tiết đơn hàng bao gồm ngày, giờ khác")
+            .WithTags(OrderTag)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+        ;
+
+
     }
 
     private static void MapToPublic(RouteGroupBuilder group)
@@ -119,6 +164,26 @@ public class OrderEndpoints : IEndpointGroup
             .WithSummary("Tạo đơn đặt sân online")
             .WithTags(OrderTag)
             .Produces<CreateOrderOnlineResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
+
+
+        // PUT /api/v1/orders/{id:guid}/payment-proof — Nộp chứng nhận thanh toán
+        group.MapPut("/{id:guid}/payment-proof", async ([FromRoute] Guid id,
+            [FromBody] SubmitPaymentProofCommand command,
+            ISender sender) =>
+        {
+
+            var result = await sender.Send(command);
+            return result.IsSuccess
+            ? Results.Ok()
+            : result.ToProblemDetails();
+        })
+            .WithName("SubmitPaymentProof")
+            .WithSummary("Nộp chứng nhận thanh toán")
+            .WithDescription("Nộp chứng nhận thanh toán cho đơn hàng")
+            .WithTags(OrderTag)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }

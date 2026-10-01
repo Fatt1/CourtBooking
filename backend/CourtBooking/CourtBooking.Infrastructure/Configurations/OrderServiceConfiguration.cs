@@ -12,6 +12,8 @@ public class OrderServiceConfiguration : IEntityTypeConfiguration<OrderService>
 
         builder.HasKey(s => s.Id);
 
+        builder.Property(s => s.Id).ValueGeneratedNever();
+
         builder.Property(s => s.Quantity).IsRequired();
 
         builder.Property(s => s.UnitPrice)

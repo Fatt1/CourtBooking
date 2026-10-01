@@ -13,6 +13,8 @@ public class PlayerProfileConfiguration : IEntityTypeConfiguration<PlayerProfile
 
         builder.HasKey(p => p.Id);
 
+        builder.Property(p => p.Id).ValueGeneratedNever();
+
         builder.Property(p => p.AvatarImageId);
 
         builder.Property(p => p.Gender)

@@ -13,6 +13,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.HasKey(o => o.Id);
 
+        builder.Property(o => o.Id).ValueGeneratedNever();
+
         builder.Property(o => o.OrderCode)
             .HasMaxLength(255)
             .IsRequired();

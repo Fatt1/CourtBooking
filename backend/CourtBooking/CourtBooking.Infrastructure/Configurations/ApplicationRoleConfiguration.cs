@@ -10,6 +10,8 @@ public class ApplicationRoleConfiguration : IEntityTypeConfiguration<Application
     {
         builder.ToTable("Roles");
 
+        builder.Property(r => r.Id).ValueGeneratedNever();
+
         builder.Property(r => r.Description)
             .HasMaxLength(200);
     }
