@@ -23,7 +23,7 @@ internal sealed class GetServicesByBranchHandler(
 
         var query = dbContext.ServiceBranches
             .AsNoTracking()
-            .Where(sb => sb.BranchId == request.BranchId);
+            .Where(sb => sb.BranchId == request.BranchId && sb.Service.Category.IsActive);
 
         if (request.IsActive.HasValue)
         {

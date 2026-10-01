@@ -18,7 +18,9 @@ public sealed class CreateServiceValidator : AbstractValidator<CreateServiceComm
             .NotEmpty().WithMessage("Danh mục dịch vụ không được để trống.");
 
         RuleFor(x => x.Branches)
-            .NotEmpty().WithMessage("Dịch vụ cần được gán cho ít nhất một chi nhánh.");
+            .NotEmpty().WithMessage("Dịch vụ cần được gán cho ít nhất một chi nhánh.")
+            .Must(branches => branches.Select(branch => branch.BranchId).Distinct().Count() == branches.Count)
+            .WithMessage("Danh sách chi nhánh không được chứa BranchId trùng nhau.");
 
         RuleForEach(x => x.Branches).ChildRules(b =>
         {
