@@ -1,5 +1,6 @@
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Authorization;
+using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Services.Dtos;
 using CourtBooking.Application.Features.V1.Storages.Events.AttachImages;
@@ -43,6 +44,7 @@ internal sealed class UpdateServiceHandler(
         }
 
         // 3. Chỉ cho phép sử dụng danh mục đang hoạt động
+
         var categoryExists = await dbContext.ServiceCategories
             .AnyAsync(c => c.Id == request.CategoryId
                 && c.CourtOwnerId == userContext.UserId
