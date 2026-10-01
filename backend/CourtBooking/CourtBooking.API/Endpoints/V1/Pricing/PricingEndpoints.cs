@@ -21,7 +21,7 @@ public sealed class PricingEndpoints : IEndpointGroup
 
     public void Map(IEndpointRouteBuilder app)
     {
-        var group = app.MapApiV1Group("owner/branches/{branchId:guid}");
+        var group = app.MapApiV1Group("owner/pricing");
 
         // 1. Cấu hình giá & khung giờ theo Loại sân
         MapPricingConfig(group);
@@ -38,10 +38,10 @@ public sealed class PricingEndpoints : IEndpointGroup
 
     private static void MapPricingConfig(RouteGroupBuilder group)
     {
-        // GET /api/v1/owner/branches/{branchId}/court-types/{courtTypeId}/pricing-config
-        group.MapGet("/court-types/{courtTypeId:guid}/pricing-config", async (
-                Guid branchId,
-                Guid courtTypeId,
+        // GET /api/v1/owner/pricing?branchId={branchId}&courtTypeId={courtTypeId}
+        group.MapGet("/", async (
+                [FromQuery] Guid branchId,
+                [FromQuery] Guid courtTypeId,
                 ISender sender,
                 CancellationToken ct) =>
         {
@@ -64,9 +64,9 @@ public sealed class PricingEndpoints : IEndpointGroup
 
     private static void MapPriceTables(RouteGroupBuilder group)
     {
-        // POST /api/v1/owner/branches/{branchId}/price-tables
+        // POST /api/v1/owner/pricing/price-tables?branchId={branchId}
         group.MapPost("/price-tables", async (
-                Guid branchId,
+                [FromQuery] Guid branchId,
                 [FromBody] CreatePriceTableRequest request,
                 ISender sender,
                 CancellationToken ct) =>
@@ -81,7 +81,7 @@ public sealed class PricingEndpoints : IEndpointGroup
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
-                ? Results.Created($"/api/v1/owner/branches/{branchId}/court-types/{request.CourtTypeId}/pricing-config", new { id = result.Value })
+                ? Results.Created($"/api/v1/owner/pricing?branchId={branchId}&courtTypeId={request.CourtTypeId}", new { id = result.Value })
                 : result.ToProblemDetails();
         })
         .WithName("CreatePriceTable")
@@ -94,10 +94,10 @@ public sealed class PricingEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // PUT /api/v1/owner/branches/{branchId}/price-tables/{priceTableId}
+        // PUT /api/v1/owner/pricing/price-tables/{priceTableId}?branchId={branchId}
         group.MapPut("/price-tables/{priceTableId:guid}", async (
-                Guid branchId,
                 Guid priceTableId,
+                [FromQuery] Guid branchId,
                 [FromBody] UpdatePriceTableRequest request,
                 ISender sender,
                 CancellationToken ct) =>
@@ -125,10 +125,10 @@ public sealed class PricingEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // DELETE /api/v1/owner/branches/{branchId}/price-tables/{priceTableId}
+        // DELETE /api/v1/owner/pricing/price-tables/{priceTableId}?branchId={branchId}
         group.MapDelete("/price-tables/{priceTableId:guid}", async (
-                Guid branchId,
                 Guid priceTableId,
+                [FromQuery] Guid branchId,
                 ISender sender,
                 CancellationToken ct) =>
         {
@@ -151,10 +151,10 @@ public sealed class PricingEndpoints : IEndpointGroup
 
     private static void MapPriceTableRules(RouteGroupBuilder group)
     {
-        // POST /api/v1/owner/branches/{branchId}/price-tables/{priceTableId}/rules
+        // POST /api/v1/owner/pricing/price-tables/{priceTableId}/rules?branchId={branchId}
         group.MapPost("/price-tables/{priceTableId:guid}/rules", async (
-                Guid branchId,
                 Guid priceTableId,
+                [FromQuery] Guid branchId,
                 [FromBody] CreatePriceTableRuleRequest request,
                 ISender sender,
                 CancellationToken ct) =>
@@ -174,7 +174,7 @@ public sealed class PricingEndpoints : IEndpointGroup
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
-                ? Results.Created($"/api/v1/owner/branches/{branchId}/price-tables/{priceTableId}/rules/{result.Value}", new { id = result.Value })
+                ? Results.Created($"/api/v1/owner/pricing/price-tables/{priceTableId}/rules/{result.Value}?branchId={branchId}", new { id = result.Value })
                 : result.ToProblemDetails();
         })
         .WithName("CreatePriceTableRule")
@@ -187,11 +187,11 @@ public sealed class PricingEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // PUT /api/v1/owner/branches/{branchId}/price-tables/{priceTableId}/rules/{ruleId}
+        // PUT /api/v1/owner/pricing/price-tables/{priceTableId}/rules/{ruleId}?branchId={branchId}
         group.MapPut("/price-tables/{priceTableId:guid}/rules/{ruleId:guid}", async (
-                Guid branchId,
                 Guid priceTableId,
                 Guid ruleId,
+                [FromQuery] Guid branchId,
                 [FromBody] UpdatePriceTableRuleRequest request,
                 ISender sender,
                 CancellationToken ct) =>
@@ -225,11 +225,11 @@ public sealed class PricingEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // DELETE /api/v1/owner/branches/{branchId}/price-tables/{priceTableId}/rules/{ruleId}
+        // DELETE /api/v1/owner/pricing/price-tables/{priceTableId}/rules/{ruleId}?branchId={branchId}
         group.MapDelete("/price-tables/{priceTableId:guid}/rules/{ruleId:guid}", async (
-                Guid branchId,
                 Guid priceTableId,
                 Guid ruleId,
+                [FromQuery] Guid branchId,
                 ISender sender,
                 CancellationToken ct) =>
         {
@@ -252,9 +252,9 @@ public sealed class PricingEndpoints : IEndpointGroup
 
     private static void MapFixedTimeBlocks(RouteGroupBuilder group)
     {
-        // POST /api/v1/owner/branches/{branchId}/fixed-time-blocks
+        // POST /api/v1/owner/pricing/fixed-time-blocks?branchId={branchId}
         group.MapPost("/fixed-time-blocks", async (
-                Guid branchId,
+                [FromQuery] Guid branchId,
                 [FromBody] CreateFixedTimeBlockRequest request,
                 ISender sender,
                 CancellationToken ct) =>
@@ -270,7 +270,7 @@ public sealed class PricingEndpoints : IEndpointGroup
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
-                ? Results.Created($"/api/v1/owner/branches/{branchId}/court-types/{request.CourtTypeId}/pricing-config", new { id = result.Value })
+                ? Results.Created($"/api/v1/owner/pricing?branchId={branchId}&courtTypeId={request.CourtTypeId}", new { id = result.Value })
                 : result.ToProblemDetails();
         })
         .WithName("CreateFixedTimeBlock")
@@ -283,10 +283,10 @@ public sealed class PricingEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // DELETE /api/v1/owner/branches/{branchId}/fixed-time-blocks/{blockId}
+        // DELETE /api/v1/owner/pricing/fixed-time-blocks/{blockId}?branchId={branchId}
         group.MapDelete("/fixed-time-blocks/{blockId:guid}", async (
-                Guid branchId,
                 Guid blockId,
+                [FromQuery] Guid branchId,
                 ISender sender,
                 CancellationToken ct) =>
         {
