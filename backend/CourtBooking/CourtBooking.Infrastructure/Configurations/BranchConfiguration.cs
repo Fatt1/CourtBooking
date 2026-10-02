@@ -12,6 +12,8 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
 
         builder.HasKey(b => b.Id);
 
+        builder.Property(b => b.Id).ValueGeneratedNever();
+
         builder.Property(b => b.Name)
             .HasMaxLength(255)
             .IsRequired();

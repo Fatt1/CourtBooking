@@ -12,6 +12,8 @@ public class FixedTimeBlockConfiguration : IEntityTypeConfiguration<FixedTimeBlo
 
         builder.HasKey(f => f.Id);
 
+        builder.Property(f => f.Id).ValueGeneratedNever();
+
         builder.Property(f => f.DaysOfWeekMask)
             .IsRequired()
             .HasComment("Lưu theo kiểu bitwise");

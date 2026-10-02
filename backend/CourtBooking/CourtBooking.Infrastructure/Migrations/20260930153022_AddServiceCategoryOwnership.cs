@@ -1,13 +1,9 @@
-using CourtBooking.Infrastructure.Database;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace CourtBooking.Infrastructure.Migrations;
 
-[DbContext(typeof(ApplicationDbContext))]
-[Migration("20260930153022_AddServiceCategoryOwnership")]
 public partial class AddServiceCategoryOwnership : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

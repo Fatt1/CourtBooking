@@ -12,15 +12,7 @@ public class RetailOrderConfiguration : IEntityTypeConfiguration<RetailOrder>
 
         builder.HasKey(r => r.Id);
 
-        builder.Property(r => r.OrderCode)
-            .HasMaxLength(50)
-            .IsRequired();
-
-        builder.Property(r => r.CustomerName)
-            .HasMaxLength(255);
-
-        builder.Property(r => r.PaymentMethod)
-            .IsRequired();
+        builder.Property(r => r.Id).ValueGeneratedNever();
 
         builder.Property(r => r.TotalAmount)
             .HasPrecision(18, 2)
@@ -41,13 +33,6 @@ public class RetailOrderConfiguration : IEntityTypeConfiguration<RetailOrder>
 
         builder.HasIndex(r => r.BranchId)
             .HasDatabaseName("IX_RetailOrder_BranchId");
-
-        builder.HasIndex(r => r.OrderCode)
-            .IsUnique()
-            .HasDatabaseName("UX_RetailOrder_OrderCode");
-
-        builder.HasIndex(r => r.CreatedByUserId)
-            .HasDatabaseName("IX_RetailOrder_CreatedByUserId");
 
         builder.HasOne(r => r.Branch)
             .WithMany(b => b.RetailOrders)

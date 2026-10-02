@@ -34,14 +34,6 @@ internal sealed class GetRetailOrdersHandler(
         if (request.BranchId.HasValue) query = query.Where(order => order.BranchId == request.BranchId.Value);
         if (request.FromDate.HasValue) query = query.Where(order => order.OrderDate >= request.FromDate.Value);
         if (request.ToDate.HasValue) query = query.Where(order => order.OrderDate <= request.ToDate.Value);
-        if (request.PaymentMethod.HasValue) query = query.Where(order => order.PaymentMethod == request.PaymentMethod.Value);
-        if (!string.IsNullOrWhiteSpace(request.Search))
-        {
-            var search = request.Search.Trim();
-            query = query.Where(order => order.OrderCode.Contains(search)
-                || (order.CustomerName != null && order.CustomerName.Contains(search)));
-        }
-
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderByDescending(order => order.CreatedAt)
@@ -49,11 +41,8 @@ internal sealed class GetRetailOrdersHandler(
             .Take(request.PageSize)
             .Select(order => new RetailOrderListItemDto(
                 order.Id,
-                order.OrderCode,
                 order.BranchId,
                 order.Branch.Name,
-                order.CustomerName,
-                order.PaymentMethod,
                 order.Items.Sum(item => item.Quantity),
                 order.Items.Sum(item => item.Quantity * item.UnitPrice),
                 order.DiscountAmount,

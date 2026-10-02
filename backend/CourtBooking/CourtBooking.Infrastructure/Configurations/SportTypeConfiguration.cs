@@ -12,6 +12,8 @@ public class SportTypeConfiguration : IEntityTypeConfiguration<SportType>
 
         builder.HasKey(s => s.Id);
 
+        builder.Property(s => s.Id).ValueGeneratedNever();
+
         builder.Property(s => s.Name)
             .HasMaxLength(100)
             .IsRequired();

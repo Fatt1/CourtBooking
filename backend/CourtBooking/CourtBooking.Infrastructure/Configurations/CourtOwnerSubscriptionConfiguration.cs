@@ -12,6 +12,8 @@ public class CourtOwnerSubscriptionConfiguration : IEntityTypeConfiguration<Cour
 
         builder.HasKey(s => s.Id);
 
+        builder.Property(s => s.Id).ValueGeneratedNever();
+
         builder.Property(s => s.PricePaid)
             .HasPrecision(18, 2)
             .IsRequired();

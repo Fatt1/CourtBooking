@@ -13,6 +13,8 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
     {
         builder.ToTable("Users");
 
+        builder.Property(u => u.Id).ValueGeneratedNever();
+
         builder.Property(u => u.FullName)
             .HasMaxLength(150)
             .IsRequired();

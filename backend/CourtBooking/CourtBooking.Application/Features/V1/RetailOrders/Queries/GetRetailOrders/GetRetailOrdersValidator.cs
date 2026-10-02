@@ -6,8 +6,6 @@ public sealed class GetRetailOrdersValidator : AbstractValidator<GetRetailOrders
 {
     public GetRetailOrdersValidator()
     {
-        RuleFor(x => x.PaymentMethod).IsInEnum().When(x => x.PaymentMethod.HasValue);
-        RuleFor(x => x.Search).MaximumLength(255);
         RuleFor(x => x.ToDate)
             .GreaterThanOrEqualTo(x => x.FromDate)
             .When(x => x.FromDate.HasValue && x.ToDate.HasValue)

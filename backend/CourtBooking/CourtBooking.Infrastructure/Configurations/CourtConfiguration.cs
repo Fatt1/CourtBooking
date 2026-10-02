@@ -13,6 +13,8 @@ public class CourtConfiguration : IEntityTypeConfiguration<Court>
 
         builder.HasKey(c => c.Id);
 
+        builder.Property(c => c.Id).ValueGeneratedNever();
+
         builder.Property(c => c.CourtTypeId)
             .HasColumnName("CourtTyped") // Note: typo preserved from DB schema
             .IsRequired();

@@ -12,6 +12,8 @@ public class CourtOwnerConfiguration : IEntityTypeConfiguration<CourtOwner>
 
         builder.HasKey(c => c.Id);
 
+        builder.Property(c => c.Id).ValueGeneratedNever();
+
         builder.Property(c => c.BusinessName)
             .HasMaxLength(255)
             .IsRequired();

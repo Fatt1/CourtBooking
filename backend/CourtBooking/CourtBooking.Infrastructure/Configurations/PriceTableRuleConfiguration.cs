@@ -12,6 +12,8 @@ public class PriceTableRuleConfiguration : IEntityTypeConfiguration<PriceTableRu
 
         builder.HasKey(r => r.Id);
 
+        builder.Property(r => r.Id).ValueGeneratedNever();
+
         builder.Property(r => r.FixedCustomerPrice)
             .HasPrecision(18, 2)
             .IsRequired();

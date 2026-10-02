@@ -12,6 +12,8 @@ public class ServiceCategoryConfiguration : IEntityTypeConfiguration<ServiceCate
 
         builder.HasKey(c => c.Id);
 
+        builder.Property(c => c.Id).ValueGeneratedNever();
+
         builder.Property(c => c.Name)
             .HasMaxLength(150)
             .IsRequired();
