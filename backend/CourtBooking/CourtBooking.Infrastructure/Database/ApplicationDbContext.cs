@@ -66,6 +66,7 @@ public class ApplicationDbContext
 
     // ── Reviews ───────────────────────────────────────────────
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<ReviewImage> ReviewImages => Set<ReviewImage>();
 
     // ── Subscriptions ─────────────────────────────────────────
     public DbSet<ServicePackage> ServicePackages => Set<ServicePackage>();
