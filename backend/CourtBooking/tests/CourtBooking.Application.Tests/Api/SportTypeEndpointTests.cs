@@ -124,7 +124,41 @@ public sealed class SportTypeEndpointTests
             .GetOrderedMetadata<IAuthorizeData>()
             .Any(auth =>
                 auth.Roles is not null &&
-                auth.Roles.Split(',').Any(role => role.Trim() == "Admin"));
+            auth.Roles.Split(',').Any(role => role.Trim() == "Admin"));
+
+        hasAdminRole.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void UpdateSportTypeStatusEndpoint_ShouldRequireAdmin()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.AddCourtBookingApiVersioning();
+        builder.Services.AddApplication();
+
+        using var app = builder.Build();
+        app.MapEndpoints();
+
+        var endpoint = ((IEndpointRouteBuilder)app).DataSources
+            .SelectMany(source => source.Endpoints)
+            .OfType<RouteEndpoint>()
+            .SingleOrDefault(route =>
+                route.RoutePattern.RawText?.Contains(
+                    "admin/sport-types",
+                    StringComparison.OrdinalIgnoreCase) == true
+                && route.RoutePattern.RawText?.Contains(
+                    "status",
+                    StringComparison.OrdinalIgnoreCase) == true
+                && route.Metadata.GetMetadata<IHttpMethodMetadata>()?
+                    .HttpMethods.Contains("PATCH") == true);
+
+        endpoint.ShouldNotBeNull();
+
+        var hasAdminRole = endpoint!.Metadata
+            .GetOrderedMetadata<IAuthorizeData>()
+            .Any(auth =>
+                auth.Roles is not null &&
+            auth.Roles.Split(',').Any(role => role.Trim() == "Admin"));
 
         hasAdminRole.ShouldBeTrue();
     }

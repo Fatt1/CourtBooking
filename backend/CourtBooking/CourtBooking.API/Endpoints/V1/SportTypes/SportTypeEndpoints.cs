@@ -1,3 +1,4 @@
+using CourtBooking.Application.Features.V1.SportTypes.Commands.UpdateSportTypeStatus;
 using CourtBooking.Application.Features.V1.SportTypes.Queries.GetAdminSportTypes;
 using CourtBooking.Application.Features.V1.SportTypes.Queries.GetSportTypeById;
 using CourtBooking.API.Extensions;
@@ -60,6 +61,25 @@ public sealed class SportTypeEndpoints : IEndpointGroup
         .WithName("GetAdminSportTypes")
         .WithTags("SportTypes")
         .Produces<IReadOnlyList<AdminSportTypeDto>>(StatusCodes.Status200OK);
+
+        group.MapPatch("/{id:guid}/status", async (
+            Guid id,
+            UpdateSportTypeStatusRequest request,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(
+                new UpdateSportTypeStatusCommand(id, request.IsActive), ct);
+
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+        .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" })
+        .WithName("UpdateSportTypeStatus")
+        .WithTags("SportTypes")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPost("/", async (
             CreateSportTypeRequest request,
