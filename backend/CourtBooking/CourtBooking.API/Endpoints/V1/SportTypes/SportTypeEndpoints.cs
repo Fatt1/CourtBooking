@@ -1,3 +1,4 @@
+using CourtBooking.Application.Features.V1.SportTypes.Queries.GetAdminSportTypes;
 using CourtBooking.Application.Features.V1.SportTypes.Queries.GetSportTypeById;
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Features.V1.SportTypes.Commands.CreateSportType;
@@ -46,6 +47,19 @@ public sealed class SportTypeEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status404NotFound);
 
         var group = app.MapApiV1Group("admin/sport-types");
+
+        group.MapGet("/", async (ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetAdminSportTypesQuery(), ct);
+
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+        .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" })
+        .WithName("GetAdminSportTypes")
+        .WithTags("SportTypes")
+        .Produces<IReadOnlyList<AdminSportTypeDto>>(StatusCodes.Status200OK);
 
         group.MapPost("/", async (
             CreateSportTypeRequest request,
