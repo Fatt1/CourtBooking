@@ -1,5 +1,5 @@
-using CourtBooking.Application.DependencyInjections;
 using CourtBooking.API.Extensions;
+using CourtBooking.Application.DependencyInjections;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -14,11 +14,12 @@ public sealed class SportTypeEndpointTests
     public void CreateSportTypeEndpoint_ShouldRequireAdmin()
     {
         var builder = WebApplication.CreateBuilder();
-builder.AddCourtBookingApiVersioning();
-builder.Services.AddApplication();
+        builder.AddCourtBookingApiVersioning();
+        builder.Services.AddApplication();
 
-using var app = builder.Build();
-app.MapEndpoints();
+        using var app = builder.Build();
+        app.MapEndpoints();
+
         var endpoint = ((IEndpointRouteBuilder)app).DataSources
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
@@ -32,11 +33,38 @@ app.MapEndpoints();
         endpoint.ShouldNotBeNull();
 
         var hasAdminRole = endpoint!.Metadata
-    .GetOrderedMetadata<IAuthorizeData>()
-    .Any(auth =>
-        auth.Roles is not null &&
-        auth.Roles.Split(',').Any(role => role.Trim() == "Admin"));
+            .GetOrderedMetadata<IAuthorizeData>()
+            .Any(auth =>
+                auth.Roles is not null &&
+                auth.Roles.Split(',').Any(role => role.Trim() == "Admin"));
 
-hasAdminRole.ShouldBeTrue();
+        hasAdminRole.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void ListSportTypesEndpoint_ShouldAllowAnonymous()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.AddCourtBookingApiVersioning();
+        builder.Services.AddApplication();
+
+        using var app = builder.Build();
+        app.MapEndpoints();
+
+        var endpoint = ((IEndpointRouteBuilder)app).DataSources
+            .SelectMany(source => source.Endpoints)
+            .OfType<RouteEndpoint>()
+            .SingleOrDefault(route =>
+                route.RoutePattern.RawText?.Contains(
+                    "/sport-types",
+                    StringComparison.OrdinalIgnoreCase) == true
+                && route.RoutePattern.RawText?.Contains(
+                    "/admin/",
+                    StringComparison.OrdinalIgnoreCase) != true
+                && route.Metadata.GetMetadata<IHttpMethodMetadata>()?
+                    .HttpMethods.Contains("GET") == true);
+
+        endpoint.ShouldNotBeNull();
+        endpoint!.Metadata.GetOrderedMetadata<IAuthorizeData>().ShouldBeEmpty();
     }
 }
