@@ -1,3 +1,4 @@
+using CourtBooking.Application.Features.V1.SportTypes.Queries.GetSportTypeById;
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Features.V1.SportTypes.Commands.CreateSportType;
 using CourtBooking.Application.Features.V1.SportTypes.Dtos;
@@ -27,6 +28,23 @@ public sealed class SportTypeEndpoints : IEndpointGroup
         .WithTags("SportTypes")
         .Produces<IReadOnlyList<SportTypeDto>>(StatusCodes.Status200OK);
 
+        publicGroup.MapGet("/{id}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetSportTypeByIdQuery(id), ct);
+
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+        .AllowAnonymous()
+        .WithName("GetSportTypeById")
+        .WithTags("SportTypes")
+        .Produces<SportTypeDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         var group = app.MapApiV1Group("admin/sport-types");
 
         group.MapPost("/", async (
@@ -54,4 +72,4 @@ public sealed class SportTypeEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
     }
-}
+}

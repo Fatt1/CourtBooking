@@ -61,10 +61,40 @@ public sealed class SportTypeEndpointTests
                 && route.RoutePattern.RawText?.Contains(
                     "/admin/",
                     StringComparison.OrdinalIgnoreCase) != true
+                && route.RoutePattern.RawText?.Contains(
+                    "sport-types/{id}",
+                    StringComparison.OrdinalIgnoreCase) != true
                 && route.Metadata.GetMetadata<IHttpMethodMetadata>()?
                     .HttpMethods.Contains("GET") == true);
 
         endpoint.ShouldNotBeNull();
         endpoint!.Metadata.GetOrderedMetadata<IAuthorizeData>().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void GetSportTypeByIdEndpoint_ShouldAllowAnonymous()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.AddCourtBookingApiVersioning();
+        builder.Services.AddApplication();
+
+        using var app = builder.Build();
+        app.MapEndpoints();
+
+        var endpoint = ((IEndpointRouteBuilder)app).DataSources
+            .SelectMany(source => source.Endpoints)
+            .OfType<RouteEndpoint>()
+            .SingleOrDefault(route =>
+                route.RoutePattern.RawText?.Contains(
+                    "sport-types/{id}",
+                    StringComparison.OrdinalIgnoreCase) == true
+                && route.RoutePattern.RawText?.Contains(
+                    "/admin/",
+                    StringComparison.OrdinalIgnoreCase) != true
+                && route.Metadata.GetMetadata<IHttpMethodMetadata>()?
+                    .HttpMethods.Contains("GET") == true);
+
+        endpoint.ShouldNotBeNull();
+        endpoint!.Metadata.GetMetadata<IAllowAnonymous>().ShouldNotBeNull();
     }
 }
