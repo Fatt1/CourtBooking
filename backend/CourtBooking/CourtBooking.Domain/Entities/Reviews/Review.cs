@@ -20,5 +20,4 @@ public class Review : EntityBase<Guid>
     public Courts.Branch Branch { get; set; } = null!;
     public Orders.Order Order { get; set; } = null!;
     public Users.ApplicationUser Player { get; set; } = null!;
-    public List<ReviewImage> Images { get; set; } = [];
 }

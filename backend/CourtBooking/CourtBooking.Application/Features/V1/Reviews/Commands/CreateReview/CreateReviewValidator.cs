@@ -13,8 +13,5 @@ public sealed class CreateReviewValidator : AbstractValidator<CreateReviewComman
         RuleFor(x => x.Comment)
             .MaximumLength(1000)
             .WithMessage("Bình luận không được vượt quá 1000 ký tự.");
-        RuleFor(x => x.ImageIds)
-            .Must(x => x == null || x.Count <= 5)
-            .WithMessage("Bạn chỉ được tải lên tối đa 5 ảnh.");
     }
 }

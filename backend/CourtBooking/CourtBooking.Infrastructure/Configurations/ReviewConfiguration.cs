@@ -47,10 +47,5 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
             .WithMany(u => u.Reviews)
             .HasForeignKey(r => r.PlayerId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasMany(r => r.Images)
-            .WithOne(ri => ri.Review)
-            .HasForeignKey(ri => ri.ReviewId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

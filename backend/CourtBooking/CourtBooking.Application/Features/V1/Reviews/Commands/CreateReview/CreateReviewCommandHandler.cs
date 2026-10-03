@@ -52,22 +52,8 @@ public sealed class CreateReviewCommandHandler(
             PlayerId = userId.GetValueOrDefault(),
             Rating = request.Rating,
             Comment = request.Comment,
-            CreatedAt = DateTime.UtcNow,
-            Images = new List<ReviewImage>()
+            CreatedAt = DateTime.UtcNow
         };
-
-        if (request.ImageIds != null && request.ImageIds.Any())
-        {
-            foreach (var imgId in request.ImageIds)
-            {
-                review.Images.Add(new ReviewImage
-                {
-                    Id = Guid.CreateVersion7(),
-                    ReviewId = review.Id,
-                    ImageId = imgId
-                });
-            }
-        }
 
         dbContext.Reviews.Add(review);
         await dbContext.SaveChangesAsync(cancellationToken);

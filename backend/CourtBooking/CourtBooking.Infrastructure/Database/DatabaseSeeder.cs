@@ -838,10 +838,6 @@ public static class DatabaseSeeder
             PlayerId = userPlayer1.Id,
             Rating = 5,
             Comment = "Sân thảm mới và rất êm, ánh sáng đạt chuẩn thi đấu không bị chói mắt, nhân viên nhiệt tình hỗ trợ!",
-            Images = new List<ReviewImage> 
-            { 
-                new ReviewImage { Id = Guid.NewGuid(), ImageId = reviewImg.Id } 
-            },
             CreatedAt = DateTime.UtcNow
         };
 
