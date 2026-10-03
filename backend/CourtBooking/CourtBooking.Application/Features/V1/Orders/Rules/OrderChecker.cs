@@ -243,20 +243,205 @@ public sealed class OrderChecker(
         return Result<List<ServiceBranch>>.Success(serviceBranches);
     }
 
+    public async Task<Result<BookingValidationContext>> ValidateFixedBookingAsync(
+        Guid branchId,
+        List<FixedCycleInput> cycles,
+        List<OrderServiceItem>? services,
+        CancellationToken cancellationToken)
+    {
+        if (cycles == null || cycles.Count == 0)
+        {
+            return Result.Failure<BookingValidationContext>(new BadError("Đơn đặt cố định phải có ít nhất một chu kì."));
+        }
+
+        // 1. Kiểm tra chi nhánh
+        var branch = await dbContext.Branches
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == branchId, cancellationToken);
+
+        if (branch == null)
+        {
+            return Result.Failure<BookingValidationContext>(new NotFoundError("Branch", branchId));
+        }
+
+        if (!branch.IsActive)
+        {
+            return Result.Failure<BookingValidationContext>(new BadError("Chi nhánh này hiện đang tạm ngưng hoạt động."));
+        }
+
+        // 2. Kiểm tra giờ mở cửa của từng chu kì và sinh slot
+        var allGeneratedSlots = new List<(Guid CourtTypeId, Guid PriceTableId, Guid CourtId, DateOnly Date, TimeOnly StartTime, TimeOnly EndTime)>();
+
+        foreach (var cycle in cycles)
+        {
+
+
+            // Kiểm tra giờ mở cửa của chi nhánh
+            if (branch.CloseTime > branch.OpenTime && (cycle.StartTime < branch.OpenTime || cycle.EndTime > branch.CloseTime))
+            {
+                return Result.Failure<BookingValidationContext>(
+                    new BadError($"Khung giờ {cycle.StartTime:HH:mm} - {cycle.EndTime:HH:mm} nằm ngoài giờ mở cửa của chi nhánh ({branch.OpenTime:HH:mm} - {branch.CloseTime:HH:mm})."));
+            }
+
+            var cycleSlots = FixedCycleHelper.GenerateSlots(cycle);
+            foreach (var slot in cycleSlots)
+            {
+                allGeneratedSlots.Add((cycle.CourtTypeId, cycle.PriceTableId, slot.CourtId, slot.Date, slot.StartTime, slot.EndTime));
+            }
+        }
+
+        if (allGeneratedSlots.Count == 0)
+        {
+            return Result.Failure<BookingValidationContext>(new BadError("Không có buổi chơi nào được sinh ra từ các chu kì đã chọn (do ngày loại trừ hoặc thứ trong tuần không khớp)."));
+        }
+
+        // 3. Kiểm tra trùng lặp nội bộ giữa các chu kì
+        for (int i = 0; i < allGeneratedSlots.Count; i++)
+        {
+            for (int j = i + 1; j < allGeneratedSlots.Count; j++)
+            {
+                var s1 = allGeneratedSlots[i];
+                var s2 = allGeneratedSlots[j];
+
+                if (s1.CourtId == s2.CourtId
+                    && s1.Date == s2.Date
+                    && s1.StartTime < s2.EndTime
+                    && s1.EndTime > s2.StartTime)
+                {
+                    return Result.Failure<BookingValidationContext>(
+                        new BadError($"Trùng lặp khung giờ đặt cho cùng một sân trong các chu kì (ngày {s1.Date:dd/MM/yyyy}: {s1.StartTime:HH:mm} - {s1.EndTime:HH:mm})."));
+                }
+            }
+        }
+
+        // 4. Validate danh sách sân
+        var courtIds = allGeneratedSlots.Select(s => s.CourtId).Distinct().ToList();
+        var courts = await dbContext.Courts
+            .AsNoTracking()
+            .Include(c => c.CourtType)
+            .Where(c => courtIds.Contains(c.Id))
+            .ToListAsync(cancellationToken);
+
+        if (courts.Count != courtIds.Count)
+        {
+            var missingCourtId = courtIds.First(id => courts.All(c => c.Id != id));
+            return Result.Failure<BookingValidationContext>(new NotFoundError("Court", missingCourtId));
+        }
+
+        foreach (var court in courts)
+        {
+            if (court.CourtType.BranchId != branchId)
+            {
+                return Result.Failure<BookingValidationContext>(
+                    new BadError($"Sân '{court.Name}' không thuộc chi nhánh đã chọn."));
+            }
+
+            if (court.Status != CourtStatus.Available)
+            {
+                return Result.Failure<BookingValidationContext>(
+                    new BadError($"Sân '{court.Name}' hiện đang không khả dụng để đặt (bảo trì hoặc tạm ngưng)."));
+            }
+        }
+
+        // Kiểm tra tất cả các sân trong từng chu kì phải đúng với CourtTypeId của chu kì đó
+        foreach (var cycle in cycles)
+        {
+            foreach (var courtId in cycle.CourtIds)
+            {
+                var court = courts.First(c => c.Id == courtId);
+                if (court.CourtTypeId != cycle.CourtTypeId)
+                {
+                    return Result.Failure<BookingValidationContext>(
+                        new BadError($"Sân '{court.Name}' không thuộc loại sân đã chọn trong chu kì."));
+                }
+            }
+        }
+
+        // 5. Validate bảng giá (PriceTable) được chỉ định trong từng chu kì
+        var priceTableIds = cycles.Select(c => c.PriceTableId).Distinct().ToList();
+        var priceTables = await dbContext.PriceTables
+            .AsNoTracking()
+            .Include(pt => pt.Rules)
+            .Where(pt => priceTableIds.Contains(pt.Id))
+            .ToListAsync(cancellationToken);
+
+        if (priceTables.Count != priceTableIds.Count)
+        {
+            var missingPtId = priceTableIds.First(id => priceTables.All(pt => pt.Id != id));
+            return Result.Failure<BookingValidationContext>(new NotFoundError("PriceTable", missingPtId));
+        }
+
+        foreach (var cycle in cycles)
+        {
+            var priceTable = priceTables.First(pt => pt.Id == cycle.PriceTableId);
+            if (!priceTable.IsActive)
+            {
+                return Result.Failure<BookingValidationContext>(
+                    new BadError($"Bảng giá '{priceTable.Name}' hiện đang không hoạt động."));
+            }
+
+            if (priceTable.CourtTypeId != cycle.CourtTypeId)
+            {
+                return Result.Failure<BookingValidationContext>(
+                    new BadError($"Bảng giá '{priceTable.Name}' không áp dụng cho loại sân đã chọn trong chu kì."));
+            }
+        }
+
+        var calculatedSlots = new List<CalculatedSlotItem>();
+        var flatSlots = new List<FlatSlotItem>();
+
+        foreach (var slot in allGeneratedSlots)
+        {
+            var priceTable = priceTables.First(pt => pt.Id == slot.PriceTableId);
+
+            var price = priceCalculator.CalculatePrice(
+                priceTable,
+                slot.Date,
+                slot.StartTime,
+                slot.EndTime,
+                isFixedCustomer: true);
+
+            calculatedSlots.Add(new CalculatedSlotItem(slot.CourtId, slot.StartTime, slot.EndTime, price, slot.Date));
+            flatSlots.Add(new FlatSlotItem(slot.CourtTypeId, slot.PriceTableId, slot.CourtId, slot.Date, slot.StartTime, slot.EndTime));
+        }
+
+        // 6. Validate dịch vụ
+        var servicesResult = await ValidateServicesAsync(branchId, services, cancellationToken);
+        if (servicesResult.IsFailure)
+        {
+            return Result.Failure<BookingValidationContext>(servicesResult.Error!);
+        }
+
+        return Result<BookingValidationContext>.Success(new BookingValidationContext(
+            branch,
+            courts,
+            calculatedSlots,
+            servicesResult.Value,
+            flatSlots));
+    }
+
     public async Task<Result> CheckConflictsAsync(
         List<FlatSlotItem> allSlots,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Guid? excludeOrderId = null)
     {
         var nowUtc = DateTime.UtcNow;
         var courtIds = allSlots.Select(s => s.CourtId).Distinct().ToList();
         var dates = allSlots.Select(s => s.Date).Distinct().ToList();
 
-        var existingOccupiedSlots = await dbContext.OrderDetails
+        var query = dbContext.OrderDetails
             .AsNoTracking()
             .Where(od => courtIds.Contains(od.CourtId)
                       && dates.Contains(od.Date)
                       && od.Order.Status != OrderStatus.Cancelled
-                      && (od.Order.Status != OrderStatus.AwaitingPayment || od.Order.HoldExpiresAt > nowUtc))
+                      && (od.Order.Status != OrderStatus.AwaitingPayment || od.Order.HoldExpiresAt > nowUtc));
+
+        if (excludeOrderId.HasValue)
+        {
+            query = query.Where(od => od.OrderId != excludeOrderId.Value);
+        }
+
+        var existingOccupiedSlots = await query
             .Select(od => new
             {
                 od.CourtId,

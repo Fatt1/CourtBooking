@@ -1,6 +1,6 @@
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Data;
-using CourtBooking.Application.Features.V1.Pricing.Dtos;
+using CourtBooking.Application.Helpers;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Entities.Courts;
 using CourtBooking.SharedKernel;

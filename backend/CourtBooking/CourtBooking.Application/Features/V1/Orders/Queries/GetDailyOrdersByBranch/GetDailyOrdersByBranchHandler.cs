@@ -9,26 +9,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.Orders.Queries.GetOrdersByBranch;
 
-public sealed class GetOrdersByBranchHandler(
+public sealed class GetDailyOrdersByBranchHandler(
     IApplicationDbContext dbContext,
-    IBranchAuthorizationService branchAuth) : IQueryHandler<GetOrdersByBranchQuery, PagedList<OrderDto>>
+    IBranchAuthorizationService branchAuth) : IQueryHandler<GetDailyOrdersByBranchQuery, PagedList<DailyOrderDto>>
 {
-    public async Task<Result<PagedList<OrderDto>>> Handle(
-        GetOrdersByBranchQuery request,
+    public async Task<Result<PagedList<DailyOrderDto>>> Handle(
+        GetDailyOrdersByBranchQuery request,
         CancellationToken cancellationToken)
     {
         // 1. Kiểm tra quyền sở hữu / quản lý chi nhánh
         var authResult = await branchAuth.EnsureOwnerAsync(request.BranchId, cancellationToken);
         if (authResult.IsFailure)
         {
-            return Result.Failure<PagedList<OrderDto>>(authResult.Error!);
+            return Result.Failure<PagedList<DailyOrderDto>>(authResult.Error!);
         }
 
-        // 2. Base Query lọc theo chi nhánh và loại đơn vãng lai (mặc định Normal)
-        var targetOrderType = request.OrderType ?? OrderType.Normal;
+        // 2. Base Query lọc theo chi nhánh và loại đơn ngày / thường (OrderType.Normal)
         var query = dbContext.Orders
+            .Include(o => o.PaymentTransactions)
             .AsNoTracking()
-            .Where(o => o.BranchId == request.BranchId && o.OrderType == targetOrderType);
+            .Where(o => o.BranchId == request.BranchId && o.OrderType == OrderType.Normal);
 
         // 3. Áp dụng các bộ lọc
         if (request.Status.HasValue)
@@ -62,7 +62,7 @@ public sealed class GetOrdersByBranchHandler(
             .OrderByDescending(o => o.CreatedAt)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(o => new OrderDto(
+            .Select(o => new DailyOrderDto(
                 o.Id,
                 o.OrderCode,
                 o.CustomerName,
@@ -71,6 +71,7 @@ public sealed class GetOrdersByBranchHandler(
                 o.OrderType,
                 o.OrderDate,
                 o.TotalAmount,
+                o.CalculateRemainingAmount(),
                 o.Note,
                 o.Details.Select(d => new OrderDetailDto(
                     d.CourtId,
@@ -80,7 +81,7 @@ public sealed class GetOrdersByBranchHandler(
                     d.EndTime)).ToList()))
             .ToListAsync(cancellationToken);
 
-        var pagedList = new PagedList<OrderDto>(items, totalCount, request.Page, request.PageSize);
-        return Result<PagedList<OrderDto>>.Success(pagedList);
+        var pagedList = new PagedList<DailyOrderDto>(items, totalCount, request.Page, request.PageSize);
+        return Result<PagedList<DailyOrderDto>>.Success(pagedList);
     }
 }
