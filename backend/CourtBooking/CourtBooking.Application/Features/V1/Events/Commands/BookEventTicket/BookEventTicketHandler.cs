@@ -27,11 +27,14 @@ internal sealed class BookEventTicketHandler(
         var currentUserId = userContext.UserId;
 
         // 2. Mở Database Transaction với mức độ cô lập ReadCommitted
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(
-            IsolationLevel.ReadCommitted, 
-            cancellationToken);
+        var strategy = dbContext.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.ReadCommitted, 
+                cancellationToken);
 
-        try
+            try
         {
             // 3. PESSIMISTIC LOCK: Khóa độc quyền dòng sự kiện đang mua vé bằng UPDLOCK và ROWLOCK
             // Chú ý: Bảng cơ sở dữ liệu được map tên là "Events"
@@ -122,5 +125,6 @@ internal sealed class BookEventTicketHandler(
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+        });
     }
 }
