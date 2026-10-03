@@ -18,8 +18,8 @@ public sealed class ServiceCategoryEndpoints : IEndpointGroup
 
     public void Map(IEndpointRouteBuilder app)
     {
-        var group = app.MapApiV1Group("owner/service-categories")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+        var group = app.MapApiV1Group("owner/service-categories");
+        // .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
 
         group.MapGet("/", GetServiceCategories)
             .WithName("GetServiceCategories")

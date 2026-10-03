@@ -16,7 +16,7 @@ public sealed class RetailOrderEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         var group = app.MapApiV1Group("owner/retail-orders")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"))
+            // .RequireAuthorization(policy => policy.RequireRole("CourtOwner"))
             .WithTags("Retail Orders");
 
         group.MapPost("/", CreateAsync)
