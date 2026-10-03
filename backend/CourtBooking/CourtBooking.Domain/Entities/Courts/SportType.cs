@@ -11,7 +11,6 @@ public class SportType : EntityBase<Guid>
 
     public string Name { get; set; } = null!;
     public Guid? ImageId { get; set; }
-    public bool IsActive { get; set; }
 
     // Navigation properties
     public Images.Image? Image { get; set; }

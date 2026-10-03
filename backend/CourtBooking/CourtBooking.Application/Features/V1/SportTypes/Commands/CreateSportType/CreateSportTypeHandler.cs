@@ -49,8 +49,7 @@ internal sealed class CreateSportTypeHandler(
         {
             Id = Guid.CreateVersion7(),
             Name = normalizedName,
-            ImageId = request.ImageId,
-            IsActive = true
+            ImageId = request.ImageId
         };
 
         await dbContext.SportTypes.AddAsync(

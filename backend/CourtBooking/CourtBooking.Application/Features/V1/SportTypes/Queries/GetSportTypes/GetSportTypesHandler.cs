@@ -1,4 +1,5 @@
 using CourtBooking.Application.Data;
+using CourtBooking.Application.Features.V1.Services.Dtos;
 using CourtBooking.Application.Features.V1.SportTypes.Dtos;
 using CourtBooking.Application.Messaging;
 using CourtBooking.SharedKernel;
@@ -15,11 +16,12 @@ internal sealed class GetSportTypesHandler(IApplicationDbContext dbContext)
     {
         var sportTypes = await dbContext.SportTypes
             .AsNoTracking()
-            .Where(sportType => sportType.IsActive)
             .Select(sportType => new SportTypeDto(
                 sportType.Id,
                 sportType.Name,
-                sportType.ImageId))
+                sportType.Image != null
+                    ? new ImageDto(sportType.Image.StorageKey, sportType.Image.Id)
+                    : null))
             .ToListAsync(cancellationToken);
 
         return Result.Success<IReadOnlyList<SportTypeDto>>(sportTypes);

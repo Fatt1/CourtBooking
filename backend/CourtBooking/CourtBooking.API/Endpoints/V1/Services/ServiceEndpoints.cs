@@ -19,8 +19,8 @@ public sealed class ServiceEndpoints : IEndpointGroup
 
     public void Map(IEndpointRouteBuilder app)
     {
-        var groupOwner = app.MapApiV1Group("owner/services")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+        var groupOwner = app.MapApiV1Group("owner/services");
+            // .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
         MapToOwner(groupOwner);
 
         var group = app.MapApiV1Group("services");

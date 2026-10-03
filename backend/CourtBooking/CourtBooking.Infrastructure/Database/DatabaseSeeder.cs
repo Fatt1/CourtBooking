@@ -311,24 +311,21 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             Name = "Cầu lông",
-            ImageId = badmintonIcon.Id,
-            IsActive = true
+            ImageId = badmintonIcon.Id
         };
 
         var sportPickleball = new SportType
         {
             Id = Guid.NewGuid(),
             Name = "Pickleball",
-            ImageId = pickleballIcon.Id,
-            IsActive = true
+            ImageId = pickleballIcon.Id
         };
 
         var sportFutsal = new SportType
         {
             Id = Guid.NewGuid(),
             Name = "Bóng đá mini",
-            ImageId = futsalIcon.Id,
-            IsActive = true
+            ImageId = futsalIcon.Id
         };
 
         await context.SportTypes.AddRangeAsync([sportBadminton, sportPickleball, sportFutsal], cancellationToken);
