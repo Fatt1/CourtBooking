@@ -1,4 +1,4 @@
-using CourtBooking.Application.Features.V1.Pricing.Dtos;
+using CourtBooking.Application.Helpers;
 using CourtBooking.Domain.Entities.Courts;
 
 namespace CourtBooking.Application.Features.V1.Pricing.Commands.PriceTableRules;

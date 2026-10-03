@@ -30,6 +30,16 @@ public interface IOrderChecker
     /// </summary>
     Task<Result> CheckConflictsAsync(
         List<FlatSlotItem> allSlots,
+        CancellationToken cancellationToken,
+        Guid? excludeOrderId = null);
+
+    /// <summary>
+    /// Xác thực và tính toán cho đơn đặt lịch cố định theo các chu kì.
+    /// </summary>
+    Task<Result<BookingValidationContext>> ValidateFixedBookingAsync(
+        Guid branchId,
+        List<FixedCycleInput> cycles,
+        List<OrderServiceItem>? services,
         CancellationToken cancellationToken);
 
     /// <summary>

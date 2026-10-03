@@ -1,5 +1,6 @@
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Data;
+using CourtBooking.Application.Features.V1.Orders.Dtos;
 using CourtBooking.Application.Messaging;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public class GetDailyOrderByIdQueryHandler : IQueryHandler<GetDailyOrderByIdQuer
         var order = await _dbContext.Orders
             .Include(o => o.PaymentTransactions)
             .AsNoTracking()
+            .AsSplitQuery()
             .Where(o => o.Id == request.OrderId)
             .Select(o => new DailyOrderResponse(
                 Id: o.Id,
@@ -58,6 +60,16 @@ public class GetDailyOrderByIdQueryHandler : IQueryHandler<GetDailyOrderByIdQuer
                     Quantity: s.Quantity,
                     TotalPrice: s.Quantity * s.UnitPrice
                 )).ToList(),
+                PaymentTransactions: o.PaymentTransactions
+                    .OrderByDescending(t => t.CreatedAt)
+                    .Select(t => new PaymentTransactionDto(
+                        Id: t.Id,
+                        Amount: t.Amount,
+                        PaymentMethod: t.Method,
+                        CreatedAt: t.CreatedAt,
+                        Type: t.Type,
+                        ImageKey: t.ProofImage == null ? null : t.ProofImage.StorageKey
+                    )).ToList(),
                 TotalCourtAmount: o.TotalCourtAmount,
                 TotalServiceAmount: o.TotalServiceAmount,
                 DiscountAmount: o.DiscountAmount,
