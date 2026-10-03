@@ -93,8 +93,9 @@ try
 
     app.UseHttpsRedirection();
 
-    app.UseAuthentication();
-    app.UseAuthorization();
+    // Temporarily disabled for local API testing without JWT.
+    // app.UseAuthentication();
+    // app.UseAuthorization();
 
     app.MapControllers();
 
