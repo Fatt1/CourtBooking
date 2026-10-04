@@ -22,8 +22,8 @@ public sealed class CourtEndpoints : IEndpointGroup
     {
         // 1. Danh sách sân theo chi nhánh
         var branchGroup = app
-            .MapApiV1Group("owner/branches/{branchId:guid}/courts");
-            //.RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+            .MapApiV1Group("owner/branches/{branchId:guid}/courts")
+            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
 
         branchGroup.MapGet("/", async (
             Guid branchId,
@@ -51,8 +51,8 @@ public sealed class CourtEndpoints : IEndpointGroup
 
         // 2. Thêm sân mới vào loại sân
         var courtTypeGroup = app
-            .MapApiV1Group("owner/court-types/{courtTypeId:guid}/courts");
-            //.RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+            .MapApiV1Group("owner/court-types/{courtTypeId:guid}/courts")
+            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
 
         courtTypeGroup.MapPost("/", async (
             Guid courtTypeId,
@@ -80,8 +80,8 @@ public sealed class CourtEndpoints : IEndpointGroup
 
         // 3. Xem, sửa, đổi trạng thái và xóa từng sân
         var courtGroup = app
-            .MapApiV1Group("owner/courts/{id:guid}");
-            //.RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+            .MapApiV1Group("owner/courts/{id:guid}")
+            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
 
         // GET /api/v1/owner/courts/{id}
         courtGroup.MapGet("/", async (
