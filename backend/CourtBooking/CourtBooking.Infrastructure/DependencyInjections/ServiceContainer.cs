@@ -3,12 +3,14 @@ using Amazon.S3;
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Storage;
 using CourtBooking.Application.Data;
+using CourtBooking.Domain.Entities.Users;
 using CourtBooking.Infrastructure.Authentication;
 using CourtBooking.Infrastructure.BackgroundJobs;
 using CourtBooking.Infrastructure.Database;
 using CourtBooking.Infrastructure.Interceptors;
 using CourtBooking.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -22,15 +24,36 @@ public static class ServiceContainer
     {
         services.AddDatabase()
             .AddStorage()
+            .AddIdentityServices()
             .AddJwtAuthentication();
 
         // ── Authentication & User Context ────────────────────────────
         services.AddHttpContextAccessor();
         services.AddScoped<IUserContext, UserContext>();
         services.AddScoped<CourtBooking.Application.Abstractions.Authorization.IBranchAuthorizationService, CourtBooking.Infrastructure.Authorization.BranchAuthorizationService>();
+        services.AddScoped<CourtBooking.Application.Abstractions.Emails.IEmailService, CourtBooking.Infrastructure.Emails.EmailService>();
 
         // ── Background Jobs ──────────────────────────────────────────
         services.AddHostedService<CleanUpImagesBackgroundService>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddIdentityServices(this IServiceCollection services)
+    {
+        services.AddIdentityCore<ApplicationUser>(options =>
+        {
+            options.Password.RequireDigit = false;
+            options.Password.RequireLowercase = false;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequiredLength = 6;
+            options.User.RequireUniqueEmail = true;
+        })
+        .AddRoles<ApplicationRole>()
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddSignInManager()
+        .AddDefaultTokenProviders();
 
         return services;
     }
