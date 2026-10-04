@@ -15,10 +15,17 @@ internal sealed class ResetPasswordCommandHandler(
 {
     public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken ct)
     {
-        // 1. Tìm người dùng theo Email
-        var user = await userManager.Users
+        // 1. Tìm người dùng theo Email và ExpectedAccountType (nếu có)
+        var query = userManager.Users
             .Include(u => u.CourtOwner)
-            .FirstOrDefaultAsync(u => u.Email == request.Email && !u.IsDeleted, ct);
+            .Where(u => u.Email == request.Email && !u.IsDeleted);
+
+        if (request.ExpectedAccountType.HasValue)
+        {
+            query = query.Where(u => u.AccountType == request.ExpectedAccountType.Value);
+        }
+
+        var user = await query.FirstOrDefaultAsync(ct);
 
         if (user is null || user.Status != UserStatus.Active)
         {

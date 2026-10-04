@@ -6,7 +6,13 @@ namespace CourtBooking.Application.Abstractions.Emails;
 public interface IEmailService
 {
     /// <summary>
-    /// Gửi email chứa đường dẫn đặt lại mật khẩu cho người dùng.
+    /// Gửi email cho người dùng.
     /// </summary>
-    Task SendPasswordResetEmailAsync(string toEmail, string resetLink, CancellationToken ct = default);
+    Task SendEmail(string toEmail, string resetLink, CancellationToken ct = default);
+
+    /// <summary>
+    /// Alias viết thường sendEmail theo yêu cầu.
+    /// </summary>
+    Task sendEmail(string toEmail, string resetLink, CancellationToken ct = default)
+        => SendEmail(toEmail, resetLink, ct);
 }

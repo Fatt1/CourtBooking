@@ -5,7 +5,7 @@ namespace CourtBooking.Infrastructure.Emails;
 
 internal sealed class EmailService(ILogger<EmailService> logger) : IEmailService
 {
-    public Task SendPasswordResetEmailAsync(string toEmail, string resetLink, CancellationToken ct = default)
+    public Task SendEmail(string toEmail, string resetLink, CancellationToken ct = default)
     {
         // Ghi log chi tiết để hỗ trợ dev/test ngay trên Console & Seq mà không cần cấu hình SMTP thật
         logger.LogInformation(
@@ -21,4 +21,7 @@ internal sealed class EmailService(ILogger<EmailService> logger) : IEmailService
 
         return Task.CompletedTask;
     }
+
+    public Task sendEmail(string toEmail, string resetLink, CancellationToken ct = default)
+        => SendEmail(toEmail, resetLink, ct);
 }

@@ -6,6 +6,7 @@ using CourtBooking.Domain.Entities.Users;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.Identities.Commands.RegisterPlayer;
 
@@ -18,8 +19,10 @@ internal sealed class RegisterPlayerCommandHandler(
 {
     public async Task<Result<AuthResponse>> Handle(RegisterPlayerCommand request, CancellationToken ct)
     {
-        // 1. Kiểm tra email đã tồn tại hay chưa
-        var existingUser = await userManager.FindByEmailAsync(request.Email);
+        // 1. Kiểm tra email và accountType đã tồn tại hay chưa
+        var existingUser = await userManager.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.AccountType == AccountType.Player && !u.IsDeleted, ct);
+
         if (existingUser is not null)
         {
             return Result.Failure<AuthResponse>(new ConflictError("Email này đã được sử dụng trên hệ thống."));
@@ -46,18 +49,6 @@ internal sealed class RegisterPlayerCommandHandler(
             return Result.Failure<AuthResponse>(new BadError(errors));
         }
 
-        // 3. Đảm bảo role "Player" tồn tại và gán cho user
-        const string playerRole = "Player";
-        if (!await roleManager.RoleExistsAsync(playerRole))
-        {
-            await roleManager.CreateAsync(new ApplicationRole
-            {
-                Id = Guid.NewGuid(),
-                Name = playerRole,
-                NormalizedName = playerRole.ToUpperInvariant()
-            });
-        }
-        await userManager.AddToRoleAsync(user, playerRole);
 
         // 4. Tạo hồ sơ người chơi (PlayerProfile)
         dbContext.PlayerProfiles.Add(new PlayerProfile
