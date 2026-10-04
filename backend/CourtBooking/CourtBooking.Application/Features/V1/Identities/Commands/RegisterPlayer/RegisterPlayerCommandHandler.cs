@@ -1,7 +1,6 @@
-using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
-using CourtBooking.Application.Features.V1.Identities.Dtos;
 using CourtBooking.Application.Messaging;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Entities.Users;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
@@ -12,20 +11,17 @@ namespace CourtBooking.Application.Features.V1.Identities.Commands.RegisterPlaye
 
 internal sealed class RegisterPlayerCommandHandler(
     UserManager<ApplicationUser> userManager,
-    RoleManager<ApplicationRole> roleManager,
-    IApplicationDbContext dbContext,
-    IJwtTokenService jwtTokenService,
-    IAuthCookieService cookieService) : ICommandHandler<RegisterPlayerCommand, AuthResponse>
+    IApplicationDbContext dbContext) : ICommandHandler<RegisterPlayerCommand>
 {
-    public async Task<Result<AuthResponse>> Handle(RegisterPlayerCommand request, CancellationToken ct)
+    public async Task<Result> Handle(RegisterPlayerCommand request, CancellationToken cancellationToken)
     {
         // 1. Kiểm tra email và accountType đã tồn tại hay chưa
         var existingUser = await userManager.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email && u.AccountType == AccountType.Player && !u.IsDeleted, ct);
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.AccountType == AccountType.Player && !u.IsDeleted, cancellationToken);
 
         if (existingUser is not null)
         {
-            return Result.Failure<AuthResponse>(new ConflictError("Email này đã được sử dụng trên hệ thống."));
+            return Result.Failure(new ConflictError("Email này đã được sử dụng trên hệ thống."));
         }
 
         // 2. Tạo ApplicationUser
@@ -46,42 +42,24 @@ internal sealed class RegisterPlayerCommandHandler(
         if (!identityResult.Succeeded)
         {
             var errors = string.Join("; ", identityResult.Errors.Select(e => e.Description));
-            return Result.Failure<AuthResponse>(new BadError(errors));
+            return Result.Failure(new BadError(errors));
         }
+        await userManager.AddToRoleAsync(user, RoleConstants.Player);
 
 
         // 4. Tạo hồ sơ người chơi (PlayerProfile)
         dbContext.PlayerProfiles.Add(new PlayerProfile
         {
             Id = user.Id,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            Gender = request.Gender
+
         });
 
-        // 5. Cấp Access Token và Refresh Token
-        var accessToken = jwtTokenService.GenerateAccessToken(user, [playerRole]);
-        var refreshTokenString = jwtTokenService.GenerateRefreshToken();
-        var refreshTokenExpires = DateTime.UtcNow.AddDays(7);
 
-        dbContext.RefreshTokens.Add(new Domain.Entities.Users.RefreshToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            Token = refreshTokenString,
-            ExpiresAt = refreshTokenExpires,
-            CreatedAt = DateTime.UtcNow
-        });
+        await dbContext.SaveChangesAsync(cancellationToken);
 
-        await dbContext.SaveChangesAsync(ct);
 
-        cookieService.SetRefreshTokenCookie(refreshTokenString, refreshTokenExpires);
 
-        return Result.Success(new AuthResponse(
-            user.Id,
-            user.Email!,
-            user.FullName,
-            playerRole,
-            accessToken,
-            MustChangePassword: false));
+        return Result.Success();
     }
 }

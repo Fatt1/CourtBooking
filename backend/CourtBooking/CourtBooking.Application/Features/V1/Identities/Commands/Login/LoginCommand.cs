@@ -10,4 +10,4 @@ namespace CourtBooking.Application.Features.V1.Identities.Commands.Login;
 public sealed record LoginCommand(
     string Email,
     string Password,
-    AccountType? ExpectedAccountType = null) : ICommand<AuthResponse>;
+    AccountType? ExpectedAccountType = null) : ICommand<LoginResponse>;

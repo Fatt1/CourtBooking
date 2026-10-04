@@ -5,6 +5,7 @@ using CourtBooking.Application.Features.V1.ServiceCategories.Commands.UpdateServ
 using CourtBooking.Application.Features.V1.ServiceCategories.Dtos;
 using CourtBooking.Application.Features.V1.ServiceCategories.Queries.GetServiceCategories;
 using CourtBooking.Application.Features.V1.ServiceCategories.Queries.GetServiceCategoryById;
+using CourtBooking.Domain.Constants;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,7 @@ public sealed class ServiceCategoryEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         var group = app.MapApiV1Group("owner/service-categories")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
 
         group.MapGet("/", GetServiceCategories)
             .WithName("GetServiceCategories")

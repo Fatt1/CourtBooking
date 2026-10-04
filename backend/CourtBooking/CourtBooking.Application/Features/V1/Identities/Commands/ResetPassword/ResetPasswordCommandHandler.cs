@@ -5,6 +5,7 @@ using CourtBooking.Domain.Entities.Users;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.Identities.Commands.ResetPassword;
@@ -36,13 +37,7 @@ internal sealed class ResetPasswordCommandHandler(
         string rawToken;
         try
         {
-            string incoming = request.Token.Replace('-', '+').Replace('_', '/');
-            switch (incoming.Length % 4)
-            {
-                case 2: incoming += "=="; break;
-                case 3: incoming += "="; break;
-            }
-            var decodedBytes = Convert.FromBase64String(incoming);
+            var decodedBytes = WebEncoders.Base64UrlDecode(request.Token);
             rawToken = Encoding.UTF8.GetString(decodedBytes);
         }
         catch

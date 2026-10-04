@@ -1,10 +1,13 @@
+using CourtBooking.Domain.Enums;
+
 namespace CourtBooking.API.Endpoints.V1.Identities;
 
 public sealed record RegisterPlayerRequest(
     string Email,
     string Password,
     string FullName,
-    string? PhoneNumber);
+    Gender Gender,
+    string PhoneNumber);
 
 public sealed record LoginRequest(
     string Email,
