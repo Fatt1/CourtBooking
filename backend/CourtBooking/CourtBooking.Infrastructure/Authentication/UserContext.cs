@@ -22,6 +22,12 @@ internal sealed class UserContext(IHttpContextAccessor httpContextAccessor) : IU
                 return userId;
             }
 
+            // Never let a header or development fallback override an authenticated identity.
+            if (IsAuthenticated)
+            {
+                return Guid.Empty;
+            }
+
             // 2. Hỗ trợ truyền Header X-User-Id từ Postman/Swagger khi test các role khác nhau
             var customUserId = httpContextAccessor.HttpContext?.Request.Headers["X-User-Id"].ToString();
             if (!string.IsNullOrWhiteSpace(customUserId) && Guid.TryParse(customUserId, out var customGuid))

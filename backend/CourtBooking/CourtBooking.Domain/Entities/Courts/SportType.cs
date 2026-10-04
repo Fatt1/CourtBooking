@@ -15,7 +15,7 @@ public class SportType : EntityBase<Guid>
     // Navigation properties
     public Images.Image? Image { get; set; }
 
-    public List<Branch> Branches { get; set; } = [];
+    public List<BranchSportType> BranchSportTypes { get; set; } = [];
     public List<Events.SportEvent> Events { get; set; } = [];
     public List<Matches.SocialMatch> SocialMatches { get; set; } = [];
 }

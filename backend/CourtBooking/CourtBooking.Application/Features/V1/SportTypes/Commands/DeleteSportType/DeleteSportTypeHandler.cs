@@ -23,7 +23,7 @@ internal sealed class DeleteSportTypeHandler(
             return Result.Failure(new NotFoundError("SportType", request.Id));
         }
 
-        var isUsedByAnyBranch = await dbContext.Branches
+        var isUsedByAnyBranch = await dbContext.BranchSportTypes
             .AnyAsync(b => b.SportTypeId == request.Id, cancellationToken);
 
         if (isUsedByAnyBranch)

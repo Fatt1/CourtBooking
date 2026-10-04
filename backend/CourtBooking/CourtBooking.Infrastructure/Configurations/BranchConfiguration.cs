@@ -18,6 +18,10 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
             .HasMaxLength(255)
             .IsRequired();
 
+        builder.Property(b => b.Hotline)
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.Property(b => b.GgMapUrl)
             .HasColumnName("GGMapUrl")
             .HasMaxLength(255)
@@ -76,11 +80,6 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
             .HasForeignKey(b => b.CourtOwnerId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(b => b.SportType)
-            .WithMany(s => s.Branches)
-            .HasForeignKey(b => b.SportTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(b => b.QrImage)
             .WithMany()
             .HasForeignKey(b => b.QrImageId)
@@ -120,7 +119,5 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
         builder.HasIndex(b => b.CourtOwnerId)
             .HasDatabaseName("IX_Branches_CourtOwnerId");
 
-        builder.HasIndex(b => b.SportTypeId)
-            .HasDatabaseName("IX_Branches_SportTypeId");
     }
 }

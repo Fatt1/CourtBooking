@@ -19,7 +19,7 @@ internal sealed class GetAdminSportTypesHandler(IApplicationDbContext dbContext)
                 item.Id,
                 item.Name,
                 item.ImageId,
-                item.Branches.Count))
+                item.BranchSportTypes.Count))
             .ToListAsync(cancellationToken);
 
         return Result.Success<IReadOnlyList<AdminSportTypeDto>>(sportTypes);

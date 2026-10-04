@@ -26,11 +26,6 @@ public class SportTypeConfiguration : IEntityTypeConfiguration<SportType>
             .HasForeignKey(s => s.ImageId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.HasMany(s => s.Branches)
-            .WithOne(b => b.SportType)
-            .HasForeignKey(b => b.SportTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasMany(s => s.Events)
             .WithOne(e => e.SportType)
             .HasForeignKey(e => e.SportTypeId)
