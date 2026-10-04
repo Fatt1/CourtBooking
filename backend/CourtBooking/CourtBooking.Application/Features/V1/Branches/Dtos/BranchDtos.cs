@@ -1,9 +1,24 @@
+using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Domain.Entities.Courts;
 
 namespace CourtBooking.Application.Features.V1.Branches.Dtos;
 
 public sealed record BranchSportDto(Guid Id, string Name);
 public sealed record BranchImageDto(Guid Id, string Key);
+
+public sealed record BranchReviewItemDto(
+    Guid Id,
+    string PlayerName,
+    byte Rating,
+    string? Comment,
+    DateTime CreatedAt,
+    BranchImageDto? Image);
+
+public sealed record OwnerBranchReviewsDto(
+    Guid BranchId,
+    double? AverageRating,
+    int ReviewCount,
+    PagedList<BranchReviewItemDto> Reviews);
 
 public sealed record OwnerBranchListItemDto(
     Guid Id, string Name, string Hotline, string Province, string District, string Street,
