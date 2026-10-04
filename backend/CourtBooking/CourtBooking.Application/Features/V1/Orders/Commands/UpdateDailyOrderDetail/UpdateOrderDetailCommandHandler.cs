@@ -1,4 +1,4 @@
-﻿using AsyncKeyedLock;
+using AsyncKeyedLock;
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Orders.Common;
@@ -63,7 +63,10 @@ public class UpdateOrderDetailCommandHandler : ICommandHandler<UpdateOrderDetail
 
                 releasers.Add(await _keyedLocker.LockAsync(key, cancellationToken));
             }
-            var conflictResult = await _bookingValidator.CheckConflictsAsync(bookingContext.FlatSlots, cancellationToken);
+            var conflictResult = await _bookingValidator.CheckConflictsAsync(
+                bookingContext.FlatSlots,
+                cancellationToken,
+                excludeOrderId: order.Id);
             if (conflictResult.IsFailure)
             {
                 return Result.Failure(conflictResult.Error!);
