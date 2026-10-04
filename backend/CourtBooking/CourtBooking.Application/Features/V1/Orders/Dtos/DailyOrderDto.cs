@@ -5,7 +5,7 @@ namespace CourtBooking.Application.Features.V1.Orders.Dtos;
 /// <summary>
 /// DTO danh sách đơn hàng 
 /// </summary>
-public sealed record OrderDto(
+public sealed record DailyOrderDto(
     Guid Id,
     string OrderCode,
     string CustomerName,
@@ -14,5 +14,6 @@ public sealed record OrderDto(
     OrderType OrderType,
     DateOnly OrderDate,
     decimal TotalAmount,
+    decimal RemainingAmount,
     string? Note,
     List<OrderDetailDto> Details);

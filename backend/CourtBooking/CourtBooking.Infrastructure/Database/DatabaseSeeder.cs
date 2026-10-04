@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Entities.Courts;
 using CourtBooking.Domain.Entities.Events;
 using CourtBooking.Domain.Entities.Images;
@@ -95,22 +96,22 @@ public static class DatabaseSeeder
         var roleAdmin = new ApplicationRole
         {
             Id = AdminRoleId,
-            Name = "Admin",
-            NormalizedName = "ADMIN",
+            Name = RoleConstants.Admin,
+            NormalizedName = RoleConstants.Admin.ToUpperInvariant(),
             Description = "Quản trị viên toàn hệ thống"
         };
         var roleOwner = new ApplicationRole
         {
             Id = CourtOwnerRoleId,
-            Name = "CourtOwner",
-            NormalizedName = "COURTOWNER",
+            Name = RoleConstants.CourtOwner,
+            NormalizedName = RoleConstants.CourtOwner.ToUpperInvariant(),
             Description = "Chủ cơ sở thể thao / quản lý sân"
         };
         var rolePlayer = new ApplicationRole
         {
             Id = PlayerRoleId,
-            Name = "Player",
-            NormalizedName = "PLAYER",
+            Name = RoleConstants.Player,
+            NormalizedName = RoleConstants.Player.ToUpperInvariant(),
             Description = "Khách hàng / Người chơi"
         };
 

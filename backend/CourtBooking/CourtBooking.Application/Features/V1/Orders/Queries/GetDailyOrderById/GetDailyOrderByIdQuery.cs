@@ -1,3 +1,4 @@
+using CourtBooking.Application.Features.V1.Orders.Dtos;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Enums;
 
@@ -34,6 +35,7 @@ public sealed record DailyOrderResponse(
     List<DailyOrderSlotItemDto> Slots,
     // 4. Chi tiết các dịch vụ đính kèm
     List<DailyOrderServiceItemDto> Services,
+    List<PaymentTransactionDto> PaymentTransactions,
     // 5. Chiết tính hóa đơn & Thanh toán
     decimal TotalCourtAmount,          // Tổng tiền sân
     decimal TotalServiceAmount,        // Tổng tiền dịch vụ
@@ -64,3 +66,4 @@ public sealed record DailyOrderServiceItemDto(
     decimal UnitPrice,
     int Quantity,
     decimal TotalPrice);
+

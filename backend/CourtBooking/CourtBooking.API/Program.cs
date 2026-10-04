@@ -46,8 +46,11 @@ try
     // Infrastructure layer: EF Core (SQL Server), interceptors
     builder.Services.AddInfrastructureServices();
 
-    // OpenAPI document at /openapi/v1.json
-    builder.Services.AddOpenApi("v1");
+    // OpenAPI document at /openapi/v1.json with JWT Bearer Authentication
+    builder.Services.AddOpenApi("v1", options =>
+    {
+        options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    });
 
     // Register the global exception handler (IExceptionHandler implementation).
     builder.Services.AddExceptionHandler<GlobalExceptionHandlerMiddleware>();
@@ -69,7 +72,9 @@ try
             options
                 .WithTitle("CourtBooking API")
                 .WithTheme(ScalarTheme.DeepSpace)          // dark theme
-                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+                .AddPreferredSecuritySchemes("Bearer")
+                .EnablePersistentAuthentication();
             // Sidebar is shown by default — no need to call WithSidebar(true)
             // Proxy disabled: requests go directly to your API, not through proxy.scalar.com
         });

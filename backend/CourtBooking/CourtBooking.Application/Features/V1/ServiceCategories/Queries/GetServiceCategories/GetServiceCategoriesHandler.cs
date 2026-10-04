@@ -1,6 +1,5 @@
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
-using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.ServiceCategories.Dtos;
 using CourtBooking.Application.Messaging;
 using CourtBooking.SharedKernel;
@@ -10,9 +9,9 @@ namespace CourtBooking.Application.Features.V1.ServiceCategories.Queries.GetServ
 
 internal sealed class GetServiceCategoriesHandler(
     IApplicationDbContext dbContext,
-    IUserContext userContext) : IQueryHandler<GetServiceCategoriesQuery, PagedList<ServiceCategoryDto>>
+    IUserContext userContext) : IQueryHandler<GetServiceCategoriesQuery, IReadOnlyList<ServiceCategoryDto>>
 {
-    public async Task<Result<PagedList<ServiceCategoryDto>>> Handle(
+    public async Task<Result<IReadOnlyList<ServiceCategoryDto>>> Handle(
         GetServiceCategoriesQuery request,
         CancellationToken cancellationToken)
     {
@@ -31,7 +30,7 @@ internal sealed class GetServiceCategoriesHandler(
             query = query.Where(category => category.IsActive == request.IsActive.Value);
         }
 
-        var projectedQuery = query
+        var categories = await query
             .OrderBy(category => category.Name)
             .Select(category => new ServiceCategoryDto(
                 category.Id,
@@ -40,14 +39,9 @@ internal sealed class GetServiceCategoriesHandler(
                 category.IsActive,
                 category.Services.Count,
                 category.CreatedAt,
-                category.UpdatedAt));
+                category.UpdatedAt))
+            .ToListAsync(cancellationToken);
 
-        var result = await PagedList<ServiceCategoryDto>.CreateAsync(
-            projectedQuery,
-            request.Page,
-            request.PageSize,
-            cancellationToken);
-
-        return Result.Success(result);
+        return Result.Success<IReadOnlyList<ServiceCategoryDto>>(categories);
     }
 }

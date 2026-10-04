@@ -1,11 +1,11 @@
 using CourtBooking.API.Extensions;
-using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.ServiceCategories.Commands.CreateServiceCategory;
 using CourtBooking.Application.Features.V1.ServiceCategories.Commands.DeleteServiceCategory;
 using CourtBooking.Application.Features.V1.ServiceCategories.Commands.UpdateServiceCategory;
 using CourtBooking.Application.Features.V1.ServiceCategories.Dtos;
 using CourtBooking.Application.Features.V1.ServiceCategories.Queries.GetServiceCategories;
 using CourtBooking.Application.Features.V1.ServiceCategories.Queries.GetServiceCategoryById;
+using CourtBooking.Domain.Constants;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -19,13 +19,13 @@ public sealed class ServiceCategoryEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         var group = app.MapApiV1Group("owner/service-categories")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
 
         group.MapGet("/", GetServiceCategories)
             .WithName("GetServiceCategories")
             .WithSummary("Lấy danh sách loại dịch vụ của chủ sân")
             .WithTags(ServiceCategoryTag)
-            .Produces<PagedList<ServiceCategoryDto>>(StatusCodes.Status200OK)
+            .Produces<IReadOnlyList<ServiceCategoryDto>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden);
@@ -74,13 +74,11 @@ public sealed class ServiceCategoryEndpoints : IEndpointGroup
     private static async Task<IResult> GetServiceCategories(
         [FromQuery] string? search,
         [FromQuery] bool? isActive,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
         ISender sender = default!,
         CancellationToken cancellationToken = default)
     {
         var result = await sender.Send(
-            new GetServiceCategoriesQuery(search, isActive, page, pageSize),
+            new GetServiceCategoriesQuery(search, isActive),
             cancellationToken);
 
         return result.IsSuccess

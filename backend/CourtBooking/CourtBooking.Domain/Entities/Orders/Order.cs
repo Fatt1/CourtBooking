@@ -43,6 +43,12 @@ public class Order : EntityBase<Guid>, IAuditable
     public decimal TotalAmount => TotalCourtAmount + TotalServiceAmount - DiscountAmount;
 
 
+
+    public void UpdateCustomerInfo(string customerName, string customerPhone)
+    {
+        CustomerName = customerName;
+        CustomerPhone = customerPhone;
+    }
     public static Order CreateOrderOnline(
         Guid branchId,
         Guid? playerId,
@@ -105,6 +111,41 @@ public class Order : EntityBase<Guid>, IAuditable
         };
     }
 
+    public static Order CreateFixedOrderByOwner(
+        Guid branchId,
+        Guid? playerId,
+        string customerName,
+        string customerPhone,
+        string? note,
+        decimal discountAmount = 0)
+    {
+        string orderCode = $"ORD-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid().ToString().Substring(0, 8)}";
+        var orderDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        return new Order
+        {
+            Id = Guid.CreateVersion7(),
+            OrderCode = orderCode,
+            BranchId = branchId,
+            PlayerId = playerId,
+            CustomerName = customerName,
+            CustomerPhone = customerPhone,
+            Channel = OrderChannel.Pos,
+            TotalCourtAmount = 0,
+            TotalServiceAmount = 0,
+            DiscountAmount = discountAmount,
+            Status = OrderStatus.Confirmed,
+            HoldExpiresAt = DateTime.UtcNow.AddYears(100),
+            OrderDate = orderDate,
+            OrderType = OrderType.Fixed,
+            Note = note
+        };
+    }
+
+    public void AddFixedConfig(FixedOrderConfig config)
+    {
+        FixedConfigs.Add(config);
+    }
+
     public void ConfirmOrder()
     {
         Status = OrderStatus.Confirmed;
@@ -118,7 +159,14 @@ public class Order : EntityBase<Guid>, IAuditable
 
     public decimal CalculateRemainingAmount()
     {
-        return TotalAmount - PaymentTransactions.Sum(t => t.Amount);
+        var totalPaid = PaymentTransactions
+            .Where(t => t.Type == PaymentTransactionType.Payment)
+            .Sum(t => t.Amount);
+        var totalRefunded = PaymentTransactions
+            .Where(t => t.Type == PaymentTransactionType.Refund)
+            .Sum(t => t.Amount);
+
+        return Math.Max(0, TotalAmount - (totalPaid - totalRefunded));
     }
 
     public void ClearOrderDetails()
@@ -171,6 +219,12 @@ public class Order : EntityBase<Guid>, IAuditable
         }
     }
 
+    public void ClearOrderServices()
+    {
+        Services.Clear();
+        TotalServiceAmount = 0;
+    }
+
     public void RemoveOrderDetail(Guid orderDetailId)
     {
         var orderDetail = Details.FirstOrDefault(d => d.Id == orderDetailId);
@@ -181,12 +235,12 @@ public class Order : EntityBase<Guid>, IAuditable
         }
     }
 
-    public void AddPaymentTransaction(decimal Amount,
+    public Payments.PaymentTransaction AddPaymentTransaction(decimal Amount,
                 PaymentMethod Method,
                 Guid? ProofImageId,
                 PaymentTransactionType type)
     {
-        PaymentTransactions.Add(new Payments.PaymentTransaction
+        var transaction = new Payments.PaymentTransaction
         {
             Amount = Amount,
             Method = Method,
@@ -195,8 +249,9 @@ public class Order : EntityBase<Guid>, IAuditable
             Id = Guid.CreateVersion7(),
             OrderId = Id,
             CreatedAt = DateTime.UtcNow
-
-        });
+        };
+        PaymentTransactions.Add(transaction);
+        return transaction;
     }
 
     public void PendingConfirmOrder()
