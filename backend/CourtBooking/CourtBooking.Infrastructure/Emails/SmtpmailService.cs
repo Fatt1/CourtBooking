@@ -3,9 +3,9 @@ using Microsoft.Extensions.Logging;
 
 namespace CourtBooking.Infrastructure.Emails;
 
-internal sealed class EmailService(ILogger<EmailService> logger) : IEmailService
+public sealed class SmtpmailService(ILogger<SmtpmailService> logger) : IEmailService
 {
-    public Task SendEmail(string toEmail, string resetLink, CancellationToken ct = default)
+    public Task SendEmailAsync(string toEmail, string message, CancellationToken ct = default)
     {
         // Ghi log chi tiết để hỗ trợ dev/test ngay trên Console & Seq mà không cần cấu hình SMTP thật
         logger.LogInformation(
@@ -17,11 +17,9 @@ internal sealed class EmailService(ILogger<EmailService> logger) : IEmailService
             ================================================================
             """,
             toEmail,
-            resetLink);
-
+            message);
         return Task.CompletedTask;
     }
 
-    public Task sendEmail(string toEmail, string resetLink, CancellationToken ct = default)
-        => SendEmail(toEmail, resetLink, ct);
+
 }

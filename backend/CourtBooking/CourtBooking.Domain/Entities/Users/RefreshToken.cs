@@ -7,8 +7,6 @@ namespace CourtBooking.Domain.Entities.Users;
 /// </summary>
 public class RefreshToken : EntityBase<Guid>
 {
-    public RefreshToken() { }
-
     public Guid UserId { get; set; }
     public string Token { get; set; } = null!;
     public DateTime ExpiresAt { get; set; }

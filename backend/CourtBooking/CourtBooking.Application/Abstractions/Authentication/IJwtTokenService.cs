@@ -6,4 +6,6 @@ public interface IJwtTokenService
 {
     string GenerateAccessToken(ApplicationUser user, IEnumerable<string> roles);
     string GenerateRefreshToken();
+    DateTime GetRefreshTokenExpiresAt();
+    DateTime GetAccessTokenExpiresAt();
 }

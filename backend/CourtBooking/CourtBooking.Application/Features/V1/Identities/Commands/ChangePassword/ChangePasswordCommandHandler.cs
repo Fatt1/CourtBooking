@@ -36,7 +36,6 @@ internal sealed class ChangePasswordCommandHandler(
         if (user.CourtOwner is not null && user.CourtOwner.MustChangePwd)
         {
             user.CourtOwner.MustChangePwd = false;
-            user.CourtOwner.UpdatedAt = DateTime.UtcNow;
             await dbContext.SaveChangesAsync(ct);
         }
 

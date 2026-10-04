@@ -1,5 +1,5 @@
-using CourtBooking.Application.Features.V1.Identities.Dtos;
 using CourtBooking.Application.Messaging;
+using CourtBooking.Domain.Enums;
 
 namespace CourtBooking.Application.Features.V1.Identities.Commands.RegisterPlayer;
 
@@ -10,4 +10,5 @@ public sealed record RegisterPlayerCommand(
     string Email,
     string Password,
     string FullName,
-    string? PhoneNumber) : ICommand<AuthResponse>;
+    Gender Gender,
+    string PhoneNumber) : ICommand;

@@ -5,6 +5,7 @@ using CourtBooking.Domain.Entities.Users;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.Identities.Commands.ForgotPassword;
@@ -37,10 +38,7 @@ internal sealed class ForgotPasswordCommandHandler(
 
         // 3. Chuyển token sang chuỗi Base64 URL-safe để chèn an toàn vào URL
         var tokenBytes = Encoding.UTF8.GetBytes(token);
-        var urlSafeToken = Convert.ToBase64String(tokenBytes)
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
+        var urlSafeToken = WebEncoders.Base64UrlEncode(tokenBytes);
 
         // 4. Xây dựng đường link đặt lại mật khẩu riêng biệt cho từng portal (Chủ sân vs Người chơi)
         string defaultUrl = (user.AccountType == AccountType.CourtOwner)
@@ -54,7 +52,7 @@ internal sealed class ForgotPasswordCommandHandler(
         var resetLink = $"{baseUrl}?email={Uri.EscapeDataString(user.Email!)}&token={urlSafeToken}";
 
         // 5. Gửi email
-        await emailService.SendEmail(user.Email!, resetLink, ct);
+        await emailService.SendEmailAsync(user.Email!, resetLink, ct);
 
         return Result.Success();
     }

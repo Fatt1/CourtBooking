@@ -16,22 +16,19 @@ namespace CourtBooking.API.Endpoints.V1.Identities;
 
 public sealed class IdentityEndpoints : IEndpointGroup
 {
-    private const string OwnerTag = "Owner Authentication (Chủ Sân)";
-    private const string PlayerTag = "Player Authentication (Người Chơi)";
+    private const string IdentityTag = "Identity";
 
     public void Map(IEndpointRouteBuilder app)
     {
         // ── 1. Cụm endpoint dành riêng cho Chủ sân (Owner) ─────────────
-        var ownerGroup = app.MapApiV1Group("owner/auth");
+        var ownerGroup = app.MapApiV1Group("owner/identity");
         MapOwnerEndpoints(ownerGroup);
 
         // ── 2. Cụm endpoint dành cho Người chơi (Player) ───────────────
-        var playerGroup = app.MapApiV1Group("player/auth");
-        MapPlayerEndpoints(playerGroup);
+        var group = app.MapApiV1Group("identity");
+        MapToPublic(group);
 
-        // ── 3. Cụm endpoint tương thích ngược (identities) ────────────
-        var genericGroup = app.MapApiV1Group("identities");
-        MapGenericEndpoints(genericGroup);
+
     }
 
     /// <summary>
@@ -56,8 +53,8 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithName("OwnerLogin")
             .WithSummary("Đăng nhập dành cho Chủ sân (CourtOwner)")
             .WithDescription("Chỉ cho phép tài khoản Chủ sân (CourtOwner) đăng nhập vào hệ thống quản lý sân.")
-            .WithTags(OwnerTag)
-            .Produces<AuthResponse>(StatusCodes.Status200OK)
+            .WithTags(IdentityTag)
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
@@ -78,7 +75,7 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithName("OwnerForgotPassword")
             .WithSummary("Chủ sân quên mật khẩu — Gửi link đặt lại mật khẩu qua email")
             .WithDescription("Chỉ áp dụng cho tài khoản Chủ sân. Đường link đặt lại mật khẩu sẽ trỏ về cổng quản trị của Chủ sân.")
-            .WithTags(OwnerTag)
+            .WithTags(IdentityTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
@@ -99,7 +96,7 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithName("OwnerResetPassword")
             .WithSummary("Chủ sân đặt lại mật khẩu mới qua Token")
             .WithDescription("Nhận Email, Token từ email và Mật khẩu mới để đặt lại mật khẩu cho tài khoản Chủ sân.")
-            .WithTags(OwnerTag)
+            .WithTags(IdentityTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
@@ -120,7 +117,7 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithName("OwnerChangePassword")
             .WithSummary("Chủ sân đổi mật khẩu")
             .WithDescription("Yêu cầu đăng nhập. Tự động tắt cờ bắt buộc đổi mật khẩu (MustChangePwd = 0) sau lần đổi đầu tiên.")
-            .WithTags(OwnerTag)
+            .WithTags(IdentityTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
@@ -129,7 +126,7 @@ public sealed class IdentityEndpoints : IEndpointGroup
     /// <summary>
     /// Các API xác thực dành cho Người chơi (Player)
     /// </summary>
-    private static void MapPlayerEndpoints(RouteGroupBuilder group)
+    private static void MapToPublic(RouteGroupBuilder group)
     {
         // 1. POST /api/v1/player/auth/register — Đăng ký người chơi
         group.MapPost("/register", async (
@@ -141,20 +138,21 @@ public sealed class IdentityEndpoints : IEndpointGroup
                 request.Email,
                 request.Password,
                 request.FullName,
+                request.Gender,
                 request.PhoneNumber);
 
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
-                ? Results.Ok(result.Value)
+                ? Results.Ok()
                 : result.ToProblemDetails();
         })
             .AllowAnonymous()
             .WithName("PlayerRegister")
             .WithSummary("Đăng ký tài khoản Người chơi")
             .WithDescription("Tạo tài khoản người chơi mới, tự động gán role Player và tạo hồ sơ người chơi.")
-            .WithTags(PlayerTag)
-            .Produces<AuthResponse>(StatusCodes.Status200OK)
+            .WithTags(IdentityTag)
+            .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
@@ -175,8 +173,8 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithName("PlayerLogin")
             .WithSummary("Đăng nhập dành cho Người chơi")
             .WithDescription("Đăng nhập vào cổng người chơi với Email và Password.")
-            .WithTags(PlayerTag)
-            .Produces<AuthResponse>(StatusCodes.Status200OK)
+            .WithTags(IdentityTag)
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
@@ -197,7 +195,7 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithName("PlayerForgotPassword")
             .WithSummary("Người chơi quên mật khẩu — Gửi link xác nhận qua email")
             .WithDescription("Chỉ áp dụng cho tài khoản Người chơi. Đường link đặt lại mật khẩu trỏ về cổng người chơi.")
-            .WithTags(PlayerTag)
+            .WithTags(IdentityTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
@@ -218,7 +216,7 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithName("PlayerResetPassword")
             .WithSummary("Người chơi đặt lại mật khẩu mới qua Token")
             .WithDescription("Nhận Email, Token từ link email và Mật khẩu mới để đặt lại mật khẩu cho tài khoản Người chơi.")
-            .WithTags(PlayerTag)
+            .WithTags(IdentityTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
@@ -239,30 +237,29 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithName("PlayerChangePassword")
             .WithSummary("Người chơi đổi mật khẩu")
             .WithDescription("Yêu cầu đăng nhập tài khoản Người chơi để đổi mật khẩu.")
-            .WithTags(PlayerTag)
+            .WithTags(IdentityTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         // 6. POST /api/v1/player/auth/refresh-token — Làm mới token
         group.MapPost("/refresh-token", async (
-                [FromBody] RefreshTokenRequest? request,
                 ISender sender,
                 CancellationToken ct) =>
         {
-            var command = new RefreshTokenCommand(request?.RefreshToken);
+            var command = new RefreshTokenCommand();
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
-                ? Results.Ok(result.Value)
+                ? Results.Ok(new RefreshTokenResponse(result.Value))
                 : result.ToProblemDetails();
         })
             .AllowAnonymous()
-            .WithName("PlayerRefreshToken")
+            .WithName("RefreshToken")
             .WithSummary("Làm mới Access Token")
-            .WithDescription("Sử dụng Refresh Token từ Request Body hoặc HttpOnly Cookie để cấp Access Token mới.")
-            .WithTags(PlayerTag)
-            .Produces<AuthResponse>(StatusCodes.Status200OK)
+            .WithDescription("Sử dụng Refresh Token từ HttpOnly Cookie để cấp Access Token mới.")
+            .WithTags(IdentityTag)
+            .Produces<RefreshTokenResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
@@ -282,81 +279,11 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithName("PlayerGetCurrentUser")
             .WithSummary("Lấy thông tin người dùng đang đăng nhập")
             .WithDescription("Trả về thông tin chi tiết của tài khoản hiện tại từ Access Token.")
-            .WithTags(PlayerTag)
-            .Produces<CurrentUserDto>(StatusCodes.Status200OK)
+            .WithTags(IdentityTag)
+            .Produces<CurrentPlayerDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
-    /// <summary>
-    /// Các API tương thích ngược với route /api/v1/identities
-    /// </summary>
-    private static void MapGenericEndpoints(RouteGroupBuilder group)
-    {
-        group.MapPost("/login", async (
-                [FromBody] LoginRequest request,
-                ISender sender,
-                CancellationToken ct) =>
-        {
-            var command = new LoginCommand(request.Email, request.Password);
-            var result = await sender.Send(command, ct);
 
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : result.ToProblemDetails();
-        })
-            .AllowAnonymous()
-            .WithName("GenericLogin")
-            .WithSummary("Đăng nhập hệ thống (chung)")
-            .WithTags("Identities (Chung)")
-            .Produces<AuthResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest);
-
-        group.MapPost("/register", async (
-                [FromBody] RegisterPlayerRequest request,
-                ISender sender,
-                CancellationToken ct) =>
-        {
-            var command = new RegisterPlayerCommand(request.Email, request.Password, request.FullName, request.PhoneNumber);
-            var result = await sender.Send(command, ct);
-
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : result.ToProblemDetails();
-        })
-            .AllowAnonymous()
-            .WithName("GenericRegister")
-            .WithTags("Identities (Chung)");
-
-        group.MapPost("/refresh-token", async (
-                [FromBody] RefreshTokenRequest? request,
-                ISender sender,
-                CancellationToken ct) =>
-        {
-            var command = new RefreshTokenCommand(request?.RefreshToken);
-            var result = await sender.Send(command, ct);
-
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : result.ToProblemDetails();
-        })
-            .AllowAnonymous()
-            .WithName("GenericRefreshToken")
-            .WithTags("Identities (Chung)");
-
-        group.MapGet("/me", async (
-                ISender sender,
-                CancellationToken ct) =>
-        {
-            var query = new GetCurrentUserQuery();
-            var result = await sender.Send(query, ct);
-
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : result.ToProblemDetails();
-        })
-            .RequireAuthorization()
-            .WithName("GenericMe")
-            .WithTags("Identities (Chung)");
-    }
 }
