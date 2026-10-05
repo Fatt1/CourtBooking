@@ -42,28 +42,24 @@ public sealed class MatchEndpoints : IEndpointGroup
 
         // 2. GET /api/v1/matches — Danh sách kèo giao lưu (Công khai - hỗ trợ bộ lọc và phân trang)
         group.MapGet("", async (
-            [FromQuery] Guid? branchId,
             [FromQuery] Guid? sportTypeId,
             [FromQuery] DateOnly? date,
+            [FromQuery] string? province,
+            [FromQuery] string? district,
             [FromQuery] string? skillLevel,
             [FromQuery] SocialMatchStatus? status,
-            [FromQuery] Guid? hostId,
-            [FromQuery] Guid? participantPlayerId,
-            [FromQuery] string? search,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
             ISender sender = default!,
             CancellationToken ct = default) =>
         {
             var query = new GetMatchesQuery(
-                branchId,
                 sportTypeId,
                 date,
+                province,
+                district,
                 skillLevel,
                 status,
-                hostId,
-                participantPlayerId,
-                search,
                 page,
                 pageSize);
 
