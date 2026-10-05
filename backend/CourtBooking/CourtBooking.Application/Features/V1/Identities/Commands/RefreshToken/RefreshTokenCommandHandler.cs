@@ -1,6 +1,5 @@
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
-using CourtBooking.Application.Features.V1.Identities.Dtos;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Entities.Users;
 using CourtBooking.Domain.Enums;
@@ -14,35 +13,32 @@ internal sealed class RefreshTokenCommandHandler(
     UserManager<ApplicationUser> userManager,
     IApplicationDbContext dbContext,
     IJwtTokenService jwtTokenService,
-    IAuthCookieService cookieService) : ICommandHandler<RefreshTokenCommand, AuthResponse>
+    IAuthCookieService cookieService) : ICommandHandler<RefreshTokenCommand, string>
 {
-    public async Task<Result<AuthResponse>> Handle(RefreshTokenCommand request, CancellationToken ct)
+    public async Task<Result<string>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         // 1. Lấy token từ request body hoặc từ HttpOnly Cookie
-        var tokenString = !string.IsNullOrWhiteSpace(request.RefreshToken)
-            ? request.RefreshToken
-            : cookieService.GetRefreshTokenFromCookie();
+        var tokenString = cookieService.GetRefreshTokenFromCookie();
 
         if (string.IsNullOrWhiteSpace(tokenString))
         {
-            return Result.Failure<AuthResponse>(new BadError("Không tìm thấy refresh token."));
+            return Result.Failure<string>(new BadError("Không tìm thấy refresh token."));
         }
 
         // 2. Tìm token trong cơ sở dữ liệu
         var existingToken = await dbContext.RefreshTokens
             .Include(rt => rt.User)
-                .ThenInclude(u => u.CourtOwner)
-            .FirstOrDefaultAsync(rt => rt.Token == tokenString, ct);
+            .FirstOrDefaultAsync(rt => rt.Token == tokenString, cancellationToken);
 
         if (existingToken is null || !existingToken.IsActive)
         {
-            return Result.Failure<AuthResponse>(new BadError("Refresh token không hợp lệ hoặc đã hết hạn."));
+            return Result.Failure<string>(new BadError("Refresh token không hợp lệ hoặc đã hết hạn."));
         }
 
         var user = existingToken.User;
         if (user.Status != UserStatus.Active || user.IsDeleted)
         {
-            return Result.Failure<AuthResponse>(new ForbiddenError("Tài khoản đã bị vô hiệu hóa."));
+            return Result.Failure<string>(new ForbiddenError("Tài khoản đã bị vô hiệu hóa."));
         }
 
         // 3. Thu hồi (Revoke) token cũ (Refresh token rotation)
@@ -50,12 +46,10 @@ internal sealed class RefreshTokenCommandHandler(
 
         // 4. Cấp Access Token và Refresh Token mới
         var roles = await userManager.GetRolesAsync(user);
-        var primaryRole = roles.FirstOrDefault() ?? user.AccountType.ToString();
-        bool mustChangePassword = user.CourtOwner?.MustChangePwd ?? false;
 
         var newAccessToken = jwtTokenService.GenerateAccessToken(user, roles);
         var newRefreshToken = jwtTokenService.GenerateRefreshToken();
-        var refreshTokenExpires = DateTime.UtcNow.AddDays(7);
+        var refreshTokenExpires = jwtTokenService.GetRefreshTokenExpiresAt();
 
         dbContext.RefreshTokens.Add(new Domain.Entities.Users.RefreshToken
         {
@@ -66,16 +60,10 @@ internal sealed class RefreshTokenCommandHandler(
             CreatedAt = DateTime.UtcNow
         });
 
-        await dbContext.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         cookieService.SetRefreshTokenCookie(newRefreshToken, refreshTokenExpires);
 
-        return Result.Success(new AuthResponse(
-            user.Id,
-            user.Email!,
-            user.FullName,
-            primaryRole,
-            newAccessToken,
-            mustChangePassword));
+        return Result.Success(newAccessToken);
     }
 }

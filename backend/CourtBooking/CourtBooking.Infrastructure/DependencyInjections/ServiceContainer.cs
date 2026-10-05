@@ -31,7 +31,7 @@ public static class ServiceContainer
         services.AddHttpContextAccessor();
         services.AddScoped<IUserContext, UserContext>();
         services.AddScoped<CourtBooking.Application.Abstractions.Authorization.IBranchAuthorizationService, CourtBooking.Infrastructure.Authorization.BranchAuthorizationService>();
-        services.AddScoped<CourtBooking.Application.Abstractions.Emails.IEmailService, CourtBooking.Infrastructure.Emails.EmailService>();
+        services.AddScoped<CourtBooking.Application.Abstractions.Emails.IEmailService, CourtBooking.Infrastructure.Emails.SmtpmailService>();
 
         // ── Background Jobs ──────────────────────────────────────────
         services.AddHostedService<CleanUpImagesBackgroundService>();

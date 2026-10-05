@@ -5,6 +5,7 @@ using CourtBooking.Application.Features.V1.RetailOrders.Dtos;
 using CourtBooking.Application.Features.V1.RetailOrders.Queries.GetRetailOrderById;
 using CourtBooking.Application.Features.V1.RetailOrders.Queries.GetRetailOrders;
 using CourtBooking.Application.Features.V1.RetailOrders.Queries.GetRetailOrderSummary;
+using CourtBooking.Domain.Constants;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +17,7 @@ public sealed class RetailOrderEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         var group = app.MapApiV1Group("owner/retail-orders")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner))
             .WithTags("Retail Orders");
 
         group.MapPost("/", CreateAsync)

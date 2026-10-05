@@ -13,6 +13,7 @@ internal sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenS
 {
     private readonly JwtOptions _options = options.Value;
 
+
     public string GenerateAccessToken(ApplicationUser user, IEnumerable<string> roles)
     {
         var claims = new List<Claim>
@@ -32,13 +33,14 @@ internal sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenS
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var expiresAt = DateTime.UtcNow.AddMinutes(_options.AccessTokenExpirationInMinutes);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
             Issuer = _options.Issuer,
             Audience = _options.Audience,
-            Expires = DateTime.UtcNow.AddMinutes(_options.AccessTokenExpirationInMinutes),
+            Expires = expiresAt,
             SigningCredentials = credentials
         };
 
@@ -53,4 +55,10 @@ internal sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenS
         var randomBytes = RandomNumberGenerator.GetBytes(64);
         return Convert.ToBase64String(randomBytes);
     }
+
+    public DateTime GetRefreshTokenExpiresAt() =>
+        DateTime.UtcNow.AddDays(_options.RefreshTokenExpirationInDays);
+
+    public DateTime GetAccessTokenExpiresAt() =>
+        DateTime.UtcNow.AddMinutes(_options.AccessTokenExpirationInMinutes);
 }
