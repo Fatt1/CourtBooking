@@ -23,6 +23,7 @@ public interface IApplicationDbContext
     // ── Courts ────────────────────────────────────────────────
     DbSet<SportType> SportTypes { get; }
     DbSet<Branch> Branches { get; }
+    DbSet<BranchSportType> BranchSportTypes { get; }
     DbSet<BranchImage> BranchImages { get; }
     DbSet<CourtType> CourtTypes { get; }
     DbSet<Court> Courts { get; }

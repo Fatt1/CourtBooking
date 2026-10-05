@@ -36,7 +36,9 @@ internal sealed class GetSystemUtilizationStatisticsQueryHandler(IApplicationDbC
 
         if (request.SportTypeId.HasValue)
         {
-            branchQuery = branchQuery.Where(b => b.SportTypeId == request.SportTypeId.Value);
+            branchQuery = branchQuery.Where(b =>
+                b.BranchSportTypes.Any(branchSportType =>
+                    branchSportType.SportTypeId == request.SportTypeId.Value));
         }
 
         var totalBranches = await branchQuery.CountAsync(ct);
@@ -54,7 +56,9 @@ internal sealed class GetSystemUtilizationStatisticsQueryHandler(IApplicationDbC
 
         if (request.SportTypeId.HasValue)
         {
-            courtQuery = courtQuery.Where(c => c.CourtType.Branch.SportTypeId == request.SportTypeId.Value);
+            courtQuery = courtQuery.Where(c =>
+                c.CourtType.Branch.BranchSportTypes.Any(branchSportType =>
+                    branchSportType.SportTypeId == request.SportTypeId.Value));
         }
 
         var totalCourts = await courtQuery.CountAsync(ct);
@@ -64,12 +68,19 @@ internal sealed class GetSystemUtilizationStatisticsQueryHandler(IApplicationDbC
 
         // Thống kê phân bổ theo môn thể thao
         var bySportType = await branchQuery
-            .GroupBy(b => new { b.SportTypeId, b.SportType.Name })
+            .SelectMany(branch => branch.BranchSportTypes)
+            .GroupBy(branchSportType => new
+            {
+                branchSportType.SportTypeId,
+                branchSportType.SportType.Name
+            })
             .Select(g => new CourtsBySportTypeDto(
                 g.Key.SportTypeId,
                 g.Key.Name,
                 g.Count(),
-                g.SelectMany(b => b.CourtTypes).SelectMany(ct => ct.Courts).Count()))
+                g.SelectMany(branchSportType => branchSportType.Branch.CourtTypes)
+                    .SelectMany(courtType => courtType.Courts)
+                    .Count()))
             .ToListAsync(ct);
 
         var facilityMetrics = new FacilityMetricsDto(
@@ -108,7 +119,9 @@ internal sealed class GetSystemUtilizationStatisticsQueryHandler(IApplicationDbC
 
         if (request.SportTypeId.HasValue)
         {
-            activeOrderPlayersQuery = activeOrderPlayersQuery.Where(o => o.Branch.SportTypeId == request.SportTypeId.Value);
+            activeOrderPlayersQuery = activeOrderPlayersQuery.Where(o =>
+                o.Branch.BranchSportTypes.Any(branchSportType =>
+                    branchSportType.SportTypeId == request.SportTypeId.Value));
         }
 
         var orderPlayerIds = await activeOrderPlayersQuery
@@ -181,7 +194,9 @@ internal sealed class GetSystemUtilizationStatisticsQueryHandler(IApplicationDbC
 
         if (request.SportTypeId.HasValue)
         {
-            orderDetailsQuery = orderDetailsQuery.Where(d => d.Order.Branch.SportTypeId == request.SportTypeId.Value);
+            orderDetailsQuery = orderDetailsQuery.Where(d =>
+                d.Order.Branch.BranchSportTypes.Any(branchSportType =>
+                    branchSportType.SportTypeId == request.SportTypeId.Value));
         }
 
         var bookedSlots = await orderDetailsQuery

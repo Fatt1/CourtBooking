@@ -312,24 +312,21 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             Name = "Cầu lông",
-            ImageId = badmintonIcon.Id,
-            IsActive = true
+            ImageId = badmintonIcon.Id
         };
 
         var sportPickleball = new SportType
         {
             Id = Guid.NewGuid(),
             Name = "Pickleball",
-            ImageId = pickleballIcon.Id,
-            IsActive = true
+            ImageId = pickleballIcon.Id
         };
 
         var sportFutsal = new SportType
         {
             Id = Guid.NewGuid(),
             Name = "Bóng đá mini",
-            ImageId = futsalIcon.Id,
-            IsActive = true
+            ImageId = futsalIcon.Id
         };
 
         await context.SportTypes.AddRangeAsync([sportBadminton, sportPickleball, sportFutsal], cancellationToken);
@@ -342,8 +339,8 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             CourtOwnerId = userOwner.Id,
-            SportTypeId = sportBadminton.Id,
             Name = "CLB Cầu Lông & Pickleball Sài Gòn Star - Chi Nhánh 1",
+            Hotline = userOwner.PhoneNumber!,
             GgMapUrl = "https://maps.google.com/search?q=saigon-star-branch-1",
             Province = "Hồ Chí Minh",
             District = "Quận 7",
@@ -363,8 +360,8 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             CourtOwnerId = userOwner.Id,
-            SportTypeId = sportPickleball.Id,
             Name = "CLB Pickleball Phú Nhuận Arena - Chi Nhánh 2",
+            Hotline = userOwner.PhoneNumber!,
             GgMapUrl = "https://maps.google.com/search?q=phunhuan-arena-branch-2",
             Province = "Hồ Chí Minh",
             District = "Phú Nhuận",
@@ -381,6 +378,12 @@ public static class DatabaseSeeder
         };
 
         await context.Branches.AddRangeAsync([branch1, branch2], cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+
+        await context.BranchSportTypes.AddRangeAsync(
+            [new BranchSportType { BranchId = branch1.Id, SportTypeId = sportBadminton.Id },
+             new BranchSportType { BranchId = branch2.Id, SportTypeId = sportPickleball.Id }],
+            cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
         var branchImages = new[]

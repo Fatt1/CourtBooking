@@ -10,8 +10,8 @@ public class Branch : EntityBase<Guid>, IAuditable
     public Branch() { }
 
     public Guid CourtOwnerId { get; set; }
-    public Guid SportTypeId { get; set; }
     public string Name { get; set; } = null!;
+    public string Hotline { get; set; } = null!;
     public string GgMapUrl { get; set; } = null!;
     public string Province { get; set; } = null!;
     public string District { get; set; } = null!;
@@ -31,7 +31,7 @@ public class Branch : EntityBase<Guid>, IAuditable
 
     // Navigation properties
     public Users.CourtOwner CourtOwner { get; set; } = null!;
-    public SportType SportType { get; set; } = null!;
+    public List<BranchSportType> BranchSportTypes { get; set; } = [];
     public Images.Image QrImage { get; set; } = null!;
 
     public List<CourtType> CourtTypes { get; set; } = [];
@@ -60,6 +60,7 @@ public class Branch : EntityBase<Guid>, IAuditable
             {
                 Images.Add(new BranchImage
                 {
+                    Id = Guid.CreateVersion7(),
                     BranchId = Id,
                     ImageId = imageId,
                     DisplayOrder = i
