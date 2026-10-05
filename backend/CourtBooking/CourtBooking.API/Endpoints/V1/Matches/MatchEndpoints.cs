@@ -5,6 +5,7 @@ using CourtBooking.Application.Features.V1.Matches.Commands.CreateMatch;
 using CourtBooking.Application.Features.V1.Matches.Commands.JoinMatch;
 using CourtBooking.Application.Features.V1.Matches.Commands.LeaveMatch;
 using CourtBooking.Application.Features.V1.Matches.Commands.RejectParticipant;
+using CourtBooking.Application.Features.V1.Matches.Dtos;
 using CourtBooking.Application.Features.V1.Matches.Queries.GetMatchById;
 using CourtBooking.Application.Features.V1.Matches.Queries.GetMatches;
 using CourtBooking.Domain.Enums;
@@ -31,12 +32,13 @@ public sealed class MatchEndpoints : IEndpointGroup
         {
             var result = await sender.Send(command, ct);
             return result.IsSuccess
-                ? Results.Created($"/api/v1/matches/{result.Value}", result.Value)
+                ? Results.Created($"/api/v1/matches/{result.Value}", new CreateMatchResponse(result.Value))
                 : result.ToProblemDetails();
         })
         .RequireAuthorization()
         .WithName("CreateMatch")
-        .WithSummary("Mở kèo giao lưu mới từ đơn đặt sân đã xác nhận");
+        .WithSummary("Mở kèo giao lưu mới từ đơn đặt sân đã xác nhận")
+        .Produces<CreateMatchResponse>(StatusCodes.Status201Created);
 
         // 2. GET /api/v1/matches — Danh sách kèo giao lưu (Công khai - hỗ trợ bộ lọc và phân trang)
         group.MapGet("", async (
@@ -95,12 +97,13 @@ public sealed class MatchEndpoints : IEndpointGroup
         {
             var result = await sender.Send(new JoinMatchCommand(id), ct);
             return result.IsSuccess
-                ? Results.Ok(result.Value)
+                ? Results.Ok(new JoinMatchResponse(result.Value))
                 : result.ToProblemDetails();
         })
         .RequireAuthorization()
         .WithName("JoinMatch")
-        .WithSummary("Xin tham gia vào một kèo giao lưu (tự động nhận hoặc chờ chủ phòng duyệt)");
+        .WithSummary("Xin tham gia vào một kèo giao lưu (tự động nhận hoặc chờ chủ phòng duyệt)")
+        .Produces<JoinMatchResponse>(StatusCodes.Status200OK);
 
         // 5. POST /api/v1/matches/{id:guid}/participants/{participantId:guid}/approve — Chủ phòng duyệt thành viên (Yêu cầu đăng nhập)
         group.MapPost("{id:guid}/participants/{participantId:guid}/approve", async (

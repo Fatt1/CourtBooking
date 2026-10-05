@@ -56,3 +56,7 @@ public sealed record MatchParticipantDto(
     ParticipantStatus Status,
     DateTime JoinedAt,
     bool IsHost);
+
+public sealed record CreateMatchResponse(Guid MatchId);
+
+public sealed record JoinMatchResponse(Guid ParticipantId);
