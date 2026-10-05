@@ -14,7 +14,7 @@ public sealed class CreateMatchCommandHandler(
 {
     public async Task<Result<Guid>> Handle(CreateMatchCommand request, CancellationToken cancellationToken)
     {
-        var currentUserId = userContext.IsAuthenticated ? userContext.UserId : request.HostId;
+        var hostId = userContext.UserId;
 
         // 1. Kiểm tra đơn hàng tồn tại
         var order = await dbContext.Orders
@@ -27,13 +27,19 @@ public sealed class CreateMatchCommandHandler(
             return Result.Failure<Guid>(new NotFoundError("Order", request.OrderId));
         }
 
-        // 2. Kiểm tra trạng thái đơn hàng (phải là Confirmed)
+        // 2. Kiểm tra quyền sở hữu: Chỉ người đặt đơn mới được mở kèo giao lưu
+        if (order.PlayerId != hostId)
+        {
+            return Result.Failure<Guid>(new ForbiddenError("Bạn không phải là chủ sở hữu của đơn đặt sân này."));
+        }
+
+        // 3. Kiểm tra trạng thái đơn hàng (phải là Confirmed)
         if (order.Status != OrderStatus.Confirmed)
         {
             return Result.Failure<Guid>(new ConflictError("Chỉ có thể tạo kèo giao lưu cho đơn đặt sân đã được xác nhận thanh toán."));
         }
 
-        // 3. Kiểm tra đơn hàng đã được gắn với kèo nào trước đó chưa
+        // 4. Kiểm tra đơn hàng đã được gắn với kèo nào trước đó chưa
         var existingMatch = await dbContext.SocialMatches
             .AnyAsync(m => m.OrderId == request.OrderId, cancellationToken);
 
@@ -42,7 +48,7 @@ public sealed class CreateMatchCommandHandler(
             return Result.Failure<Guid>(new ConflictError("Đơn hàng này đã được mở kèo giao lưu trước đó."));
         }
 
-        // 4. Lấy chi tiết lịch chơi của đơn hàng
+        // 5. Lấy chi tiết lịch chơi của đơn hàng
         var firstDetail = order.Details
             .OrderBy(d => d.Date)
             .ThenBy(d => d.StartTime)
@@ -53,18 +59,11 @@ public sealed class CreateMatchCommandHandler(
             return Result.Failure<Guid>(new ConflictError("Đơn hàng chưa có thông tin chi tiết ca chơi."));
         }
 
-        // 5. Kiểm tra thời gian chơi đã qua chưa
+        // 6. Kiểm tra thời gian chơi đã qua chưa
         var startDateTime = firstDetail.Date.ToDateTime(firstDetail.StartTime);
         if (startDateTime < DateTime.Now)
         {
             return Result.Failure<Guid>(new ConflictError("Không thể tạo kèo cho ca chơi đã diễn ra hoặc đã bắt đầu."));
-        }
-
-        // 6. Xác định HostId
-        var hostId = currentUserId ?? order.PlayerId.GetValueOrDefault();
-        if (hostId == Guid.Empty)
-        {
-            return Result.Failure<Guid>(new ConflictError("Không xác định được thông tin người tạo kèo."));
         }
 
         // 7. Khởi tạo SocialMatch

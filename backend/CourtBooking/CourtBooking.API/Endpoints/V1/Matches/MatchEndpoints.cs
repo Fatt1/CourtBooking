@@ -23,7 +23,7 @@ public sealed class MatchEndpoints : IEndpointGroup
         var group = app.MapApiV1Group("matches")
             .WithTags(MatchTag);
 
-        // 1. POST /api/v1/matches — Mở kèo giao lưu mới
+        // 1. POST /api/v1/matches — Mở kèo giao lưu mới (Yêu cầu đăng nhập)
         group.MapPost("", async (
             [FromBody] CreateMatchCommand command,
             ISender sender,
@@ -34,10 +34,11 @@ public sealed class MatchEndpoints : IEndpointGroup
                 ? Results.Created($"/api/v1/matches/{result.Value}", result.Value)
                 : result.ToProblemDetails();
         })
+        .RequireAuthorization()
         .WithName("CreateMatch")
         .WithSummary("Mở kèo giao lưu mới từ đơn đặt sân đã xác nhận");
 
-        // 2. GET /api/v1/matches — Danh sách kèo giao lưu (hỗ trợ bộ lọc và phân trang)
+        // 2. GET /api/v1/matches — Danh sách kèo giao lưu (Công khai - hỗ trợ bộ lọc và phân trang)
         group.MapGet("", async (
             [FromQuery] Guid? branchId,
             [FromQuery] Guid? sportTypeId,
@@ -72,7 +73,7 @@ public sealed class MatchEndpoints : IEndpointGroup
         .WithName("GetMatches")
         .WithSummary("Lấy danh sách các kèo giao lưu thể thao với bộ lọc và phân trang");
 
-        // 3. GET /api/v1/matches/{id:guid} — Chi tiết kèo giao lưu
+        // 3. GET /api/v1/matches/{id:guid} — Chi tiết kèo giao lưu (Công khai)
         group.MapGet("{id:guid}", async (
             [FromRoute] Guid id,
             ISender sender,
@@ -86,80 +87,80 @@ public sealed class MatchEndpoints : IEndpointGroup
         .WithName("GetMatchById")
         .WithSummary("Lấy thông tin chi tiết của một kèo giao lưu kèm danh sách người tham gia");
 
-        // 4. POST /api/v1/matches/{id:guid}/join — Xin tham gia kèo
+        // 4. POST /api/v1/matches/{id:guid}/join — Xin tham gia kèo (Yêu cầu đăng nhập)
         group.MapPost("{id:guid}/join", async (
             [FromRoute] Guid id,
-            [FromQuery] Guid? playerId,
             ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new JoinMatchCommand(id, playerId), ct);
+            var result = await sender.Send(new JoinMatchCommand(id), ct);
             return result.IsSuccess
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
+        .RequireAuthorization()
         .WithName("JoinMatch")
         .WithSummary("Xin tham gia vào một kèo giao lưu (tự động nhận hoặc chờ chủ phòng duyệt)");
 
-        // 5. POST /api/v1/matches/{id:guid}/participants/{participantId:guid}/approve — Chủ phòng duyệt thành viên
+        // 5. POST /api/v1/matches/{id:guid}/participants/{participantId:guid}/approve — Chủ phòng duyệt thành viên (Yêu cầu đăng nhập)
         group.MapPost("{id:guid}/participants/{participantId:guid}/approve", async (
             [FromRoute] Guid id,
             [FromRoute] Guid participantId,
-            [FromQuery] Guid? hostId,
             ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new ApproveParticipantCommand(id, participantId, hostId), ct);
+            var result = await sender.Send(new ApproveParticipantCommand(id, participantId), ct);
             return result.IsSuccess
                 ? Results.NoContent()
                 : result.ToProblemDetails();
         })
+        .RequireAuthorization()
         .WithName("ApproveParticipant")
         .WithSummary("Chủ phòng phê duyệt yêu cầu tham gia của một thành viên");
 
-        // 6. POST /api/v1/matches/{id:guid}/participants/{participantId:guid}/reject — Chủ phòng từ chối thành viên
+        // 6. POST /api/v1/matches/{id:guid}/participants/{participantId:guid}/reject — Chủ phòng từ chối thành viên (Yêu cầu đăng nhập)
         group.MapPost("{id:guid}/participants/{participantId:guid}/reject", async (
             [FromRoute] Guid id,
             [FromRoute] Guid participantId,
-            [FromQuery] Guid? hostId,
             ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new RejectParticipantCommand(id, participantId, hostId), ct);
+            var result = await sender.Send(new RejectParticipantCommand(id, participantId), ct);
             return result.IsSuccess
                 ? Results.NoContent()
                 : result.ToProblemDetails();
         })
+        .RequireAuthorization()
         .WithName("RejectParticipant")
         .WithSummary("Chủ phòng từ chối yêu cầu tham gia của một thành viên");
 
-        // 7. POST /api/v1/matches/{id:guid}/leave — Người tham gia rút lui khỏi kèo
+        // 7. POST /api/v1/matches/{id:guid}/leave — Người tham gia rút lui khỏi kèo (Yêu cầu đăng nhập)
         group.MapPost("{id:guid}/leave", async (
             [FromRoute] Guid id,
-            [FromQuery] Guid? playerId,
             ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new LeaveMatchCommand(id, playerId), ct);
+            var result = await sender.Send(new LeaveMatchCommand(id), ct);
             return result.IsSuccess
                 ? Results.NoContent()
                 : result.ToProblemDetails();
         })
+        .RequireAuthorization()
         .WithName("LeaveMatch")
         .WithSummary("Người tham gia rút lui khỏi kèo trước giờ thi đấu");
 
-        // 8. POST /api/v1/matches/{id:guid}/cancel — Chủ phòng hủy kèo
+        // 8. POST /api/v1/matches/{id:guid}/cancel — Chủ phòng hủy kèo (Yêu cầu đăng nhập)
         group.MapPost("{id:guid}/cancel", async (
             [FromRoute] Guid id,
-            [FromQuery] Guid? hostId,
             ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new CancelMatchCommand(id, hostId), ct);
+            var result = await sender.Send(new CancelMatchCommand(id), ct);
             return result.IsSuccess
                 ? Results.NoContent()
                 : result.ToProblemDetails();
         })
+        .RequireAuthorization()
         .WithName("CancelMatch")
         .WithSummary("Chủ phòng hủy kèo giao lưu");
     }

@@ -13,11 +13,7 @@ public sealed class LeaveMatchCommandHandler(
 {
     public async Task<Result> Handle(LeaveMatchCommand request, CancellationToken cancellationToken)
     {
-        var playerId = userContext.IsAuthenticated ? userContext.UserId : request.PlayerId;
-        if (!playerId.HasValue || playerId.Value == Guid.Empty)
-        {
-            return Result.Failure(new ConflictError("Không xác định được danh tính người tham gia."));
-        }
+        var playerId = userContext.UserId;
 
         var match = await dbContext.SocialMatches
             .Include(m => m.Participants)
@@ -41,14 +37,14 @@ public sealed class LeaveMatchCommandHandler(
         }
 
         // 2. Không cho chủ phòng tự leave
-        if (match.HostId == playerId.Value)
+        if (match.HostId == playerId)
         {
             return Result.Failure(new ConflictError("Chủ phòng không thể rời kèo. Nếu không tiếp tục tổ chức, vui lòng chọn hủy kèo."));
         }
 
         // 3. Tìm thành viên
         var participant = match.Participants
-            .FirstOrDefault(p => p.PlayerId == playerId.Value &&
+            .FirstOrDefault(p => p.PlayerId == playerId &&
                                 (p.Status == ParticipantStatus.Confirmed || p.Status == ParticipantStatus.PendingApproval));
 
         if (participant == null)

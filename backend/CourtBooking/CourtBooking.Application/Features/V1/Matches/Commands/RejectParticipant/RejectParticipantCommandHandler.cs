@@ -22,9 +22,9 @@ public sealed class RejectParticipantCommandHandler(
             return Result.Failure(new NotFoundError("SocialMatch", request.MatchId));
         }
 
-        // 1. Kiểm tra quyền chủ phòng: Khi đã đăng nhập thì lấy từ Token, khi chưa đăng nhập thì lấy từ request để test
-        var currentUserId = userContext.IsAuthenticated ? userContext.UserId : request.HostId;
-        if (currentUserId.HasValue && match.HostId != currentUserId.Value)
+        // 1. Kiểm tra quyền chủ phòng
+        var currentUserId = userContext.UserId;
+        if (match.HostId != currentUserId)
         {
             return Result.Failure(new ForbiddenError("Chỉ có chủ phòng mới có quyền từ chối thành viên."));
         }

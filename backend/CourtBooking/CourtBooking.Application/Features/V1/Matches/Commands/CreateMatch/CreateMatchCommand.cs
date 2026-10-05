@@ -8,5 +8,4 @@ public sealed record CreateMatchCommand(
     int MissingPlayers,
     decimal FeePerPlayer,
     byte ApprovalMode,
-    string? Description,
-    Guid? HostId = null) : ICommand<Guid>;
+    string? Description) : ICommand<Guid>;

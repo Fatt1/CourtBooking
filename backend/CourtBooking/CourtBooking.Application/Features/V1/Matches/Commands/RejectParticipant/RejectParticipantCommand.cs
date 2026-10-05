@@ -4,5 +4,4 @@ namespace CourtBooking.Application.Features.V1.Matches.Commands.RejectParticipan
 
 public sealed record RejectParticipantCommand(
     Guid MatchId,
-    Guid ParticipantId,
-    Guid? HostId = null) : ICommand;
+    Guid ParticipantId) : ICommand;

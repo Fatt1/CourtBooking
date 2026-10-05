@@ -12,8 +12,8 @@ public sealed class ReviewEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         var group = app.MapApiV1Group("reviews")
-            .WithTags("Reviews");
-            //.RequireAuthorization(); // TEMP: Bỏ comment dòng này sau khi có API Đăng nhập
+            .WithTags("Reviews")
+            .RequireAuthorization();
 
         group.MapPost("", async (
             [FromBody] CreateReviewCommand command,

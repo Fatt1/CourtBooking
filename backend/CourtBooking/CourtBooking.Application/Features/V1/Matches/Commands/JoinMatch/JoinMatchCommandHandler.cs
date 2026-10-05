@@ -14,11 +14,7 @@ public sealed class JoinMatchCommandHandler(
 {
     public async Task<Result<Guid>> Handle(JoinMatchCommand request, CancellationToken cancellationToken)
     {
-        var playerId = userContext.IsAuthenticated ? userContext.UserId : request.PlayerId;
-        if (!playerId.HasValue || playerId.Value == Guid.Empty)
-        {
-            return Result.Failure<Guid>(new ConflictError("Không xác định được danh tính người tham gia."));
-        }
+        var playerId = userContext.UserId;
 
         var match = await dbContext.SocialMatches
             .Include(m => m.Participants)
@@ -36,14 +32,14 @@ public sealed class JoinMatchCommandHandler(
         }
 
         // 2. Không cho chủ kèo tự join
-        if (match.HostId == playerId.Value)
+        if (match.HostId == playerId)
         {
             return Result.Failure<Guid>(new ConflictError("Bạn là người tạo kèo này, không thể gửi yêu cầu tham gia."));
         }
 
         // 3. Kiểm tra xem người chơi đã có trong danh sách chưa
         var existingParticipant = match.Participants
-            .FirstOrDefault(p => p.PlayerId == playerId.Value);
+            .FirstOrDefault(p => p.PlayerId == playerId);
 
         if (existingParticipant != null)
         {
@@ -84,7 +80,7 @@ public sealed class JoinMatchCommandHandler(
         {
             Id = Guid.CreateVersion7(),
             MatchId = match.Id,
-            PlayerId = playerId.Value,
+            PlayerId = playerId,
             Status = participantStatus,
             JoinedAt = DateTime.UtcNow
         };
