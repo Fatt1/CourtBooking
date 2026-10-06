@@ -8,7 +8,6 @@ using CourtBooking.Application.Features.V1.SportTypes.Queries.GetSportTypeById;
 using CourtBooking.Application.Features.V1.SportTypes.Queries.GetSportTypes;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 
 namespace CourtBooking.API.Endpoints.V1.SportTypes;
 
@@ -20,7 +19,21 @@ public sealed class SportTypeEndpoints : IEndpointGroup
     {
         var publicGroup = app.MapApiV1Group("sport-types");
 
-        publicGroup.MapGet("/", async (ISender sender, CancellationToken ct) =>
+        MapToPublic(publicGroup);
+
+
+
+
+
+
+        var group = app.MapApiV1Group("admin/sport-types");
+        MapToAdmin(group);
+
+    }
+
+    public void MapToPublic(RouteGroupBuilder group)
+    {
+        group.MapGet("/", async (ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new GetSportTypesQuery(), ct);
 
@@ -28,14 +41,14 @@ public sealed class SportTypeEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-        .AllowAnonymous()
-        .WithName("GetSportTypes")
-        .WithSummary("Lấy danh sách môn thể thao")
-        .WithDescription("Trả về danh sách các môn thể thao phục vụ người dùng công khai.")
-        .WithTags(SportTypeTag)
-        .Produces<IReadOnlyList<SportTypeDto>>(StatusCodes.Status200OK);
+      .AllowAnonymous()
+      .WithName("GetSportTypes")
+      .WithSummary("Lấy danh sách môn thể thao")
+      .WithDescription("Trả về danh sách các môn thể thao phục vụ người dùng công khai.")
+      .WithTags(SportTypeTag)
+      .Produces<IReadOnlyList<SportTypeDto>>(StatusCodes.Status200OK);
 
-        publicGroup.MapGet("/{id:guid}", async (
+        group.MapGet("/{id:guid}", async (
             Guid id,
             ISender sender,
             CancellationToken ct) =>
@@ -54,7 +67,12 @@ public sealed class SportTypeEndpoints : IEndpointGroup
         .Produces<SportTypeDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        var group = app.MapApiV1Group("admin/sport-types");
+    }
+
+    public void MapToAdmin(RouteGroupBuilder group)
+    {
+        // Admin endpoints are already mapped in the Map method above.
+        // This method can be used for additional admin-specific mappings if needed.
 
         group.MapGet("/", async (ISender sender, CancellationToken ct) =>
         {
@@ -64,12 +82,12 @@ public sealed class SportTypeEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-        // .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" })
-        .WithName("GetAdminSportTypes")
-        .WithSummary("Lấy danh sách tất cả môn thể thao cho quản trị viên")
-        .WithDescription("Trả về danh sách tất cả môn thể thao trong hệ thống kèm số lượng chi nhánh liên kết.")
-        .WithTags(SportTypeTag)
-        .Produces<IReadOnlyList<AdminSportTypeDto>>(StatusCodes.Status200OK);
+       // .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" })
+       .WithName("GetAdminSportTypes")
+       .WithSummary("Lấy danh sách tất cả môn thể thao cho quản trị viên")
+       .WithDescription("Trả về danh sách tất cả môn thể thao trong hệ thống kèm số lượng chi nhánh liên kết.")
+       .WithTags(SportTypeTag)
+       .Produces<IReadOnlyList<AdminSportTypeDto>>(StatusCodes.Status200OK);
 
         group.MapDelete("/{id:guid}", async (
             Guid id,

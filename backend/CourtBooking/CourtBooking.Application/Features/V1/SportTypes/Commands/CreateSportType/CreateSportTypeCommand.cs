@@ -4,4 +4,4 @@ namespace CourtBooking.Application.Features.V1.SportTypes.Commands.CreateSportTy
 
 public sealed record CreateSportTypeCommand(
     string Name,
-    Guid? ImageId) : ICommand<Guid>;
+    Guid ImageId) : ICommand<Guid>;

@@ -12,5 +12,9 @@ public sealed class CreateSportTypeValidator
             .WithMessage("Tên môn thể thao không được để trống.")
             .Must(name => name is null || name.Trim().Length <= 100)
             .WithMessage("Tên môn thể thao không được vượt quá 100 ký tự.");
+
+        RuleFor(x => x.ImageId)
+            .NotEmpty()
+            .WithMessage("ID hình ảnh không được để trống.");
     }
 }

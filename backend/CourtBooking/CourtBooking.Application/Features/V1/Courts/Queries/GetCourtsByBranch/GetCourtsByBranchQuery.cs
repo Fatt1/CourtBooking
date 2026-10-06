@@ -62,8 +62,6 @@ internal sealed class GetCourtsByBranchHandler(
                 BranchName = c.CourtType.Branch.Name,
                 Name = c.Name,
                 Status = c.Status,
-                CreatedAt = c.CreatedAt,
-                UpdatedAt = c.UpdatedAt
             })
             .ToListAsync(cancellationToken);
 

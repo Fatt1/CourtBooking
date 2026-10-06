@@ -1,3 +1,5 @@
+using CourtBooking.Application.Features.V1.Storages.Dtos;
+
 namespace CourtBooking.Application.Features.V1.Services.Dtos;
 
 public sealed record ServiceByBranchDto(
@@ -44,7 +46,3 @@ public sealed record OwnerServiceDto(
     IReadOnlyList<OwnerServiceBranchDto> Branches);
 
 
-public sealed record ImageDto(
-    string Key,
-    Guid Id
-    );

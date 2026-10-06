@@ -1,6 +1,6 @@
 using CourtBooking.Application.Data;
-using CourtBooking.Application.Features.V1.Services.Dtos;
 using CourtBooking.Application.Features.V1.SportTypes.Dtos;
+using CourtBooking.Application.Features.V1.Storages.Dtos;
 using CourtBooking.Application.Messaging;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,8 @@ internal sealed class GetSportTypesHandler(IApplicationDbContext dbContext)
                 sportType.Name,
                 sportType.Image != null
                     ? new ImageDto(sportType.Image.StorageKey, sportType.Image.Id)
-                    : null))
+                    : null,
+                sportType.BranchSportTypes.Count))
             .ToListAsync(cancellationToken);
 
         return Result.Success<IReadOnlyList<SportTypeDto>>(sportTypes);

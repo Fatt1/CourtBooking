@@ -19,7 +19,9 @@ public class Branch : EntityBase<Guid>, IAuditable
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
     public bool IsActive { get; set; }
-    public int ReviewTotal { get; set; }
+    public double ReviewAverage { get; set; }
+    public decimal MinPrice { get; set; }
+    public decimal MaxPrice { get; set; }
     public TimeOnly OpenTime { get; set; }
     public TimeOnly CloseTime { get; set; }
     public string? Policy { get; set; }

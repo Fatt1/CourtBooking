@@ -1,7 +1,7 @@
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Pricing.Dtos;
-using CourtBooking.Application.Helpers;
+using CourtBooking.Application.Features.V1.Pricing.Mappers;
 using CourtBooking.Application.Messaging;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -40,83 +40,7 @@ internal sealed class GetPricingConfigByCourtTypeHandler(
             return Result.Failure<CourtTypePricingConfigDto>(new NotFoundError("CourtType", request.CourtTypeId));
         }
 
-        // 3. Map danh sách sân khả dụng thuộc loại sân này
-        var availableCourts = courtType.Courts
-            .OrderBy(c => c.Name)
-            .Select(c => new AppliedCourtDto(c.Id, c.Name))
-            .ToList();
-
-        // 4. Map danh sách Khung giờ bắt buộc kèm giải mã bitmask ngày trong tuần
-        var fixedTimeBlocks = courtType.FixedTimeBlocks
-            .OrderBy(ftb => ftb.StartTime)
-            .Select(ftb =>
-            {
-                var daysOfWeek = DaysOfWeekMaskHelper.DecodeMask(ftb.DaysOfWeekMask);
-                var dayNames = DaysOfWeekMaskHelper.DecodeMaskToNames(ftb.DaysOfWeekMask);
-                var appliedCourts = ftb.Courts
-                    .Select(c => new AppliedCourtDto(c.CourtId, c.Court.Name))
-                    .OrderBy(c => c.CourtName)
-                    .ToList();
-
-                return new FixedTimeBlockDto(
-                    ftb.Id,
-                    ftb.CourtTypeId,
-                    ftb.StartTime,
-                    ftb.EndTime,
-                    ftb.DaysOfWeekMask,
-                    daysOfWeek,
-                    dayNames,
-                    appliedCourts,
-                    ftb.CreatedAt,
-                    ftb.UpdatedAt);
-            })
-            .ToList();
-
-        // 5. Map danh sách Bảng giá kèm các quy tắc giá chi tiết bên trong
-        var priceTables = courtType.PriceTables
-            .OrderByDescending(pt => pt.IsActive)
-            .ThenBy(pt => pt.Name)
-            .Select(pt =>
-            {
-                var rules = pt.Rules
-                    .OrderBy(r => r.DayOfWeekFrom)
-                    .ThenBy(r => r.StartTime)
-                    .Select(r => new PriceTableRuleDto(
-                        r.Id,
-                        r.PriceTableId,
-                        r.StartDate,
-                        r.EndDate,
-                        r.DayOfWeekFrom,
-                        r.DayOfWeekTo,
-                        DaysOfWeekMaskHelper.GetDayRangeText(r.DayOfWeekFrom, r.DayOfWeekTo),
-                        r.StartTime,
-                        r.EndTime,
-                        r.FixedCustomerPrice,
-                        r.WalkInCustomerPrice))
-                    .ToList();
-
-                return new PriceTableDto(
-                    pt.Id,
-                    pt.CourtTypeId,
-                    pt.Name,
-                    pt.IsActive,
-                    pt.DefaultPrice,
-                    pt.CreatedAt,
-                    pt.UpdatedAt,
-                    rules);
-            })
-            .ToList();
-
-        // 6. Trả về cấu hình tổng hợp dạng cây/nhóm cho Frontend render trực tiếp
-        var response = new CourtTypePricingConfigDto(
-            courtType.Id,
-            courtType.BranchId,
-            courtType.Name,
-            courtType.MinutesConfig,
-            availableCourts,
-            fixedTimeBlocks,
-            priceTables);
-
-        return Result<CourtTypePricingConfigDto>.Success(response);
+        // 3. Ánh xạ dữ liệu sang DTO thông qua Mapper dùng chung
+        return Result.Success(courtType.ToPricingConfigDto());
     }
 }

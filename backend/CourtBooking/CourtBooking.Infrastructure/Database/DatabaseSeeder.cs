@@ -351,7 +351,7 @@ public static class DatabaseSeeder
             AccountNumber = "1903678912345",
             AccountName = "NGUYEN VAN CHU SAN",
             IsActive = true,
-            ReviewTotal = 0,
+            ReviewAverage = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -372,7 +372,7 @@ public static class DatabaseSeeder
             AccountNumber = "1903678912345",
             AccountName = "NGUYEN VAN CHU SAN",
             IsActive = true,
-            ReviewTotal = 0,
+            ReviewAverage = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

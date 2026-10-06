@@ -48,8 +48,14 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
         builder.Property(b => b.IsActive)
             .HasDefaultValue(true);
 
-        builder.Property(b => b.ReviewTotal)
-            .HasDefaultValue(0);
+        builder.Property(b => b.ReviewAverage)
+            .HasDefaultValue(0.0);
+
+        builder.Property(b => b.MinPrice)
+            .HasPrecision(18, 2);
+
+        builder.Property(b => b.MaxPrice)
+            .HasPrecision(18, 2);
 
         builder.Property(b => b.Policy)
             .HasMaxLength(255);

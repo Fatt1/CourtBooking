@@ -7,14 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.Courts.Queries.GetCourtById;
 
-public sealed record GetCourtByIdQuery(Guid Id) : IQuery<CourtDetailDto>;
+public sealed record GetCourtByIdQuery(Guid Id) : IQuery<CourtDto>;
 
 internal sealed class GetCourtByIdHandler(
     IApplicationDbContext dbContext,
     IBranchAuthorizationService branchAuth)
-    : IQueryHandler<GetCourtByIdQuery, CourtDetailDto>
+    : IQueryHandler<GetCourtByIdQuery, CourtDto>
 {
-    public async Task<Result<CourtDetailDto>> Handle(
+    public async Task<Result<CourtDto>> Handle(
         GetCourtByIdQuery request,
         CancellationToken cancellationToken)
     {
@@ -26,16 +26,16 @@ internal sealed class GetCourtByIdHandler(
 
         if (court is null)
         {
-            return Result.Failure<CourtDetailDto>(new NotFoundError("Court", request.Id));
+            return Result.Failure<CourtDto>(new NotFoundError("Court", request.Id));
         }
 
         var authResult = await branchAuth.EnsureOwnerAsync(court.CourtType.BranchId, cancellationToken);
         if (authResult.IsFailure)
         {
-            return Result.Failure<CourtDetailDto>(authResult.Error!);
+            return Result.Failure<CourtDto>(authResult.Error!);
         }
 
-        var dto = new CourtDetailDto
+        var dto = new CourtDto
         {
             Id = court.Id,
             CourtTypeId = court.CourtTypeId,
@@ -43,9 +43,7 @@ internal sealed class GetCourtByIdHandler(
             BranchId = court.CourtType.BranchId,
             BranchName = court.CourtType.Branch.Name,
             Name = court.Name,
-            Status = court.Status,
-            CreatedAt = court.CreatedAt,
-            UpdatedAt = court.UpdatedAt
+            Status = court.Status
         };
 
         return Result.Success(dto);

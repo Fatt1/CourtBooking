@@ -1,3 +1,4 @@
+using CourtBooking.Application.Features.V1.Storages.Dtos;
 using CourtBooking.Domain.Enums;
 namespace CourtBooking.Application.Features.V1.Events.Dtos;
 /// <summary>
@@ -11,9 +12,7 @@ public sealed record BranchImageDto(
 /// <summary>
 /// DTO đại diện ảnh chung (Avatar người chơi, mã QR thanh toán của sân).
 /// </summary>
-public sealed record ImageDto(
-    Guid Id,
-    string Key);
+
 /// <summary>
 /// DTO hiển thị thẻ sự kiện ở màn hình danh sách (/events).
 /// </summary>

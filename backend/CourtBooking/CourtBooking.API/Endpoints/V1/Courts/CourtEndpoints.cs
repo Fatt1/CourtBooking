@@ -9,29 +9,37 @@ using CourtBooking.Application.Features.V1.Courts.Queries.GetCourtsByBranch;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourtBooking.API.Endpoints.V1.Courts;
 
 public sealed class CourtEndpoints : IEndpointGroup
 {
-    private const string CourtTag = "Owner Courts";
+    private const string CourtTag = "Courts";
 
     public void Map(IEndpointRouteBuilder app)
     {
         // 1. Danh sách sân theo chi nhánh
-        var branchGroup = app
-            .MapApiV1Group("owner/branches/{branchId:guid}/courts")
+        var group = app
+            .MapApiV1Group("owner/courts")
             .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
 
-        branchGroup.MapGet("/", async (
-            Guid branchId,
-            [FromQuery] Guid? courtTypeId,
-            [FromQuery] CourtStatus? status,
-            [FromQuery] string? search,
-            ISender sender,
-            CancellationToken ct) =>
+        MapToOwner(group);
+
+
+    }
+
+    public void MapToOwner(RouteGroupBuilder group)
+    {
+        // This method can be used to map endpoints specifically for court owners if needed.
+
+        group.MapGet("/", async (
+           Guid branchId,
+           [FromQuery] Guid? courtTypeId,
+           [FromQuery] CourtStatus? status,
+           [FromQuery] string? search,
+           ISender sender,
+           CancellationToken ct) =>
         {
             var query = new GetCourtsByBranchQuery(branchId, courtTypeId, status, search);
             var result = await sender.Send(query, ct);
@@ -40,27 +48,21 @@ public sealed class CourtEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-        .WithName("GetCourtsByBranch")
-        .WithSummary("Lấy danh sách sân theo chi nhánh")
-        .WithDescription("Lấy danh sách sân thuộc chi nhánh của chủ sân, có thể lọc theo loại sân, trạng thái và từ khóa tìm kiếm.")
-        .WithTags(CourtTag)
-        .Produces<IReadOnlyList<CourtDto>>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status401Unauthorized)
-        .ProducesProblem(StatusCodes.Status403Forbidden);
+       .WithName("GetCourtsByBranch")
+       .WithSummary("Lấy danh sách sân theo chi nhánh")
+       .WithDescription("Lấy danh sách sân thuộc chi nhánh của chủ sân, có thể lọc theo loại sân, trạng thái và từ khóa tìm kiếm.")
+       .WithTags(CourtTag)
+       .Produces<IReadOnlyList<CourtDto>>(StatusCodes.Status200OK)
+       .ProducesProblem(StatusCodes.Status400BadRequest)
+       .ProducesProblem(StatusCodes.Status401Unauthorized)
+       .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // 2. Thêm sân mới vào loại sân
-        var courtTypeGroup = app
-            .MapApiV1Group("owner/court-types/{courtTypeId:guid}/courts")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
 
-        courtTypeGroup.MapPost("/", async (
-            Guid courtTypeId,
-            [FromBody] CreateCourtRequest request,
+        group.MapPost("/", async (
+            CreateCourtCommand command,
             ISender sender,
             CancellationToken ct) =>
         {
-            var command = new CreateCourtCommand(courtTypeId, request.Name);
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
@@ -78,13 +80,10 @@ public sealed class CourtEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // 3. Xem, sửa, đổi trạng thái và xóa từng sân
-        var courtGroup = app
-            .MapApiV1Group("owner/courts/{id:guid}")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+
 
         // GET /api/v1/owner/courts/{id}
-        courtGroup.MapGet("/", async (
+        group.MapGet("/{id:guid}", async (
             Guid id,
             ISender sender,
             CancellationToken ct) =>
@@ -100,38 +99,38 @@ public sealed class CourtEndpoints : IEndpointGroup
         .WithSummary("Lấy chi tiết một sân")
         .WithDescription("Lấy thông tin chi tiết một sân cụ thể thuộc chi nhánh của chủ sân.")
         .WithTags(CourtTag)
-        .Produces<CourtDetailDto>(StatusCodes.Status200OK)
+        .Produces<CourtDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
         // PUT /api/v1/owner/courts/{id}
-        courtGroup.MapPut("/", async (
-            Guid id,
-            [FromBody] UpdateCourtRequest request,
-            ISender sender,
-            CancellationToken ct) =>
-        {
-            var command = new UpdateCourtCommand(id, request.CourtTypeId, request.Name);
-            var result = await sender.Send(command, ct);
+        group.MapPut("/{id:guid}", async (
+        Guid id,
+        [FromBody] UpdateCourtRequest request,
+        ISender sender,
+        CancellationToken ct) =>
+    {
+        var command = new UpdateCourtCommand(id, request.CourtTypeId, request.Name);
+        var result = await sender.Send(command, ct);
 
-            return result.IsSuccess
-                ? Results.NoContent()
-                : result.ToProblemDetails();
-        })
-        .WithName("UpdateCourt")
-        .WithSummary("Cập nhật thông tin sân")
-        .WithDescription("Cập nhật tên sân hoặc chuyển sân sang loại sân khác trong cùng chi nhánh.")
-        .WithTags(CourtTag)
-        .Produces(StatusCodes.Status204NoContent)
-        .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status401Unauthorized)
-        .ProducesProblem(StatusCodes.Status403Forbidden)
-        .ProducesProblem(StatusCodes.Status404NotFound)
-        .ProducesProblem(StatusCodes.Status409Conflict);
+        return result.IsSuccess
+            ? Results.NoContent()
+            : result.ToProblemDetails();
+    })
+    .WithName("UpdateCourt")
+    .WithSummary("Cập nhật thông tin sân")
+    .WithDescription("Cập nhật tên sân hoặc chuyển sân sang loại sân khác trong cùng chi nhánh.")
+    .WithTags(CourtTag)
+    .Produces(StatusCodes.Status204NoContent)
+    .ProducesProblem(StatusCodes.Status400BadRequest)
+    .ProducesProblem(StatusCodes.Status401Unauthorized)
+    .ProducesProblem(StatusCodes.Status403Forbidden)
+    .ProducesProblem(StatusCodes.Status404NotFound)
+    .ProducesProblem(StatusCodes.Status409Conflict);
 
         // PUT /api/v1/owner/courts/{id}/status
-        courtGroup.MapPut("/status", async (
+        group.MapPut("/status/{id:guid}", async (
             Guid id,
             [FromBody] UpdateCourtStatusRequest request,
             ISender sender,
@@ -155,7 +154,7 @@ public sealed class CourtEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status404NotFound);
 
         // DELETE /api/v1/owner/courts/{id}
-        courtGroup.MapDelete("/", async (
+        group.MapDelete("/{id:guid}", async (
             Guid id,
             ISender sender,
             CancellationToken ct) =>

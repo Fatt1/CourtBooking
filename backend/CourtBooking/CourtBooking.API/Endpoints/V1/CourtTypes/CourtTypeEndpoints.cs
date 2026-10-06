@@ -6,22 +6,33 @@ using CourtBooking.Application.Features.V1.CourtTypes.Dtos;
 using CourtBooking.Application.Features.V1.CourtTypes.Queries.GetCourtTypesByBranch;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 
 namespace CourtBooking.API.Endpoints.V1.CourtTypes;
 
 public sealed class CourtTypeEndpoints : IEndpointGroup
 {
-    private const string CourtTypeTag = "Owner Court Types";
+    private const string CourtTypeTag = "Court Types";
 
     public void Map(IEndpointRouteBuilder app)
     {
         // ── 1. Thao tác theo chi nhánh (Danh sách & Thêm mới) ───────
-        var branchGroup = app.MapApiV1Group("owner/branches/{branchId:guid}/court-types");
-            // .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+        var group = app.MapApiV1Group("owner/court-types");
+        // .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+        MapToOwner(group);
 
+    }
+
+
+
+    public void MapToPublic(RouteGroupBuilder group)
+    {
+        // Public endpoints can be defined here if needed
+    }
+
+    public void MapToOwner(RouteGroupBuilder group)
+    {
         // GET /api/v1/owner/branches/{branchId}/court-types
-        branchGroup.MapGet("/", async (
+        group.MapGet("/", async (
             Guid branchId,
             ISender sender,
             CancellationToken ct) =>
@@ -42,18 +53,12 @@ public sealed class CourtTypeEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // POST /api/v1/owner/branches/{branchId}/court-types
-        branchGroup.MapPost("/", async (
-            Guid branchId,
-            CreateCourtTypeRequest request,
+        // POST /api/v1/owner/court-types
+        group.MapPost("/", async (
+            CreateCourtTypeCommand command,
             ISender sender,
             CancellationToken ct) =>
         {
-            var command = new CreateCourtTypeCommand(
-                branchId,
-                request.Name,
-                request.MinutesConfig);
-
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
@@ -72,12 +77,10 @@ public sealed class CourtTypeEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
-        // ── 2. Thao tác theo loại sân cụ thể (Sửa & Xóa) ────────────
-        var itemGroup = app.MapApiV1Group("owner/court-types");
-            // .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+        // .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
 
         // PUT /api/v1/owner/court-types/{id}
-        itemGroup.MapPut("/{id:guid}", async (
+        group.MapPut("/{id:guid}", async (
             Guid id,
             UpdateCourtTypeRequest request,
             ISender sender,
@@ -106,7 +109,7 @@ public sealed class CourtTypeEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status409Conflict);
 
         // DELETE /api/v1/owner/court-types/{id}
-        itemGroup.MapDelete("/{id:guid}", async (
+        group.MapDelete("/{id:guid}", async (
             Guid id,
             ISender sender,
             CancellationToken ct) =>

@@ -1,5 +1,5 @@
-using CourtBooking.Application.Features.V1.Storages.Events.AttachImages;
 using CourtBooking.Application.Data;
+using CourtBooking.Application.Features.V1.Storages.Events.AttachImages;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Entities.Courts;
 using CourtBooking.SharedKernel;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.SportTypes.Commands.CreateSportType;
 
-internal sealed class CreateSportTypeHandler(
+public sealed class CreateSportTypeHandler(
     IApplicationDbContext dbContext,
     IPublisher publisher) : ICommandHandler<CreateSportTypeCommand, Guid>
 {
@@ -17,27 +17,14 @@ internal sealed class CreateSportTypeHandler(
         CancellationToken cancellationToken)
     {
         var normalizedName = request.Name.Trim();
-        if (request.ImageId.HasValue)
-{
-    var imageExists = await dbContext.Images
-        .AnyAsync(image => image.Id == request.ImageId.Value, cancellationToken);
 
-    if (!imageExists)
-    {
-        return Result.Failure<Guid>(
-            new NotFoundError("Image", request.ImageId.Value));
-    }
-}
-        var existingNames = await dbContext.SportTypes
+        var nameAlreadyExists = await dbContext.SportTypes
             .AsNoTracking()
-            .Select(sportType => sportType.Name)
-            .ToListAsync(cancellationToken);
-
-        var nameAlreadyExists = existingNames.Any(name =>
-            string.Equals(
-                name,
+            .AnyAsync(sportType => string.Equals(
+                sportType.Name,
                 normalizedName,
-                StringComparison.OrdinalIgnoreCase));
+                StringComparison.OrdinalIgnoreCase), cancellationToken);
+
 
         if (nameAlreadyExists)
         {
@@ -57,12 +44,11 @@ internal sealed class CreateSportTypeHandler(
             cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        if (request.ImageId.HasValue)
-{
-    await publisher.Publish(
-        new AttachImagesEvent([request.ImageId.Value]),
-        cancellationToken);
-}
+
+        await publisher.Publish(
+            new AttachImagesEvent([request.ImageId]),
+            cancellationToken);
+
 
         return Result.Success(sportType.Id);
     }

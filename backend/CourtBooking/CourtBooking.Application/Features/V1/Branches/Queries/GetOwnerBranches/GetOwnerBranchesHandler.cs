@@ -15,12 +15,23 @@ internal sealed class GetOwnerBranchesHandler(IApplicationDbContext dbContext, I
     {
         var branches = await dbContext.Branches.AsNoTracking().AsSplitQuery()
             .Where(x => x.CourtOwnerId == userContext.UserId)
-            .Include(x => x.BranchSportTypes).ThenInclude(x => x.SportType)
-            .Include(x => x.Images).ThenInclude(x => x.Image)
-            .Include(x => x.Reviews)
             .OrderBy(x => x.Name)
+            .Select(branch => new OwnerBranchListItemDto(
+                Id: branch.Id,
+                Name: branch.Name,
+                Hotline: branch.Hotline,
+                Province: branch.Province,
+                District: branch.District,
+                Street: branch.Street,
+                OpenTime: branch.OpenTime,
+                CloseTime: branch.CloseTime,
+                IsActive: branch.IsActive,
+                AverageRating: branch.ReviewAverage
+                ))
             .ToListAsync(cancellationToken);
-        return Result.Success<IReadOnlyList<OwnerBranchListItemDto>>(
-            branches.Select(x => x.ToListItem()).ToList());
+
+
+
+        return Result.Success<IReadOnlyList<OwnerBranchListItemDto>>(branches);
     }
 }
