@@ -4,6 +4,7 @@ using CourtBooking.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CourtBooking.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261002154845_UpdateReviewImages")]
+    partial class UpdateReviewImages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,11 +61,6 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("GGMapUrl");
 
-                    b.Property<string>("Hotline")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -75,14 +73,6 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<decimal?>("Longitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
-
-                    b.Property<decimal>("MaxPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("MinPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -104,10 +94,13 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<Guid>("QrImageId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<double>("ReviewAverage")
+                    b.Property<int>("ReviewTotal")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("float")
-                        .HasDefaultValue(0.0);
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid>("SportTypeId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Street")
                         .IsRequired()
@@ -123,6 +116,9 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasDatabaseName("IX_Branches_CourtOwnerId");
 
                     b.HasIndex("QrImageId");
+
+                    b.HasIndex("SportTypeId")
+                        .HasDatabaseName("IX_Branches_SportTypeId");
 
                     b.ToTable("Branches", (string)null);
                 });
@@ -152,21 +148,6 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasDatabaseName("IX_BranchImages_ImageId");
 
                     b.ToTable("BranchImages", (string)null);
-                });
-
-            modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.BranchSportType", b =>
-                {
-                    b.Property<Guid>("BranchId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("SportTypeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("BranchId", "SportTypeId");
-
-                    b.HasIndex("SportTypeId");
-
-                    b.ToTable("BranchSportTypes", (string)null);
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.Court", b =>
@@ -361,6 +342,11 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.Property<Guid?>("ImageId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -918,6 +904,26 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.HasIndex("PlayerId");
 
                     b.ToTable("Reviews", (string)null);
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Entities.Reviews.ReviewImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ImageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ReviewId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImageId");
+
+                    b.HasIndex("ReviewId");
+
+                    b.ToTable("ReviewImages", (string)null);
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Services.RetailOrder", b =>
@@ -1482,9 +1488,17 @@ namespace CourtBooking.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("CourtBooking.Domain.Entities.Courts.SportType", "SportType")
+                        .WithMany("Branches")
+                        .HasForeignKey("SportTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("CourtOwner");
 
                     b.Navigation("QrImage");
+
+                    b.Navigation("SportType");
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.BranchImage", b =>
@@ -1504,25 +1518,6 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Navigation("Branch");
 
                     b.Navigation("Image");
-                });
-
-            modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.BranchSportType", b =>
-                {
-                    b.HasOne("CourtBooking.Domain.Entities.Courts.Branch", "Branch")
-                        .WithMany("BranchSportTypes")
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CourtBooking.Domain.Entities.Courts.SportType", "SportType")
-                        .WithMany("BranchSportTypes")
-                        .HasForeignKey("SportTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Branch");
-
-                    b.Navigation("SportType");
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.Court", b =>
@@ -1838,6 +1833,25 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Navigation("Player");
                 });
 
+            modelBuilder.Entity("CourtBooking.Domain.Entities.Reviews.ReviewImage", b =>
+                {
+                    b.HasOne("CourtBooking.Domain.Entities.Images.Image", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CourtBooking.Domain.Entities.Reviews.Review", "Review")
+                        .WithMany("Images")
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Image");
+
+                    b.Navigation("Review");
+                });
+
             modelBuilder.Entity("CourtBooking.Domain.Entities.Services.RetailOrder", b =>
                 {
                     b.HasOne("CourtBooking.Domain.Entities.Courts.Branch", "Branch")
@@ -2036,8 +2050,6 @@ namespace CourtBooking.Infrastructure.Migrations
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.Branch", b =>
                 {
-                    b.Navigation("BranchSportTypes");
-
                     b.Navigation("CourtTypes");
 
                     b.Navigation("Images");
@@ -2083,7 +2095,7 @@ namespace CourtBooking.Infrastructure.Migrations
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.SportType", b =>
                 {
-                    b.Navigation("BranchSportTypes");
+                    b.Navigation("Branches");
 
                     b.Navigation("Events");
 
@@ -2120,6 +2132,11 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Navigation("SocialMatch");
 
                     b.Navigation("SportEvent");
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Entities.Reviews.Review", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Services.RetailOrder", b =>

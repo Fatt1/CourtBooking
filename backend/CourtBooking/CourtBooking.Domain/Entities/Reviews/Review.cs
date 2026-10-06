@@ -14,12 +14,10 @@ public class Review : EntityBase<Guid>
     public Guid PlayerId { get; set; }
     public byte Rating { get; set; }
     public string? Comment { get; set; }
-    public Guid? ImageId { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // Navigation properties
     public Courts.Branch Branch { get; set; } = null!;
     public Orders.Order Order { get; set; } = null!;
     public Users.ApplicationUser Player { get; set; } = null!;
-    public Images.Image? Image { get; set; }
 }

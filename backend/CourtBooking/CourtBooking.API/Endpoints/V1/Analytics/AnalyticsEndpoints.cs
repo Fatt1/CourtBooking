@@ -1,5 +1,6 @@
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Features.V1.Analytics.Dtos;
+using CourtBooking.Application.Features.V1.Analytics.Queries.GetCourtOwnerRevenue;
 using CourtBooking.Application.Features.V1.Analytics.Queries.GetSaaSSubscriptionRevenue;
 using CourtBooking.Application.Features.V1.Analytics.Queries.GetSystemUtilizationStatistics;
 using CourtBooking.SharedKernel.Extensions;
@@ -66,5 +67,30 @@ public sealed class AnalyticsEndpoints : IEndpointGroup
             .Produces<SystemUtilizationStatisticsDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        // 3. GET /api/v1/analytics/court-owner/revenue — Thống kê doanh thu và vận hành cho Chủ Sân
+        group.MapGet("/court-owner/revenue", async (
+                [FromQuery] DateOnly? fromDate,
+                [FromQuery] DateOnly? toDate,
+                [FromQuery] Guid? branchId,
+                [FromQuery] TimeGrouping groupBy = TimeGrouping.Day,
+                ISender sender = default!,
+                CancellationToken ct = default) =>
+        {
+            var query = new GetCourtOwnerRevenueQuery(fromDate, toDate, branchId, groupBy);
+            var result = await sender.Send(query, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .WithName("GetCourtOwnerRevenueStatistics")
+            .WithSummary("Thống kê doanh thu và vận hành cho Chủ Sân")
+            .WithDescription("Thống kê tổng hợp doanh thu (tiền sân, dịch vụ, vé sự kiện, giảm giá, doanh thu ròng), chỉ số vận hành (lượt đặt online/POS, tỷ lệ hủy, tiền đơn hủy), phân bổ theo chi nhánh và chuỗi thời gian biểu đồ.")
+            .WithTags(AnalyticsTag)
+            .Produces<CourtOwnerRevenueDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
     }
 }

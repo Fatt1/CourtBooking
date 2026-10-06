@@ -842,7 +842,6 @@ public static class DatabaseSeeder
             PlayerId = userPlayer1.Id,
             Rating = 5,
             Comment = "Sân thảm mới và rất êm, ánh sáng đạt chuẩn thi đấu không bị chói mắt, nhân viên nhiệt tình hỗ trợ!",
-            ImageId = reviewImg.Id,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -863,6 +862,7 @@ public static class DatabaseSeeder
             StartTime = new TimeOnly(19, 0),
             EndTime = new TimeOnly(21, 0),
             MissingPlayers = 2,
+            AvailableSlots = 2,
             FeePerPlayer = 50000m,
             ApprovalMode = 0,
             SkillLevel = "Trình độ B-C",
