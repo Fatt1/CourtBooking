@@ -29,8 +29,6 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
         builder.Property(r => r.Comment)
             .HasMaxLength(1000);
 
-        builder.Property(r => r.ImageId);
-
         builder.Property(r => r.CreatedAt)
             .IsRequired();
 
@@ -49,10 +47,5 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
             .WithMany(u => u.Reviews)
             .HasForeignKey(r => r.PlayerId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(r => r.Image)
-            .WithMany()
-            .HasForeignKey(r => r.ImageId)
-            .OnDelete(DeleteBehavior.SetNull);
     }
 }

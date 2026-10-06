@@ -7,6 +7,7 @@ using CourtBooking.Application.Features.V1.Services.Dtos;
 using CourtBooking.Application.Features.V1.Services.Queries.GetOwnerServices;
 using CourtBooking.Application.Features.V1.Services.Queries.GetServiceById;
 using CourtBooking.Application.Features.V1.Services.Queries.GetServicesByBranch;
+using CourtBooking.Domain.Constants;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ public sealed class ServiceEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         var groupOwner = app.MapApiV1Group("owner/services")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
         MapToOwner(groupOwner);
 
         var group = app.MapApiV1Group("services");

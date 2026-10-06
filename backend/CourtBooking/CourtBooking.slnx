@@ -11,7 +11,9 @@
     <Project Path="CourtBooking.Infrastructure/CourtBooking.Infrastructure.csproj" />
     <Project Path="CourtBooking.SharedKernel/CourtBooking.SharedKernel.csproj" Id="15f55911-0adf-4e46-8d5b-21f062431882" />
   </Folder>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/CourtBooking.Application.Tests/CourtBooking.Application.Tests.csproj" />
+  </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>

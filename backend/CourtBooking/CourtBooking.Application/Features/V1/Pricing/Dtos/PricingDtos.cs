@@ -18,9 +18,7 @@ public sealed record FixedTimeBlockDto(
     int DaysOfWeekMask,
     IReadOnlyList<int> DaysOfWeek,
     IReadOnlyList<string> DayNames,
-    IReadOnlyList<AppliedCourtDto> AppliedCourts,
-    DateTime CreatedAt,
-    DateTime UpdatedAt);
+    IReadOnlyList<AppliedCourtDto> AppliedCourts);
 
 /// <summary>
 /// DTO quy tắc tính giá (Price Table Rule).
@@ -47,8 +45,6 @@ public sealed record PriceTableDto(
     string Name,
     bool IsActive,
     decimal DefaultPrice,
-    DateTime CreatedAt,
-    DateTime UpdatedAt,
     IReadOnlyList<PriceTableRuleDto> Rules);
 
 /// <summary>

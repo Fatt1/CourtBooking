@@ -25,7 +25,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.Branch", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AccountName")
@@ -59,6 +58,11 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("GGMapUrl");
 
+                    b.Property<string>("Hotline")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -71,6 +75,14 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<decimal?>("Longitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal>("MaxPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MinPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -92,13 +104,10 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<Guid>("QrImageId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("ReviewTotal")
+                    b.Property<double>("ReviewAverage")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<Guid>("SportTypeId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("float")
+                        .HasDefaultValue(0.0);
 
                     b.Property<string>("Street")
                         .IsRequired()
@@ -115,16 +124,12 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.HasIndex("QrImageId");
 
-                    b.HasIndex("SportTypeId")
-                        .HasDatabaseName("IX_Branches_SportTypeId");
-
                     b.ToTable("Branches", (string)null);
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.BranchImage", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("BranchId")
@@ -149,10 +154,24 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.ToTable("BranchImages", (string)null);
                 });
 
+            modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.BranchSportType", b =>
+                {
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SportTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("BranchId", "SportTypeId");
+
+                    b.HasIndex("SportTypeId");
+
+                    b.ToTable("BranchSportTypes", (string)null);
+                });
+
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.Court", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CourtTypeId")
@@ -186,7 +205,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.CourtType", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("BranchId")
@@ -211,7 +229,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.FixedTimeBlock", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CourtTypeId")
@@ -260,7 +277,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.PriceTable", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CourtTypeId")
@@ -299,7 +315,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.PriceTableRule", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte>("DayOfWeekFrom")
@@ -342,16 +357,10 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.SportType", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("ImageId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -368,7 +377,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Events.EventTicket", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
@@ -426,7 +434,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Events.SportEvent", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("AvailableSlot")
@@ -494,7 +501,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Images.Image", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("AttachedAt")
@@ -526,7 +532,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Matches.MatchParticipant", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("HoldExpiresAt")
@@ -562,7 +567,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Matches.SocialMatch", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte>("ApprovalMode")
@@ -639,7 +643,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Orders.FixedOrderConfig", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("DaysOfWeekMask")
@@ -691,7 +694,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Orders.Order", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("BranchId")
@@ -782,7 +784,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Orders.OrderDetail", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CourtId")
@@ -818,7 +819,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Orders.OrderService", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("OrderId")
@@ -848,7 +848,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Payments.PaymentTransaction", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Amount")
@@ -887,7 +886,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Reviews.Review", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("BranchId")
@@ -899,9 +897,6 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("ImageId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
@@ -917,8 +912,6 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.HasIndex("BranchId")
                         .HasDatabaseName("IX_Reviews_BranchId");
 
-                    b.HasIndex("ImageId");
-
                     b.HasIndex("OrderId")
                         .IsUnique();
 
@@ -930,7 +923,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Services.RetailOrder", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("BranchId")
@@ -966,7 +958,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Services.RetailOrderItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Quantity")
@@ -996,7 +987,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Services.Service", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CategoryId")
@@ -1059,7 +1049,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Services.ServiceCategory", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CourtOwnerId")
@@ -1096,7 +1085,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Subscriptions.CourtOwnerSubscription", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CourtOwnerId")
@@ -1132,7 +1120,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Subscriptions.ServicePackage", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1166,7 +1153,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Users.ApplicationRole", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -1198,7 +1184,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Users.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("AccessFailedCount")
@@ -1350,7 +1335,6 @@ namespace CourtBooking.Infrastructure.Migrations
             modelBuilder.Entity("CourtBooking.Domain.Entities.Users.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1498,17 +1482,9 @@ namespace CourtBooking.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("CourtBooking.Domain.Entities.Courts.SportType", "SportType")
-                        .WithMany("Branches")
-                        .HasForeignKey("SportTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("CourtOwner");
 
                     b.Navigation("QrImage");
-
-                    b.Navigation("SportType");
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.BranchImage", b =>
@@ -1528,6 +1504,25 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Navigation("Branch");
 
                     b.Navigation("Image");
+                });
+
+            modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.BranchSportType", b =>
+                {
+                    b.HasOne("CourtBooking.Domain.Entities.Courts.Branch", "Branch")
+                        .WithMany("BranchSportTypes")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CourtBooking.Domain.Entities.Courts.SportType", "SportType")
+                        .WithMany("BranchSportTypes")
+                        .HasForeignKey("SportTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("SportType");
                 });
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.Court", b =>
@@ -1824,11 +1819,6 @@ namespace CourtBooking.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CourtBooking.Domain.Entities.Images.Image", "Image")
-                        .WithMany()
-                        .HasForeignKey("ImageId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("CourtBooking.Domain.Entities.Orders.Order", "Order")
                         .WithMany("Reviews")
                         .HasForeignKey("OrderId")
@@ -1842,8 +1832,6 @@ namespace CourtBooking.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Branch");
-
-                    b.Navigation("Image");
 
                     b.Navigation("Order");
 
@@ -2048,6 +2036,8 @@ namespace CourtBooking.Infrastructure.Migrations
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.Branch", b =>
                 {
+                    b.Navigation("BranchSportTypes");
+
                     b.Navigation("CourtTypes");
 
                     b.Navigation("Images");
@@ -2093,7 +2083,7 @@ namespace CourtBooking.Infrastructure.Migrations
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Courts.SportType", b =>
                 {
-                    b.Navigation("Branches");
+                    b.Navigation("BranchSportTypes");
 
                     b.Navigation("Events");
 

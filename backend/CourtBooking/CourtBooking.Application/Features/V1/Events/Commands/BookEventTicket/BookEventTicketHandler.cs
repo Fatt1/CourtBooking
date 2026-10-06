@@ -2,6 +2,7 @@ using System.Data;
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Events.Dtos;
+using CourtBooking.Application.Features.V1.Storages.Dtos;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Entities.Events;
 using CourtBooking.Domain.Enums;
@@ -33,7 +34,6 @@ internal sealed class BookEventTicketHandler(
             await using var transaction = await dbContext.Database.BeginTransactionAsync(
                 IsolationLevel.ReadCommitted, 
                 cancellationToken);
-
             try
         {
             // 3. PESSIMISTIC LOCK: Khóa độc quyền dòng sự kiện đang mua vé bằng UPDLOCK và ROWLOCK
@@ -114,7 +114,7 @@ internal sealed class BookEventTicketHandler(
                 sportEvent.Order.Branch.AccountNumber,
                 sportEvent.Order.Branch.AccountName,
                 sportEvent.Order.Branch.QrImage != null
-                    ? new ImageDto(sportEvent.Order.Branch.QrImage.Id, sportEvent.Order.Branch.QrImage.StorageKey)
+                    ? new ImageDto(sportEvent.Order.Branch.QrImage.StorageKey, sportEvent.Order.Branch.QrImage.Id)
                     : null
             );
 

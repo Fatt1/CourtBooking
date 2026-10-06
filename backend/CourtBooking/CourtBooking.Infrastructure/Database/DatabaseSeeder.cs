@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Entities.Courts;
 using CourtBooking.Domain.Entities.Events;
 using CourtBooking.Domain.Entities.Images;
@@ -95,22 +96,22 @@ public static class DatabaseSeeder
         var roleAdmin = new ApplicationRole
         {
             Id = AdminRoleId,
-            Name = "Admin",
-            NormalizedName = "ADMIN",
+            Name = RoleConstants.Admin,
+            NormalizedName = RoleConstants.Admin.ToUpperInvariant(),
             Description = "Quản trị viên toàn hệ thống"
         };
         var roleOwner = new ApplicationRole
         {
             Id = CourtOwnerRoleId,
-            Name = "CourtOwner",
-            NormalizedName = "COURTOWNER",
+            Name = RoleConstants.CourtOwner,
+            NormalizedName = RoleConstants.CourtOwner.ToUpperInvariant(),
             Description = "Chủ cơ sở thể thao / quản lý sân"
         };
         var rolePlayer = new ApplicationRole
         {
             Id = PlayerRoleId,
-            Name = "Player",
-            NormalizedName = "PLAYER",
+            Name = RoleConstants.Player,
+            NormalizedName = RoleConstants.Player.ToUpperInvariant(),
             Description = "Khách hàng / Người chơi"
         };
 
@@ -311,24 +312,21 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             Name = "Cầu lông",
-            ImageId = badmintonIcon.Id,
-            IsActive = true
+            ImageId = badmintonIcon.Id
         };
 
         var sportPickleball = new SportType
         {
             Id = Guid.NewGuid(),
             Name = "Pickleball",
-            ImageId = pickleballIcon.Id,
-            IsActive = true
+            ImageId = pickleballIcon.Id
         };
 
         var sportFutsal = new SportType
         {
             Id = Guid.NewGuid(),
             Name = "Bóng đá mini",
-            ImageId = futsalIcon.Id,
-            IsActive = true
+            ImageId = futsalIcon.Id
         };
 
         await context.SportTypes.AddRangeAsync([sportBadminton, sportPickleball, sportFutsal], cancellationToken);
@@ -341,8 +339,8 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             CourtOwnerId = userOwner.Id,
-            SportTypeId = sportBadminton.Id,
             Name = "CLB Cầu Lông & Pickleball Sài Gòn Star - Chi Nhánh 1",
+            Hotline = userOwner.PhoneNumber!,
             GgMapUrl = "https://maps.google.com/search?q=saigon-star-branch-1",
             Province = "Hồ Chí Minh",
             District = "Quận 7",
@@ -353,7 +351,7 @@ public static class DatabaseSeeder
             AccountNumber = "1903678912345",
             AccountName = "NGUYEN VAN CHU SAN",
             IsActive = true,
-            ReviewTotal = 0,
+            ReviewAverage = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -362,8 +360,8 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             CourtOwnerId = userOwner.Id,
-            SportTypeId = sportPickleball.Id,
             Name = "CLB Pickleball Phú Nhuận Arena - Chi Nhánh 2",
+            Hotline = userOwner.PhoneNumber!,
             GgMapUrl = "https://maps.google.com/search?q=phunhuan-arena-branch-2",
             Province = "Hồ Chí Minh",
             District = "Phú Nhuận",
@@ -374,12 +372,18 @@ public static class DatabaseSeeder
             AccountNumber = "1903678912345",
             AccountName = "NGUYEN VAN CHU SAN",
             IsActive = true,
-            ReviewTotal = 0,
+            ReviewAverage = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
         await context.Branches.AddRangeAsync([branch1, branch2], cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+
+        await context.BranchSportTypes.AddRangeAsync(
+            [new BranchSportType { BranchId = branch1.Id, SportTypeId = sportBadminton.Id },
+             new BranchSportType { BranchId = branch2.Id, SportTypeId = sportPickleball.Id }],
+            cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
         var branchImages = new[]
@@ -838,7 +842,6 @@ public static class DatabaseSeeder
             PlayerId = userPlayer1.Id,
             Rating = 5,
             Comment = "Sân thảm mới và rất êm, ánh sáng đạt chuẩn thi đấu không bị chói mắt, nhân viên nhiệt tình hỗ trợ!",
-            ImageId = reviewImg.Id,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -859,6 +862,7 @@ public static class DatabaseSeeder
             StartTime = new TimeOnly(19, 0),
             EndTime = new TimeOnly(21, 0),
             MissingPlayers = 2,
+            AvailableSlots = 2,
             FeePerPlayer = 50000m,
             ApprovalMode = 0,
             SkillLevel = "Trình độ B-C",

@@ -31,6 +31,7 @@ public class ApplicationDbContext
     // ── Courts ────────────────────────────────────────────────
     public DbSet<SportType> SportTypes => Set<SportType>();
     public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<BranchSportType> BranchSportTypes => Set<BranchSportType>();
     public DbSet<BranchImage> BranchImages => Set<BranchImage>();
     public DbSet<CourtType> CourtTypes => Set<CourtType>();
     public DbSet<Court> Courts => Set<Court>();
