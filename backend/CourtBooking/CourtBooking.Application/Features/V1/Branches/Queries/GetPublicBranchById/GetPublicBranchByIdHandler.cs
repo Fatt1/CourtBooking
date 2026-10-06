@@ -1,7 +1,7 @@
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Branches.Dtos;
+using CourtBooking.Application.Features.V1.Storages.Dtos;
 using CourtBooking.Application.Messaging;
-using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,78 +14,36 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
         GetPublicBranchByIdQuery request,
         CancellationToken cancellationToken)
     {
-        var branch = await dbContext.Branches.AsNoTracking().AsSplitQuery()
-            .Include(b => b.BranchSportTypes).ThenInclude(bst => bst.SportType)
-            .Include(b => b.Images).ThenInclude(bi => bi.Image)
-            .Include(b => b.CourtTypes).ThenInclude(ct => ct.Courts)
-            .Include(b => b.CourtTypes).ThenInclude(ct => ct.PriceTables).ThenInclude(pt => pt.Rules)
-            .Include(b => b.ServiceBranches.Where(sb => sb.IsActive)).ThenInclude(sb => sb.Service).ThenInclude(s => s.Image)
-            .Include(b => b.Reviews)
-            .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken);
+        var branch = await dbContext.Branches.AsNoTracking()
+            .AsSplitQuery()
+            .Where(b => b.Id == request.Id && b.IsActive)
+            .Select(b => new PublicBranchDetailDto(
+                b.Id,
+                b.Name,
+                b.Hotline,
+                b.Province,
+                b.District,
+                b.Street,
+                b.GgMapUrl,
+                b.OpenTime,
+                b.CloseTime,
+                b.Policy,
+                b.MinPrice,
+                b.MaxPrice,
+                b.ReviewAverage,
+                b.Images
+                    .OrderBy(i => i.DisplayOrder)
+                    .Select(i => new ImageDto(i.Image.StorageKey, i.ImageId))
+                    .ToList(),
+                b.BranchSportTypes.Select(bst => new BranchSportDto(bst.SportTypeId, bst.SportType.Name))
+                    .ToList()))
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (branch == null || !branch.IsActive)
+        if (branch == null)
         {
             return Result.Failure<PublicBranchDetailDto>(new NotFoundError("Branch", request.Id));
         }
 
-        var courtTypes = branch.CourtTypes.Select(ct =>
-        {
-            var activePriceTables = ct.PriceTables.Where(pt => pt.IsActive).ToList();
-            decimal? minPrice = activePriceTables.Count == 0
-                ? null
-                : activePriceTables.Min(pt => pt.Rules.Count > 0
-                    ? Math.Min(pt.DefaultPrice, pt.Rules.Min(r => r.WalkInCustomerPrice))
-                    : pt.DefaultPrice);
-
-            return new PublicCourtTypeDetailDto(
-                ct.Id,
-                ct.Name,
-                ct.MinutesConfig,
-                ct.Courts.Count(c => c.Status == CourtStatus.Available),
-                minPrice);
-        }).ToList();
-
-        var services = branch.ServiceBranches
-            .Where(sb => sb.IsActive)
-            .Select(sb => new PublicBranchServiceDto(
-                sb.ServiceId,
-                sb.Service.Name,
-                sb.Service.Unit,
-                sb.Price,
-                sb.Service.Image != null ? new BranchImageDto(sb.Service.Image.Id, sb.Service.Image.StorageKey) : null))
-            .ToList();
-
-        var images = branch.Images
-            .OrderBy(i => i.DisplayOrder)
-            .Select(i => new BranchImageDto(i.ImageId, i.Image.StorageKey))
-            .ToList();
-
-        var sports = branch.BranchSportTypes
-            .Select(bst => new BranchSportDto(bst.SportTypeId, bst.SportType.Name))
-            .ToList();
-
-        double? avgRating = branch.Reviews.Count == 0
-            ? null
-            : branch.Reviews.Average(r => (double)r.Rating);
-
-        return Result.Success(new PublicBranchDetailDto(
-            branch.Id,
-            branch.Name,
-            branch.Hotline,
-            branch.Province,
-            branch.District,
-            branch.Street,
-            branch.GgMapUrl,
-            branch.Latitude,
-            branch.Longitude,
-            branch.OpenTime,
-            branch.CloseTime,
-            branch.Policy,
-            images,
-            sports,
-            courtTypes,
-            services,
-            avgRating,
-            branch.Reviews.Count));
+        return Result.Success(branch);
     }
 }

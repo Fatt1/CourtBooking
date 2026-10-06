@@ -1,11 +1,12 @@
-using CourtBooking.Application.Features.V1.Services.Dtos;
+using CourtBooking.Application.Features.V1.Storages.Dtos;
 
 namespace CourtBooking.Application.Features.V1.SportTypes.Dtos;
 
 public sealed record SportTypeDto(
     Guid Id,
     string Name,
-    ImageDto? Image);
+    ImageDto? Image,
+    int BranchCount);
 
 public sealed record AdminSportTypeDto(
     Guid Id,

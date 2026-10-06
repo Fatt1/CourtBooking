@@ -2,6 +2,7 @@ using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Branches.Dtos;
+using CourtBooking.Application.Features.V1.Storages.Dtos;
 using CourtBooking.Application.Messaging;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,7 @@ internal sealed class GetOwnerBranchReviewsHandler(
                 r.Rating,
                 r.Comment,
                 r.CreatedAt,
-                r.Image != null ? new BranchImageDto(r.Image.Id, r.Image.StorageKey) : null));
+                r.Image != null ? new ImageDto(r.Image.StorageKey, r.Image.Id) : null));
 
         var pagedReviews = await PagedList<BranchReviewItemDto>.CreateAsync(
             reviewsQuery, request.Page, request.PageSize, cancellationToken);
@@ -50,7 +51,6 @@ internal sealed class GetOwnerBranchReviewsHandler(
         var result = new OwnerBranchReviewsDto(
             request.BranchId,
             averageRating,
-            pagedReviews.TotalCount,
             pagedReviews);
 
         return Result.Success(result);

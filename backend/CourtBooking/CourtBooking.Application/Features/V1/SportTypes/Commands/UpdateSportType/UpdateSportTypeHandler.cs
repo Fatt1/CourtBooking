@@ -26,14 +26,14 @@ internal sealed class UpdateSportTypeHandler(
 
         var normalizedName = request.Name.Trim();
 
-        var otherNames = await dbContext.SportTypes
-            .AsNoTracking()
-            .Where(item => item.Id != request.Id)
-            .Select(item => item.Name)
-            .ToListAsync(cancellationToken);
 
-        var nameAlreadyExists = otherNames.Any(name =>
-            string.Equals(name, normalizedName, StringComparison.OrdinalIgnoreCase));
+
+        var nameAlreadyExists = await dbContext.SportTypes
+                            .AsNoTracking()
+                            .AnyAsync(st => string.Equals(
+                                st.Name,
+                                normalizedName,
+                                StringComparison.OrdinalIgnoreCase) && st.Id != sportType.Id, cancellationToken);
 
         if (nameAlreadyExists)
         {
@@ -41,19 +41,7 @@ internal sealed class UpdateSportTypeHandler(
                 new ConflictError("Tên môn thể thao đã tồn tại."));
         }
 
-        if (request.ImageId.HasValue)
-        {
-            var imageExists = await dbContext.Images
-                .AnyAsync(
-                    image => image.Id == request.ImageId.Value,
-                    cancellationToken);
 
-            if (!imageExists)
-            {
-                return Result.Failure(
-                    new NotFoundError("Image", request.ImageId.Value));
-            }
-        }
 
         var oldImageId = sportType.ImageId;
 

@@ -31,22 +31,6 @@ internal sealed class DeleteSportTypeHandler(
             return Result.Failure(new ConflictError("Không thể xóa môn thể thao đang có sân sử dụng."));
         }
 
-        var isUsedByEvents = await dbContext.SportEvents
-            .AnyAsync(e => e.SportTypeId == request.Id, cancellationToken);
-
-        if (isUsedByEvents)
-        {
-            return Result.Failure(new ConflictError("Không thể xóa môn thể thao đang có sự kiện sử dụng."));
-        }
-
-        var isUsedByMatches = await dbContext.SocialMatches
-            .AnyAsync(sm => sm.SportTypeId == request.Id, cancellationToken);
-
-        if (isUsedByMatches)
-        {
-            return Result.Failure(new ConflictError("Không thể xóa môn thể thao đang có trận đấu sử dụng."));
-        }
-
         var imageId = sportType.ImageId;
 
         dbContext.SportTypes.Remove(sportType);

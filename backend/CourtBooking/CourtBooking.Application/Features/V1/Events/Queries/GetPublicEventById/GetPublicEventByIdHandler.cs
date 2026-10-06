@@ -1,5 +1,6 @@
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Events.Dtos;
+using CourtBooking.Application.Features.V1.Storages.Dtos;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
@@ -43,7 +44,7 @@ internal sealed class GetPublicEventByIdHandler(
                     e.Order.Branch.AccountNumber,
                     e.Order.Branch.AccountName,
                     e.Order.Branch.QrImage != null
-                        ? new ImageDto(e.Order.Branch.QrImage.Id, e.Order.Branch.QrImage.StorageKey)
+                        ? new ImageDto(e.Order.Branch.QrImage.StorageKey, e.Order.Branch.QrImage.Id)
                         : null,
                     // Danh sách toàn bộ ảnh không gian sân của chi nhánh
                     e.Order.Branch.Images
@@ -62,7 +63,7 @@ internal sealed class GetPublicEventByIdHandler(
                         t.PlayerId,
                         t.Player.FullName,
                         t.Player.PlayerProfile != null && t.Player.PlayerProfile.AvatarImage != null
-                            ? new ImageDto(t.Player.PlayerProfile.AvatarImage.Id, t.Player.PlayerProfile.AvatarImage.StorageKey)
+                            ? new ImageDto(t.Player.PlayerProfile.AvatarImage.StorageKey, t.Player.PlayerProfile.AvatarImage.Id)
                             : null,
                         t.Quantity,
                         t.CreatedAt))

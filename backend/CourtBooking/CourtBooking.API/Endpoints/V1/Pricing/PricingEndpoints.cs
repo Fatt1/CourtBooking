@@ -8,6 +8,7 @@ using CourtBooking.Application.Features.V1.Pricing.Commands.PriceTables.CreatePr
 using CourtBooking.Application.Features.V1.Pricing.Commands.PriceTables.DeletePriceTable;
 using CourtBooking.Application.Features.V1.Pricing.Commands.PriceTables.UpdatePriceTable;
 using CourtBooking.Application.Features.V1.Pricing.Dtos;
+using CourtBooking.Application.Features.V1.Pricing.Queries.GetPricingConfigByBranchId;
 using CourtBooking.Application.Features.V1.Pricing.Queries.GetPricingConfigByCourtType;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
@@ -34,6 +35,25 @@ public sealed class PricingEndpoints : IEndpointGroup
 
         // 4. Quản lý Khung giờ bắt buộc (FixedTimeBlock)
         MapFixedTimeBlocks(group);
+
+
+        var publicGroup = app.MapApiV1Group("pricing");
+        // 3. Xem cấu hình giá và loại sân công khai phục vụ đặt sân
+        publicGroup.MapGet("/{id:guid}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetPricingConfigByBranchIdQuery(id), ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+         .WithTags(PricingTag)
+        .WithName("GetPublicBranchPricingConfig")
+        .WithSummary("Lấy toàn bộ cấu hình giá và loại sân của chi nhánh cho đặt sân")
+        .WithDescription("Trả về danh sách tất cả loại sân kèm các sân con khả dụng, khung giờ bắt buộc và bảng giá đang hoạt động.")
+        .Produces<IReadOnlyList<CourtTypePricingConfigDto>>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     private static void MapPricingConfig(RouteGroupBuilder group)

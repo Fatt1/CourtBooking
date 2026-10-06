@@ -3,7 +3,6 @@ using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Storages.Events.AttachImages;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Entities.Courts;
-using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -24,11 +23,6 @@ internal sealed class CreateBranchHandler(IApplicationDbContext dbContext, IUser
                 return Result.Failure<Guid>(new NotFoundError("SportType", id));
         }
 
-        foreach (var id in new[] { request.QrImageId }.Concat(request.ImageIds ?? []).Distinct())
-        {
-            if (!await dbContext.Images.AnyAsync(x => x.Id == id && x.Status != ImageStatus.Deleted, ct))
-                return Result.Failure<Guid>(new NotFoundError("Image", id));
-        }
 
         var branch = new Branch
         {

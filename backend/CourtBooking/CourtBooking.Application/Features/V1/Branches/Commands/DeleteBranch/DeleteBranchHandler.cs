@@ -8,46 +8,44 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.Branches.Commands.DeleteBranch;
 
-internal sealed class DeleteBranchHandler(IApplicationDbContext dbContext, IUserContext userContext, IPublisher publisher)
+internal sealed class DeleteBranchHandler(
+    IApplicationDbContext dbContext,
+    IUserContext userContext,
+    IPublisher publisher)
     : ICommandHandler<DeleteBranchCommand>
 {
     public async Task<Result> Handle(DeleteBranchCommand request, CancellationToken ct)
     {
         var branch = await dbContext.Branches
-            .Include(x => x.Images).Include(x => x.BranchSportTypes)
+            .Include(x => x.Images)
             .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
-        if (branch is null) return Result.Failure(new NotFoundError("Branch", request.Id));
+
+        if (branch is null)
+            return Result.Failure(new NotFoundError("Branch", request.Id));
+
         if (branch.CourtOwnerId != userContext.UserId)
             return Result.Failure(new ForbiddenError("Chi nhánh không thuộc chủ sân này."));
-
-        var used = await dbContext.CourtTypes.AnyAsync(x => x.BranchId == request.Id, ct)
-            || await dbContext.ServiceBranches.AnyAsync(x => x.BranchId == request.Id, ct)
-            || await dbContext.Reviews.AnyAsync(x => x.BranchId == request.Id, ct)
-            || await dbContext.Orders.AnyAsync(x => x.BranchId == request.Id, ct)
-            || await dbContext.SocialMatches.AnyAsync(x => x.BranchId == request.Id, ct)
+        // 1. Ràng buộc: Phải có ít nhất 2 chi nhánh mới cho xóa
+        var branchCount = await dbContext.Branches.CountAsync(x => x.CourtOwnerId == userContext.UserId, ct);
+        if (branchCount <= 1)
+            return Result.Failure(new ConflictError("Chủ sân phải có ít nhất một chi nhánh. Không thể xóa chi nhánh duy nhất còn lại."));
+        // 2. Kiểm tra nếu đã có đơn đặt sân thì không được xóa
+        var hasOrders = await dbContext.Orders.AnyAsync(x => x.BranchId == request.Id, ct)
             || await dbContext.RetailOrders.AnyAsync(x => x.BranchId == request.Id, ct);
-        if (used)
-            return Result.Failure(new ConflictError("Không thể xóa chi nhánh đã có dữ liệu liên quan."));
-
-        var images = branch.Images.Select(x => x.ImageId).Append(branch.QrImageId).Distinct().ToList();
+        if (hasOrders)
+            return Result.Failure(new ConflictError("Không thể xóa chi nhánh đã có dữ liệu đơn đặt sân."));
+        // 3. Gom ảnh riêng của chi nhánh để xóa
+        var imageIds = branch.Images
+            .Select(x => x.ImageId)
+            .Append(branch.QrImageId)
+            .Distinct()
+            .ToList();
+        // 4. Xóa chi nhánh (Database tự động Cascade Delete ServiceBranches, BranchImages,...)
         dbContext.Branches.Remove(branch);
         await dbContext.SaveChangesAsync(ct);
-        var unused = new List<Guid>();
-        foreach (var id in images)
-        {
-            var referenced = await dbContext.Branches.AnyAsync(x => x.QrImageId == id, ct)
-                || await dbContext.BranchImages.AnyAsync(x => x.ImageId == id, ct)
-                || await dbContext.SportTypes.AnyAsync(x => x.ImageId == id, ct)
-                || await dbContext.Reviews.AnyAsync(x => x.ImageId == id, ct)
-                || await dbContext.Services.AnyAsync(x => x.ImageId == id, ct)
-                || await dbContext.CourtOwners.AnyAsync(x => x.QrImageId == id, ct)
-                || await dbContext.PlayerProfiles.AnyAsync(x => x.AvatarImageId == id, ct)
-                || await dbContext.PaymentTransactions.AnyAsync(x => x.ProofImageId == id, ct)
-                || await dbContext.EventTickets.AnyAsync(x => x.ProofImageId == id, ct);
-            if (!referenced) unused.Add(id);
-        }
-        if (unused.Count > 0)
-            await publisher.Publish(new DeleteImagesEvent(unused), ct);
+        // 5. Bắn event xóa ảnh
+        if (imageIds.Count > 0)
+            await publisher.Publish(new DeleteImagesEvent(imageIds), ct);
         return Result.Success();
     }
 }
