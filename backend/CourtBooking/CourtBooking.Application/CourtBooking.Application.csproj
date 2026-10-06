@@ -13,5 +13,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Features\V1\Pricing\Queries\GetPrcingConfigByBranchId\" />
+    <Folder Include="Features\V1\Reviews\Dtos\" />
   </ItemGroup>
 </Project>

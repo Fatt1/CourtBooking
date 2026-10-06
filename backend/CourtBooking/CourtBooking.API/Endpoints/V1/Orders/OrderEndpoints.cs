@@ -29,19 +29,170 @@ public class OrderEndpoints : IEndpointGroup
 {
     private const string OrderTag = "Orders";
 
+    private const string FixedOrderTag = "Orders Fixed";
+
     public void Map(IEndpointRouteBuilder app)
     {
         var groupOwner = app.MapApiV1Group("owner/orders");
         MapToOwner(groupOwner);
 
+
+        var groupFixedOrder = app.MapApiV1Group("owner/orders/fixed");
+        MapToFixedOrder(groupFixedOrder);
+
+
         var group = app.MapApiV1Group("orders");
         MapToPublic(group);
     }
 
+    public void MapToFixedOrder(RouteGroupBuilder group)
+    {
+        // GET /api/v1/owner/orders/fixed/{id:guid} — Xem chi tiết đơn hàng lịch cố định
+        group.MapGet("/{id:guid}", async (
+                [FromRoute] Guid id,
+                ISender sender = default!,
+                CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new GetFixedOrderByIdQuery(id), ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .WithName("GetFixedOrderById")
+            .WithSummary("Lấy thông tin chi tiết đơn hàng lịch cố định")
+            .WithDescription("Trả về chi tiết đơn hàng lịch cố định bao gồm danh sách chu kì, danh sách các ca/buổi sinh ra, dịch vụ, hóa đơn chiết tính và thanh toán.")
+            .WithTags(FixedOrderTag)
+            .Produces<FixedOrderResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+
+        // GET /api/v1/owner/orders/fixed — Danh sách đơn đặt lịch cố định tại chi nhánh có phân trang & bộ lọc
+        group.MapGet("/", async (
+                [FromQuery] Guid branchId,
+                [FromQuery] OrderStatus? status,
+                [FromQuery] DateOnly? fromDate,
+                [FromQuery] DateOnly? toDate,
+                [FromQuery] string? search,
+                [FromQuery] int page = 1,
+                [FromQuery] int pageSize = 10,
+                ISender sender = default!,
+                CancellationToken ct = default) =>
+        {
+            var query = new GetFixedOrdersByBranchQuery(
+                branchId,
+                status,
+                fromDate,
+                toDate,
+                search,
+                page,
+                pageSize);
+
+            var result = await sender.Send(query, ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .WithName("GetFixedOrdersByBranch")
+            .WithSummary("Lấy danh sách đơn đặt lịch cố định tại chi nhánh")
+            .WithDescription("Trả về danh sách đơn đặt lịch cố định kèm thông tin tóm tắt từng chu kì (ngày bắt đầu, kết thúc, thứ trong tuần, khung giờ, sân).")
+            .WithTags(FixedOrderTag)
+            .Produces<PagedList<FixedOrderDto>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        // POST /api/v1/owner/orders/fixed — Chủ sân / nhân viên đặt lịch cố định cho khách
+        group.MapPost("/", async (
+                [FromBody] CreateFixedOrderByOwnerCommand command,
+                ISender sender = default!,
+                CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .WithName("CreateFixedOrderByOwner")
+            .WithSummary("Chủ sân tạo đơn đặt lịch cố định")
+            .WithDescription("Dành cho chủ sân hoặc nhân viên đặt lịch cố định theo các chu kì. Tự động áp dụng bảng giá khách cố định và sinh các OrderDetail tương ứng.")
+            .WithTags(FixedOrderTag)
+            .Produces<Guid>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+
+        // POST /api/v1/owner/orders/{orderId:guid}/fixed-cycles — Thêm một chu kì đặt cố định mới
+        group.MapPost("/fixed/{orderId:guid}/cycles", async (
+            [FromRoute] Guid orderId,
+            [FromBody] AddFixedOrderCycleCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(command with { OrderId = orderId }, ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .WithName("AddFixedOrderCycle")
+            .WithSummary("Thêm chu kì đặt sân cố định mới vào đơn hàng")
+            .WithDescription("Thêm một chu kì mới (ngày, giờ, thứ, loại sân, sân) vào đơn đặt cố định và tự động cập nhật lại toàn bộ OrderDetail.")
+            .WithTags(FixedOrderTag)
+            .Produces<Guid>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+
+        // PUT /api/v1/owner/orders/fixed/{orderId:guid}/fixed-cycles/{cycleId:guid} — Cập nhật một chu kì đặt cố định
+        group.MapPut("/{orderId:guid}/cycles/{cycleId:guid}", async (
+            [FromRoute] Guid orderId,
+            [FromRoute] Guid cycleId,
+            [FromBody] UpdateFixedOrderCycleCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(command with { OrderId = orderId, CycleId = cycleId }, ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+            .WithName("UpdateFixedOrderCycle")
+            .WithSummary("Cập nhật chu kì đặt sân cố định")
+            .WithDescription("Cập nhật thông tin ngày, giờ, thứ và sân cho 1 chu kì, đồng thời tự động cập nhật lại toàn bộ các OrderDetail của đơn hàng.")
+            .WithTags(FixedOrderTag)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+
+        // DELETE /api/v1/owner/orders/fixed/{orderId:guid}/fixed-cycles/{cycleId:guid} — Xóa một chu kì đặt cố định
+        group.MapDelete("/{orderId:guid}/cycles/{cycleId:guid}", async (
+            [FromRoute] Guid orderId,
+            [FromRoute] Guid cycleId,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new DeleteFixedOrderCycleCommand(orderId, cycleId), ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+            .WithName("DeleteFixedOrderCycle")
+            .WithSummary("Xóa một chu kì đặt sân cố định khỏi đơn hàng")
+            .WithDescription("Xóa chu kì khỏi đơn đặt cố định (yêu cầu đơn hàng có tối thiểu 2 chu kì) và tự động cập nhật lại toàn bộ OrderDetail.")
+            .WithTags(FixedOrderTag)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+    }
+
     private static void MapToOwner(RouteGroupBuilder group)
     {
-        // GET /api/v1/owner/orders/daily — Danh sách đơn hàng đặt ngày tại 1 chi nhánh có phân trang & bộ lọc
-        group.MapGet("/daily", async (
+        // GET /api/v1/owner/orders/ — Danh sách đơn hàng đặt ngày tại 1 chi nhánh có phân trang & bộ lọc
+        group.MapGet("/", async (
                 [FromQuery] Guid branchId,
                 [FromQuery] OrderStatus? status,
                 [FromQuery] DateOnly? fromDate,
@@ -74,61 +225,11 @@ public class OrderEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // GET /api/v1/owner/orders/fixed — Danh sách đơn đặt lịch cố định tại chi nhánh có phân trang & bộ lọc
-        group.MapGet("/fixed", async (
-                [FromQuery] Guid branchId,
-                [FromQuery] OrderStatus? status,
-                [FromQuery] DateOnly? fromDate,
-                [FromQuery] DateOnly? toDate,
-                [FromQuery] string? search,
-                [FromQuery] int page = 1,
-                [FromQuery] int pageSize = 10,
-                ISender sender = default!,
-                CancellationToken ct = default) =>
-        {
-            var query = new GetFixedOrdersByBranchQuery(
-                branchId,
-                status,
-                fromDate,
-                toDate,
-                search,
-                page,
-                pageSize);
 
-            var result = await sender.Send(query, ct);
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : result.ToProblemDetails();
-        })
-            .WithName("GetFixedOrdersByBranch")
-            .WithSummary("Lấy danh sách đơn đặt lịch cố định tại chi nhánh")
-            .WithDescription("Trả về danh sách đơn đặt lịch cố định kèm thông tin tóm tắt từng chu kì (ngày bắt đầu, kết thúc, thứ trong tuần, khung giờ, sân).")
-            .WithTags(OrderTag)
-            .Produces<PagedList<FixedOrderDto>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // GET /api/v1/owner/orders/fixed/{id:guid} — Xem chi tiết đơn hàng lịch cố định
-        group.MapGet("/fixed/{id:guid}", async (
-                [FromRoute] Guid id,
-                ISender sender = default!,
-                CancellationToken ct = default) =>
-        {
-            var result = await sender.Send(new GetFixedOrderByIdQuery(id), ct);
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : result.ToProblemDetails();
-        })
-            .WithName("GetFixedOrderById")
-            .WithSummary("Lấy thông tin chi tiết đơn hàng lịch cố định")
-            .WithDescription("Trả về chi tiết đơn hàng lịch cố định bao gồm danh sách chu kì, danh sách các ca/buổi sinh ra, dịch vụ, hóa đơn chiết tính và thanh toán.")
-            .WithTags(OrderTag)
-            .Produces<FixedOrderResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status403Forbidden);
 
         // POST /api/v1/owner/orders — Chủ sân / nhân viên đặt lịch trực tiếp cho khách
-        group.MapPost("/daily", async (
+        group.MapPost("/", async (
                 [FromBody] CreateOrderByOwnerCommand command,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
@@ -146,24 +247,7 @@ public class OrderEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // POST /api/v1/owner/orders/fixed — Chủ sân / nhân viên đặt lịch cố định cho khách
-        group.MapPost("/fixed", async (
-                [FromBody] CreateFixedOrderByOwnerCommand command,
-                ISender sender = default!,
-                CancellationToken ct = default) =>
-        {
-            var result = await sender.Send(command, ct);
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : result.ToProblemDetails();
-        })
-            .WithName("CreateFixedOrderByOwner")
-            .WithSummary("Chủ sân tạo đơn đặt lịch cố định")
-            .WithDescription("Dành cho chủ sân hoặc nhân viên đặt lịch cố định theo các chu kì. Tự động áp dụng bảng giá khách cố định và sinh các OrderDetail tương ứng.")
-            .WithTags(OrderTag)
-            .Produces<Guid>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status403Forbidden);
+
 
         // PUT /api/v1/owner/orders/{orderId}/confirm — Xác nhận đơn hàng
         group.MapPut("/{orderId:guid}/confirmation", async (
@@ -226,73 +310,10 @@ public class OrderEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        // POST /api/v1/owner/orders/{orderId:guid}/fixed-cycles — Thêm một chu kì đặt cố định mới
-        group.MapPost("/{orderId:guid}/fixed-cycles", async (
-            [FromRoute] Guid orderId,
-            [FromBody] AddFixedOrderCycleCommand command,
-            ISender sender,
-            CancellationToken ct) =>
-        {
-            var result = await sender.Send(command with { OrderId = orderId }, ct);
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : result.ToProblemDetails();
-        })
-            .WithName("AddFixedOrderCycle")
-            .WithSummary("Thêm chu kì đặt sân cố định mới vào đơn hàng")
-            .WithDescription("Thêm một chu kì mới (ngày, giờ, thứ, loại sân, sân) vào đơn đặt cố định và tự động cập nhật lại toàn bộ OrderDetail.")
-            .WithTags(OrderTag)
-            .Produces<Guid>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status403Forbidden);
-
-        // PUT /api/v1/owner/orders/{orderId:guid}/fixed-cycles/{cycleId:guid} — Cập nhật một chu kì đặt cố định
-        group.MapPut("/{orderId:guid}/fixed-cycles/{cycleId:guid}", async (
-            [FromRoute] Guid orderId,
-            [FromRoute] Guid cycleId,
-            [FromBody] UpdateFixedOrderCycleCommand command,
-            ISender sender,
-            CancellationToken ct) =>
-        {
-            var result = await sender.Send(command with { OrderId = orderId, CycleId = cycleId }, ct);
-            return result.IsSuccess
-                ? Results.NoContent()
-                : result.ToProblemDetails();
-        })
-            .WithName("UpdateFixedOrderCycle")
-            .WithSummary("Cập nhật chu kì đặt sân cố định")
-            .WithDescription("Cập nhật thông tin ngày, giờ, thứ và sân cho 1 chu kì, đồng thời tự động cập nhật lại toàn bộ các OrderDetail của đơn hàng.")
-            .WithTags(OrderTag)
-            .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status403Forbidden);
-
-        // DELETE /api/v1/owner/orders/{orderId:guid}/fixed-cycles/{cycleId:guid} — Xóa một chu kì đặt cố định
-        group.MapDelete("/{orderId:guid}/fixed-cycles/{cycleId:guid}", async (
-            [FromRoute] Guid orderId,
-            [FromRoute] Guid cycleId,
-            ISender sender,
-            CancellationToken ct) =>
-        {
-            var result = await sender.Send(new DeleteFixedOrderCycleCommand(orderId, cycleId), ct);
-            return result.IsSuccess
-                ? Results.NoContent()
-                : result.ToProblemDetails();
-        })
-            .WithName("DeleteFixedOrderCycle")
-            .WithSummary("Xóa một chu kì đặt sân cố định khỏi đơn hàng")
-            .WithDescription("Xóa chu kì khỏi đơn đặt cố định (yêu cầu đơn hàng có tối thiểu 2 chu kì) và tự động cập nhật lại toàn bộ OrderDetail.")
-            .WithTags(OrderTag)
-            .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status403Forbidden);
 
 
         // GET /api/v1/owner/orders/daily/{id:guid} — Xem chi tiết đơn hàng đặt sân
-        group.MapGet("/daily/{id:guid}", async (
+        group.MapGet("/{id:guid}", async (
                 [FromRoute] Guid id,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
