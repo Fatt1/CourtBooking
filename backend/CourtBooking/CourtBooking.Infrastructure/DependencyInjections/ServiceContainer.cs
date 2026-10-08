@@ -133,7 +133,7 @@ public static class ServiceContainer
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
         });
 
-        services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
         return services;
     }
 
