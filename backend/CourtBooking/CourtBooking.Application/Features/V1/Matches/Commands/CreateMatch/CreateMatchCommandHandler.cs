@@ -20,6 +20,7 @@ public sealed class CreateMatchCommandHandler(
         var order = await dbContext.Orders
             .Include(o => o.Details)
             .Include(o => o.Branch)
+            .ThenInclude(o => o.BranchSportTypes)
             .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
 
         if (order == null)
@@ -72,7 +73,7 @@ public sealed class CreateMatchCommandHandler(
             Id = Guid.CreateVersion7(),
             OrderId = order.Id,
             BranchId = order.BranchId,
-            SportTypeId = order.Branch.SportTypeId,
+            SportTypeId = order.Branch.BranchSportTypes.FirstOrDefault()!.SportTypeId,
             Date = firstDetail.Date,
             StartTime = firstDetail.StartTime,
             EndTime = firstDetail.EndTime,

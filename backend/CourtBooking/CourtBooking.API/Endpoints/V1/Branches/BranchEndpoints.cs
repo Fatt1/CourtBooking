@@ -7,7 +7,6 @@ using CourtBooking.Application.Features.V1.Branches.Commands.UpdateBranchStatus;
 using CourtBooking.Application.Features.V1.Branches.Dtos;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetOwnerBranchById;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetOwnerBranches;
-using CourtBooking.Application.Features.V1.Branches.Queries.GetOwnerBranchReviews;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetPublicBranchById;
 using CourtBooking.Application.Features.V1.Branches.Queries.SearchPublicBranches;
 using CourtBooking.SharedKernel.Extensions;
@@ -127,24 +126,7 @@ public sealed class BranchEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        group.MapGet("/{branchId:guid}/reviews", async (
-            Guid branchId,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10,
-            ISender sender = null!,
-            CancellationToken ct = default) =>
-        {
-            var result = await sender.Send(new GetOwnerBranchReviewsQuery(branchId, page, pageSize), ct);
-            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
-        })
-        .WithName("GetOwnerBranchReviews")
-        .WithSummary("Xem đánh giá của một chi nhánh")
-        .WithDescription("Chủ sân xem điểm trung bình, tổng số đánh giá và danh sách đánh giá của khách hàng tại chi nhánh.")
-        .Produces<OwnerBranchReviewsDto>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status401Unauthorized)
-        .ProducesProblem(StatusCodes.Status403Forbidden)
-        .ProducesProblem(StatusCodes.Status404NotFound);
+
 
         group.MapPost("/", async (CreateBranchRequest body, ISender sender, CancellationToken ct) =>
         {

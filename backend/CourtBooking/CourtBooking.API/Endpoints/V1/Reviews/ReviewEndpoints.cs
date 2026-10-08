@@ -1,6 +1,6 @@
 using CourtBooking.API.Extensions;
-using CourtBooking.API.Infrastructure;
 using CourtBooking.Application.Features.V1.Reviews.Commands.CreateReview;
+using CourtBooking.Application.Features.V1.Reviews.Queries.GetReviewByBranch;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -29,5 +29,25 @@ public sealed class ReviewEndpoints : IEndpointGroup
         .WithName("CreateReview")
         .WithSummary("Đánh giá sân sau khi hoàn thành đơn hàng")
         .WithDescription("Chỉ áp dụng cho người dùng đã sử dụng sân và đơn hàng đã hoàn thành.");
+
+
+
+        group.MapGet("/", async (
+            Guid branchId,
+            int page,
+            int pageSize,
+            ISender sender, CancellationToken cancellationToken) =>
+        {
+            var query = new GetReviewByBranchQuery(branchId, page, pageSize);
+            var result = await sender.Send(query, cancellationToken);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : Results.Problem("Failed to retrieve reviews.");
+        })
+        .WithName("GetReviews")
+        .WithSummary("Lấy danh sách đánh giá")
+        .WithDescription("Lấy danh sách đánh giá của 1 chi nhánh.")
+        .WithTags("Reviews");
+
     }
 }

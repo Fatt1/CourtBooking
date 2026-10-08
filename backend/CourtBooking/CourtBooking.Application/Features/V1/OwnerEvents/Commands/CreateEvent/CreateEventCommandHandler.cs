@@ -58,10 +58,6 @@ internal sealed class CreateEventCommandHandler(
         }
 
         var branch = branchResult.Value;
-        if (branch.SportTypeId != request.SportTypeId)
-        {
-            return Result.Failure<Guid>(new BadError("Chi nhánh này không hỗ trợ môn thể thao đã chọn cho sự kiện."));
-        }
 
         // 4. Tái sử dụng IOrderChecker để xác thực danh sách sân con và trạng thái hoạt động (Ngoài Lock)
         var courtsResult = await orderChecker.ValidateCourtsAsync(request.BranchId, flatSlots, cancellationToken);

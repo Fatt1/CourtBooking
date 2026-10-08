@@ -10,8 +10,7 @@ public sealed record BranchReviewItemDto(
     string PlayerName,
     byte Rating,
     string? Comment,
-    DateTime CreatedAt,
-    ImageDto? Image = null);
+    DateTime CreatedAt);
 
 public sealed record OwnerBranchReviewsDto(
     Guid BranchId,

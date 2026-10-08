@@ -130,7 +130,7 @@ public sealed class CourtEndpoints : IEndpointGroup
     .ProducesProblem(StatusCodes.Status409Conflict);
 
         // PUT /api/v1/owner/courts/{id}/status
-        group.MapPut("/status/{id:guid}", async (
+        group.MapPut("/{id:guid}/status", async (
             Guid id,
             [FromBody] UpdateCourtStatusRequest request,
             ISender sender,
