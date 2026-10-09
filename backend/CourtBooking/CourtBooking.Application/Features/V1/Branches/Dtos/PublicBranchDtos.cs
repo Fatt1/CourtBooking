@@ -5,11 +5,7 @@ namespace CourtBooking.Application.Features.V1.Branches.Dtos;
 public sealed record PublicBranchListItemDto(
     Guid Id,
     string Name,
-    string Province,
-    string District,
-    string Street,
-    decimal? Latitude,
-    decimal? Longitude,
+    string FullAddress,
     ImageDto? CoverImage,
     IReadOnlyList<BranchSportDto> Sports,
     TimeOnly OpenTime,

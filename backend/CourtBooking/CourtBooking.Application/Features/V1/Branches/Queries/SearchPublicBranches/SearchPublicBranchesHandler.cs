@@ -173,11 +173,7 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
             return new PublicBranchListItemDto(
                 p.Id,
                 p.Name,
-                p.Province,
-                p.District,
-                p.Street,
-                p.Latitude,
-                p.Longitude,
+                p.Street + ", " + p.District + ", " + p.Province,
                 p.CoverImage,
                 p.Sports,
                 p.OpenTime,
