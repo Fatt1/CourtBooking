@@ -79,4 +79,9 @@ public class Branch : EntityBase<Guid>, IAuditable
         }
         return (added, removed);
     }
+
+    public string GetFullAddress()
+    {
+        return $"{Street}, {District}, {Province}";
+    }
 }
