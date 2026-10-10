@@ -16,6 +16,7 @@ import { UsersPage } from '@/features/admin/pages/UsersPage';
 // Court Owners / Management Pages
 import { OrdersPage } from '@/features/court-owners/pages/OrdersPage';
 import { BranchesPage } from '@/features/court-owners/pages/BranchesPage';
+import { ServiceCategoriesPage } from '@/features/court-owners/pages/ServiceCategoriesPage';
 
 // Auth Pages
 import { UserLoginPage } from '@/features/auth/pages/UserLoginPage';
@@ -52,14 +53,35 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // 3. Admin / Management Portal
+  // 3. Court Owner Portal (Giao diện Chủ sân)
+  {
+    path: '/owner',
+    element: <AdminLayout />,
+    children: [
+      { index: true, element: <Navigate to="/owner/orders" replace /> },
+      { path: 'orders', element: <OrdersPage /> },
+      { path: 'branches', element: <BranchesPage /> },
+      { path: 'court-status', element: <OrdersPage /> },
+      { path: 'courts', element: <OrdersPage /> },
+      { path: 'pricing', element: <OrdersPage /> },
+      { path: 'service-categories', element: <ServiceCategoriesPage /> },
+      { path: 'products', element: <OrdersPage /> },
+      { path: 'pos', element: <OrdersPage /> },
+      { path: 'wallet', element: <OrdersPage /> },
+      { path: 'reports', element: <OrdersPage /> },
+      { path: 'packages', element: <OrdersPage /> },
+    ],
+  },
+
+  // 4. System Admin Portal (Quản trị hệ thống)
   {
     path: '/admin',
     element: <AdminLayout />,
     children: [
-      { path: 'orders', element: <OrdersPage /> },
-      { path: 'branches', element: <BranchesPage /> },
+      { index: true, element: <Navigate to="/admin/users" replace /> },
       { path: 'users', element: <UsersPage /> },
+      { path: 'orders', element: <Navigate to="/owner/orders" replace /> },
+      { path: 'branches', element: <Navigate to="/owner/branches" replace /> },
     ],
   },
 

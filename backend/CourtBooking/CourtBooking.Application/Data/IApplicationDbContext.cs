@@ -16,6 +16,7 @@ public interface IApplicationDbContext
 {
 
     // ── Identity / Users ──────────────────────────────────────
+    DbSet<ApplicationUser> Users { get; }
     DbSet<PlayerProfile> PlayerProfiles { get; }
     DbSet<CourtOwner> CourtOwners { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
