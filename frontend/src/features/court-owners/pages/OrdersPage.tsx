@@ -33,7 +33,7 @@ import {
   OwnerFilterBar,
   OwnerStatusBadge,
   OwnerPagination,
-} from '@/components/owner';
+} from '@/features/court-owners/components';
 
 interface CourtInfo {
   name: string;

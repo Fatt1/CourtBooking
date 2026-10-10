@@ -8,7 +8,7 @@
 
 ## 🧩 1. Danh Sách Các Khối Lego Có Sẵn (Chỉ Cần Gọi Ra)
 
-Tất cả các khối dùng chung cho Chủ sân đều được lưu tập trung tại:
+Tất cả các khối dùng chung cho Chủ sân đều được lưu tập trung tại `src/features/court-owners/components/`:
 ```tsx
 import { 
   OwnerPageHeader, 
@@ -16,7 +16,7 @@ import {
   OwnerStatusBadge, 
   OwnerPagination,
   OwnerModal 
-} from '@/components/owner';
+} from '@/features/court-owners/components';
 
 import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
 import { Button } from '@/components/ui/button';
@@ -48,7 +48,7 @@ import {
   OwnerFilterBar,
   OwnerStatusBadge,
   OwnerPagination,
-} from '@/components/owner';
+} from '@/features/court-owners/components';
 import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
 
 // 1. Định nghĩa kiểu dữ liệu của màn hình bạn đang làm

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
-import { OwnerPageHeader, OwnerModal } from '@/components/owner';
+import { OwnerPageHeader, OwnerModal } from '@/features/court-owners/components';
 import {
   Dialog,
   DialogContent,
