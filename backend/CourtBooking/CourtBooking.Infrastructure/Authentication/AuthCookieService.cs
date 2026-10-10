@@ -18,11 +18,12 @@ internal sealed class AuthCookieService(
             return;
         }
 
+        var isHttps = httpContext.Request.IsHttps;
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,                                     // Chống XSS (JS không đọc được)
-            Secure = httpContext.Request.IsHttps,               // HTTPS only trong production
-            SameSite = SameSiteMode.Lax,                         // Bảo vệ chống CSRF, hỗ trợ SPA
+            Secure = isHttps,                                   // HTTPS only trong production / HTTPS dev
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax, // None + Secure khi gọi API cross-origin HTTPS
             Expires = expiresAt,
             IsEssential = true,                                  // Cookie bắt buộc cho authentication
             Path = "/"
@@ -44,11 +45,12 @@ internal sealed class AuthCookieService(
             return;
         }
 
+        var isHttps = httpContext.Request.IsHttps;
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = httpContext.Request.IsHttps,
-            SameSite = SameSiteMode.Lax,
+            Secure = isHttps,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
             Expires = DateTime.UtcNow.AddDays(-1),
             Path = "/"
         };

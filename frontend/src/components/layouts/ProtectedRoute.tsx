@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({
-  allowedRoles = ['SystemAdmin', 'CourtOwner', 'Staff'],
+  allowedRoles = ['Admin', 'CourtOwner', 'SystemAdmin', 'Staff'],
   redirectPath = '/admin/login',
 }: ProtectedRouteProps) {
   const { isAuthenticated, user } = useAuthStore();

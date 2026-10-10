@@ -2,6 +2,7 @@ using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Identities.Dtos;
 using CourtBooking.Application.Messaging;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Entities.Users;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
@@ -76,11 +77,15 @@ internal sealed class LoginCommandHandler(
 
         cookieService.SetRefreshTokenCookie(refreshTokenString, refreshTokenExpires);
 
+        var roleName = roles.FirstOrDefault()
+            ?? RoleConstants.FromAccountType(user.AccountType);
+
         return Result.Success(new LoginResponse(
             user.Id,
             user.Email!,
             user.FullName,
             accessToken,
+            roleName,
             mustChangePassword));
     }
 }

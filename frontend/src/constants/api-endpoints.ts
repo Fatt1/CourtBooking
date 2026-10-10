@@ -4,16 +4,25 @@
  */
 
 export const API_ENDPOINTS = {
-  // 1. Xác thực & Tài khoản (Identities)
+  // 1. Xác thực & Tài khoản Chủ sân (Court Owner Identities)
+  OWNER_AUTH: {
+    LOGIN: '/owner/identity/login',
+    LOGOUT: '/owner/identity/logout',
+    FORGOT_PASSWORD: '/owner/identity/forgot-password',
+    RESET_PASSWORD: '/owner/identity/reset-password',
+    CHANGE_PASSWORD: '/owner/identity/change-password',
+  },
+
+  // 1b. Xác thực & Tài khoản Người chơi (Player Identities)
   AUTH: {
-    LOGIN: '/identities/login',
-    REGISTER: '/identities/register',
-    REFRESH_TOKEN: '/identities/refresh-token',
-    LOGOUT: '/identities/logout',
-    FORGOT_PASSWORD: '/identities/forgot-password',
-    RESET_PASSWORD: '/identities/reset-password',
-    CHANGE_PASSWORD: '/identities/change-password',
-    ME: '/identities/me',
+    LOGIN: '/identity/login',
+    REGISTER: '/identity/register',
+    REFRESH_TOKEN: '/identity/refresh-token',
+    LOGOUT: '/identity/logout',
+    FORGOT_PASSWORD: '/identity/forgot-password',
+    RESET_PASSWORD: '/identity/reset-password',
+    CHANGE_PASSWORD: '/identity/change-password',
+    ME: '/identity/me',
   },
 
   // 2. Quản lý Người dùng & Phân quyền (System Admin)

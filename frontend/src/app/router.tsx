@@ -17,11 +17,11 @@ import { UsersPage } from '@/features/admin/pages/UsersPage';
 import { OrdersPage } from '@/features/court-owners/pages/OrdersPage';
 import { BranchesPage } from '@/features/court-owners/pages/BranchesPage';
 import { ServiceCategoriesPage } from '@/features/court-owners/pages/ServiceCategoriesPage';
+import { CourtOwnerLoginPage } from '@/features/court-owners/pages/CourtOwnerLoginPage';
 
 // Auth Pages
 import { UserLoginPage } from '@/features/auth/pages/UserLoginPage';
 import { UserRegisterPage } from '@/features/auth/pages/UserRegisterPage';
-import { AdminLoginPage } from '@/features/auth/pages/AdminLoginPage';
 
 export const router = createBrowserRouter([
   // 1. Public Routes (Khách hàng & Người chơi xem trang chủ)
@@ -46,11 +46,14 @@ export const router = createBrowserRouter([
       { path: '/register', element: <UserRegisterPage /> },
     ],
   },
+  // Cổng Đăng nhập Chủ sân & Quản trị
   {
-    element: <AdminAuthLayout />,
-    children: [
-      { path: '/admin/login', element: <AdminLoginPage /> },
-    ],
+    path: '/owner/login',
+    element: <CourtOwnerLoginPage />,
+  },
+  {
+    path: '/admin/login',
+    element: <CourtOwnerLoginPage />,
   },
 
   // 3. Court Owner Portal (Giao diện Chủ sân)

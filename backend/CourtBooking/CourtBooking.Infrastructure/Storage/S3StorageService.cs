@@ -130,15 +130,26 @@ public sealed class S3StorageService : IStorageService
     {
         var targetBucket = ResolveBucket(bucketName);
 
+        var isHttps = !string.IsNullOrWhiteSpace(_options.ServiceUrl) &&
+                      _options.ServiceUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+
         var urlRequest = new GetPreSignedUrlRequest
         {
             BucketName = targetBucket,
             Key = fileName,
             Expires = DateTime.UtcNow.AddSeconds(expiryInSeconds),
-            Verb = HttpVerb.GET
+            Verb = HttpVerb.GET,
+            Protocol = isHttps ? Protocol.HTTPS : Protocol.HTTP
         };
 
-        return await _s3Client.GetPreSignedURLAsync(urlRequest);
+        var url = await _s3Client.GetPreSignedURLAsync(urlRequest);
+
+        if (!isHttps && url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            url = "http://" + url["https://".Length..];
+        }
+
+        return url;
     }
 
 
