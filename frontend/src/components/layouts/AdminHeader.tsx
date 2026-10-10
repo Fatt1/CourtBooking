@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Menu,
   PanelLeftClose,
@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/select';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useAppThemeStore } from '@/stores/useAppThemeStore';
+import { useBranchStore } from '@/stores/useBranchStore';
+import { useOwnerBranchesQuery } from '@/features/court-owners/api/useBranches';
 import { cn } from '@/lib/utils';
 
 interface AdminHeaderProps {
@@ -29,12 +31,22 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   const { user, logout } = useAuthStore();
-  const { theme, setTheme, sidebarCollapsed, toggleSidebar, selectedBranchId, setSelectedBranchId } =
-    useAppThemeStore();
+  const { theme, setTheme, sidebarCollapsed, toggleSidebar } = useAppThemeStore();
+  const { selectedBranchId, setSelectedBranchId, setBranches, clearBranchState } = useBranchStore();
+  const { data: branches = [], isLoading: isLoadingBranches } = useOwnerBranchesQuery();
+
   const navigate = useNavigate();
   const [hasUnreadNotification, setHasUnreadNotification] = useState(true);
 
+  // Tự động đồng bộ danh sách chi nhánh vào store và chọn chi nhánh đầu tiên nếu chưa chọn
+  useEffect(() => {
+    if (branches && branches.length > 0) {
+      setBranches(branches);
+    }
+  }, [branches, setBranches]);
+
   const handleLogout = () => {
+    clearBranchState();
     logout();
     navigate('/admin/login');
   };
@@ -67,31 +79,46 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           {sidebarCollapsed ? <PanelLeft className="size-5" /> : <PanelLeftClose className="size-5" />}
         </Button>
 
-        {/* Bộ chọn cơ sở sân (Branch Switcher) chuẩn Figma: "Matchday Bình Thạnh" */}
+        {/* Bộ chọn cơ sở sân (Branch Switcher) động từ Backend theo Chủ sân */}
         <div className="flex items-center">
           <Select
-            value={selectedBranchId || 'binh-thanh'}
+            value={selectedBranchId || ''}
             onValueChange={(val) => setSelectedBranchId(val)}
+            disabled={isLoadingBranches || branches.length === 0}
           >
-            <SelectTrigger className="h-9 w-[190px] md:w-[210px] rounded-xl border-border/60 bg-card/70 px-3 text-xs md:text-sm font-semibold focus:ring-1 focus:ring-[#a3e635]/50">
+            <SelectTrigger className="h-9 w-[190px] md:w-[230px] rounded-xl border-border/60 bg-card/70 px-3 text-xs md:text-sm font-semibold focus:ring-1 focus:ring-[#a3e635]/50">
               <div className="flex items-center gap-2 truncate">
                 <Store className="size-3.5 text-[#a3e635] shrink-0" />
-                <SelectValue placeholder="Chọn cụm sân" />
+                <SelectValue
+                  placeholder={
+                    isLoadingBranches
+                      ? 'Đang tải cụm sân...'
+                      : branches.length === 0
+                      ? 'Chưa có cụm sân'
+                      : 'Chọn cụm sân'
+                  }
+                />
               </div>
             </SelectTrigger>
-            <SelectContent className="bg-popover border-border/60">
-              <SelectItem value="binh-thanh" className="text-xs md:text-sm">
-                Matchday Bình Thạnh
-              </SelectItem>
-              <SelectItem value="quan-7" className="text-xs md:text-sm">
-                Matchday Quận 7
-              </SelectItem>
-              <SelectItem value="thu-duc" className="text-xs md:text-sm">
-                Matchday Thủ Đức
-              </SelectItem>
-              <SelectItem value="tan-binh" className="text-xs md:text-sm">
-                Matchday Tân Bình
-              </SelectItem>
+            <SelectContent className="bg-popover border-border/60 max-h-72">
+              {branches.length === 0 ? (
+                <div className="py-2.5 px-3 text-xs text-muted-foreground text-center">
+                  Chủ sân chưa có chi nhánh
+                </div>
+              ) : (
+                branches.map((b) => (
+                  <SelectItem key={b.id} value={b.id} className="text-xs md:text-sm cursor-pointer">
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="font-semibold">{b.name}</span>
+                      {b.district && (
+                        <span className="text-[11px] text-muted-foreground truncate">
+                          • {b.district}
+                        </span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>

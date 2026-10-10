@@ -10,6 +10,7 @@ public sealed record LoginResponse(
     string Email,
     string FullName,
     string AccessToken,
+    string RoleName,
     bool MustChangePassword = false);
 
 /// <summary>

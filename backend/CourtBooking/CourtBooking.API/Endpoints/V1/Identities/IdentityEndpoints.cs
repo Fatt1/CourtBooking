@@ -1,4 +1,5 @@
 using CourtBooking.API.Extensions;
+using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Features.V1.Identities.Commands.ChangePassword;
 using CourtBooking.Application.Features.V1.Identities.Commands.ForgotPassword;
 using CourtBooking.Application.Features.V1.Identities.Commands.Login;
@@ -121,6 +122,18 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        // 6. POST /api/v1/owner/identity/logout — Chủ sân đăng xuất và xóa Refresh Token Cookie
+        group.MapPost("/logout", (IAuthCookieService cookieService) =>
+        {
+            cookieService.DeleteRefreshTokenCookie();
+            return Results.Ok(new { message = "Đăng xuất thành công." });
+        })
+            .AllowAnonymous()
+            .WithName("OwnerLogout")
+            .WithSummary("Chủ sân đăng xuất và xóa Refresh Token Cookie")
+            .WithTags(IdentityTag)
+            .Produces(StatusCodes.Status200OK);
     }
 
     /// <summary>
@@ -283,6 +296,18 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .Produces<CurrentPlayerDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        // 8. POST /api/v1/identity/logout — Người chơi đăng xuất và xóa Refresh Token Cookie
+        group.MapPost("/logout", (IAuthCookieService cookieService) =>
+        {
+            cookieService.DeleteRefreshTokenCookie();
+            return Results.Ok(new { message = "Đăng xuất thành công." });
+        })
+            .AllowAnonymous()
+            .WithName("PlayerLogout")
+            .WithSummary("Người chơi đăng xuất và xóa Refresh Token Cookie")
+            .WithTags(IdentityTag)
+            .Produces(StatusCodes.Status200OK);
     }
 
 

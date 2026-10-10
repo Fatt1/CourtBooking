@@ -36,5 +36,4 @@ dist-ssr
 *.tsbuildinfo
 
 # Temporary / scratch directories
-.agents/
 .gemini/

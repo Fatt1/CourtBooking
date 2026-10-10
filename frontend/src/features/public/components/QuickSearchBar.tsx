@@ -14,16 +14,13 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { PROVINCES, getWardsByProvince } from '@/constants/locations';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSportTypesQuery } from '../api/usePublicHome';
+import { PROVINCES, getWardsByProvince } from '@/constants/locations';
+import { ProvinceSelect, WardSelect, generateTimeSlots } from '@/components/common';
 
-// Khung giờ chuẩn theo giờ chẵn từ 05:00 đến 23:00
-const TIME_OPTIONS = [
-  '05:00', '06:00', '07:00', '08:00', '09:00', '10:00',
-  '11:00', '12:00', '13:00', '14:00', '15:00', '16:00',
-  '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
-];
+// Khung giờ chuẩn theo bước nhảy 30 phút từ 00:00 đến 23:30
+const TIME_OPTIONS = generateTimeSlots(30, 0, 24);
 
 export function QuickSearchBar() {
   const navigate = useNavigate();
@@ -112,53 +109,26 @@ export function QuickSearchBar() {
           className="rounded-xl border border-border/80 bg-card p-3 sm:p-4 shadow-xl shadow-foreground/[0.03] transition-shadow hover:shadow-2xl hover:shadow-foreground/[0.05]"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 lg:gap-0 lg:divide-x lg:divide-border/60 items-center">
-            {/* 1. THÀNH PHỐ (Không mặc định, hiển thị placeholder) */}
+            {/* 1. THÀNH PHỐ (Hỗ trợ tìm kiếm theo tên) */}
             <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center">
-              <label className="font-heading font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
-                THÀNH PHỐ
-              </label>
-              <Select value={selectedProvinceCode} onValueChange={handleProvinceChange}>
-                <SelectTrigger className="w-full h-9 border-0 bg-transparent px-0 font-semibold text-sm focus:ring-0 focus:ring-offset-0 shadow-none">
-                  <SelectValue placeholder="Chọn thành phố" />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  <SelectGroup>
-                    {PROVINCES.map((p) => (
-                      <SelectItem key={p.code} value={p.code}>
-                        {p.nameWithType}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <ProvinceSelect
+                value={selectedProvinceCode}
+                onChange={(code) => handleProvinceChange(code)}
+                variant="bar"
+                label="THÀNH PHỐ"
+              />
             </div>
 
-            {/* 2. QUẬN / HUYỆN (Không mặc định, vô hiệu hoá nếu chưa chọn thành phố) */}
+            {/* 2. QUẬN / HUYỆN (Hỗ trợ tìm kiếm theo tên) */}
             <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center">
-              <label className="font-heading font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
-                QUẬN / HUYỆN
-              </label>
-              <Select
+              <WardSelect
+                provinceCode={selectedProvinceCode}
                 value={selectedWard}
-                onValueChange={setSelectedWard}
-                disabled={!selectedProvinceCode}
-              >
-                <SelectTrigger className="w-full h-9 border-0 bg-transparent px-0 font-semibold text-sm focus:ring-0 focus:ring-offset-0 shadow-none disabled:opacity-50 disabled:cursor-not-allowed">
-                  <SelectValue
-                    placeholder={selectedProvinceCode ? 'Chọn quận/huyện' : 'Chọn thành phố trước'}
-                  />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  <SelectGroup>
-                    <SelectItem value="all">Tất cả quận/huyện</SelectItem>
-                    {availableWards.map((w) => (
-                      <SelectItem key={w.code} value={w.name}>
-                        {w.nameWithType}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                onChange={(wardVal) => setSelectedWard(wardVal)}
+                variant="bar"
+                label="QUẬN / HUYỆN"
+                includeAllOption
+              />
             </div>
 
             {/* 3. MÔN THỂ THAO (Mặc định là tất cả, có tuỳ chọn Tất cả môn thể thao) */}
