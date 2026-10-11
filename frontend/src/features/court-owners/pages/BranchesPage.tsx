@@ -23,8 +23,8 @@ import {
   useOwnerBranchesQuery,
   useUpdateBranchStatusMutation,
   useDeleteBranchMutation,
-} from '@/features/court-owners/api/useBranches';
-import type { OwnerBranchListItem } from '@/features/court-owners/types/branch';
+  type OwnerBranchListItem,
+} from '@/api/branches';
 
 export function BranchesPage() {
   // 1. Gọi API lấy danh sách chi nhánh của Chủ sân từ Backend

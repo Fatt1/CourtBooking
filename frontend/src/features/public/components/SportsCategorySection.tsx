@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSportTypesQuery } from '../api/usePublicHome';
+import { useSportTypesQuery } from '@/api/sport-types';
 
 // Dữ liệu hình ảnh mặc định theo từng môn thể thao
 const DEFAULT_SPORT_IMAGES: Record<string, string> = {

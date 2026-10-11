@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, devtools } from 'zustand/middleware';
-import type { OwnerBranchItem } from '@/features/court-owners/types/branch';
+import type { OwnerBranchItem } from '@/api/branches';
 
 interface BranchState {
   selectedBranchId: string | null;

@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { refreshAccessToken } from './auth-service';
 import type { ProblemDetails } from '@/types/api';
 
 export const apiClient = axios.create({
@@ -74,18 +75,10 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Gọi endpoint refresh-token dùng chung cho toàn bộ hệ thống
-        // Refresh Token được tự động đính kèm từ HttpOnly Cookie nhờ withCredentials: true
-        const refreshRes = await axios.post<{ accessToken: string }>(
-          `${apiClient.defaults.baseURL}/identity/refresh-token`,
-          {},
-          { withCredentials: true }
-        );
-
-        const newAccessToken = refreshRes.data.accessToken;
-
-        // Cập nhật accessToken mới vào Zustand Store
-        useAuthStore.getState().setAccessToken(newAccessToken);
+        const newAccessToken = await refreshAccessToken();
+        if (!newAccessToken) {
+          throw new Error('Refresh token expired or failed');
+        }
 
         // Giải phóng hàng đợi các request bị hoãn
         processQueue(null, newAccessToken);
@@ -97,7 +90,6 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        useAuthStore.getState().logout();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

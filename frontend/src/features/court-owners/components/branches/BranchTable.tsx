@@ -2,7 +2,7 @@ import { MapPin, Clock, Phone, Building2, Star, Pencil, Trash2 } from 'lucide-re
 import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
 import { OwnerStatusBadge } from '@/features/court-owners/components/shared/OwnerStatusBadge';
 import { Button } from '@/components/ui/button';
-import type { OwnerBranchListItem } from '../../types/branch';
+import type { OwnerBranchListItem } from '@/api/branches';
 
 interface BranchTableProps {
   data: OwnerBranchListItem[];

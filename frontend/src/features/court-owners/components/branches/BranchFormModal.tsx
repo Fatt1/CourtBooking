@@ -36,13 +36,11 @@ import {
   useCreateBranchMutation,
   useUpdateBranchMutation,
   useOwnerBranchDetailQuery,
-} from '../../api/useBranches';
-import { useSportTypesQuery } from '../../api/useSportTypes';
-import type {
-  OwnerBranchListItem,
-  CreateBranchPayload,
-  UpdateBranchPayload,
-} from '../../types/branch';
+  type OwnerBranchListItem,
+  type CreateBranchPayload,
+  type UpdateBranchPayload,
+} from '@/api/branches';
+import { useSportTypesQuery } from '@/api/sport-types';
 
 interface ImageItem {
   id: string; // Storage Guid

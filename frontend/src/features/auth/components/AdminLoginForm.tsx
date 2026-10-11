@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { adminLoginSchema, type AdminLoginValues } from '../schemas/adminAuthSchema';
-import { useAdminLoginMutation } from '../api/useAdminAuth';
+import { useAdminLoginMutation } from '@/api/auth';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

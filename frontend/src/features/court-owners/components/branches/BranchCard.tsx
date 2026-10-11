@@ -2,7 +2,7 @@ import { Building2, MapPin, Clock, Phone, Star, Pencil, Trash2 } from 'lucide-re
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OwnerStatusBadge } from '@/features/court-owners/components/shared/OwnerStatusBadge';
-import type { OwnerBranchListItem } from '../../types/branch';
+import type { OwnerBranchListItem } from '@/api/branches';
 
 interface BranchCardProps {
   branch: OwnerBranchListItem;

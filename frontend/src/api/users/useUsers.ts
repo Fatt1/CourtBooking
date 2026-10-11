@@ -1,18 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/axios';
-import type { UserFormValues } from '../schemas/userSchema';
-import type { UserRole } from '@/types/user';
-
-export interface UserItem {
-  id: string;
-  name: string;
-  email: string;
-  phoneNumber?: string;
-  role: UserRole;
-  status: 'active' | 'inactive';
-  mustChangePwd?: boolean;
-  createdAt: string;
-}
+import type { UserItem, CreateUserPayload } from './types';
 
 export function useUsersQuery(page = 1, search = '') {
   return useQuery({
@@ -29,7 +17,7 @@ export function useUsersQuery(page = 1, search = '') {
 export function useCreateUserMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (values: UserFormValues) => apiClient.post('/users', values),
+    mutationFn: (values: CreateUserPayload) => apiClient.post('/users', values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },

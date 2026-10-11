@@ -4,7 +4,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layouts/PublicLayout';
 import { AdminLayout } from '@/components/layouts/AdminLayout';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
-import { AdminAuthLayout } from '@/components/layouts/AdminAuthLayout';
+import { ProtectedRoute, OwnerProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
 // Public Pages
 import { HomePage } from '@/features/public/pages/HomePage';
@@ -56,10 +56,14 @@ export const router = createBrowserRouter([
     element: <CourtOwnerLoginPage />,
   },
 
-  // 3. Court Owner Portal (Giao diện Chủ sân)
+  // 3. Court Owner Portal (Giao diện Chủ sân - Bảo vệ bằng JWT & Role CourtOwner)
   {
     path: '/owner',
-    element: <AdminLayout />,
+    element: (
+      <OwnerProtectedRoute>
+        <AdminLayout />
+      </OwnerProtectedRoute>
+    ),
     children: [
       { index: true, element: <Navigate to="/owner/orders" replace /> },
       { path: 'orders', element: <OrdersPage /> },
@@ -76,10 +80,14 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // 4. System Admin Portal (Quản trị hệ thống)
+  // 4. System Admin Portal (Quản trị hệ thống - Bảo vệ bằng JWT & Role Admin)
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: (
+      <ProtectedRoute allowedRoles={['Admin', 'SystemAdmin']} redirectPath="/admin/login">
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Navigate to="/admin/users" replace /> },
       { path: 'users', element: <UsersPage /> },
