@@ -8,7 +8,14 @@ import type {
   UpdateBranchStatusPayload,
   CreateBranchPayload,
   UpdateBranchPayload,
-} from '../types/branch';
+  PublicBranchListItemDto,
+  PagedList,
+  SearchBranchesParams,
+} from './types';
+
+// ==========================================
+// 1. DÀNH CHO COURT OWNER & ADMIN
+// ==========================================
 
 /**
  * Hook lấy danh sách chi nhánh thuộc sở hữu của Chủ sân hiện tại
@@ -132,5 +139,40 @@ export function useUpdateVietQRMutation(branchId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owner', 'branches'] });
     },
+  });
+}
+
+// ==========================================
+// 2. DÀNH CHO NGƯỜI DÙNG CÔNG KHAI (PUBLIC)
+// ==========================================
+
+/**
+ * Hook tìm kiếm chi nhánh & sân công khai
+ * Gọi Endpoint: GET /api/v1/branches (SearchPublicBranches)
+ */
+export function usePublicBranchesQuery(params: SearchBranchesParams = { page: 1, pageSize: 6 }) {
+  return useQuery<PagedList<PublicBranchListItemDto>>({
+    queryKey: ['public', 'branches', params],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get<PagedList<PublicBranchListItemDto>>(
+          API_ENDPOINTS.BRANCHES.PUBLIC_SEARCH,
+          { params }
+        );
+        return response as unknown as PagedList<PublicBranchListItemDto>;
+      } catch (err) {
+        console.warn('API branches chưa kết nối được backend, fallback dữ liệu mẫu:', err);
+        return {
+          items: [],
+          totalCount: 0,
+          page: 1,
+          pageSize: params.pageSize || 6,
+          totalPages: 0,
+          hasPrevious: false,
+          hasNext: false,
+        };
+      }
+    },
+    staleTime: 1000 * 60 * 5, // 5 phút cache
   });
 }

@@ -20,9 +20,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useCourtOwnerLogoutMutation } from '@/api/auth';
 import { useAppThemeStore } from '@/stores/useAppThemeStore';
 import { useBranchStore } from '@/stores/useBranchStore';
-import { useOwnerBranchesQuery } from '@/features/court-owners/api/useBranches';
+import { useOwnerBranchesQuery } from '@/api/branches';
 import { cn } from '@/lib/utils';
 
 interface AdminHeaderProps {
@@ -30,7 +31,8 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
+  const { mutate: logoutCourtOwner } = useCourtOwnerLogoutMutation();
   const { theme, setTheme, sidebarCollapsed, toggleSidebar } = useAppThemeStore();
   const { selectedBranchId, setSelectedBranchId, setBranches, clearBranchState } = useBranchStore();
   const { data: branches = [], isLoading: isLoadingBranches } = useOwnerBranchesQuery();
@@ -47,8 +49,8 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
 
   const handleLogout = () => {
     clearBranchState();
-    logout();
-    navigate('/admin/login');
+    logoutCourtOwner();
+    navigate('/owner/login', { replace: true });
   };
 
   const isDark = theme === 'dark';

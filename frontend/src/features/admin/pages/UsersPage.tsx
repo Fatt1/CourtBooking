@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { UserFormDialog } from '../components/UserFormDialog';
-import { useUsersQuery, useCreateUserMutation, type UserItem } from '../api/useUsersQuery';
+import { useUsersQuery, useCreateUserMutation, type UserItem } from '@/api/users';
 import { useDebounce } from '@/hooks/useDebounce';
 import { LoadingSpinner } from '@/components/feedback/LoadingSpinner';
 import { EmptyState } from '@/components/feedback/EmptyState';

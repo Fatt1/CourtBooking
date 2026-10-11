@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { isJwtValid, getJwtRoles } from '@/lib/jwt';
 import { CourtOwnerLoginForm } from '../components/auth/CourtOwnerLoginForm';
 import {
   Trophy,
@@ -9,6 +11,21 @@ import {
 } from 'lucide-react';
 
 export function CourtOwnerLoginPage() {
+  const { isAuthenticated, accessToken, user } = useAuthStore();
+  const location = useLocation();
+
+  // Nếu người dùng đã đăng nhập với JWT hợp lệ và vai trò là CourtOwner hoặc Admin, tự động chuyển vào Portal
+  if (isAuthenticated && isJwtValid(accessToken)) {
+    const roles = new Set<string>();
+    if (user?.role) roles.add(user.role);
+    getJwtRoles(accessToken).forEach((r) => roles.add(r));
+
+    if (roles.has('CourtOwner') || roles.has('Admin')) {
+      const redirectPath =
+        (location.state as { from?: { pathname?: string } })?.from?.pathname || '/owner/orders';
+      return <Navigate to={redirectPath} replace />;
+    }
+  }
   return (
     <div className="min-h-screen w-full bg-[#060B17] text-slate-100 flex flex-col justify-between relative overflow-hidden selection:bg-[#a3e635] selection:text-black">
       {/* Background Decorative Ambient Glows */}

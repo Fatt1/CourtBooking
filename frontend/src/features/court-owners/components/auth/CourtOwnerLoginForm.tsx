@@ -6,7 +6,7 @@ import {
   courtOwnerLoginSchema,
   type CourtOwnerLoginValues,
 } from '../../schemas/courtOwnerAuthSchema';
-import { useCourtOwnerLoginMutation } from '../../api/useCourtOwnerAuth';
+import { useCourtOwnerLoginMutation } from '@/api/auth';
 import {
   Form,
   FormField,

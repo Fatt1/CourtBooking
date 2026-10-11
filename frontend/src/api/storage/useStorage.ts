@@ -1,14 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/lib/axios';
 import { API_ENDPOINTS } from '@/constants/api-endpoints';
-
-export interface UploadImageResponse {
-  id: string;
-  originalFileName: string;
-  contentType: string;
-  sizeBytes: number;
-  url: string;
-}
+import type { UploadImageResponse } from './types';
 
 /**
  * Base URL của Object Storage (SeaweedFS / S3)

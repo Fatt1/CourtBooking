@@ -15,7 +15,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSportTypesQuery } from '../api/usePublicHome';
+import { useSportTypesQuery } from '@/api/sport-types';
 import { PROVINCES, getWardsByProvince } from '@/constants/locations';
 import { ProvinceSelect, WardSelect, generateTimeSlots } from '@/components/common';
 

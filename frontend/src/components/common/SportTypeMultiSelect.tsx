@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useSportTypesQuery, SportTypeItem } from '@/features/court-owners/api/useSportTypes';
+import { useSportTypesQuery, type SportTypeItem } from '@/api/sport-types';
 import { removeVietnameseTones } from './SearchableSelect';
 
 export interface SportTypeMultiSelectProps {

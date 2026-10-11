@@ -13,8 +13,7 @@ import {
 import { OwnerModal } from '@/features/court-owners/components/shared/OwnerModal';
 import { OwnerStatusBadge } from '@/features/court-owners/components/shared/OwnerStatusBadge';
 import { getImageUrl } from '@/api/storage';
-import { useOwnerBranchDetailQuery } from '../../api/useBranches';
-import type { OwnerBranchListItem } from '../../types/branch';
+import { useOwnerBranchDetailQuery, type OwnerBranchListItem } from '@/api/branches';
 
 interface BranchDetailModalProps {
   branch: OwnerBranchListItem | null;

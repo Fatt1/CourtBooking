@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { userRegisterSchema, type UserRegisterValues } from '../schemas/userAuthSchema';
-import { useUserRegisterMutation } from '../api/useUserAuth';
+import { useUserRegisterMutation } from '@/api/auth';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

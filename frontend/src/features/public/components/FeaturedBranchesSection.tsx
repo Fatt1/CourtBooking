@@ -2,8 +2,7 @@ import { Link } from 'react-router-dom';
 import { Star, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePublicBranchesQuery } from '../api/usePublicHome';
-import type { PublicBranchListItemDto } from '../types/public.types';
+import { usePublicBranchesQuery, type PublicBranchListItemDto } from '@/api/branches';
 
 // Fallback data khi backend chưa chạy hoặc chưa có data
 const FALLBACK_BRANCHES: PublicBranchListItemDto[] = [
