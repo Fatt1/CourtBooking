@@ -4,23 +4,42 @@
 > **MỤC TIÊU CỐT LÕI:**
 > Đảm bảo toàn bộ 12 màn hình quản lý của Chủ sân (*Lịch đặt, Danh mục, Quản lý sân, Chi nhánh, Bảng giá, Sản phẩm, POS...*) **ĐỒNG BỘ 100% GIAO DIỆN THEO CHUẨN FIGMA MATCHDAY**.
 > 
-> ⚠️ **QUY TẮC BẮT BUỘC:** Không tự ý code lại Sidebar, Header, Table từ đầu. Mọi trang đều được lắp ghép từ **Bộ Lego Component dùng chung** có sẵn tại `src/features/court-owners/components/`.
+> ⚠️ **QUY TẮC BẮT BUỘC:** Không tự ý code lại Sidebar, Header, Table từ đầu. Mọi trang đều được lắp ghép từ **Bộ Lego Component dùng chung** có sẵn tại `src/features/court-owners/components/shared/` và kết nối API qua tầng tập trung `src/api/`.
 
 ---
 
-## 🏛️ 1. Kiến Trúc Giao Diện & Cơ Chế Hoạt Động (Cần Hiểu Rõ)
+## 🏛️ 1. Kiến Trúc Dự Án Đã Chuẩn Hóa (Cần Hiểu Rõ)
 
-### Vì sao khi code một trang mới, bạn KHÔNG CẦN viết Sidebar hay Header?
-Dự án sử dụng cơ chế **Nested Routing (Định tuyến lồng nhau)** của React Router:
-1. **Khung bao ngoài (`AdminLayout`):** Đã chứa sẵn **Sidebar 12 mục menu** và **Header chọn chi nhánh, theme dark/light, chuông thông báo**. Vị trí hiển thị nội dung chính được đánh dấu bằng thẻ `<Outlet />`.
-2. **Trang con của bạn:** Chỉ cần tập trung code phần ruột (tiêu đề, bộ lọc, bảng dữ liệu, modal). Khi người dùng vào đường dẫn `/owner/...`, trang con sẽ tự động được đưa vào vị trí `<Outlet />`.
-3. **Cấu hình đường dẫn tại:** `src/app/router.tsx`. Khi tạo trang mới, chỉ cần thêm 1 dòng vào danh sách `children` của nhánh `/owner`.
+Dự án hiện tại được tổ chức rất chặt chẽ theo các tầng chính:
+
+1. **Tầng API tập trung (`src/api/`):**
+   * Mọi thao tác gọi Backend (Queries, Mutations, Types DTOs) được gom vào `src/api/<tên-module>/`.
+   * Ví dụ: Chi nhánh ở `src/api/branches/`, Tài khoản ở `src/api/auth/`, Danh mục dịch vụ ở `src/api/service-categories/`.
+   * Sử dụng instance Axios cấu hình sẵn JWT tại `@/api/axiosClient`.
+   * Khi làm trang mới (ví dụ Lịch đặt, Danh mục, Sân con), hãy tạo hook API tại `src/api/<tên-module>/use<Module>.ts`.
+
+2. **Khung giao diện bao ngoài Chủ sân (`OwnerLayout` & `OwnerProtectedRoute`):**
+   * Vị trí: `src/components/layouts/OwnerLayout.tsx` (đi kèm `OwnerHeader.tsx` và `OwnerSidebar.tsx`).
+   * Tách biệt hoàn toàn với `AdminLayout` (dành riêng cho Super Admin hệ thống).
+   * Đã có sẵn **Sidebar 12 mục menu** chuẩn Figma Matchday (active xanh neon `#a3e635`).
+   * Đã có sẵn **Header** chọn chi nhánh cụm sân (kết nối trực tiếp từ Backend), nút switch Dark/Light, chuông thông báo, avatar.
+   * Vị trí hiển thị nội dung chính của từng trang được đánh dấu bằng thẻ `<Outlet />`.
+   * Được bảo vệ tự động bằng `OwnerProtectedRoute` (yêu cầu đăng nhập tài khoản Chủ sân).
+   * 👉 **Bạn KHÔNG CẦN và KHÔNG ĐƯỢC code lại Sidebar/Header trong file trang con!**
+
+3. **Cấu hình đường dẫn tại `src/app/router.tsx`:**
+   * Tất cả các trang của Chủ sân đều nằm trong nhánh `/owner/...` và được bọc bởi `OwnerLayout`.
+   * Khi tạo trang mới, chỉ cần khai báo thêm 1 dòng vào danh sách `children` của route `/owner`.
+
+4. **Tầng tiện ích & Dữ liệu (`src/lib/` & `src/data/`):**
+   * Định dạng tiền tệ và ngày giờ: Dùng `@/lib/format` (`formatVND`, `formatDate`, `formatDateTime`, `formatPhone`).
+   * Dữ liệu địa chỉ hành chính Việt Nam: Đặt tại `src/data/province.json` và `src/data/ward.json`, tra cứu qua `@/lib/vietnamLocations`.
 
 ---
 
 ## 🧩 2. Danh Sách Các "Khối Lego" Dùng Chung (Import & Sử Dụng)
 
-Tất cả các khối dùng chung cho Chủ sân được đặt tập trung tại:
+Tất cả các khối dùng chung cho Chủ sân được lưu tập trung tại:
 ```tsx
 import { 
   OwnerPageHeader, 
@@ -28,22 +47,28 @@ import {
   OwnerStatusBadge, 
   OwnerPagination,
   OwnerModal 
-} from '@/features/court-owners/components';
+} from '@/features/court-owners/components/shared';
+// Hoặc import ngắn gọn: from '@/features/court-owners/components';
 
 import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
 import { Button } from '@/components/ui/button';
+import { formatVND } from '@/lib/format';
 ```
 
 ### Bảng tra cứu component và công dụng:
 
-| Component | Mục đích sử dụng | Props quan trọng |
-| :--- | :--- | :--- |
-| **`OwnerPageHeader`** | Tiêu đề trang H1 + Tên phân mục nhỏ + Cụm nút hành động bên phải | `title`, `category`, `actions` |
-| **`OwnerFilterBar`** | Thanh tìm kiếm + Tabs phân loại có gạch chân neon + Các dropdown lọc | `tabs`, `activeTab`, `onTabChange`, `searchValue`, `onSearchChange`, `children` |
-| **`CommonTable`** | Bảng dữ liệu tự động có viền bo góc, hover mượt, skeleton loading, empty state | `columns`, `data`, `isLoading`, `onRowClick`, `containerClassName` |
-| **`OwnerStatusBadge`** | Huy hiệu trạng thái tự động nhận diện từ khóa để ra đúng màu Figma | `status` (chuỗi trạng thái bất kỳ), `variant` |
-| **`OwnerPagination`** | Thanh phân trang dưới cùng ("Hiển thị X - Y kết quả" + Nút Trước / Tiếp) | `currentPage`, `pageSize`, `totalItems`, `onPageChange` |
-| **`OwnerModal`** | Hộp thoại thêm mới / chỉnh sửa chuẩn nền tối `#0B1324` bo tròn `rounded-2xl` | `open`, `onOpenChange`, `title`, `onSubmit`, `onCancel`, `submitText`, `cancelText` |
+| Component | Vị trí thư mục | Mục đích sử dụng | Props quan trọng |
+| :--- | :--- | :--- | :--- |
+| **`OwnerPageHeader`** | `components/shared/` | Tiêu đề trang H1 + Phân mục nhỏ + Cụm nút hành động bên phải | `title`, `category`, `actions` |
+| **`OwnerFilterBar`** | `components/shared/` | Thanh tìm kiếm + Tabs phân loại có gạch chân neon + Dropdown lọc | `tabs`, `activeTab`, `onTabChange`, `searchValue`, `onSearchChange`, `children` |
+| **`CommonTable`** | `components/common/` | Bảng dữ liệu tự động có viền bo góc, hover mượt, skeleton loading, empty state | `columns`, `data`, `isLoading`, `onRowClick`, `containerClassName` |
+| **`OwnerStatusBadge`** | `components/shared/` | Huy hiệu trạng thái tự động nhận diện từ khóa để ra đúng màu Figma | `status` (chuỗi trạng thái bất kỳ), `variant` |
+| **`OwnerPagination`** | `components/shared/` | Thanh phân trang dưới cùng ("Hiển thị X - Y kết quả" + Nút Trước / Tiếp) | `currentPage`, `pageSize`, `totalItems`, `onPageChange` |
+| **`OwnerModal`** | `components/shared/` | Hộp thoại thêm mới / chỉnh sửa chuẩn nền tối `#0B1324` bo tròn `rounded-2xl` | `open`, `onOpenChange`, `title`, `onSubmit`, `onCancel`, `submitText`, `cancelText` |
+
+> 💡 **Lưu ý về Component riêng của từng màn hình:**
+> Nếu màn hình của bạn có các component phức tạp riêng biệt (ví dụ trang Chi nhánh có Modal form lớn 4 bước, thẻ Card chi nhánh riêng...), hãy tạo thư mục con tại:
+> `src/features/court-owners/components/<tên-màn-hình>/` (Ví dụ đã có sẵn: `components/branches/BranchFormModal.tsx`).
 
 ---
 
@@ -58,7 +83,7 @@ import { Button } from '@/components/ui/button';
    </Button>
    ```
 
-2. **Nút phụ / Xuất báo cáo / Lọc:**
+2. **Nút phụ / Xuất báo cáo / Bộ lọc:**
    * Dùng nút viền tối:
    ```tsx
    <Button variant="outline" className="h-9.5 rounded-xl border-border/60 bg-card/60 hover:bg-accent font-medium gap-2">
@@ -90,20 +115,21 @@ import { Button } from '@/components/ui/button';
 
 ## 💻 4. Code Mẫu Hoàn Chỉnh (Template) Để Copy Tạo Trang Mới
 
-Khi tạo một trang mới (ví dụ: `src/features/court-owners/pages/CourtsPage.tsx`), copy đoạn mã chuẩn dưới đây và thay đổi dữ liệu:
+Khi tạo một trang mới (ví dụ: `src/features/court-owners/pages/CourtsPage.tsx`), copy đoạn mã chuẩn dưới đây:
 
 ```tsx
 import { useState, useMemo } from 'react';
 import { Plus, Pencil, Trash2, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
+import { formatVND } from '@/lib/format';
 import {
   OwnerPageHeader,
   OwnerFilterBar,
   OwnerStatusBadge,
   OwnerPagination,
   OwnerModal,
-} from '@/features/court-owners/components';
+} from '@/features/court-owners/components/shared';
 
 // 1. Khai báo kiểu dữ liệu của màn hình
 interface CourtItem {
@@ -157,7 +183,7 @@ export function CourtsPage() {
       headerClassName: 'text-xs font-semibold text-muted-foreground min-w-[140px]',
       cell: (item) => (
         <span className="font-semibold text-foreground">
-          {item.pricePerHour.toLocaleString('vi-VN')}đ
+          {formatVND(item.pricePerHour)}
         </span>
       ),
     },
@@ -278,28 +304,36 @@ Bạn là lập trình viên Frontend Senior phụ trách dự án CourtBooking 
 
 HÃY ĐỌC VÀ TUÂN THỦ NGHIÊM NGẶT CÁC QUY TẮC SAU ĐÂY:
 1. Đọc file hướng dẫn kiến trúc: "frontend/HUONG_DAN_DUNG_CHUNG_COMPONENT.md".
-2. KHÔNG TỰ CODE LẠI Sidebar, Header hay Table HTML từ đầu. Trang quản lý của Chủ sân (Owner) đã có Layout bao bọc sẵn thông qua thẻ <Outlet /> của AdminLayout.
-3. BẮT BUỘC SỬ DỤNG các Component Lego dùng chung từ:
+2. KHÔNG TỰ CODE LẠI Sidebar, Header hay Table HTML từ đầu. Trang quản lý của Chủ sân (Owner) đã có Layout bao bọc sẵn thông qua thẻ <Outlet /> của OwnerLayout (tại src/components/layouts/OwnerLayout.tsx, bọc OwnerProtectedRoute).
+3. BẮT BUỘC SỬ DỤNG các Component Lego & Tiện ích dùng chung từ:
    import {
      OwnerPageHeader,
      OwnerFilterBar,
      OwnerStatusBadge,
      OwnerPagination,
      OwnerModal,
-   } from '@/features/court-owners/components';
+   } from '@/features/court-owners/components/shared';
    import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
    import { Button } from '@/components/ui/button';
+   import { formatVND, formatDate } from '@/lib/format';
 
-4. QUY ƯỚC THIẾT KẾ MATCHDAY (FIGMA):
+4. QUY TẮC TẦNG API:
+   - Nếu viết API gọi Backend (React Query / TanStack Query), đặt tại: `src/api/[tên-module]/` (gồm `use[Module].ts`, `types.ts`, `index.ts`), export ra `src/api/index.ts`.
+   - Sử dụng instance `axiosClient` từ `@/api/axiosClient`.
+
+5. QUY ƯỚC THIẾT KẾ MATCHDAY (FIGMA):
    - Nền Dark Slate sang trọng (#0B1324).
    - Nút chính (Primary CTA): Luôn dùng màu Xanh Neon thể thao: `className="bg-[#a3e635] text-black hover:bg-[#8ece28] font-bold h-9.5 rounded-xl shadow-xs"`.
    - Nút phụ (Secondary/Export): Dùng `variant="outline"` với `className="border-border/60 bg-card/60 h-9.5 rounded-xl"`.
-   - Bảng dữ liệu: Dùng CommonTable, cột thao tác gồm nút Sửa (Pencil) và Xóa (Trash).
+   - Bảng dữ liệu: Dùng CommonTable, hiển thị tiền dùng `formatVND(amount)`, ngày giờ dùng `formatDate(date)`.
+   - Cột thao tác: Gồm nút Sửa (Pencil) và Xóa (Trash).
    - Modal form: Dùng OwnerModal (tiêu đề lớn, input nền tối #080E1C viền focus #a3e635, nút [Hủy] nền tối và [Lưu...] xanh neon).
+   - Nếu cần chọn Tỉnh/Huyện/Xã: Dùng helper từ `@/lib/vietnamLocations` (dữ liệu tĩnh tại `src/data/`).
 
 NHIỆM VỤ CỤ THỂ BÂY GIỜ:
 - Hãy tạo trang: [ĐIỀN TÊN TRANG TẠI ĐÂY, ví dụ: Quản lý sân con (CourtsPage) / Quản lý sản phẩm (ProductsPage) / Bảng giá (PricingPage)]
-- Đặt file tại: `src/features/court-owners/pages/[TênFilePage].tsx`
+- Đặt file page tại: `src/features/court-owners/pages/[TênFilePage].tsx`
+- Nếu có component phức tạp riêng cho trang này, đặt tại: `src/features/court-owners/components/[tên-module]/`
 - Đăng ký route tương ứng tại `src/app/router.tsx` trong nhánh `/owner/[tên-route]`.
 - Tạo dữ liệu mẫu mockData phong phú, có đủ các trạng thái và hỗ trợ tương tác tìm kiếm + mở modal thêm mới/chỉnh sửa.
 - Kiểm tra TypeScript để đảm bảo build không lỗi.
@@ -315,7 +349,7 @@ NHIỆM VỤ CỤ THỂ BÂY GIỜ:
 | 2 | **Lịch đặt sân** | `/owner/orders` | `OrdersPage.tsx` | ✅ Đã hoàn thành chuẩn mẫu |
 | 3 | **Trạng thái sân** | `/owner/court-status` | `CourtStatusPage.tsx` | Chờ làm |
 | 4 | **Quản lý sân** | `/owner/courts` | `CourtsPage.tsx` | Chờ làm |
-| 5 | **Chi nhánh** | `/owner/branches` | `BranchesPage.tsx` | Đã có sơ bộ |
+| 5 | **Chi nhánh** | `/owner/branches` | `BranchesPage.tsx` | ✅ Đã kết nối API thật |
 | 6 | **Giá và khung giờ** | `/owner/pricing` | `PricingPage.tsx` | Chờ làm |
 | 7 | **Danh mục dịch vụ** | `/owner/service-categories`| `ServiceCategoriesPage.tsx`| ✅ Đã hoàn thành chuẩn mẫu |
 | 8 | **Sản phẩm** | `/owner/products` | `ProductsPage.tsx` | Chờ làm |
@@ -326,9 +360,10 @@ NHIỆM VỤ CỤ THỂ BÂY GIỜ:
 
 ---
 
-## 📁 7. Hai Trang Mẫu Để Tham Khảo Trực Tiếp
-Khi cần xem cách ghép nối thực tế, mở 2 file mẫu chuẩn mực nhất của dự án:
+## 📁 7. Ba Trang Mẫu Để Tham Khảo Trực Tiếp
+Khi cần xem cách ghép nối thực tế, mở 3 file mẫu chuẩn mực nhất của dự án:
 1. 📄 [OrdersPage.tsx](file:///d:/DoAN/QLDA_DOTNET/CourtBooking/frontend/src/features/court-owners/pages/OrdersPage.tsx) – Trang có Tabs, Bộ lọc ngày, Bảng dữ liệu đa cột và xem chi tiết.
 2. 📄 [ServiceCategoriesPage.tsx](file:///d:/DoAN/QLDA_DOTNET/CourtBooking/frontend/src/features/court-owners/pages/ServiceCategoriesPage.tsx) – Trang có Nút tạo mới, Bảng dữ liệu thao tác Sửa/Xóa và Modal form nhập liệu chuẩn Figma.
+3. 📄 [BranchesPage.tsx](file:///d:/DoAN/QLDA_DOTNET/CourtBooking/frontend/src/features/court-owners/pages/BranchesPage.tsx) – Trang kết nối API Backend hoàn chỉnh, Form modal 4 bước chọn địa chỉ Việt Nam.
 
 *(Đường dẫn xem trên trình duyệt: [http://localhost:3000/owner/orders](http://localhost:3000/owner/orders) và [http://localhost:3000/owner/service-categories](http://localhost:3000/owner/service-categories))*

@@ -2,12 +2,13 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 // Layouts
 import { PublicLayout } from '@/components/layouts/PublicLayout';
+import { OwnerLayout } from '@/components/layouts/OwnerLayout';
 import { AdminLayout } from '@/components/layouts/AdminLayout';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { ProtectedRoute, OwnerProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
-// Public Pages
-import { HomePage } from '@/features/public/pages/HomePage';
+// Customer / Public Pages
+import { HomePage } from '@/features/customer/pages/HomePage';
 
 
 // Admin Pages
@@ -61,7 +62,7 @@ export const router = createBrowserRouter([
     path: '/owner',
     element: (
       <OwnerProtectedRoute>
-        <AdminLayout />
+        <OwnerLayout />
       </OwnerProtectedRoute>
     ),
     children: [
