@@ -112,7 +112,7 @@ export function CourtTypeFormModal({
               if (error) setError(null);
             }}
             placeholder="Ví dụ: Sân Cầu Lông Tiêu Chuẩn, Sân Pickleball Đôi..."
-            className="w-full h-11 rounded-xl bg-[#080E1C] px-4 text-sm text-white placeholder:text-muted-foreground/60 border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] transition-all"
+            className="w-full h-11 rounded-xl bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground/60 border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] transition-all"
           />
           <p className="text-[11px] text-muted-foreground">
             Tên loại sân giúp phân loại các sân có cùng quy chuẩn, kích thước và bảng giá.
@@ -163,7 +163,7 @@ export function CourtTypeFormModal({
                 setMinutesConfig(Number(e.target.value));
                 if (error) setError(null);
               }}
-              className="w-28 h-9 rounded-lg bg-[#080E1C] px-3 text-xs text-white border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+              className="w-28 h-9 rounded-lg bg-background px-3 text-xs text-foreground border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
             />
             <span className="text-xs text-muted-foreground">phút / lượt (bội số của 30)</span>
           </div>
