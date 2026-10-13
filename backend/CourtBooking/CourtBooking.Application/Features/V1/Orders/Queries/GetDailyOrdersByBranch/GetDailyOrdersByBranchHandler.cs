@@ -38,12 +38,12 @@ public sealed class GetDailyOrdersByBranchHandler(
 
         if (request.FromDate.HasValue)
         {
-            query = query.Where(o => o.OrderDate >= request.FromDate.Value);
+            query = query.Where(o => o.Details.Any(d => d.Date >= request.FromDate.Value));
         }
 
         if (request.ToDate.HasValue)
         {
-            query = query.Where(o => o.OrderDate <= request.ToDate.Value);
+            query = query.Where(o => o.Details.Any(d => d.Date <= request.ToDate.Value));
         }
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))

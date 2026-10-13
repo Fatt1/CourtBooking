@@ -31,8 +31,8 @@ public sealed class CreateReviewCommandHandler(
             return Result.Failure<Guid>(new ForbiddenError("Bạn chỉ có thể đánh giá đơn hàng của chính mình."));
         }
 
-        // 3. Kiểm tra trạng thái đơn hàng (chỉ cho đánh giá khi đã hoàn thành hoặc qua giờ)
-        if (order.Status != OrderStatus.Completed && order.Status != OrderStatus.CheckedIn)
+        // 3. Kiểm tra trạng thái đơn hàng (chỉ cho đánh giá khi đã hoàn thành)
+        if (order.Status != OrderStatus.Completed)
         {
             return Result.Failure<Guid>(new ConflictError("Bạn chỉ có thể đánh giá sau khi đã hoàn thành ca chơi."));
         }

@@ -3,6 +3,7 @@ using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Orders.Commands.AddFixedOrderCycle;
 using CourtBooking.Application.Features.V1.Orders.Commands.AddPaymentTransaction;
 using CourtBooking.Application.Features.V1.Orders.Commands.CancelOrderByOwner;
+using CourtBooking.Application.Features.V1.Orders.Commands.CompleteOrder;
 using CourtBooking.Application.Features.V1.Orders.Commands.ConfirmOrder;
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateFixedOrderByOwner;
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderByOwner;
@@ -266,6 +267,26 @@ public class OrderEndpoints : IEndpointGroup
             .WithTags(OrderTag)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        // PUT /api/v1/owner/orders/{orderId:guid}/completion — Hoàn thành đơn hàng
+        group.MapPut("/{orderId:guid}/completion", async (
+                [FromRoute] Guid orderId,
+                ISender sender = default!,
+                CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new CompleteOrderCommand(orderId), ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+            .WithName("CompleteOrder")
+            .WithSummary("Chủ sân hoàn thành đơn đặt lịch")
+            .WithDescription("Dành cho chủ sân hoàn thành đơn hàng sau khi khách chơi xong")
+            .WithTags(OrderTag)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
         // PUT /api/v1/owner/orders/{orderId:guid}/cancellation — Chủ sân hủy đơn hàng (kèm hoàn tiền nếu có)

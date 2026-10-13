@@ -151,7 +151,6 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
 
         var validOrders = orders
             .Where(o => o.Status == OrderStatus.Confirmed
-                     || o.Status == OrderStatus.CheckedIn
                      || o.Status == OrderStatus.Completed)
             .ToList();
 
