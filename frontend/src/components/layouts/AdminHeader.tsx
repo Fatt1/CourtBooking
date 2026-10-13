@@ -142,34 +142,50 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         </Button>
 
         {/* Pill Theme Switcher chuẩn Figma: [Light | Dark] */}
-        <div className="flex items-center rounded-full border border-border/60 bg-muted/40 p-0.5 text-xs">
+        <div
+          className={cn(
+            'flex items-center rounded-full p-0.5 text-xs transition-all border',
+            !isDark
+              ? 'bg-[#E8ECE9] border-slate-300/70'
+              : 'bg-[#0B1324] border-slate-800'
+          )}
+        >
           <button
             type="button"
             onClick={() => setTheme('light')}
             className={cn(
-              'flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-all text-xs font-medium cursor-pointer',
+              'flex items-center gap-1.5 rounded-full px-3 py-1 transition-all text-xs cursor-pointer',
               !isDark
-                ? 'bg-background text-foreground shadow-xs font-semibold'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-[#18231C] text-white shadow-xs font-bold'
+                : 'text-slate-400 hover:text-white font-semibold'
             )}
             title="Chế độ sáng"
           >
-            <Sun className="size-3.5" />
-            <span className="hidden sm:inline">Light</span>
+            <Sun className="size-3.5 stroke-[2.2]" />
+            <span className="font-bold">Light</span>
           </button>
           <button
             type="button"
             onClick={() => setTheme('dark')}
             className={cn(
-              'flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-all text-xs font-medium cursor-pointer',
+              'flex items-center gap-1.5 rounded-full px-3 py-1 transition-all text-xs cursor-pointer',
               isDark
-                ? 'bg-slate-800 text-white shadow-xs font-semibold'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-white text-slate-950 shadow-xs font-bold'
+                : 'text-slate-600 hover:text-slate-900 font-semibold'
             )}
             title="Chế độ tối"
           >
-            <Moon className="size-3.5" />
-            <span className="hidden sm:inline">Dark</span>
+            <svg
+              className="size-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 3a9 9 0 0 0 0 18V3z" fill="currentColor" />
+            </svg>
+            <span className="font-bold">Dark</span>
           </button>
         </div>
 
