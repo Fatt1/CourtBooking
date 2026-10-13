@@ -70,11 +70,16 @@ export const API_ENDPOINTS = {
 
   // 5. Bảng giá & Khung giờ cố định (Pricing)
   PRICING: {
-    PRICE_TABLES: '/owner/pricing/tables',
-    PRICE_TABLE_DETAIL: (id: string) => `/owner/pricing/tables/${id}`,
-    PRICE_RULES: '/owner/pricing/rules',
-    FIXED_TIME_BLOCKS: '/owner/pricing/fixed-time-blocks',
+    OWNER_CONFIG: '/owner/pricing',
     BRANCH_CONFIG: '/pricing',
+    PRICE_TABLES: '/owner/pricing/price-tables',
+    PRICE_TABLE_DETAIL: (id: string) => `/owner/pricing/price-tables/${id}`,
+    PRICE_RULES: (tableId: string) => `/owner/pricing/price-tables/${tableId}/rules`,
+    PRICE_RULE_DETAIL: (tableId: string, ruleId: string) =>
+      `/owner/pricing/price-tables/${tableId}/rules/${ruleId}`,
+    FIXED_TIME_BLOCKS: '/owner/pricing/fixed-time-blocks',
+    FIXED_TIME_BLOCK_DETAIL: (blockId: string) =>
+      `/owner/pricing/fixed-time-blocks/${blockId}`,
   },
 
   // 6. Đơn đặt sân & Lưới lịch (Orders & Booking)
