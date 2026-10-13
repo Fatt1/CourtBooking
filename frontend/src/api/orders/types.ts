@@ -271,3 +271,38 @@ export interface FixedOrderDto {
   cycles: FixedOrderCycleSummaryDto[];
 }
 
+/**
+ * Payload ca sân con đặt trực tiếp
+ */
+export interface CourtSlotItemPayload {
+  courtId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
+/**
+ * Payload nhóm sân theo loại sân và bảng giá
+ */
+export interface CourtBookingSlotPayload {
+  courtTypeId: string;
+  priceTableId: string;
+  slots: CourtSlotItemPayload[];
+}
+
+/**
+ * Payload tạo đơn đặt sân trực tiếp từ chủ sân (POST /api/v1/owner/orders)
+ */
+export interface CreateOrderByOwnerPayload {
+  branchId: string;
+  customerName: string;
+  customerPhone: string;
+  note?: string | null;
+  discountAmount?: number;
+  paymentMethod: PaymentMethod;
+  courtSlots: CourtBookingSlotPayload[];
+  services?: OrderServiceInputItem[];
+  playerId?: string | null;
+}
+
+

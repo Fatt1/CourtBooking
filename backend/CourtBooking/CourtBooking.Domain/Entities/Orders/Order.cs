@@ -175,7 +175,7 @@ public class Order : EntityBase<Guid>, IAuditable
             .Where(t => t.Type == PaymentTransactionType.Refund)
             .Sum(t => t.Amount);
 
-        return Math.Max(0, TotalAmount - (totalPaid - totalRefunded));
+        return TotalAmount - (totalPaid - totalRefunded);
     }
 
     public void ClearOrderDetails()

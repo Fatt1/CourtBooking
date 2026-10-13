@@ -36,15 +36,16 @@ public sealed class PricingEndpoints : IEndpointGroup
         // 4. Quản lý Khung giờ bắt buộc (FixedTimeBlock)
         MapFixedTimeBlocks(group);
 
+      
 
         var publicGroup = app.MapApiV1Group("pricing");
         // 3. Xem cấu hình giá và loại sân công khai phục vụ đặt sân
-        publicGroup.MapGet("/{id:guid}", async (
-            Guid id,
+        publicGroup.MapGet("/", async (
+            [FromQuery] Guid branchId,
             ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new GetPricingConfigByBranchIdQuery(id), ct);
+            var result = await sender.Send(new GetPricingConfigByBranchIdQuery(branchId), ct);
             return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
         })
          .WithTags(PricingTag)

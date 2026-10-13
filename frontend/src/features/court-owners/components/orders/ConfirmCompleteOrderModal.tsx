@@ -1,6 +1,7 @@
 import { CheckCircle2, Clock } from 'lucide-react';
 import { OwnerModal } from '../shared/OwnerModal';
 import { useCompleteOrderMutation } from '@/api/orders';
+import { getApiErrorMessage } from '@/types/api';
 import { toast } from 'sonner';
 
 interface ConfirmCompleteOrderModalProps {
@@ -31,8 +32,7 @@ export function ConfirmCompleteOrderModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể hoàn thành đơn hàng';
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, 'Không thể hoàn thành đơn hàng'));
     }
   };
 

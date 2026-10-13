@@ -49,6 +49,8 @@ export const API_ENDPOINTS = {
     CONFIG_VIETQR: (id: string) => `/owner/branches/${id}/vietqr`,
     IMAGES: (id: string) => `/owner/branches/${id}/images`,
     POLICIES: (id: string) => `/owner/branches/${id}/policies`,
+    GET_ONE_TIME_BOOKING: '/branches/get-one-time-booking',
+    OWNER_GET_ONE_TIME_BOOKING: '/owner/branches/get-one-time-booking',
   },
 
   // 4. Loại sân & Danh sách Sân (CourtTypes & Courts)
@@ -72,6 +74,7 @@ export const API_ENDPOINTS = {
     PRICE_TABLE_DETAIL: (id: string) => `/owner/pricing/tables/${id}`,
     PRICE_RULES: '/owner/pricing/rules',
     FIXED_TIME_BLOCKS: '/owner/pricing/fixed-time-blocks',
+    BRANCH_CONFIG: '/pricing',
   },
 
   // 6. Đơn đặt sân & Lưới lịch (Orders & Booking)

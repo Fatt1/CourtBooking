@@ -7,6 +7,7 @@ import {
   Store,
   CalendarDays,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import type { DateRange } from 'react-day-picker';
+import { format, subDays, startOfMonth } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +45,7 @@ import {
   DailyOrderTable,
   DailyOrderDetailModal,
   CancelOrderModal,
+  CreateDailyOrderModal,
 } from '@/features/court-owners/components/orders';
 import { useBranchStore } from '@/stores/useBranchStore';
 import {
@@ -49,9 +61,26 @@ export function OrdersPage() {
   // 2. States quản lý bộ lọc & phân trang
   const [activeTab, setActiveTab] = useState<'daily' | 'recurring' | 'event'>('daily');
   const [searchQuery, setSearchQuery] = useState('');
+  // Áp dụng useDebounce cho tìm kiếm (trì hoãn 400ms để tránh spam API liên tục khi gõ)
+  const debouncedSearch = useDebounce(searchQuery, 400);
+
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [selectedDate, setSelectedDate] = useState<string>(''); // YYYY-MM-DD nếu lọc ngày cụ thể
+  // Lọc theo khoảng ngày (từ ngày mấy tới ngày mấy)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  // Nhãn hiển thị cho nút bộ lọc ngày
+  const dateRangeLabel = useMemo(() => {
+    if (!dateRange?.from) return 'Tất cả ngày';
+    const fromStr = format(dateRange.from, 'dd/MM/yyyy');
+    if (!dateRange.to || dateRange.from.getTime() === dateRange.to.getTime()) {
+      return fromStr;
+    }
+    const toStr = format(dateRange.to, 'dd/MM/yyyy');
+    return `${fromStr} - ${toStr}`;
+  }, [dateRange]);
 
   // 3. States quản lý Modals
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -60,36 +89,38 @@ export function OrdersPage() {
   const [orderToCancel, setOrderToCancel] = useState<DailyOrderDto | null>(null);
   const [isQuickBookOpen, setIsQuickBookOpen] = useState(false);
 
-  // 4. Tabs theo chuẩn Figma (Image 1)
+  // 4. Tabs theo chuẩn Figma
   const filterTabs = [
     { id: 'daily', label: 'Đơn ngày' },
     { id: 'recurring', label: 'Đơn cố định (Chu kỳ)' },
     { id: 'event', label: 'Sự kiện' },
   ];
 
-  // 5. Query lấy danh sách đơn ngày từ API backend (kèm fallback mượt mà)
+  // 5. Query lấy danh sách đơn ngày từ API backend (kèm debounce search & date range)
   const queryParams = useMemo(() => {
     const params: Record<string, any> = {
       branchId: selectedBranchId || undefined,
       page: currentPage,
-      pageSize: 10,
+      pageSize: pageSize,
     };
 
-    if (searchQuery.trim()) {
-      params.search = searchQuery.trim();
+    if (debouncedSearch.trim()) {
+      params.search = debouncedSearch.trim();
     }
 
     if (statusFilter !== 'ALL') {
       params.status = Number(statusFilter);
     }
 
-    if (selectedDate) {
-      params.fromDate = selectedDate;
-      params.toDate = selectedDate;
+    if (dateRange?.from) {
+      params.fromDate = format(dateRange.from, 'yyyy-MM-dd');
+      params.toDate = dateRange.to
+        ? format(dateRange.to, 'yyyy-MM-dd')
+        : format(dateRange.from, 'yyyy-MM-dd');
     }
 
     return params;
-  }, [selectedBranchId, currentPage, searchQuery, statusFilter, selectedDate]);
+  }, [selectedBranchId, currentPage, pageSize, debouncedSearch, statusFilter, dateRange]);
 
   const { data: pagedData, isLoading, refetch } = useDailyOrdersQuery(queryParams);
 
@@ -171,28 +202,151 @@ export function OrdersPage() {
           setCurrentPage(1);
         }}
       >
-        {/* Bộ chọn ngày: Mặc định hoặc chọn ngày cụ thể */}
+        {/* Bộ chọn khoảng ngày: Popover Date Range Picker */}
         <div className="flex items-center gap-1.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (selectedDate) {
-                setSelectedDate('');
-              } else {
-                // Set sang ngày hôm nay YYYY-MM-DD
-                const today = new Date().toISOString().split('T')[0];
-                setSelectedDate(today);
-              }
-              setCurrentPage(1);
-            }}
-            className={`gap-1.5 h-9.5 border-border/60 bg-card/60 hover:bg-accent text-xs font-medium rounded-xl cursor-pointer ${
-              selectedDate ? 'border-[#a3e635]/60 text-[#a3e635]' : 'text-foreground'
-            }`}
-          >
-            <CalendarIcon className="size-3.5 text-muted-foreground" />
-            <span>{selectedDate ? 'Đã lọc theo ngày' : 'Tất cả ngày'}</span>
-          </Button>
+          <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`gap-1.5 h-9.5 border-border/60 bg-card/60 hover:bg-accent text-xs font-medium rounded-xl cursor-pointer ${
+                  dateRange?.from
+                    ? 'border-[#a3e635]/60 text-[#a3e635] bg-[#a3e635]/10'
+                    : 'text-foreground'
+                }`}
+              >
+                <CalendarIcon
+                  className={`size-3.5 ${
+                    dateRange?.from ? 'text-[#a3e635]' : 'text-muted-foreground'
+                  }`}
+                />
+                <span>{dateRangeLabel}</span>
+              </Button>
+            </PopoverTrigger>
+
+            <PopoverContent
+              className="w-auto p-0 bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl z-50 overflow-hidden"
+              align="start"
+            >
+              {/* Header Popover */}
+              <div className="px-4 py-2.5 border-b border-border/50 bg-[#0f172a] flex items-center justify-between">
+                <div>
+                  <div className="text-[11px] font-bold text-[#a3e635] tracking-wider uppercase">
+                    Lọc theo khoảng ngày đặt
+                  </div>
+                  <div className="text-xs text-slate-300 font-mono mt-0.5">
+                    {dateRangeLabel}
+                  </div>
+                </div>
+                {dateRange?.from && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDateRange(undefined);
+                      setCurrentPage(1);
+                    }}
+                    className="h-7 px-2 text-xs text-slate-400 hover:text-rose-400 cursor-pointer"
+                  >
+                    <X className="size-3.5 mr-1" />
+                    Xóa lọc
+                  </Button>
+                )}
+              </div>
+
+              {/* Quick Presets */}
+              <div className="p-2 border-b border-border/40 bg-[#070D1A]/60 flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    setDateRange({ from: today, to: today });
+                    setCurrentPage(1);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                >
+                  Hôm nay
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const yesterday = subDays(new Date(), 1);
+                    setDateRange({ from: yesterday, to: yesterday });
+                    setCurrentPage(1);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                >
+                  Hôm qua
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    setDateRange({ from: subDays(today, 6), to: today });
+                    setCurrentPage(1);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                >
+                  7 ngày qua
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    setDateRange({ from: startOfMonth(today), to: today });
+                    setCurrentPage(1);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                >
+                  Tháng này
+                </button>
+              </div>
+
+              {/* Calendar Mode Range */}
+              <div className="p-2 flex justify-center">
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={(range) => {
+                    setDateRange(range);
+                    setCurrentPage(1);
+                  }}
+                  locale={vi}
+                  className="bg-transparent"
+                />
+              </div>
+
+              {/* Footer */}
+              <div className="p-2.5 border-t border-border/50 bg-[#0f172a] flex items-center justify-between">
+                <span className="text-[11px] text-slate-400">
+                  Chọn ngày bắt đầu & kết thúc
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => setIsDatePickerOpen(false)}
+                  className="h-7.5 px-3 rounded-lg bg-[#a3e635] text-black hover:bg-[#8ece28] text-xs font-bold cursor-pointer"
+                >
+                  Đóng
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Nút X nhanh bên cạnh nút ngày nếu đang có filter */}
+          {dateRange?.from && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setDateRange(undefined);
+                setCurrentPage(1);
+              }}
+              className="size-8 rounded-xl text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+              title="Xóa bộ lọc ngày"
+            >
+              <X className="size-3.5" />
+            </Button>
+          )}
         </div>
 
         {/* Dropdown Lọc Trạng Thái */}
@@ -248,9 +402,14 @@ export function OrdersPage() {
           {/* Thanh phân trang chuẩn */}
           <OwnerPagination
             currentPage={currentPage}
-            pageSize={10}
+            pageSize={pageSize}
+            pageSizeOptions={[25, 50, 100]}
             totalItems={totalCount}
             onPageChange={setCurrentPage}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setCurrentPage(1);
+            }}
           />
         </div>
       )}
@@ -329,70 +488,14 @@ export function OrdersPage() {
         />
       )}
 
-      {/* 3. Modal Đặt sân hộ tại quầy (Quick Book) */}
-      <Dialog open={isQuickBookOpen} onOpenChange={setIsQuickBookOpen}>
-        <DialogContent className="max-w-md bg-[#0B1324] border-border/70 text-white rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-white">
-              <Plus className="size-5 text-[#a3e635]" /> Đặt sân hộ tại quầy
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-xs">
-              Tạo đơn đặt nhanh cho khách vãng lai gọi điện thoại hoặc đến trực tiếp sân.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3.5 py-2 text-sm">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Tên khách hàng
-              </label>
-              <input
-                className="w-full h-9.5 rounded-xl border border-border/60 bg-[#131d31] px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#a3e635]"
-                placeholder="Ví dụ: Nguyễn Văn A"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Số điện thoại
-              </label>
-              <input
-                className="w-full h-9.5 rounded-xl border border-border/60 bg-[#131d31] px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#a3e635]"
-                placeholder="09..."
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Chọn sân
-              </label>
-              <select className="w-full h-9.5 rounded-xl border border-border/60 bg-[#131d31] px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#a3e635]">
-                <option>Sân 1 (Cầu lông)</option>
-                <option>Sân 2 (Cầu lông)</option>
-                <option>Sân VIP 1 (Pickleball)</option>
-              </select>
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsQuickBookOpen(false)}
-              className="rounded-xl border-border/60 bg-transparent text-white hover:bg-muted/30"
-            >
-              Hủy
-            </Button>
-            <Button
-              className="bg-[#a3e635] text-black hover:bg-[#8ece28] font-bold rounded-xl"
-              onClick={() => {
-                toast.success('Tạo đơn đặt sân hộ thành công!');
-                setIsQuickBookOpen(false);
-                refetch();
-              }}
-            >
-              Lưu & Xác nhận
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* 3. Modal Đặt sân hộ tại quầy (CreateDailyOrderModal) */}
+      <CreateDailyOrderModal
+        open={isQuickBookOpen}
+        onOpenChange={setIsQuickBookOpen}
+        branchId={selectedBranchId || undefined}
+        branchName={selectedBranch?.name || undefined}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 }

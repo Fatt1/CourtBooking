@@ -23,6 +23,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { OwnerStatusBadge } from '../shared/OwnerStatusBadge';
+import { getApiErrorMessage } from '@/types/api';
 import {
   useDailyOrderDetailQuery,
   useConfirmOrderMutation,
@@ -158,8 +159,7 @@ export function DailyOrderDetailModal({
         refetch();
         onOrderUpdated?.();
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Không thể xác nhận đơn';
-        toast.error(msg);
+        toast.error(getApiErrorMessage(err, 'Không thể xác nhận đơn'));
       }
     } else if (order.status === OrderStatus.Confirmed) {
       if (isBeforePlayDate) {

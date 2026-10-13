@@ -4,6 +4,7 @@ import { AlertTriangle, CircleDollarSign } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { OwnerModal } from '../shared/OwnerModal';
 import { useCancelOrderByOwnerMutation, PaymentMethod } from '@/api/orders';
+import { getApiErrorMessage } from '@/types/api';
 
 interface CancelOrderModalProps {
   open: boolean;
@@ -45,8 +46,7 @@ export function CancelOrderModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể hủy đơn đặt sân';
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, 'Không thể hủy đơn đặt sân'));
     }
   };
 

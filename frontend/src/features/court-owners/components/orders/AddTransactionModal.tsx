@@ -18,6 +18,7 @@ import {
   PaymentTransactionType,
 } from '@/api/orders';
 import { uploadImageApi, getImageUrl } from '@/api/storage';
+import { getApiErrorMessage } from '@/types/api';
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -90,8 +91,7 @@ export function AddTransactionModal({
       setProofImageUrl(res.url);
       toast.success('Đã tải ảnh biên lai thành công!');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Tải ảnh lên thất bại';
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, 'Tải ảnh lên thất bại'));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -126,8 +126,7 @@ export function AddTransactionModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể ghi nhận giao dịch';
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, 'Không thể ghi nhận giao dịch'));
     }
   };
 

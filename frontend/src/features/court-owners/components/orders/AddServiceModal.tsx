@@ -19,6 +19,8 @@ import {
 import { useServiceCategoriesQuery } from '@/api/service-categories';
 import { useServicesByBranchQuery, type ServiceByBranchDto } from '@/api/services';
 import { getImageUrl } from '@/api/storage';
+import { getApiErrorMessage } from '@/types/api';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export interface SelectedServiceItem {
   serviceId: string;
@@ -67,6 +69,7 @@ export function AddServiceModal({
   const isUpdateMode = propMode ? propMode === 'update' : Boolean(orderId);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [items, setItems] = useState<SelectedServiceItem[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -157,17 +160,18 @@ export function AddServiceModal({
     return list;
   }, [remoteCategories, productList]);
 
-  // Lọc sản phẩm theo Category và Từ khóa tìm kiếm
+  // Lọc sản phẩm theo Category và Từ khóa tìm kiếm (đã debounce)
   const filteredProducts = useMemo(() => {
+    const q = debouncedSearchQuery.trim().toLowerCase();
     return productList.filter((p) => {
       const matchCat =
         selectedCategory === 'Tất cả' || p.category === selectedCategory;
       const matchSearch =
-        !searchQuery.trim() ||
-        p.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
+        !q ||
+        p.name.toLowerCase().includes(q);
       return matchCat && matchSearch;
     });
-  }, [productList, selectedCategory, searchQuery]);
+  }, [productList, selectedCategory, debouncedSearchQuery]);
 
   // Thao tác giỏ hàng: Thêm / tăng số lượng khi click vào card
   const handleSelectProduct = (product: ProductCatalogItem) => {
@@ -240,9 +244,7 @@ export function AddServiceModal({
         onOpenChange(false);
         onSuccess?.();
       } catch (err: unknown) {
-        const msg =
-          err instanceof Error ? err.message : 'Không thể cập nhật dịch vụ';
-        toast.error(msg);
+        toast.error(getApiErrorMessage(err, 'Không thể cập nhật dịch vụ'));
       }
     } else {
       // 2. ĐANG THÊM ĐƠN HÀNG / POS: Thanh toán / Trả về danh sách dịch vụ

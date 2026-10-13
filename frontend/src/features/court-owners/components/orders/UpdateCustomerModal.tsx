@@ -4,6 +4,7 @@ import { User, Phone } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { OwnerModal } from '../shared/OwnerModal';
 import { useUpdateCustomerInfoMutation } from '@/api/orders';
+import { getApiErrorMessage } from '@/types/api';
 
 interface UpdateCustomerModalProps {
   open: boolean;
@@ -49,8 +50,7 @@ export function UpdateCustomerModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể cập nhật thông tin';
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, 'Không thể cập nhật thông tin'));
     }
   };
 

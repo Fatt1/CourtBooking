@@ -11,6 +11,7 @@ import {
   type UpdateCustomerInfoPayload,
   type UpdateOrderServicesPayload,
   type AddPaymentTransactionPayload,
+  type CreateOrderByOwnerPayload,
 } from './types';
 
 // ============================================================================
@@ -199,4 +200,26 @@ export function useAddPaymentTransactionMutation() {
     },
   });
 }
+
+/**
+ * Tạo đơn đặt sân trực tiếp từ chủ sân
+ * POST /api/v1/owner/orders
+ */
+export async function createOrderByOwner(payload: CreateOrderByOwnerPayload): Promise<string> {
+  const response = await apiClient.post<string>(API_ENDPOINTS.ORDERS.CREATE_BY_OWNER, payload);
+  return response as unknown as string;
+}
+
+export function useCreateOrderByOwnerMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createOrderByOwner,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'one-time-booking'] });
+    },
+  });
+}
+
 
