@@ -4,6 +4,7 @@ import {
   CalendarDays,
   Activity,
   Grid3X3,
+  Layers,
   Building2,
   BadgeDollarSign,
   Package,
@@ -33,12 +34,13 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
 
   const isSystemAdmin = user?.role === 'SystemAdmin';
 
-  // 12 mục Menu chuẩn theo đúng Figma của Owner (dùng tiền tố /owner/...)
+  // Danh mục Menu chuẩn theo đúng Figma của Owner (dùng tiền tố /owner/...)
   const ownerNavItems = [
     { label: 'Tổng quan', href: '/owner', icon: LayoutDashboard },
     { label: 'Lịch đặt sân', href: '/owner/orders', icon: CalendarDays },
     { label: 'Trạng thái sân', href: '/owner/court-status', icon: Activity },
     { label: 'Quản lý sân', href: '/owner/courts', icon: Grid3X3 },
+    { label: 'Loại sân', href: '/owner/court-types', icon: Layers },
     { label: 'Chi nhánh', href: '/owner/branches', icon: Building2 },
     { label: 'Giá và khung giờ', href: '/owner/pricing', icon: BadgeDollarSign },
     { label: 'Danh mục dịch vụ', href: '/owner/service-categories', icon: Package },

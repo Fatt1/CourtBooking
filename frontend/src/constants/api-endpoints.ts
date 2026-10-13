@@ -55,6 +55,9 @@ export const API_ENDPOINTS = {
   COURTS: {
     COURT_TYPES: '/owner/court-types',
     COURT_TYPE_DETAIL: (id: string) => `/owner/court-types/${id}`,
+    CREATE_TYPE: '/owner/court-types',
+    UPDATE_TYPE: (id: string) => `/owner/court-types/${id}`,
+    DELETE_TYPE: (id: string) => `/owner/court-types/${id}`,
     LIST: '/owner/courts',
     DETAIL: (id: string) => `/owner/courts/${id}`,
     CREATE: '/owner/courts',
@@ -163,9 +166,10 @@ export const API_ENDPOINTS = {
   SPORT_TYPES: {
     LIST: '/sport-types',
     DETAIL: (id: string) => `/sport-types/${id}`,
-    CREATE: '/system/sport-types',
-    UPDATE: (id: string) => `/system/sport-types/${id}`,
-    DELETE: (id: string) => `/system/sport-types/${id}`,
+    ADMIN_LIST: '/admin/sport-types',
+    CREATE: '/admin/sport-types',
+    UPDATE: (id: string) => `/admin/sport-types/${id}`,
+    DELETE: (id: string) => `/admin/sport-types/${id}`,
   },
 
   // 13. Thống kê & Báo cáo (Analytics)

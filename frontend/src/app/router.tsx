@@ -2,12 +2,13 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 // Layouts
 import { PublicLayout } from '@/components/layouts/PublicLayout';
+import { OwnerLayout } from '@/components/layouts/OwnerLayout';
 import { AdminLayout } from '@/components/layouts/AdminLayout';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { ProtectedRoute, OwnerProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
-// Public Pages
-import { HomePage } from '@/features/public/pages/HomePage';
+// Customer / Public Pages
+import { HomePage } from '@/features/customer/pages/HomePage';
 
 
 // Admin Pages
@@ -16,6 +17,8 @@ import { UsersPage } from '@/features/admin/pages/UsersPage';
 // Court Owners / Management Pages
 import { OrdersPage } from '@/features/court-owners/pages/OrdersPage';
 import { BranchesPage } from '@/features/court-owners/pages/BranchesPage';
+import { CourtTypesPage } from '@/features/court-owners/pages/CourtTypesPage';
+import { CourtsPage } from '@/features/court-owners/pages/CourtsPage';
 import { ServiceCategoriesPage } from '@/features/court-owners/pages/ServiceCategoriesPage';
 import { CourtOwnerLoginPage } from '@/features/court-owners/pages/CourtOwnerLoginPage';
 
@@ -61,7 +64,7 @@ export const router = createBrowserRouter([
     path: '/owner',
     element: (
       <OwnerProtectedRoute>
-        <AdminLayout />
+        <OwnerLayout />
       </OwnerProtectedRoute>
     ),
     children: [
@@ -69,7 +72,8 @@ export const router = createBrowserRouter([
       { path: 'orders', element: <OrdersPage /> },
       { path: 'branches', element: <BranchesPage /> },
       { path: 'court-status', element: <OrdersPage /> },
-      { path: 'courts', element: <OrdersPage /> },
+      { path: 'courts', element: <CourtsPage /> },
+      { path: 'court-types', element: <CourtTypesPage /> },
       { path: 'pricing', element: <OrdersPage /> },
       { path: 'service-categories', element: <ServiceCategoriesPage /> },
       { path: 'products', element: <OrdersPage /> },

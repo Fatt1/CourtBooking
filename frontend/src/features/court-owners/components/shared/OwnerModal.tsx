@@ -60,7 +60,7 @@ export function OwnerModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          'w-[95vw] max-h-[92vh] overflow-y-auto no-scrollbar rounded-2xl border border-border/70 bg-[#0B1324] p-6 text-foreground shadow-2xl backdrop-blur-md sm:p-7 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
+          'w-[95vw] max-h-[92vh] overflow-y-auto no-scrollbar rounded-2xl border border-border/70 bg-card p-6 text-card-foreground shadow-2xl backdrop-blur-md sm:p-7 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
           maxWidth,
           className
         )}
@@ -73,7 +73,7 @@ export function OwnerModal({
               </div>
             )}
             <div>
-              <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+              <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
                 {title}
               </DialogTitle>
               {description && (
@@ -95,7 +95,7 @@ export function OwnerModal({
               type="button"
               onClick={handleCancel}
               disabled={isSubmitting}
-              className="h-11 rounded-xl border border-border/60 bg-[#131d31] px-6 text-sm font-bold text-white hover:bg-[#1a2742] transition-colors cursor-pointer disabled:opacity-50"
+              className="h-11 rounded-xl border border-border/60 bg-muted/40 px-6 text-sm font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer disabled:opacity-50"
             >
               {cancelText}
             </button>

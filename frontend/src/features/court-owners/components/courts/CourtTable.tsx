@@ -1,0 +1,105 @@
+import { Pencil, Trash2 } from 'lucide-react';
+import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
+import { Switch } from '@/components/ui/switch';
+import { CourtStatus, type CourtDto } from '@/api/courts';
+interface CourtTableProps {
+  data: CourtDto[];
+  isLoading: boolean;
+  onEdit: (item: CourtDto) => void;
+  onDelete: (item: CourtDto) => void;
+  onToggleStatus: (item: CourtDto, newStatus: CourtStatus) => void;
+  isStatusPending?: boolean;
+}
+
+export function CourtTable({
+  data,
+  isLoading,
+  onEdit,
+  onDelete,
+  onToggleStatus,
+  isStatusPending = false,
+}: CourtTableProps) {
+  const columns: ColumnDef<CourtDto>[] = [
+    {
+      header: 'TÊN / SỐ HIỆU SÂN',
+      headerClassName: 'text-xs font-semibold text-muted-foreground min-w-[200px]',
+      cell: (item) => (
+        <div className="font-bold text-foreground text-sm">
+          {item.name}
+        </div>
+      ),
+    },
+    {
+      header: 'LOẠI SÂN',
+      headerClassName: 'text-xs font-semibold text-muted-foreground min-w-[160px]',
+      cell: (item) => (
+        <span className="text-sm text-foreground/90 font-medium">
+          {item.courtTypeName || 'Thảm PVC'}
+        </span>
+      ),
+    },
+    {
+      header: 'TRẠNG THÁI (BẢO TRÌ)',
+      headerClassName: 'text-xs font-semibold text-muted-foreground min-w-[180px]',
+      cell: (item) => {
+        const isAvailable = item.status === CourtStatus.Available;
+
+        return (
+          <div className="flex items-center gap-3">
+            <Switch
+              checked={isAvailable}
+              disabled={isStatusPending}
+              onCheckedChange={(checked) => {
+                const targetStatus = checked ? CourtStatus.Available : CourtStatus.Maintenance;
+                onToggleStatus(item, targetStatus);
+              }}
+              aria-label={`Trạng thái ${item.name}`}
+            />
+            <span
+              className={`text-xs font-semibold transition-colors ${
+                isAvailable ? 'text-[#a3e635]' : 'text-muted-foreground'
+              }`}
+            >
+              {isAvailable ? 'Hoạt động' : 'Bảo trì'}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      header: 'THAO TÁC',
+      headerClassName: 'text-xs font-semibold text-muted-foreground text-right w-[110px] pr-4',
+      className: 'text-right pr-4',
+      cell: (item) => (
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => onEdit(item)}
+            className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-card/60 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            title="Chỉnh sửa sân"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(item)}
+            className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-card/60 hover:bg-destructive/20 hover:text-destructive text-muted-foreground transition-colors cursor-pointer"
+            title="Xóa sân"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <CommonTable
+      columns={columns}
+      data={data}
+      isLoading={isLoading}
+      emptyTitle="Chưa có sân nào"
+      emptyDescription="Chi nhánh hiện tại chưa có sân nào được thêm. Hãy bấm '+ Thêm sân mới' để bắt đầu thiết lập."
+    />
+  );
+}

@@ -1,5 +1,5 @@
-import provinceData from '@/province.json';
-import wardData from '@/ward.json';
+import provinceData from '@/data/province.json';
+import wardData from '@/data/ward.json';
 
 export interface ProvinceItem {
   code: string;
