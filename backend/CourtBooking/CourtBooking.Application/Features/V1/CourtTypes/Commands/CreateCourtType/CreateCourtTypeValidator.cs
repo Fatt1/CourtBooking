@@ -18,6 +18,8 @@ public sealed class CreateCourtTypeValidator : AbstractValidator<CreateCourtType
 
         RuleFor(x => x.MinutesConfig)
             .GreaterThan(0)
-            .WithMessage("Thời lượng mỗi lượt đặt (phút) phải lớn hơn 0.");
+            .WithMessage("Thời lượng mỗi lượt đặt (phút) phải lớn hơn 0.")
+            .Must(m => m % 30 == 0)
+            .WithMessage("Thời lượng mỗi lượt đặt phải là bội số của 30 phút (30, 60, 90, 120, 150,...).");
     }
 }
