@@ -9,6 +9,7 @@ using CourtBooking.Application.Features.V1.Branches.Queries.GetOwnerBranchById;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetOwnerBranches;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetPublicBranchById;
 using CourtBooking.Application.Features.V1.Branches.Queries.SearchPublicBranches;
+using CourtBooking.Application.Features.V1.Branches.Queries.GetOneTimeBooking;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,23 @@ public sealed class BranchEndpoints : IEndpointGroup
 
         MapToPublic(publicGroup);
 
+        // Alias hỗ trợ route số ít /api/v1/branch/get-one-time-booking
+        var singularBranchGroup = app.MapApiV1Group("branch").WithTags(BranchTag);
+        singularBranchGroup.MapGet("/get-one-time-booking", async (
+            [FromQuery] Guid branchId,
+            [FromQuery] DateOnly date,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetOneTimeBookingQuery(branchId, date);
+            var result = await sender.Send(query, ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+        .WithName("GetOneTimeBookingScheduleSingular")
+        .WithSummary("Lấy lịch đặt sân theo ngày để hiển thị timeline (alias số ít)")
+        .Produces<OneTimeBookingScheduleDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
 
@@ -99,10 +117,44 @@ public sealed class BranchEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
+        // 3. Lấy lịch đặt sân theo ngày cho chi nhánh (phục vụ timeline đặt sân)
+        group.MapGet("/get-one-time-booking", async (
+            [FromQuery] Guid branchId,
+            [FromQuery] DateOnly date,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetOneTimeBookingQuery(branchId, date);
+            var result = await sender.Send(query, ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+        .WithName("GetOneTimeBookingSchedule")
+        .WithSummary("Lấy lịch đặt sân theo ngày để hiển thị timeline")
+        .WithDescription("Trả về danh sách các sân của chi nhánh và các slot đã đặt/khóa/sự kiện trong ngày được chọn.")
+        .Produces<OneTimeBookingScheduleDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
     }
 
     public void MapToOwner(RouteGroupBuilder group)
     {
+        group.MapGet("/get-one-time-booking", async (
+            [FromQuery] Guid branchId,
+            [FromQuery] DateOnly date,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetOneTimeBookingQuery(branchId, date);
+            var result = await sender.Send(query, ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+        .WithName("GetOwnerOneTimeBookingSchedule")
+        .WithSummary("Chủ sân lấy lịch đặt sân theo ngày để hiển thị timeline")
+        .Produces<OneTimeBookingScheduleDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         group.MapGet("/", async (ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new GetOwnerBranchesQuery(), ct);

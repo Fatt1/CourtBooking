@@ -14,5 +14,8 @@ public sealed class AddPaymentTransactionValidator : AbstractValidator<AddPaymen
 
         RuleFor(x => x.Method)
             .IsInEnum().WithMessage("Phương thức thanh toán không hợp lệ (1 = Tiền mặt, 2 = Chuyển khoản QR).");
+
+        RuleFor(x => x.Type)
+            .IsInEnum().WithMessage("Loại giao dịch không hợp lệ (1 = Thanh toán, 2 = Hoàn tiền).");
     }
 }

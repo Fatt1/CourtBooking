@@ -151,6 +151,15 @@ public class Order : EntityBase<Guid>, IAuditable
         Status = OrderStatus.Confirmed;
     }
 
+    public void CompleteOrder()
+    {
+        if (Status != OrderStatus.Confirmed)
+        {
+            throw new DomainException("Chỉ đơn hàng đã được xác nhận mới có thể hoàn thành.");
+        }
+        Status = OrderStatus.Completed;
+    }
+
     public void CancelOrder(string cancelReason)
     {
         Status = OrderStatus.Cancelled;
@@ -166,7 +175,7 @@ public class Order : EntityBase<Guid>, IAuditable
             .Where(t => t.Type == PaymentTransactionType.Refund)
             .Sum(t => t.Amount);
 
-        return Math.Max(0, TotalAmount - (totalPaid - totalRefunded));
+        return TotalAmount - (totalPaid - totalRefunded);
     }
 
     public void ClearOrderDetails()

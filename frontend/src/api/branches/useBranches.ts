@@ -11,6 +11,7 @@ import type {
   PublicBranchListItemDto,
   PagedList,
   SearchBranchesParams,
+  OneTimeBookingScheduleDto,
 } from './types';
 
 // ==========================================
@@ -176,3 +177,28 @@ export function usePublicBranchesQuery(params: SearchBranchesParams = { page: 1,
     staleTime: 1000 * 60 * 5, // 5 phút cache
   });
 }
+
+/**
+ * Lấy lịch đặt sân theo ngày cho chi nhánh (phục vụ timeline đặt sân)
+ * GET /api/v1/branches/get-one-time-booking?branchId={branchId}&date={date}
+ */
+export async function getOneTimeBooking(
+  branchId: string,
+  date: string
+): Promise<OneTimeBookingScheduleDto> {
+  const response = await apiClient.get<OneTimeBookingScheduleDto>(
+    API_ENDPOINTS.BRANCHES.GET_ONE_TIME_BOOKING,
+    { params: { branchId, date } }
+  );
+  return response as unknown as OneTimeBookingScheduleDto;
+}
+
+export function useOneTimeBookingQuery(branchId?: string, date?: string) {
+  return useQuery<OneTimeBookingScheduleDto>({
+    queryKey: ['branches', 'one-time-booking', branchId, date],
+    queryFn: () => getOneTimeBooking(branchId!, date!),
+    enabled: Boolean(branchId && date),
+    staleTime: 1000 * 30, // 30s cache
+  });
+}
+

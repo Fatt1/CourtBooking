@@ -134,3 +134,43 @@ export interface SearchBranchesParams {
   page?: number;
   pageSize?: number;
 }
+
+/**
+ * Trạng thái slot trên timeline đặt sân
+ */
+export enum TimelineSlotStatus {
+  Available = 0,
+  Booked = 1,
+  Locked = 2,
+  Event = 3,
+}
+
+export interface OccupiedSlotDto {
+  courtId: string;
+  courtName: string;
+  startTime: string;
+  endTime: string;
+  status: TimelineSlotStatus;
+  orderCode?: string | null;
+  customerName?: string | null;
+  title?: string | null;
+}
+
+export interface CourtTimelineItemDto {
+  courtId: string;
+  courtTypeId: string;
+  courtTypeName: string;
+  courtName: string;
+  isMaintenance: boolean;
+}
+
+export interface OneTimeBookingScheduleDto {
+  branchId: string;
+  branchName: string;
+  date: string;
+  openTime: string;
+  closeTime: string;
+  courts: CourtTimelineItemDto[];
+  occupiedSlots: OccupiedSlotDto[];
+}
+

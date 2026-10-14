@@ -34,21 +34,48 @@ public sealed class AddPaymentTransactionCommandHandler(
         }
 
         // 3. Kiểm tra trạng thái đơn hàng
-        if (order.Status == OrderStatus.Cancelled)
+        if (order.Status == OrderStatus.Cancelled && request.Type == PaymentTransactionType.Payment)
         {
             return Result.Failure<Guid>(new BadError("Không thể thu tiền cho đơn hàng đã bị hủy."));
         }
 
-        // 4. Kiểm tra số tiền còn lại cần thu
-        var remaining = order.CalculateRemainingAmount();
-        if (remaining <= 0)
-        {
-            return Result.Failure<Guid>(new BadError("Đơn hàng đã được thanh toán đầy đủ, không còn số tiền cần thu."));
-        }
+        // 4. Kiểm tra số tiền theo loại giao dịch (Payment hoặc Refund)
+        var totalPaid = order.PaymentTransactions
+            .Where(t => t.Type == PaymentTransactionType.Payment)
+            .Sum(t => t.Amount);
+        var totalRefunded = order.PaymentTransactions
+            .Where(t => t.Type == PaymentTransactionType.Refund)
+            .Sum(t => t.Amount);
+        var netPaid = totalPaid - totalRefunded;
 
-        if (request.Amount > remaining)
+        if (request.Type == PaymentTransactionType.Payment)
         {
-            return Result.Failure<Guid>(new BadError($"Số tiền thu ({request.Amount:N0} đ) vượt quá số tiền còn lại cần thanh toán ({remaining:N0} đ)."));
+            var remaining = Math.Max(0, order.TotalAmount - netPaid);
+            if (remaining <= 0)
+            {
+                return Result.Failure<Guid>(new BadError("Đơn hàng đã được thanh toán đầy đủ, không còn số tiền cần thu."));
+            }
+
+            if (request.Amount > remaining)
+            {
+                return Result.Failure<Guid>(new BadError($"Số tiền thu ({request.Amount:N0} đ) vượt quá số tiền còn lại cần thanh toán ({remaining:N0} đ)."));
+            }
+        }
+        else if (request.Type == PaymentTransactionType.Refund)
+        {
+            if (netPaid <= 0)
+            {
+                return Result.Failure<Guid>(new BadError("Đơn hàng chưa có khoản thanh toán nào để hoàn tiền."));
+            }
+
+            if (request.Amount > netPaid)
+            {
+                return Result.Failure<Guid>(new BadError($"Số tiền hoàn ({request.Amount:N0} đ) vượt quá số tiền khách đã thanh toán ({netPaid:N0} đ)."));
+            }
+        }
+        else
+        {
+            return Result.Failure<Guid>(new BadError("Loại giao dịch không hợp lệ."));
         }
 
         // 5. Thêm giao dịch thanh toán
@@ -56,10 +83,11 @@ public sealed class AddPaymentTransactionCommandHandler(
             request.Amount,
             request.Method,
             request.ProofImageId,
-            PaymentTransactionType.Payment);
+            request.Type);
 
-        // Nếu đơn hàng đang ở trạng thái chờ thanh toán hoặc chờ duyệt, tự động duyệt đơn
-        if (order.Status == OrderStatus.AwaitingPayment || order.Status == OrderStatus.PendingConfirmation)
+        // Nếu là giao dịch thanh toán và đơn hàng đang ở trạng thái chờ thanh toán hoặc chờ duyệt, tự động duyệt đơn
+        if (request.Type == PaymentTransactionType.Payment &&
+            (order.Status == OrderStatus.AwaitingPayment || order.Status == OrderStatus.PendingConfirmation))
         {
             order.ConfirmOrder();
         }

@@ -178,13 +178,12 @@ internal sealed class GetSystemUtilizationStatisticsQueryHandler(IApplicationDbC
             totalCapacityHours += dailyHours * daysCount;
         }
 
-        // b. Tính tổng số giờ đã được đặt từ các OrderDetail hợp lệ (Confirmed, CheckedIn, Completed)
+        // b. Tính tổng số giờ đã được đặt từ các OrderDetail hợp lệ (Confirmed, Completed)
         var orderDetailsQuery = dbContext.OrderDetails
             .AsNoTracking()
             .Where(d => d.Date >= fromDate
                      && d.Date <= toDate
                      && (d.Order.Status == OrderStatus.Confirmed
-                         || d.Order.Status == OrderStatus.CheckedIn
                          || d.Order.Status == OrderStatus.Completed));
 
         if (request.BranchId.HasValue)

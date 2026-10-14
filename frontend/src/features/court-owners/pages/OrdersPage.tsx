@@ -3,14 +3,13 @@ import {
   FileDown,
   Plus,
   Calendar as CalendarIcon,
-  Eye,
-  CheckCircle2,
-  XCircle,
-  Phone,
-  User,
-  Clock,
-  CircleDollarSign,
+  ChevronDown,
+  Store,
+  CalendarDays,
+  Sparkles,
+  X,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -20,6 +19,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import type { DateRange } from 'react-day-picker';
+import { format, subDays, startOfMonth } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { useDebounce } from '@/hooks/useDebounce';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -27,453 +36,466 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
 import {
   OwnerPageHeader,
   OwnerFilterBar,
-  OwnerStatusBadge,
   OwnerPagination,
-} from '@/features/court-owners/components';
-
-interface CourtInfo {
-  name: string;
-  sportType: string;
-}
-
-interface OrderItem {
-  id: string;
-  orderCode: string;
-  customerName: string;
-  customerPhone: string;
-  courts: CourtInfo[];
-  timeSlot: string;
-  dateLabel: string;
-  totalAmount: number;
-  paymentStatus: 'PAID' | 'UNPAID';
-  status: string; // 'Đang sử dụng' | 'Chờ duyệt hủy' | 'Hoàn thành'
-  type: 'daily' | 'recurring';
-  note?: string;
-}
-
-// 3 đơn mẫu khớp 100% với Figma screenshot + dữ liệu mẫu bổ sung
-const initialOrders: OrderItem[] = [
-  {
-    id: '1',
-    orderCode: '#MD-0923',
-    customerName: 'Nguyễn Văn A',
-    customerPhone: '0901234567',
-    courts: [{ name: 'Sân 1', sportType: 'Cầu lông' }],
-    timeSlot: '14:00 - 15:30',
-    dateLabel: 'Hôm nay',
-    totalAmount: 150000,
-    paymentStatus: 'PAID',
-    status: 'Đang sử dụng',
-    type: 'daily',
-    note: 'Khách đến đúng giờ, lấy thêm 2 chai nước suối',
-  },
-  {
-    id: '2',
-    orderCode: '#MD-0924',
-    customerName: 'Trần Thị B',
-    customerPhone: '0987654321',
-    courts: [
-      { name: 'Sân 2', sportType: 'Cầu lông' },
-      { name: 'Sân 3', sportType: 'Cầu lông' },
-    ],
-    timeSlot: '16:00 - 18:00',
-    dateLabel: 'Hôm nay',
-    totalAmount: 200000,
-    paymentStatus: 'UNPAID',
-    status: 'Chờ duyệt hủy',
-    type: 'daily',
-    note: 'Khách báo bận đột xuất, xin hủy lịch và hoàn cọc',
-  },
-  {
-    id: '3',
-    orderCode: '#MD-0925',
-    customerName: 'Lê Văn C',
-    customerPhone: '0911222333',
-    courts: [{ name: 'Sân VIP 1', sportType: 'Pickleball' }],
-    timeSlot: '08:00 - 10:00',
-    dateLabel: 'Hôm nay',
-    totalAmount: 240000,
-    paymentStatus: 'PAID',
-    status: 'Hoàn thành',
-    type: 'daily',
-    note: 'Đã hoàn tất thanh toán qua VietQR chuyển khoản',
-  },
-];
+} from '@/features/court-owners/components/shared';
+import {
+  DailyOrderTable,
+  DailyOrderDetailModal,
+  CancelOrderModal,
+  CreateDailyOrderModal,
+} from '@/features/court-owners/components/orders';
+import { useBranchStore } from '@/stores/useBranchStore';
+import {
+  useDailyOrdersQuery,
+  type DailyOrderDto,
+  OrderStatus,
+} from '@/api/orders';
 
 export function OrdersPage() {
-  const [activeTab, setActiveTab] = useState<'daily' | 'recurring'>('daily');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  // 1. Lấy chi nhánh được chọn từ Zustand Store (quản lý bởi Header)
+  const { selectedBranchId, selectedBranch } = useBranchStore();
 
-  // Tabs theo Figma
+  // 2. States quản lý bộ lọc & phân trang
+  const [activeTab, setActiveTab] = useState<'daily' | 'recurring' | 'event'>('daily');
+  const [searchQuery, setSearchQuery] = useState('');
+  // Áp dụng useDebounce cho tìm kiếm (trì hoãn 400ms để tránh spam API liên tục khi gõ)
+  const debouncedSearch = useDebounce(searchQuery, 400);
+
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  // Lọc theo khoảng ngày (từ ngày mấy tới ngày mấy)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  // Nhãn hiển thị cho nút bộ lọc ngày
+  const dateRangeLabel = useMemo(() => {
+    if (!dateRange?.from) return 'Tất cả ngày';
+    const fromStr = format(dateRange.from, 'dd/MM/yyyy');
+    if (!dateRange.to || dateRange.from.getTime() === dateRange.to.getTime()) {
+      return fromStr;
+    }
+    const toStr = format(dateRange.to, 'dd/MM/yyyy');
+    return `${fromStr} - ${toStr}`;
+  }, [dateRange]);
+
+  // 3. States quản lý Modals
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<DailyOrderDto | null>(null);
+  const [isQuickBookOpen, setIsQuickBookOpen] = useState(false);
+
+  // 4. Tabs theo chuẩn Figma
   const filterTabs = [
     { id: 'daily', label: 'Đơn ngày' },
     { id: 'recurring', label: 'Đơn cố định (Chu kỳ)' },
+    { id: 'event', label: 'Sự kiện' },
   ];
 
-  // Lọc dữ liệu theo tab, search và trạng thái
-  const filteredData = useMemo(() => {
-    return initialOrders.filter((item) => {
-      // Lọc theo tab
-      if (item.type !== activeTab) return false;
+  // 5. Query lấy danh sách đơn ngày từ API backend (kèm debounce search & date range)
+  const queryParams = useMemo(() => {
+    const params: Record<string, any> = {
+      branchId: selectedBranchId || undefined,
+      page: currentPage,
+      pageSize: pageSize,
+    };
 
-      // Lọc theo từ khóa tìm kiếm (Mã đơn, Tên, SĐT)
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const matchesCode = item.orderCode.toLowerCase().includes(query);
-        const matchesName = item.customerName.toLowerCase().includes(query);
-        const matchesPhone = item.customerPhone.includes(query);
-        if (!matchesCode && !matchesName && !matchesPhone) return false;
-      }
+    if (debouncedSearch.trim()) {
+      params.search = debouncedSearch.trim();
+    }
 
-      // Lọc theo trạng thái
-      if (statusFilter !== 'ALL' && item.status !== statusFilter) {
-        return false;
-      }
+    if (statusFilter !== 'ALL') {
+      params.status = Number(statusFilter);
+    }
 
-      return true;
-    });
-  }, [activeTab, searchQuery, statusFilter]);
+    if (dateRange?.from) {
+      params.fromDate = format(dateRange.from, 'yyyy-MM-dd');
+      params.toDate = dateRange.to
+        ? format(dateRange.to, 'yyyy-MM-dd')
+        : format(dateRange.from, 'yyyy-MM-dd');
+    }
 
-  // Cấu hình Cột bảng (Columns) chuẩn hóa
-  const columns: ColumnDef<OrderItem>[] = [
-    {
-      header: 'MÃ ĐƠN',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground w-[120px]',
-      cell: (item) => (
-        <span className="font-bold tracking-tight text-foreground text-sm">
-          {item.orderCode}
-        </span>
-      ),
-    },
-    {
-      header: 'KHÁCH HÀNG',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[180px]',
-      cell: (item) => (
-        <div className="space-y-0.5">
-          <div className="font-medium text-foreground text-sm">{item.customerName}</div>
-          <div className="text-xs text-muted-foreground">{item.customerPhone}</div>
-        </div>
-      ),
-    },
-    {
-      header: 'SÂN',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[180px]',
-      cell: (item) => (
-        <div className="space-y-1">
-          {item.courts.map((c, i) => (
-            <div key={i} className="text-sm">
-              <span className="font-medium text-foreground">{c.name}</span>{' '}
-              <span className="text-xs text-muted-foreground">({c.sportType})</span>
-            </div>
-          ))}
-        </div>
-      ),
-    },
-    {
-      header: 'THỜI GIAN',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[150px]',
-      cell: (item) => (
-        <div className="space-y-0.5">
-          <div className="text-sm font-medium text-foreground">{item.timeSlot}</div>
-          <div className="text-xs text-muted-foreground">{item.dateLabel}</div>
-        </div>
-      ),
-    },
-    {
-      header: 'TỔNG TIỀN',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[140px]',
-      cell: (item) => (
-        <div className="space-y-0.5">
-          <div className="text-sm font-bold text-foreground">
-            {item.totalAmount.toLocaleString('vi-VN')}đ
-          </div>
-          <div
-            className={`text-xs font-medium ${
-              item.paymentStatus === 'PAID' ? 'text-emerald-400' : 'text-rose-400'
-            }`}
-          >
-            {item.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: 'TRẠNG THÁI',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground w-[150px]',
-      cell: (item) => <OwnerStatusBadge status={item.status} />,
-    },
-    {
-      header: 'THAO TÁC',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground text-right w-[110px]',
-      className: 'text-right',
-      cell: (item) => {
-        const isCancelPending = item.status === 'Chờ duyệt hủy';
-        return (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedOrder(item);
-              setIsDetailOpen(true);
-            }}
-            className={`h-8 px-3 rounded-lg text-xs font-semibold border-border/60 bg-card/60 hover:bg-accent ${
-              isCancelPending
-                ? 'text-rose-400 hover:text-rose-300 border-rose-500/30'
-                : 'text-foreground'
-            }`}
-          >
-            {isCancelPending ? 'Duyệt hủy' : 'Chi tiết'}
-          </Button>
-        );
-      },
-    },
-  ];
+    return params;
+  }, [selectedBranchId, currentPage, pageSize, debouncedSearch, statusFilter, dateRange]);
+
+  const { data: pagedData, isLoading, refetch } = useDailyOrdersQuery(queryParams);
+
+  // Dữ liệu đơn ngày hiển thị
+  const dailyOrders = pagedData?.items || [];
+  const totalCount = pagedData?.totalCount || dailyOrders.length;
+
+  // Xử lý xem chi tiết
+  const handleViewDetail = (order: DailyOrderDto) => {
+    setSelectedOrderId(order.id);
+    setIsDetailOpen(true);
+  };
+
+  // Xử lý duyệt hủy đơn từ bảng
+  const handleApproveCancel = (order: DailyOrderDto) => {
+    setOrderToCancel(order);
+    setIsCancelModalOpen(true);
+  };
 
   return (
     <div className="space-y-6">
-      {/* 1. Header chuẩn: Category + Tiêu đề H1 + Cụm Action Buttons */}
+      {/* =================================================================== */}
+      {/* KHỐI 1: HEADER TRANG CHUẨN FIGMA (Quản lý hoạt động / Danh sách lịch đặt) */}
+      {/* =================================================================== */}
       <OwnerPageHeader
         category="Quản lý hoạt động"
         title="Danh sách lịch đặt"
         actions={
-          <>
+          <div className="flex items-center gap-2.5">
+            {/* Nút Xuất báo cáo */}
             <Button
               variant="outline"
-              className="gap-2 border-border/60 bg-card/60 hover:bg-accent text-foreground text-xs md:text-sm font-semibold h-9.5 rounded-xl"
-              onClick={() => alert('Đang tạo báo cáo danh sách lịch đặt...')}
+              className="gap-2 border-border/60 bg-card/60 hover:bg-accent text-foreground text-xs md:text-sm font-semibold h-9.5 rounded-xl cursor-pointer"
+              onClick={() => toast.info('Đang tạo báo cáo danh sách lịch đặt...')}
             >
               <FileDown className="size-4" />
               <span>Xuất báo cáo</span>
             </Button>
 
+            {/* Nút Đặt sân hộ với mũi tên Dropdown ▼ (Màu xanh Neon đặc trưng #a3e635) */}
             <Button
-              className="gap-1.5 bg-[#a3e635] text-black hover:bg-[#8ece28] font-bold text-xs md:text-sm h-9.5 rounded-xl shadow-xs transition-colors"
-              onClick={() => setIsCreateOpen(true)}
+              className="gap-1.5 bg-[#a3e635] text-black hover:bg-[#8ece28] font-bold text-xs md:text-sm h-9.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+              onClick={() => setIsQuickBookOpen(true)}
             >
               <Plus className="size-4 stroke-[2.5]" />
               <span>Đặt sân hộ</span>
+              <ChevronDown className="size-3.5 stroke-[2.5] ml-0.5" />
             </Button>
-          </>
+          </div>
         }
       />
 
-      {/* 2. Thanh Lọc Chuẩn: Tabs + Search + Date + Status Dropdown */}
+      {/* Thông tin chi nhánh đang được chọn (nếu có) */}
+      {selectedBranch && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+          <Store className="size-3.5 text-[#a3e635]" />
+          <span>Đang xem lịch đặt tại: </span>
+          <span className="font-semibold text-foreground">{selectedBranch.name}</span>
+          {selectedBranch.district && (
+            <span className="text-muted-foreground">• {selectedBranch.district}</span>
+          )}
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* KHỐI 2: THANH LỌC CHUẨN FIGMA (Tabs + Search + Ngày + Status Dropdown) */}
+      {/* =================================================================== */}
       <OwnerFilterBar
         tabs={filterTabs}
         activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as 'daily' | 'recurring')}
+        onTabChange={(id) => {
+          setActiveTab(id as 'daily' | 'recurring' | 'event');
+          setCurrentPage(1);
+        }}
         searchPlaceholder="Mã đơn, Tên, SĐT..."
         searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={(val) => {
+          setSearchQuery(val);
+          setCurrentPage(1);
+        }}
       >
-        {/* Bộ chọn ngày */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 h-9.5 border-border/60 bg-card/60 hover:bg-accent text-xs font-medium rounded-xl"
-        >
-          <CalendarIcon className="size-3.5 text-muted-foreground" />
-          <span>Hôm nay</span>
-        </Button>
+        {/* Bộ chọn khoảng ngày: Popover Date Range Picker */}
+        <div className="flex items-center gap-1.5">
+          <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`gap-1.5 h-9.5 border-border/60 bg-card/60 hover:bg-accent text-xs font-medium rounded-xl cursor-pointer ${
+                  dateRange?.from
+                    ? 'border-[#a3e635]/60 text-[#a3e635] bg-[#a3e635]/10'
+                    : 'text-foreground'
+                }`}
+              >
+                <CalendarIcon
+                  className={`size-3.5 ${
+                    dateRange?.from ? 'text-[#a3e635]' : 'text-muted-foreground'
+                  }`}
+                />
+                <span>{dateRangeLabel}</span>
+              </Button>
+            </PopoverTrigger>
+
+            <PopoverContent
+              className="w-auto p-0 bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl z-50 overflow-hidden"
+              align="start"
+            >
+              {/* Header Popover */}
+              <div className="px-4 py-2.5 border-b border-border/50 bg-[#0f172a] flex items-center justify-between">
+                <div>
+                  <div className="text-[11px] font-bold text-[#a3e635] tracking-wider uppercase">
+                    Lọc theo khoảng ngày đặt
+                  </div>
+                  <div className="text-xs text-slate-300 font-mono mt-0.5">
+                    {dateRangeLabel}
+                  </div>
+                </div>
+                {dateRange?.from && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDateRange(undefined);
+                      setCurrentPage(1);
+                    }}
+                    className="h-7 px-2 text-xs text-slate-400 hover:text-rose-400 cursor-pointer"
+                  >
+                    <X className="size-3.5 mr-1" />
+                    Xóa lọc
+                  </Button>
+                )}
+              </div>
+
+              {/* Quick Presets */}
+              <div className="p-2 border-b border-border/40 bg-[#070D1A]/60 flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    setDateRange({ from: today, to: today });
+                    setCurrentPage(1);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                >
+                  Hôm nay
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const yesterday = subDays(new Date(), 1);
+                    setDateRange({ from: yesterday, to: yesterday });
+                    setCurrentPage(1);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                >
+                  Hôm qua
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    setDateRange({ from: subDays(today, 6), to: today });
+                    setCurrentPage(1);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                >
+                  7 ngày qua
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    setDateRange({ from: startOfMonth(today), to: today });
+                    setCurrentPage(1);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                >
+                  Tháng này
+                </button>
+              </div>
+
+              {/* Calendar Mode Range */}
+              <div className="p-2 flex justify-center">
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={(range) => {
+                    setDateRange(range);
+                    setCurrentPage(1);
+                  }}
+                  locale={vi}
+                  className="bg-transparent"
+                />
+              </div>
+
+              {/* Footer */}
+              <div className="p-2.5 border-t border-border/50 bg-[#0f172a] flex items-center justify-between">
+                <span className="text-[11px] text-slate-400">
+                  Chọn ngày bắt đầu & kết thúc
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => setIsDatePickerOpen(false)}
+                  className="h-7.5 px-3 rounded-lg bg-[#a3e635] text-black hover:bg-[#8ece28] text-xs font-bold cursor-pointer"
+                >
+                  Đóng
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Nút X nhanh bên cạnh nút ngày nếu đang có filter */}
+          {dateRange?.from && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setDateRange(undefined);
+                setCurrentPage(1);
+              }}
+              className="size-8 rounded-xl text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+              title="Xóa bộ lọc ngày"
+            >
+              <X className="size-3.5" />
+            </Button>
+          )}
+        </div>
 
         {/* Dropdown Lọc Trạng Thái */}
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px] h-9.5 rounded-xl border-border/60 bg-card/60 text-xs font-medium">
+        <Select
+          value={statusFilter}
+          onValueChange={(val) => {
+            setStatusFilter(val);
+            setCurrentPage(1);
+          }}
+        >
+          <SelectTrigger className="w-[165px] h-9.5 rounded-xl border-border/60 bg-card/60 text-xs font-medium">
             <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border/60">
             <SelectItem value="ALL" className="text-xs">
               Tất cả trạng thái
             </SelectItem>
-            <SelectItem value="Đang sử dụng" className="text-xs">
-              Đang sử dụng
+            <SelectItem value={String(OrderStatus.Confirmed)} className="text-xs">
+              Đã xác nhận
             </SelectItem>
-            <SelectItem value="Chờ duyệt hủy" className="text-xs">
+            <SelectItem value={String(OrderStatus.PendingConfirmation)} className="text-xs">
+              Chờ xác nhận
+            </SelectItem>
+            <SelectItem value={String(OrderStatus.RequestCancellation)} className="text-xs">
               Chờ duyệt hủy
             </SelectItem>
-            <SelectItem value="Hoàn thành" className="text-xs">
+            <SelectItem value={String(OrderStatus.Completed)} className="text-xs">
               Hoàn thành
+            </SelectItem>
+            <SelectItem value={String(OrderStatus.AwaitingPayment)} className="text-xs">
+              Chờ thanh toán
+            </SelectItem>
+            <SelectItem value={String(OrderStatus.Cancelled)} className="text-xs">
+              Đã hủy
             </SelectItem>
           </SelectContent>
         </Select>
       </OwnerFilterBar>
 
-      {/* 3. Bảng Dữ Liệu Dùng Chung (CommonTable) */}
-      <CommonTable
-        columns={columns}
-        data={filteredData}
-        emptyTitle="Không có đơn đặt sân nào"
-        emptyDescription="Thử thay đổi bộ lọc tìm kiếm hoặc chuyển sang tab khác."
-        onRowClick={(order) => {
-          setSelectedOrder(order);
-          setIsDetailOpen(true);
-        }}
-      />
+      {/* =================================================================== */}
+      {/* KHỐI 3: NỘI DUNG THEO TAB */}
+      {/* =================================================================== */}
+      {activeTab === 'daily' && (
+        <div className="space-y-4">
+          {/* Bảng đơn ngày với các cột đã được tinh chỉnh theo yêu cầu */}
+          <DailyOrderTable
+            data={dailyOrders}
+            isLoading={isLoading}
+            onViewDetail={handleViewDetail}
+            onApproveCancel={handleApproveCancel}
+          />
 
-      {/* 4. Thanh Phân Trang Chuẩn theo Figma */}
-      <OwnerPagination
-        currentPage={currentPage}
-        pageSize={10}
-        totalItems={24}
-        onPageChange={setCurrentPage}
-      />
+          {/* Thanh phân trang chuẩn */}
+          <OwnerPagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            pageSizeOptions={[25, 50, 100]}
+            totalItems={totalCount}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      )}
 
-      {/* MODAL 1: Chi tiết đơn đặt sân */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-md bg-card border-border/60">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between pr-4">
-              <span>Chi tiết đơn đặt #{selectedOrder?.orderCode}</span>
-              {selectedOrder && <OwnerStatusBadge status={selectedOrder.status} />}
-            </DialogTitle>
-            <DialogDescription>
-              Thông tin chi tiết người đặt và trạng thái giữ sân thời gian thực.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedOrder && (
-            <div className="space-y-4 py-2 text-sm">
-              <div className="rounded-xl border border-border/60 bg-muted/30 p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                    <User className="size-3.5" /> Khách hàng
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {selectedOrder.customerName}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                    <Phone className="size-3.5" /> Số điện thoại
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {selectedOrder.customerPhone}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                    <Clock className="size-3.5" /> Khung giờ
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {selectedOrder.timeSlot} ({selectedOrder.dateLabel})
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                    <CircleDollarSign className="size-3.5" /> Tổng tiền
-                  </span>
-                  <span className="font-bold text-[#a3e635]">
-                    {selectedOrder.totalAmount.toLocaleString('vi-VN')}đ
-                  </span>
-                </div>
-              </div>
-
-              {selectedOrder.note && (
-                <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-200">
-                  <span className="font-bold">Ghi chú:</span> {selectedOrder.note}
-                </div>
-              )}
-            </div>
-          )}
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            {selectedOrder?.status === 'Chờ duyệt hủy' ? (
-              <>
-                <Button
-                  variant="destructive"
-                  className="w-full sm:w-auto"
-                  onClick={() => {
-                    alert(`Đã xác nhận hủy đơn ${selectedOrder.orderCode}`);
-                    setIsDetailOpen(false);
-                  }}
-                >
-                  <XCircle className="size-4 mr-1.5" /> Duyệt hủy & hoàn tiền
-                </Button>
-                <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
-                  Đóng
-                </Button>
-              </>
-            ) : (
-              <Button
-                className="w-full sm:w-auto bg-[#a3e635] text-black hover:bg-[#8ece28] font-semibold"
-                onClick={() => setIsDetailOpen(false)}
-              >
-                <CheckCircle2 className="size-4 mr-1.5" /> Xác nhận đóng
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* MODAL 2: Đặt sân hộ cho khách vãng lai (Quick Book) */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-md bg-card border-border/60">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="size-5 text-[#a3e635]" /> Đặt sân hộ tại quầy
-            </DialogTitle>
-            <DialogDescription>
-              Tạo đơn đặt nhanh cho khách vãng lai gọi điện thoại hoặc đến trực tiếp sân.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 py-2 text-sm">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Tên khách hàng
-              </label>
-              <input
-                className="w-full h-9 rounded-lg border border-border/60 bg-muted/30 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#a3e635]"
-                placeholder="Ví dụ: Anh Tuấn"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Số điện thoại
-              </label>
-              <input
-                className="w-full h-9 rounded-lg border border-border/60 bg-muted/30 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#a3e635]"
-                placeholder="09..."
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Chọn sân
-              </label>
-              <select className="w-full h-9 rounded-lg border border-border/60 bg-card px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#a3e635]">
-                <option>Sân 1 (Cầu lông)</option>
-                <option>Sân 2 (Cầu lông)</option>
-                <option>Sân VIP 1 (Pickleball)</option>
-              </select>
-            </div>
+      {/* Tab Đơn cố định (Chu kỳ) - Placeholder theo ghi chú của user */}
+      {activeTab === 'recurring' && (
+        <div className="rounded-2xl border border-border/60 bg-card/40 p-12 text-center space-y-3">
+          <div className="size-12 rounded-2xl bg-lime-400/10 text-[#a3e635] flex items-center justify-center mx-auto">
+            <CalendarDays className="size-6" />
           </div>
+          <h3 className="text-base font-bold text-foreground">
+            Quản lý Đơn cố định (Chu kỳ)
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            Giao diện bảng đơn cố định (đặt theo tuần, tháng, chu kỳ nhiều buổi) được thiết kế
+            riêng biệt theo lộ trình kế tiếp của hệ thống.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveTab('daily')}
+            className="rounded-xl text-xs font-semibold mt-2"
+          >
+            Quay lại Đơn ngày
+          </Button>
+        </div>
+      )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-              Hủy
-            </Button>
-            <Button
-              className="bg-[#a3e635] text-black hover:bg-[#8ece28] font-bold"
-              onClick={() => {
-                alert('Tạo đơn đặt sân hộ thành công!');
-                setIsCreateOpen(false);
-              }}
-            >
-              Lưu & Xác nhận
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Tab Sự kiện - Placeholder theo ghi chú của user */}
+      {activeTab === 'event' && (
+        <div className="rounded-2xl border border-border/60 bg-card/40 p-12 text-center space-y-3">
+          <div className="size-12 rounded-2xl bg-amber-400/10 text-amber-400 flex items-center justify-center mx-auto">
+            <Sparkles className="size-6" />
+          </div>
+          <h3 className="text-base font-bold text-foreground">
+            Quản lý Đơn hàng Sự kiện & Giải đấu
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            Giao diện bán vé và phân luồng sự kiện thể thao sẽ được áp dụng bảng dữ liệu chuyên biệt.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveTab('daily')}
+            className="rounded-xl text-xs font-semibold mt-2"
+          >
+            Quay lại Đơn ngày
+          </Button>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* KHỐI 4: MODALS & POPUPS */}
+      {/* =================================================================== */}
+
+      {/* 1. Modal Xem chi tiết đặt lịch (Pop-up rộng rãi chuẩn Image 2) */}
+      <DailyOrderDetailModal
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        orderId={selectedOrderId}
+        onOrderUpdated={() => refetch()}
+      />
+
+      {/* 2. Modal Duyệt hủy đơn */}
+      {orderToCancel && (
+        <CancelOrderModal
+          open={isCancelModalOpen}
+          onOpenChange={setIsCancelModalOpen}
+          orderId={orderToCancel.id}
+          orderCode={orderToCancel.orderCode}
+          totalPaid={orderToCancel.totalAmount - orderToCancel.remainingAmount}
+          onSuccess={() => {
+            setOrderToCancel(null);
+            refetch();
+          }}
+        />
+      )}
+
+      {/* 3. Modal Đặt sân hộ tại quầy (CreateDailyOrderModal) */}
+      <CreateDailyOrderModal
+        open={isQuickBookOpen}
+        onOpenChange={setIsQuickBookOpen}
+        branchId={selectedBranchId || undefined}
+        branchName={selectedBranch?.name || undefined}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 }

@@ -1,3 +1,26 @@
+Email: owner@courtbooking.com
+Mật khẩu: Owner@123456
+
+Cách 1: Chạy toàn bộ Backend bằng Docker (Nhanh & Tiện nhất khi làm FE)
+Dùng cách này khi bạn tập trung làm giao diện (Frontend) hoặc kiểm thử hệ thống mà không cần sửa code C#.
+
+Bật ứng dụng Docker Desktop trên máy tính.
+Khởi động Backend: Mở PowerShell (hoặc Terminal) và gõ:
+powershell
+cd d:\DoAN\QLDA_DOTNET\CourtBooking\backend\CourtBooking
+docker compose up -d
+(Lệnh này sẽ tự khởi chạy SQL Server, SeaweedFS, Seq và container API courtbooking-api).
+Khởi động Frontend: Mở thêm 1 tab terminal khác và gõ:
+powershell
+cd d:\DoAN\QLDA_DOTNET\CourtBooking\frontend
+npm run dev
+Để tắt Backend khi dùng xong:
+powershell
+cd d:\DoAN\QLDA_DOTNET\CourtBooking\backend\CourtBooking
+docker compose down
+TIP
+
+Nếu bạn có sửa code C# bên Backend và muốn Docker cập nhật lại bản mới nhất, chỉ cần thêm cờ --build: docker compose up -d --build courtbooking.api
 # 📘 CẨM NANG & HƯỚNG DẪN PHÁT TRIỂN GIAO DIỆN CHỦ SÂN (OWNER PORTAL)
 ### *Dành cho Thành Viên Nhóm & Hướng Dẫn Kèm Prompt Chuẩn Cho AI Coding Agent*
 

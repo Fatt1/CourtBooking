@@ -55,6 +55,8 @@ export const API_ENDPOINTS = {
     CONFIG_VIETQR: (id: string) => `/owner/branches/${id}/vietqr`,
     IMAGES: (id: string) => `/owner/branches/${id}/images`,
     POLICIES: (id: string) => `/owner/branches/${id}/policies`,
+    GET_ONE_TIME_BOOKING: '/branches/get-one-time-booking',
+    OWNER_GET_ONE_TIME_BOOKING: '/owner/branches/get-one-time-booking',
   },
 
   // 4. Loại sân & Danh sách Sân (CourtTypes & Courts)
@@ -74,10 +76,16 @@ export const API_ENDPOINTS = {
 
   // 5. Bảng giá & Khung giờ cố định (Pricing)
   PRICING: {
-    PRICE_TABLES: '/owner/pricing/tables',
-    PRICE_TABLE_DETAIL: (id: string) => `/owner/pricing/tables/${id}`,
-    PRICE_RULES: '/owner/pricing/rules',
+    OWNER_CONFIG: '/owner/pricing',
+    BRANCH_CONFIG: '/pricing',
+    PRICE_TABLES: '/owner/pricing/price-tables',
+    PRICE_TABLE_DETAIL: (id: string) => `/owner/pricing/price-tables/${id}`,
+    PRICE_RULES: (tableId: string) => `/owner/pricing/price-tables/${tableId}/rules`,
+    PRICE_RULE_DETAIL: (tableId: string, ruleId: string) =>
+      `/owner/pricing/price-tables/${tableId}/rules/${ruleId}`,
     FIXED_TIME_BLOCKS: '/owner/pricing/fixed-time-blocks',
+    FIXED_TIME_BLOCK_DETAIL: (blockId: string) =>
+      `/owner/pricing/fixed-time-blocks/${blockId}`,
   },
 
   // 6. Đơn đặt sân & Lưới lịch (Orders & Booking)
@@ -86,6 +94,16 @@ export const API_ENDPOINTS = {
     OWNER_TIME_GRID: '/owner/orders/time-grid',
     OWNER_LIST: '/owner/orders',
     OWNER_DETAIL: (id: string) => `/owner/orders/${id}`,
+    CONFIRM: (id: string) => `/owner/orders/${id}/confirmation`,
+    COMPLETE: (id: string) => `/owner/orders/${id}/completion`,
+    CANCEL: (id: string) => `/owner/orders/${id}/cancellation`,
+    ADD_PAYMENT: (id: string) => `/owner/orders/${id}/payments`,
+    UPDATE_ITEMS: (id: string) => `/owner/orders/${id}/items`,
+    UPDATE_CUSTOMER: (id: string) => `/owner/orders/${id}/customer-info`,
+    UPDATE_SERVICES: (id: string) => `/owner/orders/${id}/services`,
+    CREATE_BY_OWNER: '/owner/orders',
+    FIXED_LIST: '/owner/orders/fixed',
+    FIXED_DETAIL: (id: string) => `/owner/orders/fixed/${id}`,
     APPROVE_PAYMENT: (id: string) => `/owner/orders/${id}/approve-payment`,
     REJECT_PAYMENT: (id: string) => `/owner/orders/${id}/reject-payment`,
     PROCESS_REFUND: (id: string) => `/owner/orders/${id}/process-refund`,
@@ -116,7 +134,16 @@ export const API_ENDPOINTS = {
     REJECT_TICKET: (ticketId: string) => `/owner/events/tickets/${ticketId}/reject`,
   },
 
-  // 8. Bán lẻ POS & Dịch vụ tại quầy (RetailOrders & Services)
+  // 8. Dịch vụ & Loại dịch vụ (Services & ServiceCategories)
+  SERVICES: {
+    PUBLIC_BY_BRANCH: (branchId: string) => `/services/${branchId}`,
+    OWNER_LIST: '/owner/services',
+    OWNER_DETAIL: (id: string) => `/owner/services/${id}`,
+    CATEGORIES: '/owner/service-categories',
+    CATEGORY_DETAIL: (id: string) => `/owner/service-categories/${id}`,
+  },
+
+  // 8.1 Bán lẻ POS tại quầy (RetailOrders)
   POS: {
     SERVICE_CATEGORIES: '/owner/service-categories',
     SERVICES: '/owner/services',

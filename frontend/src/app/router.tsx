@@ -21,6 +21,7 @@ import { BranchesPage } from '@/features/court-owners/pages/BranchesPage';
 import { CourtTypesPage } from '@/features/court-owners/pages/CourtTypesPage';
 import { CourtsPage } from '@/features/court-owners/pages/CourtsPage';
 import { ServiceCategoriesPage } from '@/features/court-owners/pages/ServiceCategoriesPage';
+import { PricingPage } from '@/features/court-owners/pages/PricingPage';
 import { CourtOwnerLoginPage } from '@/features/court-owners/pages/CourtOwnerLoginPage';
 
 // Auth Pages
@@ -76,7 +77,7 @@ export const router = createBrowserRouter([
       { path: 'court-status', element: <OrdersPage /> },
       { path: 'courts', element: <CourtsPage /> },
       { path: 'court-types', element: <CourtTypesPage /> },
-      { path: 'pricing', element: <OrdersPage /> },
+      { path: 'pricing', element: <PricingPage /> },
       { path: 'service-categories', element: <ServiceCategoriesPage /> },
       { path: 'products', element: <OrdersPage /> },
       { path: 'pos', element: <OrdersPage /> },
