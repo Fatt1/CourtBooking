@@ -25,6 +25,12 @@ export const API_ENDPOINTS = {
     ME: '/identity/me',
   },
 
+  // 1c. Xác thực & Tài khoản Quản trị viên (Admin Identities)
+  ADMIN_AUTH: {
+    LOGIN: '/admin/identity/login',
+    LOGOUT: '/admin/identity/logout',
+  },
+
   // 2. Quản lý Người dùng & Phân quyền (System Admin)
   USERS: {
     LIST: '/users',

@@ -28,12 +28,10 @@ internal sealed class UpdateSportTypeHandler(
 
 
 
+        var lowerName = normalizedName.ToLower();
         var nameAlreadyExists = await dbContext.SportTypes
-                            .AsNoTracking()
-                            .AnyAsync(st => string.Equals(
-                                st.Name,
-                                normalizedName,
-                                StringComparison.OrdinalIgnoreCase) && st.Id != sportType.Id, cancellationToken);
+            .AsNoTracking()
+            .AnyAsync(st => st.Name.ToLower() == lowerName && st.Id != sportType.Id, cancellationToken);
 
         if (nameAlreadyExists)
         {

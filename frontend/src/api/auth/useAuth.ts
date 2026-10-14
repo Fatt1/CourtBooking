@@ -111,12 +111,48 @@ export function useAdminLoginMutation() {
   const { setCredentials } = useAuthStore();
 
   return useMutation({
-    mutationFn: async (credentials: AdminLoginRequest) => {
-      const response = await apiClient.post<AdminAuthResponse>('/admin/auth/login', credentials);
-      return response as unknown as AdminAuthResponse;
+    mutationFn: async (credentials: AdminLoginRequest): Promise<CourtOwnerLoginResponse> => {
+      const email = credentials.email || credentials.usernameOrEmail || '';
+      const response = await apiClient.post<CourtOwnerLoginResponse>(
+        API_ENDPOINTS.ADMIN_AUTH.LOGIN,
+        {
+          email,
+          password: credentials.password,
+        }
+      );
+      return response as unknown as CourtOwnerLoginResponse;
     },
     onSuccess: (data) => {
-      setCredentials(data.user, data.tokens.accessToken, data.tokens.refreshToken);
+      setCredentials(
+        {
+          id: data.userId,
+          name: data.fullName,
+          email: data.email,
+          role: data.roleName,
+          mustChangePwd: data.mustChangePassword,
+        },
+        data.accessToken
+      );
+    },
+  });
+}
+
+/**
+ * Hook Mutation đăng xuất Quản trị viên (Admin)
+ */
+export function useAdminLogoutMutation() {
+  const { logout } = useAuthStore();
+
+  return useMutation({
+    mutationFn: async () => {
+      try {
+        await apiClient.post(API_ENDPOINTS.ADMIN_AUTH.LOGOUT);
+      } catch {
+        // Vẫn tiếp tục dọn dẹp local state kể cả khi backend lỗi mạng
+      }
+    },
+    onSettled: () => {
+      logout();
     },
   });
 }

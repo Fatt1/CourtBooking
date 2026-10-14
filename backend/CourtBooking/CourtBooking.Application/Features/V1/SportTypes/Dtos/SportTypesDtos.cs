@@ -12,4 +12,5 @@ public sealed record AdminSportTypeDto(
     Guid Id,
     string Name,
     Guid? ImageId,
+    ImageDto? Image,
     int BranchCount);

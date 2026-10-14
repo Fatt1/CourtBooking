@@ -29,7 +29,9 @@ public sealed class IdentityEndpoints : IEndpointGroup
         var group = app.MapApiV1Group("identity");
         MapToPublic(group);
 
-
+        // ── 3. Cụm endpoint dành riêng cho Quản trị viên (Admin) ─────────────
+        var adminGroup = app.MapApiV1Group("admin/identity");
+        MapAdminEndpoints(adminGroup);
     }
 
     /// <summary>
@@ -310,5 +312,43 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .Produces(StatusCodes.Status200OK);
     }
 
+    /// <summary>
+    /// Các API xác thực dành riêng cho Quản trị viên (Admin)
+    /// </summary>
+    private static void MapAdminEndpoints(RouteGroupBuilder group)
+    {
+        // 1. POST /api/v1/admin/identity/login — Quản trị viên đăng nhập
+        group.MapPost("/login", async (
+                [FromBody] LoginRequest request,
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var command = new LoginCommand(request.Email, request.Password, AccountType.Admin);
+            var result = await sender.Send(command, ct);
 
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .AllowAnonymous()
+            .WithName("AdminLogin")
+            .WithSummary("Đăng nhập dành cho Quản trị viên (Admin)")
+            .WithDescription("Chỉ cho phép tài khoản Quản trị viên (Admin) đăng nhập vào hệ thống quản trị CourtOS.")
+            .WithTags(IdentityTag)
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        // 2. POST /api/v1/admin/identity/logout — Quản trị viên đăng xuất
+        group.MapPost("/logout", (IAuthCookieService cookieService) =>
+        {
+            cookieService.DeleteRefreshTokenCookie();
+            return Results.Ok(new { message = "Đăng xuất thành công." });
+        })
+            .AllowAnonymous()
+            .WithName("AdminLogout")
+            .WithSummary("Đăng xuất tài khoản Quản trị viên và xóa Refresh Token Cookie")
+            .WithTags(IdentityTag)
+            .Produces(StatusCodes.Status200OK);
+    }
 }

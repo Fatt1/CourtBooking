@@ -13,6 +13,7 @@ import { HomePage } from '@/features/customer/pages/HomePage';
 
 // Admin Pages
 import { UsersPage } from '@/features/admin/pages/UsersPage';
+import { SportTypesPage } from '@/features/admin/pages/SportTypesPage';
 
 // Court Owners / Management Pages
 import { OrdersPage } from '@/features/court-owners/pages/OrdersPage';
@@ -25,6 +26,7 @@ import { CourtOwnerLoginPage } from '@/features/court-owners/pages/CourtOwnerLog
 // Auth Pages
 import { UserLoginPage } from '@/features/auth/pages/UserLoginPage';
 import { UserRegisterPage } from '@/features/auth/pages/UserRegisterPage';
+import { AdminLoginPage } from '@/features/auth/pages/AdminLoginPage';
 
 export const router = createBrowserRouter([
   // 1. Public Routes (Khách hàng & Người chơi xem trang chủ)
@@ -56,7 +58,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin/login',
-    element: <CourtOwnerLoginPage />,
+    element: <AdminLoginPage />,
   },
 
   // 3. Court Owner Portal (Giao diện Chủ sân - Bảo vệ bằng JWT & Role CourtOwner)
@@ -94,9 +96,11 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/admin/users" replace /> },
+      { path: 'dashboard', element: <UsersPage /> },
       { path: 'users', element: <UsersPage /> },
-      { path: 'orders', element: <Navigate to="/owner/orders" replace /> },
-      { path: 'branches', element: <Navigate to="/owner/branches" replace /> },
+      { path: 'owners', element: <UsersPage /> },
+      { path: 'subscriptions', element: <UsersPage /> },
+      { path: 'sport-types', element: <SportTypesPage /> },
     ],
   },
 

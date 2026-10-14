@@ -18,12 +18,10 @@ public sealed class CreateSportTypeHandler(
     {
         var normalizedName = request.Name.Trim();
 
+        var lowerName = normalizedName.ToLower();
         var nameAlreadyExists = await dbContext.SportTypes
             .AsNoTracking()
-            .AnyAsync(sportType => string.Equals(
-                sportType.Name,
-                normalizedName,
-                StringComparison.OrdinalIgnoreCase), cancellationToken);
+            .AnyAsync(sportType => sportType.Name.ToLower() == lowerName, cancellationToken);
 
 
         if (nameAlreadyExists)
