@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/axios';
+import { isGuid } from '@/lib/utils';
 import { API_ENDPOINTS } from '@/constants/api-endpoints';
 import type {
   CourtTypePricingConfigDto,
@@ -39,7 +40,7 @@ export function useCourtTypePricingQuery(
   return useQuery<CourtTypePricingConfigDto>({
     queryKey: ['owner', 'pricing', branchId, courtTypeId],
     queryFn: () => getCourtTypePricingConfig(branchId!, courtTypeId!),
-    enabled: Boolean(branchId) && Boolean(courtTypeId),
+    enabled: Boolean(branchId) && isGuid(courtTypeId),
     staleTime: 1000 * 60 * 3, // 3 phút cache
   });
 }

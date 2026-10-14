@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Clock } from 'lucide-react';
 import { OwnerModal } from '@/features/court-owners/components/shared';
+import { TimeSelect } from '@/components/common';
 
 export interface NewFixedBlockFormValues {
   startTime: string;
@@ -31,7 +31,7 @@ export function AddFixedTimeBlockModal({
 }: AddFixedTimeBlockModalProps) {
   const [startTime, setStartTime] = useState('17:00');
   const [endTime, setEndTime] = useState('19:00');
-  const [selectedDays, setSelectedDays] = useState<number[]>([6, 0]); // Mặc định Thứ 7, CN theo ảnh
+  const [selectedDays, setSelectedDays] = useState<number[]>([6, 0]); // Mặc định Thứ 7, CN
 
   const toggleDay = (dayVal: number) => {
     setSelectedDays((prev) =>
@@ -59,37 +59,31 @@ export function AddFixedTimeBlockModal({
       maxWidth="max-w-md"
     >
       <div className="space-y-5 pt-1 text-sm">
-        {/* 1. Giờ bắt đầu & Giờ kết thúc */}
+        {/* 1. Giờ bắt đầu & Giờ kết thúc (Dùng TimeSelect dropdown) */}
         <div className="grid grid-cols-2 gap-3.5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
-              Giờ bắt đầu
-            </label>
-            <div className="relative">
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
-              />
-              <Clock className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            </div>
-          </div>
+          <TimeSelect
+            label="Giờ bắt đầu"
+            value={startTime}
+            onChange={setStartTime}
+            stepMinutes={30}
+            startHour={0}
+            endHour={24}
+            required
+            className="space-y-1.5"
+            triggerClassName="h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
+          />
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
-              Giờ kết thúc
-            </label>
-            <div className="relative">
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
-              />
-              <Clock className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            </div>
-          </div>
+          <TimeSelect
+            label="Giờ kết thúc"
+            value={endTime}
+            onChange={setEndTime}
+            stepMinutes={30}
+            startHour={0}
+            endHour={24}
+            required
+            className="space-y-1.5"
+            triggerClassName="h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
+          />
         </div>
 
         {/* 2. Áp dụng các ngày */}

@@ -3,6 +3,7 @@ import { Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { OwnerPageHeader } from '@/features/court-owners/components/shared';
+import { isGuid } from '@/lib/utils';
 import { useBranchStore } from '@/stores/useBranchStore';
 import { useCourtTypesQuery } from '@/api/court-types';
 import {
@@ -10,7 +11,10 @@ import {
   useCreateFixedTimeBlockMutation,
   useDeleteFixedTimeBlockMutation,
   useCreatePriceTableRuleMutation,
+  useUpdatePriceTableRuleMutation,
   useDeletePriceTableRuleMutation,
+  useCreatePriceTableMutation,
+  useUpdatePriceTableMutation,
   useDeletePriceTableMutation,
 } from '@/api/pricing';
 import {
@@ -19,6 +23,7 @@ import {
   PriceTableBlock,
   AddPriceRuleModal,
   AddFixedTimeBlockModal,
+  AddPriceTableModal,
   mockCourtTypes,
   mockPricingDataMap,
   FixedTimeBlock,
@@ -29,6 +34,9 @@ import {
   CourtTypePricingData,
   NewPriceRuleFormValues,
   NewFixedBlockFormValues,
+  PriceRuleToEdit,
+  PriceTableFormValues,
+  PriceTableToEdit,
   mapBackendDtoToUiData,
 } from '@/features/court-owners/components/pricing';
 
@@ -37,15 +45,20 @@ export function PricingPage() {
   const [selectedCourtTypeId, setSelectedCourtTypeId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'standard' | 'promo'>('standard');
 
-  // Quản lý trạng thái mở 2 Modal
+  // Quản lý trạng thái mở các Modal
   const [isPriceRuleModalOpen, setIsPriceRuleModalOpen] = useState(false);
   const [isFixedBlockModalOpen, setIsFixedBlockModalOpen] = useState(false);
+  const [isPriceTableModalOpen, setIsPriceTableModalOpen] = useState(false);
+
+  // Dữ liệu đối tượng đang chỉnh sửa
+  const [ruleToEdit, setRuleToEdit] = useState<PriceRuleToEdit | null>(null);
+  const [priceTableToEdit, setPriceTableToEdit] = useState<PriceTableToEdit | null>(null);
 
   // 1. Lấy danh sách Loại sân thật từ Backend
   const { data: rawCourtTypes = [], isLoading: isLoadingCourtTypes } =
     useCourtTypesQuery(selectedBranchId);
 
-  // Map danh sách Loại sân sang định dạng UI (hoặc fallback sang mock data nếu chưa có loại sân)
+  // Map danh sách Loại sân sang định dạng UI (hoặc fallback sang mock data nếu chưa chọn chi nhánh)
   const courtTypes: CourtTypeOption[] = useMemo(() => {
     if (rawCourtTypes && rawCourtTypes.length > 0) {
       return rawCourtTypes.map((ct) => ({
@@ -55,8 +68,12 @@ export function PricingPage() {
         totalCourts: ct.courtCount,
       }));
     }
-    return mockCourtTypes;
-  }, [rawCourtTypes]);
+    // Chỉ fallback sang mock data khi chưa chọn chi nhánh
+    if (!selectedBranchId) {
+      return mockCourtTypes;
+    }
+    return [];
+  }, [rawCourtTypes, selectedBranchId]);
 
   // Tự động chọn loại sân đầu tiên khi có danh sách loại sân
   useEffect(() => {
@@ -65,10 +82,12 @@ export function PricingPage() {
       if (!exists || !selectedCourtTypeId) {
         setSelectedCourtTypeId(courtTypes[0].id);
       }
+    } else {
+      setSelectedCourtTypeId('');
     }
   }, [courtTypes, selectedCourtTypeId]);
 
-  // 2. Lấy cấu hình giá thật theo Loại sân từ Backend
+  // 2. Lấy cấu hình giá thật theo Loại sân từ Backend (chỉ gọi khi courtTypeId là Guid hợp lệ)
   const {
     data: backendPricingDto,
     isLoading: isLoadingPricing,
@@ -79,7 +98,10 @@ export function PricingPage() {
   const createFixedBlockMutation = useCreateFixedTimeBlockMutation();
   const deleteFixedBlockMutation = useDeleteFixedTimeBlockMutation();
   const createPriceRuleMutation = useCreatePriceTableRuleMutation();
+  const updatePriceRuleMutation = useUpdatePriceTableRuleMutation();
   const deletePriceRuleMutation = useDeletePriceTableRuleMutation();
+  const createPriceTableMutation = useCreatePriceTableMutation();
+  const updatePriceTableMutation = useUpdatePriceTableMutation();
   const deletePriceTableMutation = useDeletePriceTableMutation();
 
   // Helper trích xuất thông báo lỗi từ RFC ProblemDetails
@@ -105,9 +127,16 @@ export function PricingPage() {
     if (backendPricingDto) {
       return mapBackendDtoToUiData(backendPricingDto);
     }
+    if (isGuid(selectedCourtTypeId)) {
+      return {
+        courtTypeId: selectedCourtTypeId,
+        tabName: 'Bảng giá tiêu chuẩn',
+        fixedBlocks: [],
+        priceTables: [],
+      };
+    }
     return mockPricingDataMap[selectedCourtTypeId] || mockPricingDataMap['ct-pvc'];
   }, [backendPricingDto, selectedCourtTypeId]);
-
 
   // Xử lý chuyển đổi loại sân
   const handleSelectCourtType = (id: string) => {
@@ -121,10 +150,26 @@ export function PricingPage() {
       return;
     }
 
+    if (!isGuid(selectedCourtTypeId)) {
+      toast.warning('Vui lòng chọn loại sân hợp lệ.');
+      return;
+    }
+
     try {
       // Format giờ HH:mm -> HH:mm:00
       const startTimeFormatted = `${values.startTime}:00`;
       const endTimeFormatted = `${values.endTime}:00`;
+
+      // Lấy danh sách ID các sân con thuộc loại sân này
+      const courtIds =
+        backendPricingDto?.availableCourts?.map((c) => c.courtId) || [];
+
+      if (courtIds.length === 0) {
+        toast.warning(
+          'Loại sân này hiện chưa có sân con nào để áp dụng khung giờ bắt buộc. Vui lòng thêm sân vào chi nhánh trước.'
+        );
+        return;
+      }
 
       await createFixedBlockMutation.mutateAsync({
         branchId: selectedBranchId,
@@ -132,7 +177,7 @@ export function PricingPage() {
         startTime: startTimeFormatted,
         endTime: endTimeFormatted,
         daysOfWeek: values.selectedDays,
-        courtIds: [], // áp dụng cho tất cả các sân thuộc loại sân này
+        courtIds: courtIds,
       });
 
       toast.success(
@@ -162,11 +207,26 @@ export function PricingPage() {
     }
   };
 
-  // 2. Thêm mới Quy tắc khung giờ giá từ Modal
-  const handleAddPriceRuleSubmit = async (values: NewPriceRuleFormValues) => {
+  // 2. Thêm mới / Cập nhật Quy tắc khung giờ giá từ Modal
+  const handleAddPriceRuleSubmit = async (
+    values: NewPriceRuleFormValues,
+    ruleId?: string
+  ) => {
     if (!selectedBranchId) {
-      toast.warning('Vui lòng chọn chi nhánh trước khi thêm khung giờ giá.');
+      toast.warning('Vui lòng chọn chi nhánh trước khi thực hiện.');
       return;
+    }
+
+    // Đảm bảo priceTableId là Guid thật
+    let targetPriceTableId = values.priceTableId;
+    if (!isGuid(targetPriceTableId)) {
+      const realTable = availablePriceTables.find((t) => isGuid(t.id));
+      if (realTable) {
+        targetPriceTableId = realTable.id;
+      } else {
+        toast.error('Không tìm thấy bảng giá hợp lệ. Vui lòng tạo bảng giá trước.');
+        return;
+      }
     }
 
     try {
@@ -178,25 +238,99 @@ export function PricingPage() {
       const dayOfWeekTo =
         values.selectedDays.length > 0 ? Math.max(...values.selectedDays) : 5;
 
-      await createPriceRuleMutation.mutateAsync({
-        branchId: selectedBranchId,
-        priceTableId: values.priceTableId,
-        startDate: values.startDate ? values.startDate : null,
-        endDate: values.endDate ? values.endDate : null,
-        dayOfWeekFrom,
-        dayOfWeekTo,
-        startTime: startTimeFormatted,
-        endTime: endTimeFormatted,
-        fixedCustomerPrice: values.fixedPrice,
-        walkInCustomerPrice: values.walkInPrice,
-      });
+      if (ruleId) {
+        // Mode cập nhật quy tắc tính giá
+        await updatePriceRuleMutation.mutateAsync({
+          branchId: selectedBranchId,
+          priceTableId: targetPriceTableId,
+          ruleId,
+          startDate: values.startDate ? values.startDate : null,
+          endDate: values.endDate ? values.endDate : null,
+          dayOfWeekFrom,
+          dayOfWeekTo,
+          startTime: startTimeFormatted,
+          endTime: endTimeFormatted,
+          fixedCustomerPrice: values.fixedPrice,
+          walkInCustomerPrice: values.walkInPrice,
+        });
 
-      toast.success(
-        `Đã thêm khung giờ giá ${values.startTime} - ${values.endTime} thành công!`
-      );
+        toast.success(`Cập nhật khung giờ giá ${values.startTime} - ${values.endTime} thành công!`);
+      } else {
+        // Mode tạo mới quy tắc tính giá
+        await createPriceRuleMutation.mutateAsync({
+          branchId: selectedBranchId,
+          priceTableId: targetPriceTableId,
+          startDate: values.startDate ? values.startDate : null,
+          endDate: values.endDate ? values.endDate : null,
+          dayOfWeekFrom,
+          dayOfWeekTo,
+          startTime: startTimeFormatted,
+          endTime: endTimeFormatted,
+          fixedCustomerPrice: values.fixedPrice,
+          walkInCustomerPrice: values.walkInPrice,
+        });
+
+        toast.success(
+          `Đã thêm khung giờ giá ${values.startTime} - ${values.endTime} thành công!`
+        );
+      }
+
       refetchPricing();
+      setRuleToEdit(null);
     } catch (err) {
-      const msg = getErrorMessage(err, 'Không thể thêm quy tắc tính giá');
+      const msg = getErrorMessage(
+        err,
+        ruleId ? 'Không thể cập nhật quy tắc tính giá' : 'Không thể thêm quy tắc tính giá'
+      );
+      toast.error(msg);
+    }
+  };
+
+  // 3. Thêm mới / Cập nhật Loại Bảng Giá (Price Table)
+  const handleAddOrUpdatePriceTable = async (
+    values: PriceTableFormValues,
+    tableId?: string
+  ) => {
+    if (!selectedBranchId) {
+      toast.warning('Vui lòng chọn chi nhánh trước khi tạo bảng giá.');
+      return;
+    }
+
+    if (!isGuid(selectedCourtTypeId)) {
+      toast.warning('Vui lòng chọn loại sân hợp lệ trước khi tạo bảng giá.');
+      return;
+    }
+
+    try {
+      if (tableId) {
+        // Chế độ chỉnh sửa thông tin bảng giá
+        await updatePriceTableMutation.mutateAsync({
+          branchId: selectedBranchId,
+          priceTableId: tableId,
+          name: values.name,
+          defaultPrice: values.defaultPrice,
+          isActive: values.isActive,
+        });
+        toast.success(`Cập nhật bảng giá "${values.name}" thành công!`);
+      } else {
+        // Chế độ tạo mới bảng giá
+        await createPriceTableMutation.mutateAsync({
+          branchId: selectedBranchId,
+          courtTypeId: selectedCourtTypeId,
+          name: values.name,
+          defaultPrice: values.defaultPrice,
+          isActive: values.isActive,
+        });
+        toast.success(`Tạo mới loại bảng giá "${values.name}" thành công!`);
+      }
+
+      refetchPricing();
+      setPriceTableToEdit(null);
+    } catch (err) {
+      const msg = getErrorMessage(
+        err,
+        tableId ? 'Không thể cập nhật bảng giá' : 'Không thể tạo bảng giá mới'
+      );
       toast.error(msg);
     }
   };
@@ -204,6 +338,11 @@ export function PricingPage() {
   // Xóa nhóm Bảng giá
   const handleDeleteTable = async (table: PriceTableGroup) => {
     if (!selectedBranchId) return;
+
+    if (!isGuid(table.id)) {
+      toast.warning('Bảng giá mẫu không thể xóa qua máy chủ.');
+      return;
+    }
 
     try {
       await deletePriceTableMutation.mutateAsync({
@@ -218,28 +357,74 @@ export function PricingPage() {
     }
   };
 
-  // Xóa hoặc sửa quy tắc trên từng dòng bảng
-  const handleEditRule = async (
-    _table: PriceTableGroup,
+  // Mở modal sửa quy tắc trên từng dòng bảng
+  const handleEditRule = (
+    table: PriceTableGroup,
     _group: PriceRuleGroup,
-    _rule: PriceRuleItem
+    rule: PriceRuleItem
   ) => {
-    // Sẽ mở modal chỉnh sửa rule khi chức năng được phát triển
+    const parts = (rule.timeRange || '').split(' - ');
+    const startTime = parts[0]?.trim() || '06:00';
+    const endTime = parts[1]?.trim() || '12:00';
+
+    setRuleToEdit({
+      ruleId: rule.id,
+      priceTableId: table.id,
+      startTime,
+      endTime,
+      selectedDays: [1, 2, 3, 4, 5],
+      fixedPrice: rule.fixedPrice ?? 0,
+      walkInPrice: rule.walkInPrice ?? 0,
+      unitMinutes: 60,
+      unitLabel: 'h',
+      minBookingMinutes: 60,
+    });
+    setIsPriceRuleModalOpen(true);
   };
 
-  const handleEditTable = (_table: PriceTableGroup) => {
-    // Sẽ mở modal chỉnh sửa bảng giá khi chức năng được phát triển
+  // Mở modal sửa thông tin bảng giá (Header bảng giá)
+  const handleEditTable = (table: PriceTableGroup) => {
+    if (!isGuid(table.id)) {
+      toast.warning('Bảng giá mẫu không thể chỉnh sửa.');
+      return;
+    }
+    const backendTable = backendPricingDto?.priceTables?.find((t) => t.id === table.id);
+    setPriceTableToEdit({
+      id: table.id,
+      name: table.name,
+      defaultPrice: backendTable?.defaultPrice ?? 80000,
+      isActive: backendTable?.isActive ?? true,
+    });
+    setIsPriceTableModalOpen(true);
   };
 
+  // Bấm nút "+ Thêm loại bảng giá mới"
   const handleAddPriceTableType = () => {
-    // Sẽ mở modal thêm loại bảng giá mới khi chức năng được phát triển
+    if (!selectedBranchId) {
+      toast.warning('Vui lòng chọn chi nhánh trước khi thêm bảng giá.');
+      return;
+    }
+    if (!isGuid(selectedCourtTypeId)) {
+      toast.warning('Vui lòng chọn loại sân hợp lệ trước khi thêm bảng giá.');
+      return;
+    }
+    setPriceTableToEdit(null);
+    setIsPriceTableModalOpen(true);
   };
 
   // Danh sách các bảng giá hiện có để hiển thị trong Dropdown chọn của Modal
-  const availablePriceTables = currentPricingData.priceTables.map((t) => ({
-    id: t.id,
-    name: t.name,
-  }));
+  const availablePriceTables = useMemo(() => {
+    if (backendPricingDto?.priceTables && backendPricingDto.priceTables.length > 0) {
+      return backendPricingDto.priceTables.map((t) => ({
+        id: t.id,
+        name: t.name,
+      }));
+    }
+    return currentPricingData.priceTables.map((t) => ({
+      id: t.id,
+      name: t.name,
+    }));
+  }, [backendPricingDto, currentPricingData]);
 
   const isLoading = isLoadingCourtTypes || (isLoadingPricing && !backendPricingDto);
 
@@ -252,7 +437,10 @@ export function PricingPage() {
         actions={
           <Button
             type="button"
-            onClick={() => setIsPriceRuleModalOpen(true)}
+            onClick={() => {
+              setRuleToEdit(null);
+              setIsPriceRuleModalOpen(true);
+            }}
             className="h-9.5 px-4 rounded-xl bg-[#a3e635] text-black hover:bg-[#8ece28] font-bold shadow-xs gap-1.5 cursor-pointer"
           >
             <Plus className="size-4 stroke-[2.5]" />
@@ -305,7 +493,7 @@ export function PricingPage() {
               <div className="space-y-7">
                 {currentPricingData.priceTables.length === 0 ? (
                   <div className="py-8 text-center text-xs text-muted-foreground italic border border-dashed border-border/80 rounded-xl">
-                    Chưa có bảng giá nào cho loại sân này. Hãy bấm nút "+ Thêm khung giờ giá" để tạo bảng giá đầu tiên.
+                    Chưa có bảng giá nào cho loại sân này. Hãy bấm nút "+ Thêm loại bảng giá mới" bên dưới để tạo bảng giá đầu tiên.
                   </div>
                 ) : (
                   currentPricingData.priceTables.map((table) => (
@@ -337,12 +525,16 @@ export function PricingPage() {
         </div>
       </div>
 
-      {/* Modal 1: Thêm khung giờ giá */}
+      {/* Modal 1: Thêm/Sửa khung giờ giá */}
       <AddPriceRuleModal
         open={isPriceRuleModalOpen}
-        onOpenChange={setIsPriceRuleModalOpen}
+        onOpenChange={(open) => {
+          setIsPriceRuleModalOpen(open);
+          if (!open) setRuleToEdit(null);
+        }}
         availablePriceTables={availablePriceTables}
         defaultPriceTableId={availablePriceTables[0]?.id}
+        ruleToEdit={ruleToEdit}
         onSubmit={handleAddPriceRuleSubmit}
       />
 
@@ -351,6 +543,17 @@ export function PricingPage() {
         open={isFixedBlockModalOpen}
         onOpenChange={setIsFixedBlockModalOpen}
         onSubmit={handleAddFixedBlockSubmit}
+      />
+
+      {/* Modal 3: Thêm / Sửa loại bảng giá mới */}
+      <AddPriceTableModal
+        open={isPriceTableModalOpen}
+        onOpenChange={(open) => {
+          setIsPriceTableModalOpen(open);
+          if (!open) setPriceTableToEdit(null);
+        }}
+        tableToEdit={priceTableToEdit}
+        onSubmit={handleAddOrUpdatePriceTable}
       />
     </div>
   );
