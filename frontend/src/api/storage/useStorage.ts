@@ -8,7 +8,7 @@ import type { UploadImageResponse } from './types';
  * Lấy từ .env: VITE_STORAGE_BASE_URL
  */
 export const STORAGE_BASE_URL: string =
-  (import.meta.env.VITE_STORAGE_BASE_URL as string) || 'http://localhost:8888/courtbooking';
+  (import.meta.env.VITE_STORAGE_BASE_URL as string) || 'http://localhost:8888/buckets/courtbooking';
 
 /**
  * Ghép đường dẫn hình ảnh từ Storage Key hoặc trả về URL hoàn chỉnh
@@ -27,11 +27,15 @@ export function getImageUrl(keyOrUrl?: string | null, fallback = ''): string {
     return trimmed;
   }
 
-  const baseUrl = STORAGE_BASE_URL.replace(/\/+$/, '');
+  let baseUrl = STORAGE_BASE_URL.replace(/\/+$/, '');
+  // Đảm bảo baseUrl trỏ tới cổng 8888 luôn có tiền tố /buckets/courtbooking
+  if (baseUrl.includes('localhost:8888') && !baseUrl.includes('/buckets/')) {
+    baseUrl = baseUrl.replace('/courtbooking', '/buckets/courtbooking');
+  }
 
   // Nếu là URL trỏ tới SeaweedFS/S3 localhost (port 8333 hoặc 8888) của bucket courtbooking,
   // chuẩn hóa lại về baseUrl hiện tại và lược bỏ query string chữ ký S3 nếu có
-  const localMatch = trimmed.match(/^https?:\/\/localhost:(?:8333|8888)\/courtbooking\/?([^?]*)/i);
+  const localMatch = trimmed.match(/^https?:\/\/localhost:(?:8333|8888)\/(?:buckets\/)?courtbooking\/?([^?]*)/i);
   if (localMatch) {
     const cleanKey = localMatch[1].replace(/^\/+/, '');
     return `${baseUrl}/${cleanKey}`;
@@ -56,12 +60,7 @@ export async function uploadImageApi(file: File): Promise<UploadImageResponse> {
 
   const response = await apiClient.post<UploadImageResponse>(
     API_ENDPOINTS.STORAGE.UPLOAD,
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
+    formData
   );
 
   return response as unknown as UploadImageResponse;

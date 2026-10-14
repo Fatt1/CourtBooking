@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSportTypesQuery } from '@/api/sport-types';
+import { useSportTypesQuery, type SportTypeItem } from '@/api/sport-types';
+import { getImageUrl } from '@/api/storage';
 
 // Dữ liệu hình ảnh mặc định theo từng môn thể thao
 const DEFAULT_SPORT_IMAGES: Record<string, string> = {
@@ -13,7 +14,7 @@ const DEFAULT_SPORT_IMAGES: Record<string, string> = {
 };
 
 // Mock data fallback khi backend chưa có dữ liệu hoặc offline
-const FALLBACK_SPORTS = [
+const FALLBACK_SPORTS: SportTypeItem[] = [
   {
     id: '1',
     name: 'Bóng đá',
@@ -89,6 +90,7 @@ export function SportsCategorySection() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {displaySports.slice(0, 4).map((sport) => {
               const imageUrl =
+                (sport.image?.key ? getImageUrl(sport.image.key) : null) ||
                 sport.image?.url ||
                 DEFAULT_SPORT_IMAGES[sport.name] ||
                 DEFAULT_SPORT_IMAGES['Bóng đá'];
