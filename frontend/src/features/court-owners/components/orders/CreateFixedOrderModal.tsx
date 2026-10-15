@@ -528,14 +528,16 @@ export function CreateFixedOrderModal({
       </Dialog>
 
       {/* Modal phụ cấu hình chu kỳ */}
-      <FixedVisualBookingModal
-        open={isCycleModalOpen}
-        onOpenChange={setIsCycleModalOpen}
-        branchId={activeBranchId}
-        branchName={activeBranchName}
-        existingCycles={cycles}
-        onSaveCycle={handleSaveCycle}
-      />
+      {isCycleModalOpen && (
+        <FixedVisualBookingModal
+          open={isCycleModalOpen}
+          onOpenChange={setIsCycleModalOpen}
+          branchId={activeBranchId}
+          branchName={activeBranchName}
+          existingCycles={cycles}
+          onSaveCycle={handleSaveCycle}
+        />
+      )}
 
       {/* Modal phụ thêm dịch vụ */}
       <AddServiceModal

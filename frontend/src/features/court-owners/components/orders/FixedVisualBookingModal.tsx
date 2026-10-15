@@ -389,6 +389,14 @@ export function FixedVisualBookingModal({
     if (existingCycles && existingCycles.length > 0) {
       for (let cIdx = 0; cIdx < existingCycles.length; cIdx++) {
         const cyc = existingCycles[cIdx];
+
+        // Kiểm tra xem khoảng ngày áp dụng của 2 chu kỳ có giao nhau không
+        if (cyc.startDate && cyc.endDate && startDate && endDate) {
+          if (startDate > cyc.endDate || endDate < cyc.startDate) {
+            continue; // Không giao nhau về ngày áp dụng
+          }
+        }
+
         const cycStartMin = timeToMinutes(cyc.startTime);
         const cycEndMin = timeToMinutes(cyc.endTime);
 
@@ -404,7 +412,7 @@ export function FixedVisualBookingModal({
                   courtId: courtId,
                   courtName: courtObj?.courtName || 'Sân',
                   dayLabel: day.label,
-                  date: 'Trùng chu kỳ',
+                  date: `Chu kỳ #${cIdx + 1}`,
                   startTime: cyc.startTime.slice(0, 5),
                   endTime: cyc.endTime.slice(0, 5),
                   customerName: `Chu kỳ #${cIdx + 1} trong đơn`,
@@ -429,20 +437,36 @@ export function FixedVisualBookingModal({
     courts,
     existingCycles,
     excludeOrderCode,
+    startDate,
+    endDate,
   ]);
 
-  // Cảnh báo ngay lập tức khi phát hiện trùng lịch do thay đổi giờ / sân
+  // Cảnh báo khi người dùng chọn khung giờ / sân dẫn đến trùng lịch (chỉ báo khi modal đang mở)
+  const isFirstRenderAfterOpen = useRef(true);
   const prevConflictCountRef = useRef(0);
   useEffect(() => {
+    if (!open) {
+      isFirstRenderAfterOpen.current = true;
+      prevConflictCountRef.current = 0;
+      return;
+    }
+
+    if (isFirstRenderAfterOpen.current) {
+      isFirstRenderAfterOpen.current = false;
+      prevConflictCountRef.current = conflicts.length;
+      return;
+    }
+
     if (conflicts.length > 0 && conflicts.length !== prevConflictCountRef.current) {
       const first = conflicts[0];
-      toast.error(
-        `Trùng lịch: ${first.courtName} (${first.dayLabel} ngày ${first.date}) đã có lịch từ ${first.startTime} - ${first.endTime}!`,
-        { duration: 4000 }
-      );
+      const conflictMsg =
+        first.orderCode === 'TRÙNG_CHU_KỲ_TRƯỚC'
+          ? `Trùng với ${first.customerName}: ${first.courtName} (${first.dayLabel}) khung giờ ${first.startTime} - ${first.endTime}!`
+          : `Trùng lịch: ${first.courtName} (${first.dayLabel} ngày ${first.date}) đã có lịch từ ${first.startTime} - ${first.endTime}!`;
+      toast.error(conflictMsg, { duration: 4500 });
     }
     prevConflictCountRef.current = conflicts.length;
-  }, [conflicts]);
+  }, [conflicts, open]);
 
   // Khi click vào slot đã bị chiếm trên timeline -> Báo lỗi ngay lập tức
   const handleConflictSlotClick = (

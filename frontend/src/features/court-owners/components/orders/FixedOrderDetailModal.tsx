@@ -1084,17 +1084,19 @@ export function FixedOrderDetailModal({
       )}
 
       {/* Modal thêm chu kỳ mới */}
-      <FixedVisualBookingModal
-        open={isAddCycleOpen}
-        onOpenChange={setIsAddCycleOpen}
-        branchId={displayOrder.branchId}
-        branchName={displayOrder.branchName}
-        excludeOrderCode={displayOrder.orderCode}
-        existingCycles={allExistingCyclesForAdd}
-        title="Thêm chu kỳ mới vào đơn hàng cố định"
-        confirmText="Thêm chu kỳ mới"
-        onSaveCycle={handleSaveNewCycle}
-      />
+      {isAddCycleOpen && (
+        <FixedVisualBookingModal
+          open={isAddCycleOpen}
+          onOpenChange={setIsAddCycleOpen}
+          branchId={displayOrder.branchId}
+          branchName={displayOrder.branchName}
+          excludeOrderCode={displayOrder.orderCode}
+          existingCycles={allExistingCyclesForAdd}
+          title="Thêm chu kỳ mới vào đơn hàng cố định"
+          confirmText="Thêm chu kỳ mới"
+          onSaveCycle={handleSaveNewCycle}
+        />
+      )}
 
       {/* Modal xác nhận xóa chu kỳ */}
       {cycleToDelete && (
