@@ -174,3 +174,39 @@ export interface OneTimeBookingScheduleDto {
   occupiedSlots: OccupiedSlotDto[];
 }
 
+export interface OccupiedSlotDetailDto {
+  courtId: string;
+  courtName: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm:ss
+  endTime: string; // HH:mm:ss
+  status: TimelineSlotStatus;
+  orderCode?: string | null;
+  customerName?: string | null;
+  title?: string | null;
+}
+
+export interface CourtTypeScheduleItemDto {
+  courtTypeId: string;
+  courtTypeName: string;
+  courts: CourtTimelineItemDto[];
+  occupiedSlots: OccupiedSlotDetailDto[];
+}
+
+export interface DayOfWeekScheduleDto {
+  dayOfWeek: number;
+  dayOfWeekNumber: number; // 2 -> 8 (CN)
+  dayOfWeekName: string; // "Thứ 2", "Thứ 3", ..., "Chủ nhật"
+  courtTypes: CourtTypeScheduleItemDto[];
+}
+
+export interface TimeBookingScheduleDto {
+  branchId: string;
+  branchName: string;
+  fromDate: string;
+  toDate: string;
+  openTime: string;
+  closeTime: string;
+  schedules: DayOfWeekScheduleDto[];
+}
+

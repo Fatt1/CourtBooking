@@ -25,8 +25,8 @@ interface AddTransactionModalProps {
   onOpenChange: (open: boolean) => void;
   orderId: string;
   orderCode?: string;
-  totalAmount: number;
-  totalPaid: number;
+  totalAmount?: number;
+  totalPaid?: number;
   onSuccess?: () => void;
 }
 
@@ -35,18 +35,20 @@ export function AddTransactionModal({
   onOpenChange,
   orderId,
   orderCode,
-  totalAmount,
-  totalPaid,
+  totalAmount = 0,
+  totalPaid = 0,
   onSuccess,
 }: AddTransactionModalProps) {
-  const diff = totalAmount - totalPaid;
+  const safeTotal = totalAmount ?? 0;
+  const safePaid = totalPaid ?? 0;
+  const diff = safeTotal - safePaid;
   // diff > 0: khách còn nợ (cần thu thêm)
   // diff < 0: khách trả dư (cần hoàn lại)
 
   const [type, setType] = useState<PaymentTransactionType>(
     diff < 0 ? PaymentTransactionType.Refund : PaymentTransactionType.Payment
   );
-  const [amount, setAmount] = useState<number>(Math.abs(diff));
+  const [amount, setAmount] = useState<number>(Math.abs(diff) || 0);
   const [method, setMethod] = useState<PaymentMethod>(PaymentMethod.QrTransfer);
 
   // Ảnh chứng từ chuyển khoản
@@ -164,14 +166,14 @@ export function AddTransactionModal({
           <div className="flex items-center justify-between text-slate-300">
             <span>Tổng tiền đơn hàng:</span>
             <span className="font-bold text-white text-sm">
-              {totalAmount.toLocaleString('vi-VN')}đ
+              {safeTotal.toLocaleString('vi-VN')}đ
             </span>
           </div>
 
           <div className="flex items-center justify-between text-slate-300">
             <span>Đã thanh toán thực tế:</span>
             <span className="font-bold text-[#a3e635] text-sm">
-              {totalPaid.toLocaleString('vi-VN')}đ
+              {safePaid.toLocaleString('vi-VN')}đ
             </span>
           </div>
 

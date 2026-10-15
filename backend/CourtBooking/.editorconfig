@@ -22,7 +22,7 @@ dotnet_sort_system_directives_first = true
 
 # this. and Me. preferences
 dotnet_style_qualification_for_event = false:error
-dotnet_style_qualification_for_field = false:error
+dotnet_style_qualification_for_field = falsea:error
 dotnet_style_qualification_for_method = false:error
 dotnet_style_qualification_for_property = false:error
 

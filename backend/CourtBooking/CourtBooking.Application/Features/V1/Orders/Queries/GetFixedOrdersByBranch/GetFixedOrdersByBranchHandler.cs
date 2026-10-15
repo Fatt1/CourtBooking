@@ -57,15 +57,17 @@ public sealed class GetFixedOrdersByBranchHandler(
         // 4. Đếm tổng số bản ghi
         var totalCount = await query.CountAsync(cancellationToken);
 
-        // 5. Phân trang và tải dữ liệu các chu kì
+        // 5. Phân trang và tải dữ liệu các chu kì kèm thông tin sân
         var orders = await query
             .OrderByDescending(o => o.CreatedAt)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Include(o => o.FixedConfigs)
+                .ThenInclude(f => f.Courts)
+                    .ThenInclude(fc => fc.Court)
             .ToListAsync(cancellationToken);
 
-        // 6. Ánh xạ sang DTO chỉ gồm ngày bắt đầu và ngày kết thúc của chu kì
+        // 6. Ánh xạ sang DTO
         var items = orders.Select(o => new FixedOrderDto(
             o.Id,
             o.OrderCode,
@@ -81,12 +83,28 @@ public sealed class GetFixedOrdersByBranchHandler(
             o.DiscountAmount,
             o.Note,
             o.CreatedAt,
-            o.FixedConfigs.Select(f => new FixedOrderCycleSummaryDto(
-                f.StartTime,
-                f.EndTime,
-                f.Id,
-                f.StartDate,
-                f.EndDate)).ToList()
+            o.FixedConfigs.Select(f => {
+                var dayNames = new List<string>();
+                if ((f.DaysOfWeekMask & (1 << 1)) != 0) dayNames.Add("Thứ 2");
+                if ((f.DaysOfWeekMask & (1 << 2)) != 0) dayNames.Add("Thứ 3");
+                if ((f.DaysOfWeekMask & (1 << 3)) != 0) dayNames.Add("Thứ 4");
+                if ((f.DaysOfWeekMask & (1 << 4)) != 0) dayNames.Add("Thứ 5");
+                if ((f.DaysOfWeekMask & (1 << 5)) != 0) dayNames.Add("Thứ 6");
+                if ((f.DaysOfWeekMask & (1 << 6)) != 0) dayNames.Add("Thứ 7");
+                if ((f.DaysOfWeekMask & (1 << 0)) != 0) dayNames.Add("Chủ nhật");
+
+                var courtNames = f.Courts.Select(c => c.Court.Name).ToList();
+
+                return new FixedOrderCycleSummaryDto(
+                    f.StartTime,
+                    f.EndTime,
+                    f.Id,
+                    f.StartDate,
+                    f.EndDate,
+                    f.DaysOfWeekMask,
+                    dayNames,
+                    courtNames);
+            }).ToList()
         )).ToList();
 
         var pagedList = new PagedList<FixedOrderDto>(items, totalCount, request.Page, request.PageSize);

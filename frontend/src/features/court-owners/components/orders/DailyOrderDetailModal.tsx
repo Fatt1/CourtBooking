@@ -27,6 +27,7 @@ import { getApiErrorMessage } from '@/types/api';
 import {
   useDailyOrderDetailQuery,
   useConfirmOrderMutation,
+  useUpdateOrderItemsMutation,
   OrderStatus,
   getOrderStatusLabel,
   getOrderStatusVariant,
@@ -36,6 +37,7 @@ import {
   type DailyOrderResponse,
   type DailyOrderSlotItemDto,
   type PaymentTransactionDto,
+  type CourtBookingSlotPayload,
 } from '@/api/orders';
 import { getImageUrl } from '@/api/storage';
 import { UpdateCustomerModal } from './UpdateCustomerModal';
@@ -43,6 +45,8 @@ import { CancelOrderModal } from './CancelOrderModal';
 import { AddServiceModal } from './AddServiceModal';
 import { ConfirmCompleteOrderModal } from './ConfirmCompleteOrderModal';
 import { AddTransactionModal } from './AddTransactionModal';
+import { VisualBookingModal } from './VisualBookingModal';
+import { type SelectedCourtSlot, timeToMinutes } from './timeline';
 
 interface DailyOrderDetailModalProps {
   open: boolean;
@@ -92,6 +96,7 @@ export function DailyOrderDetailModal({
 }: DailyOrderDetailModalProps) {
   const { data: order, isLoading, refetch } = useDailyOrderDetailQuery(orderId);
   const { mutateAsync: confirmOrder, isPending: isConfirming } = useConfirmOrderMutation();
+  const { mutateAsync: updateOrderItems, isPending: isUpdatingSlots } = useUpdateOrderItemsMutation();
 
   // Sub-modals
   const [isUpdateCustomerOpen, setIsUpdateCustomerOpen] = useState(false);
@@ -99,6 +104,7 @@ export function DailyOrderDetailModal({
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
   const [isConfirmCompleteOpen, setIsConfirmCompleteOpen] = useState(false);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
+  const [isEditSlotsOpen, setIsEditSlotsOpen] = useState(false);
   const [showPriceDetail, setShowPriceDetail] = useState(false);
 
   // Xem trước ảnh biên lai thanh toán
@@ -167,6 +173,99 @@ export function DailyOrderDetailModal({
         return;
       }
       setIsConfirmCompleteOpen(true);
+    }
+  };
+
+  // Danh sách slot ban đầu phục vụ modal chọn lịch trực quan
+  const initialSlotsForEdit: SelectedCourtSlot[] = useMemo(() => {
+    if (!order?.slots || order.slots.length === 0) return [];
+    return order.slots.map((s) => ({
+      courtId: s.courtId,
+      courtName: s.courtName || '',
+      courtTypeId: s.courtTypeId || (s as any).courTypeId || '',
+      courtTypeName: s.courtTypeName || '',
+      date: s.date?.split('T')[0] || todayStr,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      priceTableId: '',
+      priceTableName: '',
+      price: s.price || 0,
+    }));
+  }, [order?.slots, todayStr]);
+
+  const initialDateForEdit = useMemo(() => {
+    return order?.slots?.[0]?.date?.split('T')[0] || todayStr;
+  }, [order?.slots, todayStr]);
+
+  // Xử lý cập nhật danh sách ca sân (Order Details)
+  const handleUpdateSlots = async (newSlots: SelectedCourtSlot[]) => {
+    if (!order) return;
+    if (newSlots.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một ca sân.');
+      return;
+    }
+
+    // Kiểm tra xem có thêm slot mới nào không hay chỉ giữ / xóa bớt slot cũ
+    const hasAnyNewSlot = newSlots.some((ns) => {
+      const nsDate = ns.date?.split('T')[0];
+      const nsStart = timeToMinutes(ns.startTime);
+      const nsEnd = timeToMinutes(ns.endTime);
+
+      return !order.slots.some((os) => {
+        const osDate = os.date?.split('T')[0];
+        const osStart = timeToMinutes(os.startTime);
+        const osEnd = timeToMinutes(os.endTime);
+        return (
+          os.courtId === ns.courtId &&
+          osDate === nsDate &&
+          nsStart >= osStart &&
+          nsEnd <= osEnd
+        );
+      });
+    });
+
+    const groupMap: Record<string, { courtTypeId: string; priceTableId?: string; slots: any[] }> = {};
+
+    newSlots.forEach((slot) => {
+      // Đảm bảo courtTypeId luôn có giá trị GUID hợp lệ
+      const courtTypeId =
+        slot.courtTypeId ||
+        order.slots.find((s) => s.courtId === slot.courtId)?.courtTypeId ||
+        (order.slots.find((s) => s.courtId === slot.courtId) as any)?.courTypeId ||
+        '';
+
+      // Nếu không có slot mới nào (chỉ xóa / giữ ca cũ) -> bỏ đi priceTableId theo yêu cầu
+      const priceTableId = hasAnyNewSlot ? (slot.priceTableId || undefined) : undefined;
+
+      const groupKey = `${courtTypeId}__${priceTableId || 'no_pt'}`;
+      if (!groupMap[groupKey]) {
+        groupMap[groupKey] = {
+          courtTypeId,
+          priceTableId: priceTableId || undefined,
+          slots: [],
+        };
+      }
+      groupMap[groupKey].slots.push({
+        courtId: slot.courtId,
+        date: slot.date?.split('T')[0] || todayStr,
+        startTime: slot.startTime.length === 5 ? `${slot.startTime}:00` : slot.startTime,
+        endTime: slot.endTime.length === 5 ? `${slot.endTime}:00` : slot.endTime,
+      });
+    });
+
+    const courtBookingSlots: CourtBookingSlotPayload[] = Object.values(groupMap);
+
+    try {
+      await updateOrderItems({
+        orderId: order.id,
+        courtBookingSlots,
+      });
+      toast.success('Cập nhật lịch đặt sân thành công!');
+      setIsEditSlotsOpen(false);
+      refetch();
+      onOrderUpdated?.();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Không thể cập nhật lịch sân'));
     }
   };
 
@@ -239,6 +338,7 @@ export function DailyOrderDetailModal({
 
   const isActionPending = isConfirming;
   const isTerminalState = isCompleted || isCancelled;
+  const canEditSlots = !isTerminalState;
   const isPrimaryDisabled =
     isTerminalState || isActionPending || (isConfirmed && isBeforePlayDate);
 
@@ -370,7 +470,18 @@ export function DailyOrderDetailModal({
                   <div className="pt-1 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-300 font-medium">Sân & Thời gian chơi:</span>
-                      <Grid className="size-4 text-[#a3e635]" />
+                      {canEditSlots ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditSlotsOpen(true)}
+                          className="size-7 sm:size-8 rounded-lg bg-[#1a2742] border border-border/60 hover:bg-[#223354] text-white flex items-center justify-center cursor-pointer transition-colors"
+                          title="Chỉnh sửa sân & thời gian chơi"
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
+                      ) : (
+                        <Grid className="size-4 text-slate-500" />
+                      )}
                     </div>
 
                     {Object.keys(groupedSlotsByDate).length > 0 ? (
@@ -797,6 +908,21 @@ export function DailyOrderDetailModal({
           onOrderUpdated?.();
         }}
       />
+
+      {displayOrder.branchId && (
+        <VisualBookingModal
+          open={isEditSlotsOpen}
+          onOpenChange={setIsEditSlotsOpen}
+          branchId={displayOrder.branchId}
+          branchName={displayOrder.branchName}
+          initialDate={initialDateForEdit}
+          initialSlots={initialSlotsForEdit}
+          excludeOrderCode={displayOrder.orderCode}
+          title={`Cập nhật lịch sân #${displayOrder.orderCode}`}
+          confirmText={isUpdatingSlots ? 'Đang lưu...' : 'Lưu thay đổi lịch sân'}
+          onConfirm={handleUpdateSlots}
+        />
+      )}
     </>
   );
 }

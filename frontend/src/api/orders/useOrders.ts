@@ -12,6 +12,8 @@ import {
   type UpdateOrderServicesPayload,
   type AddPaymentTransactionPayload,
   type CreateOrderByOwnerPayload,
+  type CreateFixedOrderByOwnerPayload,
+  type UpdateOrderItemsPayload,
 } from './types';
 
 // ============================================================================
@@ -221,5 +223,261 @@ export function useCreateOrderByOwnerMutation() {
     },
   });
 }
+
+/**
+ * Cập nhật danh sách ca sân (OrderDetails / Items) của đơn hàng
+ * PUT /api/v1/owner/orders/{id}/items
+ */
+export async function updateOrderItems(payload: UpdateOrderItemsPayload): Promise<void> {
+  await apiClient.put(API_ENDPOINTS.ORDERS.UPDATE_ITEMS(payload.orderId), {
+    orderId: payload.orderId,
+    courtBookingSlots: payload.courtBookingSlots,
+  });
+}
+
+export function useUpdateOrderItemsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateOrderItems,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'orders', 'daily-detail', variables.orderId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'one-time-booking'] });
+    },
+  });
+}
+
+/**
+ * Tạo đơn đặt lịch cố định từ chủ sân
+ * POST /api/v1/owner/orders/fixed
+ */
+export async function createFixedOrderByOwner(payload: CreateFixedOrderByOwnerPayload): Promise<string> {
+  const response = await apiClient.post<string>(API_ENDPOINTS.ORDERS.FIXED_LIST, payload);
+  return response as unknown as string;
+}
+
+export function useCreateFixedOrderByOwnerMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createFixedOrderByOwner,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'one-time-booking'] });
+    },
+  });
+}
+
+/**
+ * Hook lấy danh sách đơn đặt lịch cố định tại chi nhánh (GET /api/v1/owner/orders/fixed)
+ */
+export function useFixedOrdersQuery(params: import('./types').GetFixedOrdersParams) {
+  const { isAuthenticated, user } = useAuthStore();
+  const isOwner = user?.role === 'CourtOwner' || user?.role === 'Admin';
+
+  return useQuery<PagedList<import('./types').FixedOrderDto>>({
+    queryKey: ['owner', 'orders', 'fixed-list', params],
+    queryFn: async (): Promise<PagedList<import('./types').FixedOrderDto>> => {
+      if (!params.branchId) {
+        return {
+          items: [],
+          totalCount: 0,
+          page: params.page || 1,
+          pageSize: params.pageSize || 10,
+          totalPages: 0,
+          hasPrevious: false,
+          hasNext: false,
+        };
+      }
+
+      const response = await apiClient.get<PagedList<import('./types').FixedOrderDto>>(
+        API_ENDPOINTS.ORDERS.FIXED_LIST,
+        { params }
+      );
+      return (
+        (response as unknown as PagedList<import('./types').FixedOrderDto>) || {
+          items: [],
+          totalCount: 0,
+          page: params.page || 1,
+          pageSize: params.pageSize || 10,
+          totalPages: 0,
+          hasPrevious: false,
+          hasNext: false,
+        }
+      );
+    },
+    enabled: isAuthenticated && isOwner && !!params.branchId,
+    staleTime: 1000 * 30,
+  });
+}
+
+/**
+ * Hook lấy chi tiết đơn đặt lịch cố định (GET /api/v1/owner/orders/fixed/{id})
+ */
+export function useFixedOrderDetailQuery(orderId: string | null) {
+  const { isAuthenticated, user } = useAuthStore();
+  const isOwner = user?.role === 'CourtOwner' || user?.role === 'Admin';
+
+  return useQuery<import('./types').FixedOrderResponse>({
+    queryKey: ['owner', 'orders', 'fixed-detail', orderId],
+    queryFn: async (): Promise<import('./types').FixedOrderResponse> => {
+      if (!orderId) throw new Error('orderId is required');
+
+      const response = await apiClient.get<import('./types').FixedOrderResponse>(
+        API_ENDPOINTS.ORDERS.FIXED_DETAIL(orderId)
+      );
+      return response as unknown as import('./types').FixedOrderResponse;
+    },
+    enabled: isAuthenticated && isOwner && !!orderId,
+  });
+}
+
+/**
+ * Hook hủy / xóa 1 ca sân lẻ trong đơn hàng kèm hoàn tiền nếu có
+ * PUT /api/v1/owner/orders/{orderId}/slots/{orderDetailId}/cancellation
+ */
+export function useCancelOrderSlotMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      orderDetailId,
+      ...payload
+    }: import('./types').CancelOrderSlotPayload) => {
+      return await apiClient.put(
+        API_ENDPOINTS.ORDERS.CANCEL_SLOT(orderId, orderDetailId),
+        payload
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'orders', 'fixed-detail', variables.orderId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'orders', 'daily-detail', variables.orderId],
+      });
+    },
+  });
+}
+
+/**
+ * Hook thêm ca sân lẻ vào đơn hàng (đơn ngày hoặc đơn cố định)
+ * POST /api/v1/owner/orders/{orderId}/slots
+ */
+export function useAddOrderSlotsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      courtSlots,
+    }: import('./types').AddOrderSlotsPayload) => {
+      return await apiClient.post(API_ENDPOINTS.ORDERS.ADD_SLOTS(orderId), {
+        orderId,
+        courtSlots,
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'orders', 'fixed-detail', variables.orderId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'orders', 'daily-detail', variables.orderId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'one-time-booking'] });
+    },
+  });
+}
+
+/**
+ * Hook thêm chu kì cố định mới vào đơn hàng
+ * POST /api/v1/owner/orders/fixed/{orderId}/cycles
+ */
+export function useAddFixedOrderCycleMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      ...payload
+    }: import('./types').AddFixedOrderCyclePayload) => {
+      return await apiClient.post(
+        API_ENDPOINTS.ORDERS.ADD_FIXED_CYCLE(orderId),
+        payload
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'orders', 'fixed-detail', variables.orderId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+    },
+  });
+}
+
+/**
+ * Hook cập nhật chu kì cố định của đơn hàng
+ * PUT /api/v1/owner/orders/fixed/{orderId}/cycles/{cycleId}
+ */
+export function useUpdateFixedOrderCycleMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      cycleId,
+      ...payload
+    }: import('./types').UpdateFixedOrderCyclePayload) => {
+      return await apiClient.put(
+        API_ENDPOINTS.ORDERS.UPDATE_FIXED_CYCLE(orderId, cycleId),
+        payload
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'orders', 'fixed-detail', variables.orderId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+    },
+  });
+}
+
+/**
+ * Hook xóa một chu kì cố định khỏi đơn hàng
+ * DELETE /api/v1/owner/orders/fixed/{orderId}/cycles/{cycleId}
+ */
+export function useDeleteFixedOrderCycleMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      cycleId,
+    }: import('./types').DeleteFixedOrderCyclePayload) => {
+      return await apiClient.delete(
+        API_ENDPOINTS.ORDERS.DELETE_FIXED_CYCLE(orderId, cycleId)
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'orders', 'fixed-detail', variables.orderId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+    },
+  });
+}
+
+
 
 

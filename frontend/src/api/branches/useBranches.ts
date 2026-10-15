@@ -12,6 +12,7 @@ import type {
   PagedList,
   SearchBranchesParams,
   OneTimeBookingScheduleDto,
+  TimeBookingScheduleDto,
 } from './types';
 
 // ==========================================
@@ -201,4 +202,30 @@ export function useOneTimeBookingQuery(branchId?: string, date?: string) {
     staleTime: 1000 * 30, // 30s cache
   });
 }
+
+/**
+ * Lấy lịch đặt sân theo khoảng ngày (tối đa 1 tháng) nhóm theo Thứ và Loại sân
+ * GET /api/v1/owner/branches/get-from-time-booking?branchId={branchId}&fromDate={fromDate}&toDate={toDate}
+ */
+export async function getFromTimeBooking(
+  branchId: string,
+  fromDate: string,
+  toDate: string
+): Promise<TimeBookingScheduleDto> {
+  const response = await apiClient.get<TimeBookingScheduleDto>(
+    API_ENDPOINTS.BRANCHES.OWNER_GET_FROM_TIME_BOOKING,
+    { params: { branchId, fromDate, toDate } }
+  );
+  return response as unknown as TimeBookingScheduleDto;
+}
+
+export function useFromTimeBookingQuery(branchId?: string, fromDate?: string, toDate?: string) {
+  return useQuery<TimeBookingScheduleDto>({
+    queryKey: ['branches', 'from-time-booking', branchId, fromDate, toDate],
+    queryFn: () => getFromTimeBooking(branchId!, fromDate!, toDate!),
+    enabled: Boolean(branchId && fromDate && toDate),
+    staleTime: 1000 * 30, // 30s cache
+  });
+}
+
 

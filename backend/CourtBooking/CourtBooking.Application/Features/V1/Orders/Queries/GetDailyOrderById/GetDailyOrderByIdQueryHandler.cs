@@ -45,7 +45,7 @@ public class GetDailyOrderByIdQueryHandler : IQueryHandler<GetDailyOrderByIdQuer
                     OrderDetailId: od.Id,
                     CourtId: od.CourtId,
                     CourtName: od.Court.Name,
-                     CourTypeId: od.Court.CourtTypeId,
+                    CourtTypeId: od.Court.CourtTypeId,
                     CourtTypeName: od.Court.CourtType.Name,
                     Date: od.Date,
                     StartTime: od.StartTime,

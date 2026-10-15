@@ -10,6 +10,7 @@ using CourtBooking.Application.Features.V1.Branches.Queries.GetOwnerBranches;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetPublicBranchById;
 using CourtBooking.Application.Features.V1.Branches.Queries.SearchPublicBranches;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetOneTimeBooking;
+using CourtBooking.Application.Features.V1.Branches.Queries.GetFromTimeBooking;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -48,6 +49,23 @@ public sealed class BranchEndpoints : IEndpointGroup
         .WithName("GetOneTimeBookingScheduleSingular")
         .WithSummary("Lấy lịch đặt sân theo ngày để hiển thị timeline (alias số ít)")
         .Produces<OneTimeBookingScheduleDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        singularBranchGroup.MapGet("/get-from-time-booking", async (
+            [FromQuery] Guid branchId,
+            [FromQuery] DateOnly fromDate,
+            [FromQuery] DateOnly toDate,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetFromTimeBookingQuery(branchId, fromDate, toDate);
+            var result = await sender.Send(query, ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+        .WithName("GetFromTimeBookingScheduleSingular")
+        .WithSummary("Lấy lịch đặt sân theo khoảng ngày (tối đa 1 tháng) nhóm theo Thứ và Loại sân (alias số ít)")
+        .Produces<TimeBookingScheduleDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
     }
@@ -135,6 +153,24 @@ public sealed class BranchEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapGet("/get-from-time-booking", async (
+            [FromQuery] Guid branchId,
+            [FromQuery] DateOnly fromDate,
+            [FromQuery] DateOnly toDate,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetFromTimeBookingQuery(branchId, fromDate, toDate);
+            var result = await sender.Send(query, ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+        .WithName("GetFromTimeBookingSchedule")
+        .WithSummary("Lấy lịch đặt sân theo khoảng ngày (tối đa 1 tháng) nhóm theo Thứ và Loại sân")
+        .WithDescription("Trả về danh sách các sân theo loại sân và các slot đã đặt trong khoảng ngày, gom nhóm theo Thứ trong tuần.")
+        .Produces<TimeBookingScheduleDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
     }
 
     public void MapToOwner(RouteGroupBuilder group)
@@ -152,6 +188,23 @@ public sealed class BranchEndpoints : IEndpointGroup
         .WithName("GetOwnerOneTimeBookingSchedule")
         .WithSummary("Chủ sân lấy lịch đặt sân theo ngày để hiển thị timeline")
         .Produces<OneTimeBookingScheduleDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapGet("/get-from-time-booking", async (
+            [FromQuery] Guid branchId,
+            [FromQuery] DateOnly fromDate,
+            [FromQuery] DateOnly toDate,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetFromTimeBookingQuery(branchId, fromDate, toDate);
+            var result = await sender.Send(query, ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+        .WithName("GetOwnerFromTimeBookingSchedule")
+        .WithSummary("Chủ sân lấy lịch đặt sân theo khoảng ngày (tối đa 1 tháng) nhóm theo Thứ và Loại sân")
+        .Produces<TimeBookingScheduleDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound);
 

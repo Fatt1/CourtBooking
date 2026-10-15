@@ -175,14 +175,15 @@ export function CreateDailyOrderModal({
     // 3. Gom slots theo (CourtTypeId + PriceTableId) theo đúng format backend
     // Các slot liền kề cùng sân đã được gộp thành 1 slot duy nhất -> Tạo đúng 1 OrderDetail
     // Các slot khác sân hoặc không liền kề vẫn là các slot riêng biệt -> Tạo OrderDetail riêng biệt
-    const groupMap: Record<string, { courtTypeId: string; priceTableId: string; slots: any[] }> = {};
+    const groupMap: Record<string, { courtTypeId: string; priceTableId?: string; slots: any[] }> = {};
 
     mergedSelectedSlots.forEach((slot) => {
-      const key = `${slot.courtTypeId}__${slot.priceTableId}`;
+      const ptKey = slot.priceTableId || 'default';
+      const key = `${slot.courtTypeId}__${ptKey}`;
       if (!groupMap[key]) {
         groupMap[key] = {
           courtTypeId: slot.courtTypeId,
-          priceTableId: slot.priceTableId,
+          priceTableId: slot.priceTableId || undefined,
           slots: [],
         };
       }
@@ -509,7 +510,10 @@ export function CreateDailyOrderModal({
           branchId={activeBranchId}
           branchName={activeBranchName}
           initialSlots={selectedSlots}
-          onConfirm={(slots) => setSelectedSlots(slots)}
+          onConfirm={(slots) => {
+            setSelectedSlots(slots);
+            toast.success(`Đã chọn ${slots.length} ca sân thành công!`);
+          }}
         />
       )}
 
