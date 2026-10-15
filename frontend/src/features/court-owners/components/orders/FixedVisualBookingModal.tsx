@@ -102,9 +102,10 @@ export function FixedVisualBookingModal({
   confirmText = 'Xác nhận lưu chu kỳ',
   onSaveCycle,
 }: FixedVisualBookingModalProps) {
-  // 1. Quản lý Tháng áp dụng (Yêu cầu: chỉ trong 1 tháng duy nhất, không vượt qua tháng khác)
-  const initialMonthStr = useMemo(() => format(new Date(), 'yyyy-MM'), []);
-  const [selectedMonth, setSelectedMonth] = useState(initialMonthStr); // "YYYY-MM"
+  // 1. Quản lý Tháng áp dụng (Yêu cầu: chỉ trong 1 tháng duy nhất, không vượt qua tháng khác và không chọn tháng quá khứ)
+  const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const currentMonthStr = useMemo(() => format(new Date(), 'yyyy-MM'), []);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthStr); // "YYYY-MM"
 
   // Giới hạn ngày đầu và ngày cuối của tháng được chọn
   const { monthStartStr, monthEndStr } = useMemo(() => {
@@ -123,16 +124,68 @@ export function FixedVisualBookingModal({
     }
   }, [selectedMonth]);
 
-  // Khoảng ngày chu kỳ: luôn bị chặn trong phạm vi [monthStartStr, monthEndStr]
-  const [startDate, setStartDate] = useState(monthStartStr);
+  // Ngày bắt đầu tối thiểu hợp lệ: Tháng hiện tại -> tối thiểu là hôm nay (todayStr); Tháng tương lai -> đầu tháng (monthStartStr)
+  const effectiveMinDate = useMemo(() => {
+    if (selectedMonth <= currentMonthStr) {
+      return todayStr;
+    }
+    return monthStartStr;
+  }, [selectedMonth, currentMonthStr, todayStr, monthStartStr]);
+
+  // Khoảng ngày chu kỳ: mặc định bắt đầu từ hôm nay, không được là ngày quá khứ
+  const [startDate, setStartDate] = useState(effectiveMinDate);
   const [endDate, setEndDate] = useState(monthEndStr);
 
-  // Khi đổi tháng -> tự động cập nhật ngày bắt đầu và kết thúc theo tháng đó
+  // Khi đổi tháng -> tự động cập nhật ngày bắt đầu (luôn từ effectiveMinDate trở đi) và kết thúc theo tháng đó
   useEffect(() => {
-    setStartDate(monthStartStr);
+    setStartDate(effectiveMinDate);
     setEndDate(monthEndStr);
     setExceptionDates([]);
-  }, [monthStartStr, monthEndStr]);
+  }, [effectiveMinDate, monthEndStr]);
+
+  const handleMonthChange = (val: string) => {
+    if (!val) return;
+    if (val < currentMonthStr) {
+      toast.warning('Không thể chọn tháng trong quá khứ.');
+      setSelectedMonth(currentMonthStr);
+      return;
+    }
+    setSelectedMonth(val);
+  };
+
+  const handleStartDateChange = (val: string) => {
+    if (val && val < effectiveMinDate) {
+      toast.warning(
+        `Không được chọn ngày trong quá khứ. Đã tự động điều chỉnh về hôm nay (${format(
+          parseISO(effectiveMinDate),
+          'dd/MM/yyyy'
+        )}).`
+      );
+      setStartDate(effectiveMinDate);
+      return;
+    }
+    if (val && val > monthEndStr) {
+      setStartDate(monthEndStr);
+      return;
+    }
+    setStartDate(val);
+    if (endDate && val > endDate) {
+      setEndDate(val);
+    }
+  };
+
+  const handleEndDateChange = (val: string) => {
+    if (val && val < (startDate || effectiveMinDate)) {
+      toast.warning('Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.');
+      setEndDate(startDate || effectiveMinDate);
+      return;
+    }
+    if (val && val > monthEndStr) {
+      setEndDate(monthEndStr);
+      return;
+    }
+    setEndDate(val);
+  };
 
   // 2. Bitmask các thứ trong tuần (Mặc định chọn T2, T4, T6 -> 2 + 8 + 32 = 42)
   const [daysOfWeekMask, setDaysOfWeekMask] = useState<number>(42);
@@ -262,46 +315,68 @@ export function FixedVisualBookingModal({
     }
   }, [courts, selectedCourtIds.length]);
 
-  // RESET HOẶC NẠP DỮ LIỆU CHU KỲ KHI MỞ MODAL
+  // RESET HOẶC NẠP DỮ LIỆU CHU KỲ KHI MỞ MODAL (Chỉ chạy đúng 1 lần khi vừa mở modal)
+  const hasInitializedForOpenRef = useRef(false);
   useEffect(() => {
-    if (open) {
-      if (initialCycle) {
-        setStartTime(initialCycle.startTime ? initialCycle.startTime.slice(0, 5) : '');
-        setEndTime(initialCycle.endTime ? initialCycle.endTime.slice(0, 5) : '');
-        setDaysOfWeekMask(initialCycle.daysOfWeekMask || 2);
-        setExceptionDates(initialCycle.exceptionDates || []);
-        if (initialCycle.startDate) {
-          const baseMonth = initialCycle.startDate.slice(0, 7);
-          setSelectedMonth(baseMonth);
-          setStartDate(initialCycle.startDate);
-          setEndDate(initialCycle.endDate);
-        }
-        if (initialCycle.courtTypeId) {
-          setSelectedCourtTypeId(initialCycle.courtTypeId);
-        }
-        if (initialCycle.priceTableId) {
-          setSelectedPriceTableId(initialCycle.priceTableId);
-        }
-        if (initialCycle.courtIds && initialCycle.courtIds.length > 0) {
-          setSelectedCourtIds(initialCycle.courtIds);
-        }
+    if (!open) {
+      hasInitializedForOpenRef.current = false;
+      return;
+    }
+
+    if (hasInitializedForOpenRef.current) {
+      return; // Đã khởi tạo cho lần mở này, không ghi đè lại khi người dùng đổi tháng hoặc sân
+    }
+    hasInitializedForOpenRef.current = true;
+
+    if (initialCycle) {
+      setStartTime(initialCycle.startTime ? initialCycle.startTime.slice(0, 5) : '');
+      setEndTime(initialCycle.endTime ? initialCycle.endTime.slice(0, 5) : '');
+      setDaysOfWeekMask(initialCycle.daysOfWeekMask || 2);
+      setExceptionDates(initialCycle.exceptionDates || []);
+      if (initialCycle.startDate) {
+        const baseMonth = initialCycle.startDate.slice(0, 7);
+        const safeMonth = baseMonth < currentMonthStr ? currentMonthStr : baseMonth;
+        setSelectedMonth(safeMonth);
+        const safeStart = initialCycle.startDate < todayStr ? todayStr : initialCycle.startDate;
+        setStartDate(safeStart);
+        const safeEnd = initialCycle.endDate < safeStart ? safeStart : initialCycle.endDate;
+        setEndDate(safeEnd);
+      }
+      if (initialCycle.courtTypeId) {
+        setSelectedCourtTypeId(initialCycle.courtTypeId);
+      }
+      if (initialCycle.priceTableId) {
+        setSelectedPriceTableId(initialCycle.priceTableId);
+      }
+      if (initialCycle.courtIds && initialCycle.courtIds.length > 0) {
+        setSelectedCourtIds(initialCycle.courtIds);
+      }
+    } else {
+      setStartTime('');
+      setEndTime('');
+      setDaysOfWeekMask(2); // Mặc định Thứ 2
+      setExceptionDates([]);
+      // Mặc định luôn bắt đầu từ hôm nay, không được phép là ngày quá khứ
+      if (existingCycles && existingCycles.length > 0) {
+        const baseCycle = existingCycles[0];
+        const baseMonth = baseCycle.startDate ? baseCycle.startDate.slice(0, 7) : currentMonthStr;
+        const safeMonth = baseMonth < currentMonthStr ? currentMonthStr : baseMonth;
+        setSelectedMonth(safeMonth);
+        const safeStart =
+          baseCycle.startDate && baseCycle.startDate >= todayStr ? baseCycle.startDate : todayStr;
+        setStartDate(safeStart);
+        const safeEnd =
+          baseCycle.endDate && baseCycle.endDate >= safeStart ? baseCycle.endDate : monthEndStr;
+        setEndDate(safeEnd);
       } else {
-        setStartTime('');
-        setEndTime('');
-        setDaysOfWeekMask(2); // Mặc định Thứ 2
-        setExceptionDates([]);
-        if (existingCycles && existingCycles.length > 0) {
-          const baseCycle = existingCycles[0];
-          const baseMonth = baseCycle.startDate.slice(0, 7);
-          setSelectedMonth(baseMonth);
-          setStartDate(baseCycle.startDate);
-          setEndDate(baseCycle.endDate);
-        }
-        if (courts.length > 0) {
-          setSelectedCourtIds([courts[0].courtId]);
-        } else {
-          setSelectedCourtIds([]);
-        }
+        setSelectedMonth(currentMonthStr);
+        setStartDate(todayStr);
+        setEndDate(monthEndStr);
+      }
+      if (courts.length > 0) {
+        setSelectedCourtIds([courts[0].courtId]);
+      } else {
+        setSelectedCourtIds([]);
       }
     }
   }, [open, initialCycle]);
@@ -682,6 +757,11 @@ export function FixedVisualBookingModal({
       return;
     }
 
+    if (startDate < todayStr) {
+      toast.error('Ngày bắt đầu chu kỳ không được phép là ngày trong quá khứ');
+      return;
+    }
+
     // BÁO LỖI VÀ CHẶN LƯU NẾU CÒN TRÙNG LỊCH
     if (conflicts.length > 0) {
       const first = conflicts[0];
@@ -835,46 +915,55 @@ export function FixedVisualBookingModal({
 
           {/* HÀNG 1: THÁNG ÁP DỤNG & KHOẢNG NGÀY & THỨ TRONG TUẦN */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 bg-card/40 p-4 rounded-xl border border-border/60">
-            {/* Chọn Tháng áp dụng (Bắt buộc trong 1 tháng duy nhất) */}
+            {/* Chọn Tháng áp dụng (Bắt buộc trong 1 tháng duy nhất, không chọn tháng quá khứ) */}
             <div className="md:col-span-3 space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <Calendar className="size-3.5 text-[#a3e635]" />
+              <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <Calendar className="size-3.5 text-white" />
                 Tháng áp dụng
               </label>
               <Input
                 type="month"
+                min={currentMonthStr}
                 value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg font-semibold"
+                onChange={(e) => handleMonthChange(e.target.value)}
+                style={{ colorScheme: 'dark' }}
+                className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg font-semibold text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
               />
               <span className="text-[10px] text-muted-foreground block">
                 Chỉ trong tháng {selectedMonth.slice(5)}/{selectedMonth.slice(0, 4)}
               </span>
             </div>
 
-            {/* Khoảng ngày trong tháng (min/max khóa chặt trong tháng đã chọn) */}
+            {/* Khoảng ngày trong tháng (min/max khóa chặt từ ngày hôm nay đến cuối tháng) */}
             <div className="md:col-span-4 space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">Từ ngày - Đến ngày</label>
+              <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <Calendar className="size-3.5 text-white" />
+                Từ ngày - Đến ngày
+              </label>
               <div className="grid grid-cols-2 gap-2">
                 <Input
                   type="date"
-                  min={monthStartStr}
-                  max={endDate}
+                  min={effectiveMinDate}
+                  max={endDate || monthEndStr}
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg"
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                  style={{ colorScheme: 'dark' }}
+                  className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg font-semibold text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
                 />
                 <Input
                   type="date"
-                  min={startDate}
+                  min={startDate || effectiveMinDate}
                   max={monthEndStr}
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg"
+                  onChange={(e) => handleEndDateChange(e.target.value)}
+                  style={{ colorScheme: 'dark' }}
+                  className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg font-semibold text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
                 />
               </div>
               <span className="text-[10px] text-muted-foreground block">
-                Giới hạn: {monthStartStr} đến {monthEndStr}
+                {selectedMonth === currentMonthStr
+                  ? `Giới hạn: Từ hôm nay (${format(parseISO(todayStr), 'dd/MM/yyyy')}) đến ${format(parseISO(monthEndStr), 'dd/MM/yyyy')}`
+                  : `Giới hạn: ${format(parseISO(monthStartStr), 'dd/MM/yyyy')} đến ${format(parseISO(monthEndStr), 'dd/MM/yyyy')}`}
               </span>
             </div>
 
