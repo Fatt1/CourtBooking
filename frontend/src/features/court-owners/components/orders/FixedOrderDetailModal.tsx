@@ -341,13 +341,7 @@ export function FixedOrderDetailModal({
             <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
               Chi tiết đặt lịch cố định
             </h2>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="size-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer"
-            >
-              <X className="size-4" />
-            </button>
+
           </div>
           <div className="p-16 flex flex-col items-center justify-center gap-3 text-slate-300">
             <div className="size-10 rounded-full border-2 border-[#a3e635]/20 border-t-[#a3e635] animate-spin" />
@@ -460,13 +454,7 @@ export function FixedOrderDetailModal({
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="size-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="size-4" />
-            </button>
+
           </div>
 
           {/* ================================================================= */}
@@ -496,8 +484,8 @@ export function FixedOrderDetailModal({
                       SĐT:{' '}
                       <span
                         className={`font-semibold ${displayOrder.customerPhone && displayOrder.customerPhone !== 'Không cung cấp'
-                            ? 'text-[#a3e635]'
-                            : 'text-slate-400'
+                          ? 'text-[#a3e635]'
+                          : 'text-slate-400'
                           }`}
                       >
                         {displayOrder.customerPhone || 'Không cung cấp'}

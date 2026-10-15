@@ -478,8 +478,7 @@ export function FixedVisualBookingModal({
       `Không thể chọn: ${courtName} vào ${dayLabel} (ngày ${conflict.date}) đã có lịch đặt từ ${conflict.startTime.slice(
         0,
         5
-      )} đến ${conflict.endTime.slice(0, 5)}${
-        conflict.customerName ? ` (${conflict.customerName})` : ''
+      )} đến ${conflict.endTime.slice(0, 5)}${conflict.customerName ? ` (${conflict.customerName})` : ''
       }!`,
       { duration: 5000 }
     );
@@ -508,15 +507,14 @@ export function FixedVisualBookingModal({
             !exceptionDates.includes(occ.date) &&
             (!excludeOrderCode ||
               occ.orderCode?.replace(/^#/, '').trim().toLowerCase() !==
-                excludeOrderCode.replace(/^#/, '').trim().toLowerCase()) &&
+              excludeOrderCode.replace(/^#/, '').trim().toLowerCase()) &&
             Math.max(startMin, timeToMinutes(occ.startTime)) <
-              Math.min(endMin, timeToMinutes(occ.endTime))
+            Math.min(endMin, timeToMinutes(occ.endTime))
         );
 
         if (clash) {
           toast.error(
-            `Cảnh báo trùng lịch: ${courtObj?.courtName || 'Sân'} vào ${day.label} (${
-              clash.date
+            `Cảnh báo trùng lịch: ${courtObj?.courtName || 'Sân'} vào ${day.label} (${clash.date
             }) đã có lịch từ ${clash.startTime.slice(0, 5)} - ${clash.endTime.slice(0, 5)}!`,
             { duration: 4500 }
           );
@@ -752,14 +750,6 @@ export function FixedVisualBookingModal({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="size-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
-            title="Đóng modal"
-          >
-            <X className="size-5" />
-          </button>
         </div>
 
         {/* =================================================================== */}
@@ -902,11 +892,10 @@ export function FixedVisualBookingModal({
                       key={d.bit}
                       type="button"
                       onClick={() => toggleDayOfWeek(d.maskValue)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        isSelected
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isSelected
                           ? 'bg-[#a3e635] text-black shadow-sm'
                           : 'bg-[#0b1324] text-slate-400 border border-border/60 hover:text-white'
-                      }`}
+                        }`}
                     >
                       {d.short}
                     </button>
@@ -1023,11 +1012,10 @@ export function FixedVisualBookingModal({
                       key={item.dateStr}
                       type="button"
                       onClick={() => handleToggleExceptionDate(item.dateStr)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
-                        isExcluded
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${isExcluded
                           ? 'bg-rose-500/15 border-rose-500/50 text-rose-300 line-through'
                           : 'bg-[#0b1324] border-border/60 text-slate-300 hover:border-slate-500'
-                      }`}
+                        }`}
                     >
                       <span>{item.label}</span>
                       {isExcluded ? (
@@ -1062,18 +1050,16 @@ export function FixedVisualBookingModal({
                       key={court.courtId}
                       type="button"
                       onClick={() => handleToggleCourt(court.courtId)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer ${
-                        isChecked
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer ${isChecked
                           ? 'bg-[#a3e635]/15 border-[#a3e635] text-[#a3e635]'
                           : 'bg-[#0b1324] border-border/60 text-slate-300 hover:border-slate-500'
-                      }`}
+                        }`}
                     >
                       <span
-                        className={`size-3.5 rounded flex items-center justify-center border text-[9px] ${
-                          isChecked
+                        className={`size-3.5 rounded flex items-center justify-center border text-[9px] ${isChecked
                             ? 'bg-[#a3e635] border-[#a3e635] text-black font-bold'
                             : 'border-slate-500'
-                        }`}
+                          }`}
                       >
                         {isChecked && <Check className="size-2.5 stroke-[3]" />}
                       </span>
@@ -1151,17 +1137,16 @@ export function FixedVisualBookingModal({
               type="button"
               onClick={handleSave}
               disabled={conflicts.length > 0 || !startTime || !endTime}
-              className={`font-bold text-xs h-9 rounded-xl cursor-pointer ${
-                conflicts.length > 0 || !startTime || !endTime
+              className={`font-bold text-xs h-9 rounded-xl cursor-pointer ${conflicts.length > 0 || !startTime || !endTime
                   ? 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
                   : 'bg-[#a3e635] text-black hover:bg-[#8ece28]'
-              }`}
+                }`}
             >
               {conflicts.length > 0
                 ? 'Bị trùng lịch - Chưa thể lưu'
                 : !startTime || !endTime
-                ? 'Vui lòng chọn giờ trên lưới'
-                : confirmText}
+                  ? 'Vui lòng chọn giờ trên lưới'
+                  : confirmText}
             </Button>
           </div>
         </div>
