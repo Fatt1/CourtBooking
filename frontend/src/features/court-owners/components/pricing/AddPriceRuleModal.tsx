@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Clock, Calendar, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, ChevronDown } from 'lucide-react';
 import { OwnerModal } from '@/features/court-owners/components/shared';
+import { TimeSelect } from '@/components/common';
 
 export interface NewPriceRuleFormValues {
   priceTableId: string;
@@ -16,12 +17,28 @@ export interface NewPriceRuleFormValues {
   minBookingMinutes: number;
 }
 
+export interface PriceRuleToEdit {
+  ruleId: string;
+  priceTableId: string;
+  startTime: string;
+  endTime: string;
+  selectedDays: number[];
+  startDate?: string;
+  endDate?: string;
+  fixedPrice: number;
+  walkInPrice: number;
+  unitMinutes?: number;
+  unitLabel?: string;
+  minBookingMinutes?: number;
+}
+
 interface AddPriceRuleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   availablePriceTables: Array<{ id: string; name: string }>;
   defaultPriceTableId?: string;
-  onSubmit: (values: NewPriceRuleFormValues) => void;
+  ruleToEdit?: PriceRuleToEdit | null;
+  onSubmit: (values: NewPriceRuleFormValues, ruleId?: string) => void;
 }
 
 const dayOptions = [
@@ -39,21 +56,61 @@ export function AddPriceRuleModal({
   onOpenChange,
   availablePriceTables,
   defaultPriceTableId,
+  ruleToEdit,
   onSubmit,
 }: AddPriceRuleModalProps) {
-  const [priceTableId, setPriceTableId] = useState(
-    defaultPriceTableId || availablePriceTables[0]?.id || 'pt-standard'
+  const isEditing = Boolean(ruleToEdit);
+
+  const [priceTableId, setPriceTableId] = useState<string>(
+    ruleToEdit?.priceTableId || defaultPriceTableId || availablePriceTables[0]?.id || ''
   );
-  const [startTime, setStartTime] = useState('06:00');
-  const [endTime, setEndTime] = useState('12:00');
-  const [selectedDays, setSelectedDays] = useState<number[]>([6, 0]); // Mặc định Thứ 7, CN theo ảnh
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startTime, setStartTime] = useState<string>('06:00');
+  const [endTime, setEndTime] = useState<string>('12:00');
+  const [selectedDays, setSelectedDays] = useState<number[]>([6, 0]); // Mặc định Thứ 7, CN
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [fixedPrice, setFixedPrice] = useState<number>(100000);
   const [walkInPrice, setWalkInPrice] = useState<number>(120000);
   const [unitMinutes, setUnitMinutes] = useState<number>(60);
-  const [unitLabel, setUnitLabel] = useState('h');
+  const [unitLabel, setUnitLabel] = useState<string>('h');
   const [minBookingMinutes, setMinBookingMinutes] = useState<number>(60);
+
+  // Đồng bộ dữ liệu khi mở modal hoặc thay đổi chế độ tạo/sửa
+  useEffect(() => {
+    if (open) {
+      if (ruleToEdit) {
+        setPriceTableId(ruleToEdit.priceTableId || availablePriceTables[0]?.id || '');
+        setStartTime(ruleToEdit.startTime || '06:00');
+        setEndTime(ruleToEdit.endTime || '12:00');
+        setSelectedDays(ruleToEdit.selectedDays?.length ? ruleToEdit.selectedDays : [1, 2, 3, 4, 5]);
+        setStartDate(ruleToEdit.startDate || '');
+        setEndDate(ruleToEdit.endDate || '');
+        setFixedPrice(ruleToEdit.fixedPrice ?? 100000);
+        setWalkInPrice(ruleToEdit.walkInPrice ?? 120000);
+        setUnitMinutes(ruleToEdit.unitMinutes ?? 60);
+        setUnitLabel(ruleToEdit.unitLabel ?? 'h');
+        setMinBookingMinutes(ruleToEdit.minBookingMinutes ?? 60);
+      } else {
+        // Mode tạo mới: reset về mặc định và chọn đúng ID bảng giá thật
+        const validDefaultId =
+          defaultPriceTableId && availablePriceTables.some((t) => t.id === defaultPriceTableId)
+            ? defaultPriceTableId
+            : availablePriceTables[0]?.id || '';
+
+        setPriceTableId(validDefaultId);
+        setStartTime('06:00');
+        setEndTime('12:00');
+        setSelectedDays([6, 0]);
+        setStartDate('');
+        setEndDate('');
+        setFixedPrice(100000);
+        setWalkInPrice(120000);
+        setUnitMinutes(60);
+        setUnitLabel('h');
+        setMinBookingMinutes(60);
+      }
+    }
+  }, [open, ruleToEdit, availablePriceTables, defaultPriceTableId]);
 
   const toggleDay = (dayVal: number) => {
     setSelectedDays((prev) =>
@@ -62,19 +119,26 @@ export function AddPriceRuleModal({
   };
 
   const handleFormSubmit = () => {
-    onSubmit({
-      priceTableId,
-      startTime,
-      endTime,
-      selectedDays,
-      startDate,
-      endDate,
-      fixedPrice,
-      walkInPrice,
-      unitMinutes,
-      unitLabel,
-      minBookingMinutes,
-    });
+    // Đảm bảo priceTableId hợp lệ
+    const targetTableId =
+      priceTableId || availablePriceTables[0]?.id || defaultPriceTableId || '';
+
+    onSubmit(
+      {
+        priceTableId: targetTableId,
+        startTime,
+        endTime,
+        selectedDays,
+        startDate,
+        endDate,
+        fixedPrice,
+        walkInPrice,
+        unitMinutes,
+        unitLabel,
+        minBookingMinutes,
+      },
+      ruleToEdit?.ruleId
+    );
     onOpenChange(false);
   };
 
@@ -82,8 +146,8 @@ export function AddPriceRuleModal({
     <OwnerModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Thêm khung giờ giá"
-      submitText="Lưu cấu hình"
+      title={isEditing ? 'Chỉnh sửa khung giờ giá' : 'Thêm khung giờ giá'}
+      submitText={isEditing ? 'Lưu thay đổi' : 'Lưu cấu hình'}
       cancelText="Hủy"
       onSubmit={handleFormSubmit}
       maxWidth="max-w-xl"
@@ -98,7 +162,8 @@ export function AddPriceRuleModal({
             <select
               value={priceTableId}
               onChange={(e) => setPriceTableId(e.target.value)}
-              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground appearance-none pr-10 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] cursor-pointer"
+              disabled={isEditing}
+              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground appearance-none pr-10 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {availablePriceTables.map((tbl) => (
                 <option key={tbl.id} value={tbl.id} className="bg-[#0B1324] text-white">
@@ -110,37 +175,31 @@ export function AddPriceRuleModal({
           </div>
         </div>
 
-        {/* 2. Khung giờ bắt đầu & kết thúc */}
+        {/* 2. Khung giờ bắt đầu & kết thúc (Dùng TimeSelect dropdown) */}
         <div className="grid grid-cols-2 gap-3.5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
-              Khung giờ bắt đầu
-            </label>
-            <div className="relative">
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
-              />
-              <Clock className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            </div>
-          </div>
+          <TimeSelect
+            label="Khung giờ bắt đầu"
+            value={startTime}
+            onChange={setStartTime}
+            stepMinutes={30}
+            startHour={0}
+            endHour={24}
+            required
+            className="space-y-1.5"
+            triggerClassName="h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
+          />
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
-              Khung giờ kết thúc
-            </label>
-            <div className="relative">
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
-              />
-              <Clock className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            </div>
-          </div>
+          <TimeSelect
+            label="Khung giờ kết thúc"
+            value={endTime}
+            onChange={setEndTime}
+            stepMinutes={30}
+            startHour={0}
+            endHour={24}
+            required
+            className="space-y-1.5"
+            triggerClassName="h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
+          />
         </div>
 
         {/* 3. Chọn thứ */}
@@ -204,7 +263,7 @@ export function AddPriceRuleModal({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                placeholder="mm/dd/yyyy"
+                placeholder="yyyy-mm-dd"
                 className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
               />
               <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
@@ -220,7 +279,7 @@ export function AddPriceRuleModal({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                placeholder="mm/dd/yyyy"
+                placeholder="yyyy-mm-dd"
                 className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
               />
               <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />

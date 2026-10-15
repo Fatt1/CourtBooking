@@ -1,69 +1,75 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu,
   PanelLeftClose,
   PanelLeft,
-  Sun,
-  Moon,
+  Search,
   Bell,
   LogOut,
-  ExternalLink,
-  Store,
+  ChevronDown,
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useCourtOwnerLogoutMutation } from '@/api/auth';
 import { useAppThemeStore } from '@/stores/useAppThemeStore';
-import { useBranchStore } from '@/stores/useBranchStore';
-import { useOwnerBranchesQuery } from '@/api/branches';
-import { cn } from '@/lib/utils';
+import { useAdminLogoutMutation } from '@/api/auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
 }
 
 export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
-  const { user } = useAuthStore();
-  const { mutate: logoutCourtOwner } = useCourtOwnerLogoutMutation();
-  const { theme, setTheme, sidebarCollapsed, toggleSidebar } = useAppThemeStore();
-  const { selectedBranchId, setSelectedBranchId, setBranches, clearBranchState } = useBranchStore();
-  const { data: branches = [], isLoading: isLoadingBranches } = useOwnerBranchesQuery();
-
+  const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { sidebarCollapsed, toggleSidebar } = useAppThemeStore();
+  const { mutate: adminLogout } = useAdminLogoutMutation();
+
   const [hasUnreadNotification, setHasUnreadNotification] = useState(true);
 
-  // Tự động đồng bộ danh sách chi nhánh vào store và chọn chi nhánh đầu tiên nếu chưa chọn
-  useEffect(() => {
-    if (branches && branches.length > 0) {
-      setBranches(branches);
-    }
-  }, [branches, setBranches]);
-
-  const handleLogout = () => {
-    clearBranchState();
-    logoutCourtOwner();
-    navigate('/owner/login', { replace: true });
+  // Xác định tiêu đề Breadcrumb động dựa trên Route hiện tại
+  const getPageTitle = (pathname: string) => {
+    if (pathname.includes('/admin/users')) return 'Quản lý người dùng';
+    if (pathname.includes('/admin/owners')) return 'Quản lý chủ sân';
+    if (pathname.includes('/admin/subscriptions')) return 'Gói cước & đăng ký';
+    if (pathname.includes('/admin/sport-types')) return 'Môn thể thao';
+    if (pathname === '/admin') return 'Tổng quan hệ thống';
+    return 'Quản trị hệ thống';
   };
 
-  const isDark = theme === 'dark';
+  const pageTitle = getPageTitle(location.pathname);
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'HA';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const initials = getInitials(user?.name);
+
+  const handleLogout = () => {
+    adminLogout();
+    navigate('/admin/login', { replace: true });
+  };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/60 bg-card/85 px-4 backdrop-blur-md md:px-6">
-      {/* Cụm Bên Trái: Toggle Sidebar & Bộ chọn Chi nhánh theo Figma */}
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-[#16241c] bg-[#0c1410]/90 px-4 backdrop-blur-md md:px-6 select-none">
+      {/* 1. Bên Trái: Toggle sidebar & Breadcrumbs chuẩn CourtOS Console */}
       <div className="flex items-center gap-3">
         {/* Mobile menu trigger */}
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden size-9"
+          className="md:hidden size-9 text-zinc-400 hover:text-white hover:bg-zinc-800"
           onClick={onMenuClick}
           aria-label="Mở menu"
         >
@@ -74,154 +80,103 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="hidden md:inline-flex size-9 text-muted-foreground hover:text-foreground"
+          className="hidden md:inline-flex size-9 text-zinc-400 hover:text-white hover:bg-zinc-800/60"
           onClick={toggleSidebar}
           aria-label="Thu gọn sidebar"
         >
           {sidebarCollapsed ? <PanelLeft className="size-5" /> : <PanelLeftClose className="size-5" />}
         </Button>
 
-        {/* Bộ chọn cơ sở sân (Branch Switcher) động từ Backend theo Chủ sân */}
-        <div className="flex items-center">
-          <Select
-            value={selectedBranchId || ''}
-            onValueChange={(val) => setSelectedBranchId(val)}
-            disabled={isLoadingBranches || branches.length === 0}
-          >
-            <SelectTrigger className="h-9 w-[190px] md:w-[230px] rounded-xl border-border/60 bg-card/70 px-3 text-xs md:text-sm font-semibold focus:ring-1 focus:ring-[#a3e635]/50">
-              <div className="flex items-center gap-2 truncate">
-                <Store className="size-3.5 text-[#a3e635] shrink-0" />
-                <SelectValue
-                  placeholder={
-                    isLoadingBranches
-                      ? 'Đang tải cụm sân...'
-                      : branches.length === 0
-                      ? 'Chưa có cụm sân'
-                      : 'Chọn cụm sân'
-                  }
-                />
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-popover border-border/60 max-h-72">
-              {branches.length === 0 ? (
-                <div className="py-2.5 px-3 text-xs text-muted-foreground text-center">
-                  Chủ sân chưa có chi nhánh
-                </div>
-              ) : (
-                branches.map((b) => (
-                  <SelectItem key={b.id} value={b.id} className="text-xs md:text-sm cursor-pointer">
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="font-semibold">{b.name}</span>
-                      {b.district && (
-                        <span className="text-[11px] text-muted-foreground truncate">
-                          • {b.district}
-                        </span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Breadcrumb Path theo đúng Figma */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-zinc-400">
+          <span className="hidden sm:inline">Không gian quản trị</span>
+          <span className="text-zinc-600 hidden sm:inline">/</span>
+          <span className="text-white font-semibold">{pageTitle}</span>
+        </nav>
       </div>
 
-      {/* Cụm Bên Phải: Pill Switch Light/Dark + Thông báo + Avatar MD theo Figma */}
+      {/* 2. Bên Phải: Tìm kiếm toàn hệ thống + Notification + Avatar Profile */}
       <div className="flex items-center gap-3 md:gap-4">
-        {/* Link xem giao diện người chơi */}
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="hidden xl:flex gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <Link to="/" target="_blank">
-            <span>Xem trang khách</span>
-            <ExternalLink className="size-3.5" />
-          </Link>
-        </Button>
-
-        {/* Pill Theme Switcher chuẩn Figma: [Light | Dark] */}
-        <div
-          className={cn(
-            'flex items-center rounded-full p-0.5 text-xs transition-all border',
-            !isDark
-              ? 'bg-[#E8ECE9] border-slate-300/70'
-              : 'bg-[#0B1324] border-slate-800'
-          )}
-        >
-          <button
-            type="button"
-            onClick={() => setTheme('light')}
-            className={cn(
-              'flex items-center gap-1.5 rounded-full px-3 py-1 transition-all text-xs cursor-pointer',
-              !isDark
-                ? 'bg-[#18231C] text-white shadow-xs font-bold'
-                : 'text-slate-400 hover:text-white font-semibold'
-            )}
-            title="Chế độ sáng"
-          >
-            <Sun className="size-3.5 stroke-[2.2]" />
-            <span className="font-bold">Light</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTheme('dark')}
-            className={cn(
-              'flex items-center gap-1.5 rounded-full px-3 py-1 transition-all text-xs cursor-pointer',
-              isDark
-                ? 'bg-white text-slate-950 shadow-xs font-bold'
-                : 'text-slate-600 hover:text-slate-900 font-semibold'
-            )}
-            title="Chế độ tối"
-          >
-            <svg
-              className="size-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 3a9 9 0 0 0 0 18V3z" fill="currentColor" />
-            </svg>
-            <span className="font-bold">Dark</span>
-          </button>
+        {/* Search input with shortcut badge */}
+        <div className="relative hidden md:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm trong hệ thống..."
+            className="h-9 w-60 lg:w-72 rounded-xl bg-[#111915] border border-[#1b2b22] pl-9 pr-12 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-all"
+          />
+          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5 text-[10px] font-mono font-semibold text-zinc-500 bg-[#16241c] px-1.5 py-0.5 rounded border border-[#213429]">
+            <span>⌘K</span>
+          </div>
         </div>
 
-        {/* Chuông thông báo (Notification Bell) màu vàng hổ phách có chấm đỏ theo Figma */}
+        {/* Notification Bell */}
         <button
           type="button"
           onClick={() => setHasUnreadNotification(false)}
-          className="relative flex size-9 items-center justify-center rounded-full border border-border/60 bg-muted/30 text-amber-400 hover:bg-muted/70 transition-colors cursor-pointer"
-          aria-label="Thông báo"
-          title="Thông báo mới"
+          className="relative flex size-9 items-center justify-center rounded-xl border border-[#1b2b22] bg-[#111915] text-zinc-400 hover:text-white hover:bg-[#16241c] transition-colors cursor-pointer"
+          aria-label="Thông báo hệ thống"
+          title="Thông báo hệ thống"
         >
-          <Bell className="size-4.5 fill-amber-400/20" />
+          <Bell className="size-4" />
           {hasUnreadNotification && (
-            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-rose-500 ring-2 ring-background" />
+            <span className="absolute top-2 right-2 size-2 rounded-full bg-emerald-500 ring-2 ring-[#0c1410]" />
           )}
         </button>
 
-        {/* User Avatar MD (Matchday) hình tròn xanh neon theo Figma */}
-        <div className="flex items-center gap-2 pl-1 border-l border-border/60">
-          <div
-            className="flex size-9 items-center justify-center rounded-full bg-[#a3e635] text-black font-extrabold text-xs shadow-xs select-none"
-            title={user?.name || 'Matchday Owner'}
+        {/* Admin Avatar Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-xl border border-[#1b2b22] bg-[#111915] p-1 pr-2 hover:bg-[#16241c] transition-colors cursor-pointer"
+            >
+              <div className="flex size-7 items-center justify-center rounded-lg bg-[#132c20] border border-emerald-500/30 text-emerald-400 font-extrabold text-xs select-none">
+                {initials}
+              </div>
+              <ChevronDown className="size-3 text-zinc-500 hidden sm:block" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-56 rounded-xl border border-[#1b2b22] bg-[#0f1713] text-zinc-200 shadow-2xl p-1.5"
           >
-            MD
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            title="Đăng xuất"
-            className="size-8 text-muted-foreground hover:text-destructive"
-          >
-            <LogOut className="size-4" />
-          </Button>
-        </div>
+            <DropdownMenuLabel className="font-normal p-2">
+              <div className="flex flex-col space-y-1">
+                <p className="text-xs font-bold text-white leading-none">
+                  {user?.name || 'Hoàng Anh'}
+                </p>
+                <p className="text-[11px] text-zinc-400 leading-none truncate">
+                  {user?.email || 'admin@courtbooking.com'}
+                </p>
+                <span className="inline-block mt-1 w-fit rounded bg-emerald-950/70 border border-emerald-500/25 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+                  {user?.role || 'System Admin'}
+                </span>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-[#1b2b22]" />
+            <DropdownMenuItem
+              onClick={() => navigate('/owner/orders')}
+              className="text-xs cursor-pointer hover:bg-zinc-800/50"
+            >
+              Cổng Quản lý Chủ sân
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigate('/')}
+              className="text-xs cursor-pointer hover:bg-zinc-800/50"
+            >
+              Xem giao diện người chơi
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-[#1b2b22]" />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 cursor-pointer flex items-center gap-2"
+            >
+              <LogOut className="size-3.5" />
+              <span>Đăng xuất CourtOS</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
