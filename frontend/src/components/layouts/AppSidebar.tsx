@@ -47,7 +47,7 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
     { label: 'Sản phẩm', href: '/owner/products', icon: Coffee },
     { label: 'Bán hàng tại quầy', href: '/owner/pos', icon: ShoppingCart },
     { label: 'Ví và giao dịch', href: '/owner/wallet', icon: CreditCard },
-    { label: 'Báo cáo', href: '/owner/reports', icon: LineChart },
+    { label: 'Thống kê', href: '/owner/reports', icon: LineChart },
     { label: 'Gói dịch vụ', href: '/owner/packages', icon: Gem },
   ];
 
