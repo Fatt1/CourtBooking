@@ -9,6 +9,7 @@ import { ProtectedRoute, OwnerProtectedRoute } from '@/components/layouts/Protec
 
 // Customer / Public Pages
 import { HomePage } from '@/features/customer/pages/HomePage';
+import { CreateReviewPage } from '@/features/customer/pages/CreateReviewPage';
 
 
 // Admin Pages
@@ -23,6 +24,8 @@ import { CourtsPage } from '@/features/court-owners/pages/CourtsPage';
 import { ServiceCategoriesPage } from '@/features/court-owners/pages/ServiceCategoriesPage';
 import { PricingPage } from '@/features/court-owners/pages/PricingPage';
 import { CourtOwnerLoginPage } from '@/features/court-owners/pages/CourtOwnerLoginPage';
+import { OwnerReportsPage } from '@/features/court-owners/pages/OwnerReportsPage';
+import { OwnerDashboardPage } from '@/features/court-owners/pages/OwnerDashboardPage';
 
 // Auth Pages
 import { UserLoginPage } from '@/features/auth/pages/UserLoginPage';
@@ -35,6 +38,9 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { path: '/', element: <HomePage /> },
+      // Đánh giá sân
+      { path: '/orders/:orderId/review', element: <CreateReviewPage /> },
+      { path: '/reviews/create', element: <CreateReviewPage /> },
       // Placeholder routes trỏ tạm về HomePage nếu khách click
       { path: '/courts', element: <HomePage /> },
       { path: '/matches', element: <HomePage /> },
@@ -71,7 +77,8 @@ export const router = createBrowserRouter([
       </OwnerProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/owner/orders" replace /> },
+      { index: true, element: <OwnerDashboardPage /> },
+      { path: 'dashboard', element: <OwnerDashboardPage /> },
       { path: 'orders', element: <OrdersPage /> },
       { path: 'branches', element: <BranchesPage /> },
       { path: 'court-status', element: <OrdersPage /> },
@@ -82,7 +89,8 @@ export const router = createBrowserRouter([
       { path: 'products', element: <OrdersPage /> },
       { path: 'pos', element: <OrdersPage /> },
       { path: 'wallet', element: <OrdersPage /> },
-      { path: 'reports', element: <OrdersPage /> },
+      { path: 'reports', element: <OwnerReportsPage /> },
+      { path: 'analytics', element: <OwnerReportsPage /> },
       { path: 'packages', element: <OrdersPage /> },
     ],
   },
