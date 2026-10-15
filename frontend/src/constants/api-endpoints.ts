@@ -192,7 +192,8 @@ export const API_ENDPOINTS = {
     SYSTEM_REVENUE: '/system/analytics/revenue',
     OWNER_DASHBOARD: (branchId?: string) =>
       branchId ? `/owner/analytics/dashboard?branchId=${branchId}` : '/owner/analytics/dashboard',
-    OWNER_REVENUE: '/owner/analytics/revenue',
+    COURT_OWNER_REVENUE: '/analytics/court-owner/revenue',
+    OWNER_REVENUE: '/analytics/court-owner/revenue',
     OWNER_OCCUPANCY_RATE: '/owner/analytics/occupancy',
   },
 
