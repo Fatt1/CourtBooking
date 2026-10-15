@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Lock, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import type { CourtTypePricingConfigDto, FixedTimeBlockDto } from '@/api/pricing';
 import { TimelineSlotStatus, type OccupiedSlotDto } from '@/api/branches';
 import {
@@ -20,6 +21,7 @@ export interface BookingTimelineGridProps {
   selectedSlots: SelectedCourtSlot[];
   onToggleSlot: (slot: SelectedCourtSlot, blockSlots?: SelectedCourtSlot[]) => void;
   isLoading?: boolean;
+  excludeOrderCode?: string;
 }
 
 export function BookingTimelineGrid({
@@ -33,6 +35,7 @@ export function BookingTimelineGrid({
   selectedSlots,
   onToggleSlot,
   isLoading,
+  excludeOrderCode,
 }: BookingTimelineGridProps) {
   const openMinutes = useMemo(() => timeToMinutes(branchOpenTime) || 360, [branchOpenTime]); // 6:00 default
   const closeMinutes = useMemo(() => {
@@ -202,10 +205,18 @@ export function BookingTimelineGrid({
 
                             // 2. Kiểm tra xung đột với OccupiedSlots (Đã đặt / Khóa / Sự kiện)
                             const conflict = occupiedSlots.find(
-                              (os) =>
-                                os.courtId === court.courtId &&
-                                timeToMinutes(os.startTime) < ts.endMin &&
-                                timeToMinutes(os.endTime) > ts.startMin
+                              (os) => {
+                                if (os.courtId !== court.courtId) return false;
+                                if (excludeOrderCode) {
+                                  const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
+                                  const cleanCurrent = os.orderCode?.replace(/^#/, '').trim().toLowerCase();
+                                  if (cleanTarget === cleanCurrent) return false;
+                                }
+                                return (
+                                  timeToMinutes(os.startTime) < ts.endMin &&
+                                  timeToMinutes(os.endTime) > ts.startMin
+                                );
+                              }
                             );
 
                             // 3. Kiểm tra blocktime bắt buộc (FixedTimeBlock)
@@ -231,13 +242,13 @@ export function BookingTimelineGrid({
 
                             // 4. Kiểm tra thời gian đã qua hoặc quá sát giờ hiện tại (< 30 phút)
                             const isPastOrTooClose =
-                              isPastDate || (isToday && ts.startMin < minBookableMinutes);
+                              isPastDate || (isToday && ts.endMin <= currentMinutes);
 
                             const isBlockPastOrTooClose = Boolean(
                               matchingBlock &&
                               (isPastDate ||
                                 (isToday &&
-                                  timeToMinutes(matchingBlock.startTime) < minBookableMinutes))
+                                  timeToMinutes(matchingBlock.endTime) <= currentMinutes))
                             );
 
                             // Trạng thái ô
@@ -257,7 +268,22 @@ export function BookingTimelineGrid({
 
                             // Xử lý khi click vào ô
                             const handleClick = () => {
-                              if (isUnavailable) return;
+                              if (isUnavailable) {
+                                if (isPastDate || isPastOrTooClose) {
+                                  toast.warning('Khung giờ này đã kết thúc trong quá khứ.');
+                                } else if (isBlockPastOrTooClose) {
+                                  toast.warning('Khung giờ bắt buộc này đã kết thúc trong quá khứ.');
+                                } else if (isBooked) {
+                                  toast.warning(`Ca này đã được đặt bởi: ${conflict?.customerName || 'Khách'}`);
+                                } else if (isLocked) {
+                                  toast.warning('Sân đang khóa hoặc bảo trì.');
+                                } else if (isEvent) {
+                                  toast.warning(`Sân đang diễn ra sự kiện: ${conflict?.title || ''}`);
+                                } else if (isLoading) {
+                                  toast.info('Đang tải dữ liệu lịch sân, vui lòng đợi...');
+                                }
+                                return;
+                              }
 
                               const unitPrice = calculateSlotPrice(
                                 date,

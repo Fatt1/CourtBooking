@@ -115,6 +115,7 @@ export interface DailyOrderSlotItemDto {
   courtId: string;
   courtName: string;
   courtTypeId: string;
+  courTypeId?: string;
   courtTypeName: string;
   date: string;
   startTime: string;
@@ -248,6 +249,9 @@ export interface FixedOrderCycleSummaryDto {
   endDate: string;
   startTime: string;
   endTime: string;
+  daysOfWeekMask?: number;
+  daysOfWeek?: string[];
+  courtNames?: string[];
 }
 
 /**
@@ -272,6 +276,89 @@ export interface FixedOrderDto {
 }
 
 /**
+ * Params tìm kiếm danh sách đơn lịch cố định
+ */
+export interface GetFixedOrdersParams {
+  branchId: string;
+  status?: OrderStatus;
+  fromDate?: string;
+  toDate?: string;
+  searchTerm?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/**
+ * Chi tiết đơn đặt lịch cố định (Application.Features.V1.Orders.Queries.GetFixedOrderById.FixedOrderResponse)
+ */
+export interface FixedCycleCourtItemDto {
+  courtId: string;
+  courtName: string;
+}
+
+export interface FixedCycleDetailDto {
+  cycleId: string;
+  courtTypeId: string;
+  courtTypeName: string;
+  startDate: string;
+  endDate: string;
+  daysOfWeekMask: number;
+  daysOfWeek: number[];
+  dayNames: string[];
+  startTime: string;
+  endTime: string;
+  exceptionDates: string[];
+  courts: FixedCycleCourtItemDto[];
+}
+
+export interface FixedOrderSlotDto {
+  orderDetailId: string;
+  courtId: string;
+  courtName: string;
+  courtTypeId: string;
+  courtTypeName: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  price: number;
+}
+
+export interface FixedOrderServiceDto {
+  serviceId: string;
+  serviceName: string;
+  unit?: string | null;
+  unitPrice: number;
+  quantity: number;
+  totalPrice: number;
+}
+
+export interface FixedOrderResponse {
+  id: string;
+  orderCode: string;
+  branchId: string;
+  branchName: string;
+  channel: OrderChannel;
+  status: OrderStatus;
+  orderType: OrderType;
+  orderDate: string;
+  createdAt: string;
+  note?: string | null;
+  cancelReason?: string | null;
+  customerName: string;
+  customerPhone: string;
+  playerId?: string | null;
+  cycles: FixedCycleDetailDto[];
+  slots: FixedOrderSlotDto[];
+  services: FixedOrderServiceDto[];
+  totalCourtAmount: number;
+  totalServiceAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  remainingAmount: number;
+  paymentTransactions: PaymentTransactionDto[];
+}
+
+/**
  * Payload ca sân con đặt trực tiếp
  */
 export interface CourtSlotItemPayload {
@@ -286,7 +373,7 @@ export interface CourtSlotItemPayload {
  */
 export interface CourtBookingSlotPayload {
   courtTypeId: string;
-  priceTableId: string;
+  priceTableId?: string | null;
   slots: CourtSlotItemPayload[];
 }
 
@@ -304,5 +391,103 @@ export interface CreateOrderByOwnerPayload {
   services?: OrderServiceInputItem[];
   playerId?: string | null;
 }
+
+/**
+ * Payload cập nhật các ca sân (OrderDetails / Items) cho đơn hàng
+ */
+export interface UpdateOrderItemsPayload {
+  orderId: string;
+  courtBookingSlots: CourtBookingSlotPayload[];
+}
+
+/**
+ * Chu kỳ đặt cố định (Khớp CourtBooking.Application.Features.V1.Orders.SharedInputs.FixedCycleInput)
+ */
+export interface FixedCycleInputPayload {
+  courtTypeId: string;
+  priceTableId: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  daysOfWeekMask: number; // bit 0 = CN, bit 1 = T2, ..., bit 6 = T7
+  startTime: string; // HH:mm:ss or HH:mm
+  endTime: string; // HH:mm:ss or HH:mm
+  courtIds: string[];
+  exceptionDates?: string[]; // YYYY-MM-DD
+}
+
+/**
+ * Payload tạo đơn đặt lịch cố định từ chủ sân (POST /api/v1/owner/orders/fixed)
+ */
+export interface CreateFixedOrderByOwnerPayload {
+  branchId: string;
+  customerName: string;
+  customerPhone: string;
+  note?: string | null;
+  discountAmount?: number;
+  paymentMethod: PaymentMethod;
+  cycles: FixedCycleInputPayload[];
+  services?: OrderServiceInputItem[];
+}
+
+/**
+ * Payload xóa/hủy một ca sân lẻ trong đơn hàng (PUT /api/v1/owner/orders/{orderId}/slots/{orderDetailId}/cancellation)
+ */
+export interface CancelOrderSlotPayload {
+  orderId: string;
+  orderDetailId: string;
+  refundAmount?: number | null;
+  refundMethod?: PaymentMethod | null;
+  cancelReason?: string | null;
+}
+
+/**
+ * Payload thêm các ca sân lẻ vào đơn hàng (POST /api/v1/owner/orders/{orderId}/slots)
+ */
+export interface AddOrderSlotsPayload {
+  orderId: string;
+  courtSlots: CourtBookingSlotPayload[];
+}
+
+/**
+ * Payload thêm chu kì mới vào đơn đặt cố định (POST /api/v1/owner/orders/fixed/{orderId}/cycles)
+ */
+export interface AddFixedOrderCyclePayload {
+  orderId: string;
+  courtTypeId: string;
+  priceTableId: string;
+  startDate: string;
+  endDate: string;
+  daysOfWeekMask: number;
+  startTime: string;
+  endTime: string;
+  courtIds: string[];
+  exceptionDates?: string[];
+}
+
+/**
+ * Payload cập nhật chu kì đặt cố định (PUT /api/v1/owner/orders/fixed/{orderId}/cycles/{cycleId})
+ */
+export interface UpdateFixedOrderCyclePayload {
+  orderId: string;
+  cycleId: string;
+  courtTypeId: string;
+  priceTableId: string;
+  startDate: string;
+  endDate: string;
+  daysOfWeekMask: number;
+  startTime: string;
+  endTime: string;
+  courtIds: string[];
+  exceptionDates?: string[];
+}
+
+/**
+ * Payload xóa chu kì đặt cố định (DELETE /api/v1/owner/orders/fixed/{orderId}/cycles/{cycleId})
+ */
+export interface DeleteFixedOrderCyclePayload {
+  orderId: string;
+  cycleId: string;
+}
+
 
 

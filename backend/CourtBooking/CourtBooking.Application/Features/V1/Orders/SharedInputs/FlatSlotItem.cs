@@ -5,7 +5,7 @@ namespace CourtBooking.Application.Features.V1.Orders.SharedInputs;
 /// </summary>
 public sealed record FlatSlotItem(
     Guid CourtTypeId,
-    Guid PriceTableId,
+    Guid? PriceTableId,
     Guid CourtId,
     DateOnly Date,
     TimeOnly StartTime,

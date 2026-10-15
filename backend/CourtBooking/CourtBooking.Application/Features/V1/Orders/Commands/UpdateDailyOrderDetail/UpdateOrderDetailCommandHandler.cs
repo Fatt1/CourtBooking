@@ -72,15 +72,31 @@ public class UpdateOrderDetailCommandHandler : ICommandHandler<UpdateOrderDetail
                 return Result.Failure(conflictResult.Error!);
             }
 
+            var existingDetails = order.Details.ToList();
             _dbContext.OrderDetails.RemoveRange(order.Details);
             order.ClearOrderDetails();
             foreach (var slot in bookingContext.CalculatedSlots)
             {
+                var existingDetail = existingDetails.FirstOrDefault(d =>
+                    d.CourtId == slot.CourtId &&
+                    d.Date == slot.Date &&
+                    d.StartTime == slot.StartTime &&
+                    d.EndTime == slot.EndTime);
+
+                var isExplicitPtProvided = request.CourtBookingSlots.Any(g =>
+                    g.PriceTableId.HasValue &&
+                    g.PriceTableId.Value != Guid.Empty &&
+                    g.Slots.Any(s => s.CourtId == slot.CourtId && s.Date == slot.Date && s.StartTime == slot.StartTime && s.EndTime == slot.EndTime));
+
+                var finalPrice = (existingDetail != null && !isExplicitPtProvided)
+                    ? existingDetail.Price
+                    : slot.Price;
+
                 order.AddOrderDetail(
                     slot.CourtId,
                     slot.StartTime,
                     slot.EndTime,
-                    slot.Price,
+                    finalPrice,
                     slot.Date);
             }
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   FileDown,
   Plus,
@@ -8,9 +8,17 @@ import {
   CalendarDays,
   Sparkles,
   X,
+  Repeat,
+  Trophy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -44,13 +52,19 @@ import {
 import {
   DailyOrderTable,
   DailyOrderDetailModal,
+  FixedOrderTable,
+  FixedOrderDetailModal,
   CancelOrderModal,
   CreateDailyOrderModal,
+  CreateFixedOrderModal,
 } from '@/features/court-owners/components/orders';
 import { useBranchStore } from '@/stores/useBranchStore';
 import {
   useDailyOrdersQuery,
+  useFixedOrdersQuery,
   type DailyOrderDto,
+  type FixedOrderDto,
+  type GetFixedOrdersParams,
   OrderStatus,
 } from '@/api/orders';
 
@@ -85,9 +99,47 @@ export function OrdersPage() {
   // 3. States quản lý Modals
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedFixedOrderId, setSelectedFixedOrderId] = useState<string | null>(null);
+  const [isFixedDetailOpen, setIsFixedDetailOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<DailyOrderDto | null>(null);
   const [isQuickBookOpen, setIsQuickBookOpen] = useState(false);
+  const [isFixedOrderOpen, setIsFixedOrderOpen] = useState(false);
+
+  // Hover & click state cho dropdown Đặt sân
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleDropdownMouseEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+    setIsDropdownOpen(true);
+  };
+
+  const handleDropdownMouseLeave = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+    }
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setIsDropdownOpen(false);
+    }, 200);
+  };
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isDropdownOpen]);
 
   // 4. Tabs theo chuẩn Figma
   const filterTabs = [
@@ -128,10 +180,50 @@ export function OrdersPage() {
   const dailyOrders = pagedData?.items || [];
   const totalCount = pagedData?.totalCount || dailyOrders.length;
 
-  // Xử lý xem chi tiết
+  // 6. Query lấy danh sách đơn cố định (chu kỳ)
+  const fixedQueryParams = useMemo(() => {
+    const params: GetFixedOrdersParams = {
+      branchId: selectedBranchId || '',
+      page: currentPage,
+      pageSize: pageSize,
+    };
+
+    if (debouncedSearch.trim()) {
+      params.searchTerm = debouncedSearch.trim();
+    }
+
+    if (statusFilter !== 'ALL') {
+      params.status = Number(statusFilter);
+    }
+
+    if (dateRange?.from) {
+      params.fromDate = format(dateRange.from, 'yyyy-MM-dd');
+      params.toDate = dateRange.to
+        ? format(dateRange.to, 'yyyy-MM-dd')
+        : format(dateRange.from, 'yyyy-MM-dd');
+    }
+
+    return params;
+  }, [selectedBranchId, currentPage, pageSize, debouncedSearch, statusFilter, dateRange]);
+
+  const {
+    data: fixedPagedData,
+    isLoading: isFixedLoading,
+    refetch: refetchFixed,
+  } = useFixedOrdersQuery(fixedQueryParams);
+  const fixedOrders = fixedPagedData?.items || [];
+  const fixedTotalCount = fixedPagedData?.totalCount || fixedOrders.length;
+
+  // Xử lý xem chi tiết đơn ngày
   const handleViewDetail = (order: DailyOrderDto) => {
     setSelectedOrderId(order.id);
     setIsDetailOpen(true);
+  };
+
+  // Xử lý xem chi tiết đơn cố định
+  const handleViewFixedDetail = (order: FixedOrderDto) => {
+    setSelectedFixedOrderId(order.id);
+    setIsFixedDetailOpen(true);
   };
 
   // Xử lý duyệt hủy đơn từ bảng
@@ -160,15 +252,105 @@ export function OrdersPage() {
               <span>Xuất báo cáo</span>
             </Button>
 
-            {/* Nút Đặt sân hộ với mũi tên Dropdown ▼ (Màu xanh Neon đặc trưng #a3e635) */}
-            <Button
-              className="gap-1.5 bg-[#a3e635] text-black hover:bg-[#8ece28] font-bold text-xs md:text-sm h-9.5 rounded-xl shadow-xs transition-colors cursor-pointer"
-              onClick={() => setIsQuickBookOpen(true)}
+            {/* Nút Đặt sân với Dropdown: Mượt mà không giật nháy, hỗ trợ cả Hover & Click */}
+            <div
+              ref={dropdownRef}
+              className="relative inline-block"
+              onMouseEnter={handleDropdownMouseEnter}
+              onMouseLeave={handleDropdownMouseLeave}
             >
-              <Plus className="size-4 stroke-[2.5]" />
-              <span>Đặt sân hộ</span>
-              <ChevronDown className="size-3.5 stroke-[2.5] ml-0.5" />
-            </Button>
+              <Button
+                className="gap-1.5 bg-[#a3e635] text-black hover:bg-[#8ece28] font-bold text-xs md:text-sm h-9.5 rounded-xl shadow-xs transition-colors cursor-pointer select-none"
+                onClick={() => setIsDropdownOpen((prev) => !prev)}
+              >
+                <Plus className="size-4 stroke-[2.5]" />
+                <span>Đặt sân</span>
+                <ChevronDown
+                  className={`size-3.5 stroke-[2.5] ml-0.5 transition-transform duration-200 ${
+                    isDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </Button>
+
+              {/* Menu Dropdown mượt mà - container liên tục không bị mất hover */}
+              {isDropdownOpen && (
+                <div
+                  className="absolute right-0 top-full pt-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
+                  onMouseEnter={handleDropdownMouseEnter}
+                  onMouseLeave={handleDropdownMouseLeave}
+                >
+                  <div className="w-56 bg-[#0B1324] border border-border/80 p-1.5 shadow-2xl rounded-xl">
+                    <div className="space-y-0.5">
+                      {/* Lựa chọn 1: Lịch ngày */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          setIsQuickBookOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer group"
+                      >
+                        <div className="size-7 rounded-lg bg-[#a3e635]/15 flex items-center justify-center shrink-0">
+                          <CalendarDays className="size-4 text-[#a3e635]" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold group-hover:text-[#a3e635] transition-colors">
+                            Lịch ngày
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            Đặt sân lẻ trong ngày
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Lựa chọn 2: Lịch cố định */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          setIsFixedOrderOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer group"
+                      >
+                        <div className="size-7 rounded-lg bg-sky-500/15 flex items-center justify-center shrink-0">
+                          <Repeat className="size-4 text-sky-400" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold group-hover:text-sky-300 transition-colors">
+                            Lịch cố định
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            Đặt chu kỳ theo tuần/tháng
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Lựa chọn 3: Lịch sự kiện */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          toast.info('Tính năng đặt lịch sự kiện đang được phát triển');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer group"
+                      >
+                        <div className="size-7 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                          <Trophy className="size-4 text-amber-400" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold group-hover:text-amber-300 transition-colors">
+                            Lịch sự kiện
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            Giải đấu & sự kiện thể thao
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         }
       />
@@ -414,27 +596,27 @@ export function OrdersPage() {
         </div>
       )}
 
-      {/* Tab Đơn cố định (Chu kỳ) - Placeholder theo ghi chú của user */}
+      {/* Tab Đơn cố định (Chu kỳ) - Bảng danh sách chuẩn Figma và ảnh thiết kế */}
       {activeTab === 'recurring' && (
-        <div className="rounded-2xl border border-border/60 bg-card/40 p-12 text-center space-y-3">
-          <div className="size-12 rounded-2xl bg-lime-400/10 text-[#a3e635] flex items-center justify-center mx-auto">
-            <CalendarDays className="size-6" />
-          </div>
-          <h3 className="text-base font-bold text-foreground">
-            Quản lý Đơn cố định (Chu kỳ)
-          </h3>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            Giao diện bảng đơn cố định (đặt theo tuần, tháng, chu kỳ nhiều buổi) được thiết kế
-            riêng biệt theo lộ trình kế tiếp của hệ thống.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setActiveTab('daily')}
-            className="rounded-xl text-xs font-semibold mt-2"
-          >
-            Quay lại Đơn ngày
-          </Button>
+        <div className="space-y-4">
+          <FixedOrderTable
+            data={fixedOrders}
+            isLoading={isFixedLoading}
+            onViewDetail={handleViewFixedDetail}
+          />
+
+          {/* Thanh phân trang cho đơn cố định */}
+          <OwnerPagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            pageSizeOptions={[25, 50, 100]}
+            totalItems={fixedTotalCount}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setCurrentPage(1);
+            }}
+          />
         </div>
       )}
 
@@ -495,6 +677,26 @@ export function OrdersPage() {
         branchId={selectedBranchId || undefined}
         branchName={selectedBranch?.name || undefined}
         onSuccess={() => refetch()}
+      />
+
+      {/* 4. Modal Đặt lịch cố định tại quầy (CreateFixedOrderModal) */}
+      <CreateFixedOrderModal
+        open={isFixedOrderOpen}
+        onOpenChange={setIsFixedOrderOpen}
+        branchId={selectedBranchId || undefined}
+        branchName={selectedBranch?.name || undefined}
+        onSuccess={() => {
+          refetch();
+          refetchFixed();
+        }}
+      />
+
+      {/* 5. Modal Xem chi tiết đơn cố định */}
+      <FixedOrderDetailModal
+        open={isFixedDetailOpen}
+        onOpenChange={setIsFixedDetailOpen}
+        orderId={selectedFixedOrderId}
+        onOrderUpdated={() => refetchFixed()}
       />
     </div>
   );

@@ -163,16 +163,27 @@ public sealed class OrderChecker(
         bool isFixedCustomer,
         CancellationToken cancellationToken)
     {
-        var priceTableIds = courtSlots.Select(g => g.PriceTableId).Distinct().ToList();
+        var explicitPtIds = courtSlots
+            .Where(g => g.PriceTableId.HasValue && g.PriceTableId.Value != Guid.Empty)
+            .Select(g => g.PriceTableId!.Value)
+            .Distinct()
+            .ToList();
+
+        var courtTypeIdsNeedingDefaultPt = courtSlots
+            .Where(g => !g.PriceTableId.HasValue || g.PriceTableId.Value == Guid.Empty)
+            .Select(g => g.CourtTypeId)
+            .Distinct()
+            .ToList();
+
         var priceTables = await dbContext.PriceTables
             .AsNoTracking()
             .Include(pt => pt.Rules)
-            .Where(pt => priceTableIds.Contains(pt.Id))
+            .Where(pt => explicitPtIds.Contains(pt.Id) || (courtTypeIdsNeedingDefaultPt.Contains(pt.CourtTypeId) && pt.IsActive))
             .ToListAsync(cancellationToken);
 
-        if (priceTables.Count != priceTableIds.Count)
+        if (explicitPtIds.Any(id => priceTables.All(pt => pt.Id != id)))
         {
-            var missingPtId = priceTableIds.First(id => priceTables.All(pt => pt.Id != id));
+            var missingPtId = explicitPtIds.First(id => priceTables.All(pt => pt.Id != id));
             return Result.Failure<List<CalculatedSlotItem>>(new NotFoundError("PriceTable", missingPtId));
         }
 
@@ -180,7 +191,21 @@ public sealed class OrderChecker(
 
         foreach (var group in courtSlots)
         {
-            var priceTable = priceTables.First(pt => pt.Id == group.PriceTableId);
+            PriceTable? priceTable = null;
+            if (group.PriceTableId.HasValue && group.PriceTableId.Value != Guid.Empty)
+            {
+                priceTable = priceTables.FirstOrDefault(pt => pt.Id == group.PriceTableId.Value);
+            }
+            else
+            {
+                priceTable = priceTables.FirstOrDefault(pt => pt.CourtTypeId == group.CourtTypeId && pt.IsActive);
+            }
+
+            if (priceTable == null)
+            {
+                return Result.Failure<List<CalculatedSlotItem>>(
+                    new BadError("Không tìm thấy bảng giá hoạt động phù hợp cho loại sân đã chọn."));
+            }
 
             if (!priceTable.IsActive)
             {

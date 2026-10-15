@@ -51,6 +51,8 @@ export const API_ENDPOINTS = {
     POLICIES: (id: string) => `/owner/branches/${id}/policies`,
     GET_ONE_TIME_BOOKING: '/branches/get-one-time-booking',
     OWNER_GET_ONE_TIME_BOOKING: '/owner/branches/get-one-time-booking',
+    GET_FROM_TIME_BOOKING: '/branches/get-from-time-booking',
+    OWNER_GET_FROM_TIME_BOOKING: '/owner/branches/get-from-time-booking',
   },
 
   // 4. Loại sân & Danh sách Sân (CourtTypes & Courts)
@@ -95,9 +97,17 @@ export const API_ENDPOINTS = {
     UPDATE_ITEMS: (id: string) => `/owner/orders/${id}/items`,
     UPDATE_CUSTOMER: (id: string) => `/owner/orders/${id}/customer-info`,
     UPDATE_SERVICES: (id: string) => `/owner/orders/${id}/services`,
+    CANCEL_SLOT: (orderId: string, orderDetailId: string) =>
+      `/owner/orders/${orderId}/slots/${orderDetailId}/cancellation`,
+    ADD_SLOTS: (orderId: string) => `/owner/orders/${orderId}/slots`,
     CREATE_BY_OWNER: '/owner/orders',
     FIXED_LIST: '/owner/orders/fixed',
     FIXED_DETAIL: (id: string) => `/owner/orders/fixed/${id}`,
+    ADD_FIXED_CYCLE: (orderId: string) => `/owner/orders/fixed/${orderId}/cycles`,
+    UPDATE_FIXED_CYCLE: (orderId: string, cycleId: string) =>
+      `/owner/orders/fixed/${orderId}/cycles/${cycleId}`,
+    DELETE_FIXED_CYCLE: (orderId: string, cycleId: string) =>
+      `/owner/orders/fixed/${orderId}/cycles/${cycleId}`,
     APPROVE_PAYMENT: (id: string) => `/owner/orders/${id}/approve-payment`,
     REJECT_PAYMENT: (id: string) => `/owner/orders/${id}/reject-payment`,
     PROCESS_REFUND: (id: string) => `/owner/orders/${id}/process-refund`,

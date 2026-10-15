@@ -50,7 +50,7 @@ public sealed record DailyOrderSlotItemDto(
     Guid OrderDetailId,
     Guid CourtId,
     string CourtName,
-    Guid CourTypeId,
+    Guid CourtTypeId,
     string CourtTypeName,
     DateOnly Date,
     TimeOnly StartTime,

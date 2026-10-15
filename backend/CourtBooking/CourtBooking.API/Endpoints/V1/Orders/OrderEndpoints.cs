@@ -1,8 +1,10 @@
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Orders.Commands.AddFixedOrderCycle;
+using CourtBooking.Application.Features.V1.Orders.Commands.AddOrderSlots;
 using CourtBooking.Application.Features.V1.Orders.Commands.AddPaymentTransaction;
 using CourtBooking.Application.Features.V1.Orders.Commands.CancelOrderByOwner;
+using CourtBooking.Application.Features.V1.Orders.Commands.CancelOrderSlot;
 using CourtBooking.Application.Features.V1.Orders.Commands.CompleteOrder;
 using CourtBooking.Application.Features.V1.Orders.Commands.ConfirmOrder;
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateFixedOrderByOwner;
@@ -122,8 +124,8 @@ public class OrderEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
 
-        // POST /api/v1/owner/orders/{orderId:guid}/fixed-cycles — Thêm một chu kì đặt cố định mới
-        group.MapPost("/fixed/{orderId:guid}/cycles", async (
+        // POST /api/v1/owner/orders/fixed/{orderId:guid}/cycles — Thêm một chu kì đặt cố định mới
+        group.MapPost("/{orderId:guid}/cycles", async (
             [FromRoute] Guid orderId,
             [FromBody] AddFixedOrderCycleCommand command,
             ISender sender,
@@ -359,7 +361,7 @@ public class OrderEndpoints : IEndpointGroup
             ISender sender
             ) =>
         {
-            var result = await sender.Send(command);
+            var result = await sender.Send(command with { OrderId = id });
             return result.IsSuccess
             ? Results.NoContent()
             : result.ToProblemDetails();
@@ -414,6 +416,46 @@ public class OrderEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
+        // PUT /api/v1/owner/orders/{orderId:guid}/slots/{orderDetailId:guid}/cancellation — Hủy/xóa 1 ca sân trong đơn hàng kèm hoàn tiền nếu có
+        group.MapPut("/{orderId:guid}/slots/{orderDetailId:guid}/cancellation", async (
+            [FromRoute] Guid orderId,
+            [FromRoute] Guid orderDetailId,
+            [FromBody] CancelOrderSlotCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(command with { OrderId = orderId, OrderDetailId = orderDetailId }, ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+            .WithName("CancelOrderSlot")
+            .WithSummary("Chủ sân hủy/xóa một ca sân trong đơn hàng kèm hoàn tiền nếu có")
+            .WithTags(OrderTag)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        // POST /api/v1/owner/orders/{orderId:guid}/slots — Thêm các ca sân lẻ vào đơn hàng
+        group.MapPost("/{orderId:guid}/slots", async (
+            [FromRoute] Guid orderId,
+            [FromBody] AddOrderSlotsCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(command with { OrderId = orderId }, ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+            .WithName("AddOrderSlots")
+            .WithSummary("Chủ sân thêm ca sân lẻ vào đơn hàng (đơn ngày hoặc đơn cố định)")
+            .WithTags(OrderTag)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
     }
 

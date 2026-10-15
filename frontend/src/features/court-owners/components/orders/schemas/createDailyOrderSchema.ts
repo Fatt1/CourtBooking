@@ -34,7 +34,11 @@ export const createDailyOrderSchema = z.object({
 
   slots: z
     .array(z.any())
-    .min(1, 'Vui lòng bấm vào icon lịch để chọn ít nhất 1 ca sân'),
+    .min(1, 'Vui lòng bấm vào icon lịch để chọn ít nhất 1 ca sân')
+    .refine((slots) => {
+      const dates = new Set(slots.map((s: any) => s.date?.split('T')[0]));
+      return dates.size <= 1;
+    }, 'Đơn hàng ngày chỉ được đặt trong 1 ngày duy nhất.'),
 });
 
 export type CreateDailyOrderFormValues = z.infer<typeof createDailyOrderSchema>;

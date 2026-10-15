@@ -23,11 +23,14 @@ public sealed record FixedOrderDto(
     List<FixedOrderCycleSummaryDto> Cycles);
 
 /// <summary>
-/// DTO tóm tắt chu kì của đơn lịch cố định (chỉ gồm ngày bắt đầu và kết thúc của chu kì).
+/// DTO tóm tắt chu kì của đơn lịch cố định (gồm giờ, ngày, thứ và thông tin sân).
 /// </summary>
 public sealed record FixedOrderCycleSummaryDto(
     TimeOnly StartTime,
     TimeOnly EndTime,
     Guid CycleId,
     DateOnly StartDate,
-    DateOnly EndDate);
+    DateOnly EndDate,
+    int DaysOfWeekMask,
+    List<string> DaysOfWeek,
+    List<string> CourtNames);

@@ -17,9 +17,6 @@ public sealed class UpdateOrderDetailValidator : AbstractValidator<UpdateOrderDe
             group.RuleFor(g => g.CourtTypeId)
                 .NotEmpty().WithMessage("Loại sân (CourtTypeId) không được để trống.");
 
-            group.RuleFor(g => g.PriceTableId)
-                .NotEmpty().WithMessage("Bảng giá (PriceTableId) không được để trống.");
-
             group.RuleFor(g => g.Slots)
                 .NotEmpty().WithMessage("Mỗi loại sân phải có ít nhất một khung giờ đặt.");
 

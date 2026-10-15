@@ -5,5 +5,5 @@ namespace CourtBooking.Application.Features.V1.Orders.SharedInputs;
 /// </summary>
 public sealed record CourtBookingSlot(
     Guid CourtTypeId,
-    Guid PriceTableId,
+    Guid? PriceTableId,
     List<CourtSlotItem> Slots);

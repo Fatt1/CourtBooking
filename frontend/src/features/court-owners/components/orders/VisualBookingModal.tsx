@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -32,6 +32,9 @@ interface VisualBookingModalProps {
   branchName?: string;
   initialDate?: string;
   initialSlots?: SelectedCourtSlot[];
+  excludeOrderCode?: string;
+  title?: string;
+  confirmText?: string;
   onConfirm: (slots: SelectedCourtSlot[]) => void;
 }
 
@@ -43,20 +46,25 @@ function getTodayString(): string {
   return `${year}-${month}-${day}`;
 }
 
+const EMPTY_INITIAL_SLOTS: SelectedCourtSlot[] = [];
+
 export function VisualBookingModal({
   open,
   onOpenChange,
   branchId,
   branchName,
   initialDate,
-  initialSlots = [],
+  initialSlots = EMPTY_INITIAL_SLOTS,
+  excludeOrderCode,
+  title = 'Đặt lịch ngày trực quan',
+  confirmText = 'Xác nhận lịch chọn',
   onConfirm,
 }: VisualBookingModalProps) {
   const todayStr = useMemo(() => getTodayString(), []);
 
-  // 1. Ngày chơi được chọn (mặc định hôm nay YYYY-MM-DD theo giờ địa phương, không cho phép quá khứ)
+  // 1. Ngày chơi được chọn (mặc định hôm nay YYYY-MM-DD theo giờ địa phương hoặc initialDate)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
-    if (initialDate && initialDate >= todayStr) return initialDate;
+    if (initialDate) return initialDate;
     return todayStr;
   });
 
@@ -82,26 +90,51 @@ export function VisualBookingModal({
   // 6. State danh sách các ca sân người dùng chọn (lưu dạng atomic steps để highlight grid)
   const [selectedSlots, setSelectedSlots] = useState<SelectedCourtSlot[]>([]);
 
-  // Sync khi modal mở hoặc có initialSlots
+  // Ref theo dõi việc khởi tạo slots ban đầu khi modal mở (tránh re-trigger effect xóa mất slot khi user click)
+  const hasInitializedSlotsRef = useRef(false);
+
+  // Sync khi modal mở (CHỈ chạy 1 lần duy nhất khi modal chuyển sang open, KHÔNG chạy khi user tương tác chọn slot)
   useEffect(() => {
-    if (open) {
+    if (!open) {
+      hasInitializedSlotsRef.current = false;
+      return;
+    }
+
+    if (!hasInitializedSlotsRef.current) {
       if (initialSlots && initialSlots.length > 0) {
+        // Đơn hàng ngày chỉ áp dụng 1 ngày duy nhất: lấy ngày của ca đầu tiên hoặc initialDate
+        const targetDate = initialSlots[0]?.date || initialDate || todayStr;
+        const slotsForDate = initialSlots.filter((s) => s.date === targetDate);
+
         const atomicSlots: SelectedCourtSlot[] = [];
-        initialSlots.forEach((slot) => {
-          const ct = pricingConfig.find((c) => c.courtTypeId === slot.courtTypeId);
+        slotsForDate.forEach((slot) => {
+          const ct = pricingConfig.find(
+            (c) =>
+              c.courtTypeId === slot.courtTypeId ||
+              c.availableCourts?.some((court) => court.courtId === slot.courtId)
+          );
+          const resolvedCourtTypeId = slot.courtTypeId || ct?.courtTypeId || '';
+          const resolvedCourtTypeName = slot.courtTypeName || ct?.courtTypeName || '';
           const step = ct?.minutesConfig || 60;
-          atomicSlots.push(...decomposeSlotToSteps(slot, step));
+          const slotWithPt = {
+            ...slot,
+            courtTypeId: resolvedCourtTypeId,
+            courtTypeName: resolvedCourtTypeName,
+            priceTableId: slot.priceTableId || '',
+            date: targetDate,
+          };
+          atomicSlots.push(...decomposeSlotToSteps(slotWithPt, step));
         });
         setSelectedSlots(atomicSlots);
-        if (initialSlots[0]?.date) {
-          const slotDate = initialSlots[0].date;
-          setSelectedDate(slotDate >= todayStr ? slotDate : todayStr);
-        }
+        setSelectedDate(targetDate);
+        hasInitializedSlotsRef.current = true;
       } else {
         setSelectedSlots([]);
+        setSelectedDate(initialDate || todayStr);
+        hasInitializedSlotsRef.current = true;
       }
     }
-  }, [open, initialSlots, pricingConfig, todayStr]);
+  }, [open, initialDate, initialSlots, pricingConfig, todayStr]);
 
   // Tự động chọn tất cả loại sân và bảng giá mặc định đầu tiên khi pricingConfig được tải
   useEffect(() => {
@@ -150,7 +183,9 @@ export function VisualBookingModal({
 
   // Xử lý toggle chọn slot trên timeline
   const handleToggleSlot = (slot: SelectedCourtSlot, blockSlots?: SelectedCourtSlot[]) => {
-    setSelectedSlots((prev) => {
+    setSelectedSlots((rawPrev) => {
+      // Đơn hàng ngày chỉ cho phép chọn 1 ngày duy nhất: luôn đảm bảo chỉ lưu các ca thuộc selectedDate
+      const prev = rawPrev.filter((p) => p.date === selectedDate);
       // Nếu là khung giờ blocktime
       if (blockSlots && blockSlots.length > 0) {
         const allSelected = blockSlots.every((bs) =>
@@ -256,7 +291,14 @@ export function VisualBookingModal({
     if (direction === 'prev' && nextDate < todayStr) {
       return;
     }
-    setSelectedDate(nextDate);
+
+    if (nextDate !== selectedDate) {
+      if (selectedSlots.length > 0) {
+        setSelectedSlots([]);
+        toast.info(`Đã đổi sang ngày ${day}/${month}/${year}. Các ca sân ngày cũ đã được làm mới.`);
+      }
+      setSelectedDate(nextDate);
+    }
   };
 
   // Date object cho shadcn Calendar
@@ -297,36 +339,61 @@ export function VisualBookingModal({
 
   // Hoàn tất chọn lịch: Gửi danh sách đã gom liền kề (1 OrderDetail cho thời gian liền kề)
   const handleConfirm = () => {
-    if (mergedSlots.length === 0) {
+    // Chỉ lấy các ca sân thuộc ngày đang xem
+    const singleDateMergedSlots = mergedSlots.filter((s) => s.date === selectedDate);
+    if (singleDateMergedSlots.length === 0) {
       toast.warning('Bạn chưa chọn ca sân nào.');
       return;
     }
-    onConfirm(mergedSlots);
-    toast.success(`Đã chọn ${mergedSlots.length} ca sân thành công!`);
+
+    // Đảm bảo courtTypeId luôn được resolve chính xác từ cấu hình chi nhánh
+    const validatedSlots = singleDateMergedSlots.map((slot) => {
+      const ct = pricingConfig.find(
+        (c) =>
+          c.courtTypeId === slot.courtTypeId ||
+          c.availableCourts?.some((court) => court.courtId === slot.courtId)
+      );
+      const courtTypeId = slot.courtTypeId || ct?.courtTypeId || '';
+      const courtTypeName = slot.courtTypeName || ct?.courtTypeName || '';
+
+      return {
+        ...slot,
+        courtTypeId,
+        courtTypeName,
+      };
+    });
+
+    onConfirm(validatedSlots);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[96vw] max-w-[1400px] h-[92vh] p-0 overflow-hidden bg-[#070D1A] border border-border/70 text-slate-100 shadow-2xl rounded-2xl flex flex-col">
+      <DialogContent className="w-screen max-w-none h-screen max-h-none p-0 m-0 rounded-none border-none bg-[#070D1A] text-slate-100 shadow-2xl flex flex-col overflow-hidden z-[70]">
         {/* =================================================================== */}
         {/* 1. HEADER MODAL: Tiêu đề + Bộ chọn ngày chơi */}
         {/* =================================================================== */}
-        <DialogHeader className="px-5 pt-4.5 pb-3.5 pr-14 sm:pr-16 bg-[#0f172a] border-b border-border/60 flex flex-row items-center justify-between shrink-0">
+        <DialogHeader className="px-6 py-3.5 pr-14 sm:pr-16 bg-[#0f172a] border-b border-border/60 flex flex-row items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
               className="size-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Đóng"
             >
               <ChevronLeft className="size-5 stroke-[2.5]" />
             </button>
             <div>
-              <DialogTitle className="text-base sm:text-lg font-bold text-white tracking-wide">
-                Đặt lịch ngày trực quan
-              </DialogTitle>
+              <div className="flex items-center gap-2.5">
+                <DialogTitle className="text-base sm:text-lg font-bold text-white tracking-wide">
+                  {title}
+                </DialogTitle>
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                  Toàn màn hình
+                </span>
+              </div>
               {branchName && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-400 mt-0.5">
                   Chi nhánh: <span className="font-semibold text-white">{branchName}</span>
                 </p>
               )}
@@ -360,7 +427,7 @@ export function VisualBookingModal({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-auto p-0 bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl z-50 overflow-hidden"
+                  className="w-auto p-0 bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl z-[80] overflow-hidden"
                   align="center"
                 >
                   <div className="px-3 py-2 border-b border-border/50 text-[11px] font-bold text-[#a3e635] text-center bg-[#0f172a]">
@@ -374,7 +441,15 @@ export function VisualBookingModal({
                         const year = date.getFullYear();
                         const month = String(date.getMonth() + 1).padStart(2, '0');
                         const day = String(date.getDate()).padStart(2, '0');
-                        setSelectedDate(`${year}-${month}-${day}`);
+                        const nextDate = `${year}-${month}-${day}`;
+
+                        if (nextDate !== selectedDate) {
+                          if (selectedSlots.length > 0) {
+                            setSelectedSlots([]);
+                            toast.info(`Đã đổi sang ngày ${day}/${month}/${year}. Các ca sân ngày cũ đã được làm mới.`);
+                          }
+                          setSelectedDate(nextDate);
+                        }
                       }
                       setIsCalendarOpen(false);
                     }}
@@ -446,6 +521,7 @@ export function VisualBookingModal({
                 selectedSlots={selectedSlots}
                 onToggleSlot={handleToggleSlot}
                 isLoading={isScheduleLoading || isPricingLoading}
+                excludeOrderCode={excludeOrderCode}
               />
             </div>
           </div>
@@ -542,7 +618,7 @@ export function VisualBookingModal({
                 onClick={handleConfirm}
                 className="w-full h-10 rounded-xl bg-[#a3e635] hover:bg-[#8ece28] text-black font-extrabold text-xs tracking-wider uppercase cursor-pointer disabled:opacity-40"
               >
-                Xác nhận lịch chọn ({mergedSlots.length})
+                {confirmText} ({mergedSlots.length})
               </Button>
             </div>
           </div>
