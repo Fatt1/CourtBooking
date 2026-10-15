@@ -63,6 +63,7 @@ export interface FixedVisualBookingModalProps {
   branchName?: string;
   existingCycles?: FixedCycleConfig[];
   initialCycle?: FixedCycleConfig | null;
+  excludeOrderCode?: string;
   title?: string;
   confirmText?: string;
   onSaveCycle: (cycle: FixedCycleConfig) => void;
@@ -96,6 +97,7 @@ export function FixedVisualBookingModal({
   branchName,
   existingCycles = [],
   initialCycle = null,
+  excludeOrderCode,
   title = 'Cấu hình Chu kỳ Đặt sân Cố định',
   confirmText = 'Xác nhận lưu chu kỳ',
   onSaveCycle,
@@ -215,6 +217,23 @@ export function FixedVisualBookingModal({
     return pricingConfig.find((c) => c.courtTypeId === selectedCourtTypeId);
   }, [pricingConfig, selectedCourtTypeId]);
 
+  // Luôn đảm bảo đã chọn một Bảng giá hợp lệ cho Loại sân đang chọn
+  useEffect(() => {
+    if (activeCourtType?.priceTables && activeCourtType.priceTables.length > 0) {
+      const isValid = activeCourtType.priceTables.some((pt) => pt.id === selectedPriceTableId);
+      if (!isValid) {
+        if (
+          initialCycle?.priceTableId &&
+          activeCourtType.priceTables.some((pt) => pt.id === initialCycle.priceTableId)
+        ) {
+          setSelectedPriceTableId(initialCycle.priceTableId);
+        } else {
+          setSelectedPriceTableId(activeCourtType.priceTables[0].id);
+        }
+      }
+    }
+  }, [activeCourtType, selectedPriceTableId, initialCycle]);
+
   // LẤY DANH SÁCH SÂN CHUẨN XÁC: availableCourts từ pricingConfig hoặc courts từ scheduleData
   const courts: CourtItem[] = useMemo(() => {
     if (activeCourtType?.availableCourts && activeCourtType.availableCourts.length > 0) {
@@ -247,8 +266,8 @@ export function FixedVisualBookingModal({
   useEffect(() => {
     if (open) {
       if (initialCycle) {
-        setStartTime(initialCycle.startTime);
-        setEndTime(initialCycle.endTime);
+        setStartTime(initialCycle.startTime ? initialCycle.startTime.slice(0, 5) : '');
+        setEndTime(initialCycle.endTime ? initialCycle.endTime.slice(0, 5) : '');
         setDaysOfWeekMask(initialCycle.daysOfWeekMask || 2);
         setExceptionDates(initialCycle.exceptionDates || []);
         if (initialCycle.startDate) {
@@ -259,6 +278,9 @@ export function FixedVisualBookingModal({
         }
         if (initialCycle.courtTypeId) {
           setSelectedCourtTypeId(initialCycle.courtTypeId);
+        }
+        if (initialCycle.priceTableId) {
+          setSelectedPriceTableId(initialCycle.priceTableId);
         }
         if (initialCycle.courtIds && initialCycle.courtIds.length > 0) {
           setSelectedCourtIds(initialCycle.courtIds);
@@ -336,6 +358,13 @@ export function FixedVisualBookingModal({
         if (!selectedCourtIds.includes(occ.courtId)) continue;
         if (exceptionDates.includes(occ.date)) continue;
 
+        // Bỏ qua các slot thuộc chính đơn hàng này nếu đang sửa hoặc thêm chu kỳ cho đơn
+        if (excludeOrderCode) {
+          const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
+          const cleanCurrent = occ.orderCode?.replace(/^#/, '').trim().toLowerCase();
+          if (cleanTarget === cleanCurrent) continue;
+        }
+
         const occStartMin = timeToMinutes(occ.startTime);
         const occEndMin = timeToMinutes(occ.endTime);
 
@@ -399,6 +428,7 @@ export function FixedVisualBookingModal({
     exceptionDates,
     courts,
     existingCycles,
+    excludeOrderCode,
   ]);
 
   // Cảnh báo ngay lập tức khi phát hiện trùng lịch do thay đổi giờ / sân
@@ -452,6 +482,9 @@ export function FixedVisualBookingModal({
           (occ) =>
             occ.courtId === courtId &&
             !exceptionDates.includes(occ.date) &&
+            (!excludeOrderCode ||
+              occ.orderCode?.replace(/^#/, '').trim().toLowerCase() !==
+                excludeOrderCode.replace(/^#/, '').trim().toLowerCase()) &&
             Math.max(startMin, timeToMinutes(occ.startTime)) <
               Math.min(endMin, timeToMinutes(occ.endTime))
         );
@@ -1052,6 +1085,7 @@ export function FixedVisualBookingModal({
               endTime={endTime}
               selectedCourtIds={selectedCourtIds}
               existingCycles={existingCycles}
+              excludeOrderCode={excludeOrderCode}
               onToggleCourt={handleToggleCourt}
               onSelectSlot={handleTimelineSlotClick}
               onConflictClick={handleConflictSlotClick}

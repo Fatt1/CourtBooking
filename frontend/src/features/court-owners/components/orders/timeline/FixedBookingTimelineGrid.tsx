@@ -52,6 +52,7 @@ export interface FixedBookingTimelineGridProps {
   ) => void;
   onConflictClick?: (conflict: OccupiedSlotDetailDto, courtName: string, dayLabel: string) => void;
   isLoading?: boolean;
+  excludeOrderCode?: string;
 }
 
 const DAYS_OF_WEEK_MAP: { [key: number]: number } = {
@@ -76,6 +77,7 @@ export function FixedBookingTimelineGrid({
   endTime,
   selectedCourtIds,
   existingCycles,
+  excludeOrderCode,
   onToggleCourt,
   onSelectSlot,
   onConflictClick,
@@ -339,6 +341,11 @@ export function FixedBookingTimelineGrid({
                         // 1. Kiểm tra xem ô này có bị trùng với slot đã đặt/khóa/sự kiện nào không
                         const conflicts = occupiedSlots.filter((occ) => {
                           if (occ.courtId !== court.courtId) return false;
+                          if (excludeOrderCode) {
+                            const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
+                            const cleanCurrent = occ.orderCode?.replace(/^#/, '').trim().toLowerCase();
+                            if (cleanTarget === cleanCurrent) return false;
+                          }
                           const occStart = timeToMinutes(occ.startTime);
                           const occEnd = timeToMinutes(occ.endTime);
                           return Math.max(col.startMin, occStart) < Math.min(col.endMin, occEnd);

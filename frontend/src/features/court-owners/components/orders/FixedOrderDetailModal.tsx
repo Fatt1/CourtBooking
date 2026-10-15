@@ -294,26 +294,42 @@ export function FixedOrderDetailModal({
     }
   };
 
-  // Chuyển đổi FixedCycleDetailDto sang FixedCycleConfig cho modal chỉnh sửa
+  // Chuyển đổi FixedCycleDetailDto sang FixedCycleConfig
+  const mapCycleDtoToConfig = (c: FixedCycleDetailDto): FixedCycleConfig => ({
+    courtTypeId: c.courtTypeId,
+    courtTypeName: c.courtTypeName,
+    priceTableId: '',
+    priceTableName: '',
+    startDate: c.startDate.split('T')[0],
+    endDate: c.endDate.split('T')[0],
+    daysOfWeekMask: c.daysOfWeekMask,
+    daysOfWeekLabels: c.dayNames || [],
+    startTime: c.startTime,
+    endTime: c.endTime,
+    courtIds: c.courts.map((court) => court.courtId),
+    courtNames: c.courts.map((court) => court.courtName),
+    exceptionDates: c.exceptionDates || [],
+    totalSessions: 0,
+  });
+
   const initialCycleForEdit: FixedCycleConfig | null = useMemo(() => {
     if (!editingCycle) return null;
-    return {
-      courtTypeId: editingCycle.courtTypeId,
-      courtTypeName: editingCycle.courtTypeName,
-      priceTableId: '',
-      priceTableName: '',
-      startDate: editingCycle.startDate.split('T')[0],
-      endDate: editingCycle.endDate.split('T')[0],
-      daysOfWeekMask: editingCycle.daysOfWeekMask,
-      daysOfWeekLabels: editingCycle.dayNames || [],
-      startTime: editingCycle.startTime,
-      endTime: editingCycle.endTime,
-      courtIds: editingCycle.courts.map((c) => c.courtId),
-      courtNames: editingCycle.courts.map((c) => c.courtName),
-      exceptionDates: editingCycle.exceptionDates || [],
-      totalSessions: 0,
-    };
+    return mapCycleDtoToConfig(editingCycle);
   }, [editingCycle]);
+
+  // Các chu kỳ khác của đơn (dùng để kiểm tra trùng khi đang sửa 1 chu kỳ)
+  const otherCyclesForEdit: FixedCycleConfig[] = useMemo(() => {
+    if (!order?.cycles || !editingCycle) return [];
+    return order.cycles
+      .filter((c) => c.cycleId !== editingCycle.cycleId)
+      .map(mapCycleDtoToConfig);
+  }, [order?.cycles, editingCycle]);
+
+  // Tất cả chu kỳ hiện có của đơn (dùng để kiểm tra trùng khi thêm chu kỳ mới)
+  const allExistingCyclesForAdd: FixedCycleConfig[] = useMemo(() => {
+    if (!order?.cycles) return [];
+    return order.cycles.map(mapCycleDtoToConfig);
+  }, [order?.cycles]);
 
   if (!open) return null;
 
@@ -1059,6 +1075,8 @@ export function FixedOrderDetailModal({
           branchId={displayOrder.branchId}
           branchName={displayOrder.branchName}
           initialCycle={initialCycleForEdit}
+          excludeOrderCode={displayOrder.orderCode}
+          existingCycles={otherCyclesForEdit}
           title={`Chỉnh sửa Chu kỳ #${displayOrder.cycles.findIndex((c) => c.cycleId === editingCycle.cycleId) + 1}`}
           confirmText="Lưu cập nhật chu kỳ"
           onSaveCycle={handleSaveEditCycle}
@@ -1071,6 +1089,8 @@ export function FixedOrderDetailModal({
         onOpenChange={setIsAddCycleOpen}
         branchId={displayOrder.branchId}
         branchName={displayOrder.branchName}
+        excludeOrderCode={displayOrder.orderCode}
+        existingCycles={allExistingCyclesForAdd}
         title="Thêm chu kỳ mới vào đơn hàng cố định"
         confirmText="Thêm chu kỳ mới"
         onSaveCycle={handleSaveNewCycle}
