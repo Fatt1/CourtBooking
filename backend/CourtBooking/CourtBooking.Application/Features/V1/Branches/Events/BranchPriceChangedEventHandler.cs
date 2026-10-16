@@ -29,37 +29,42 @@ public sealed class BranchPriceChangedEventHandler(
         }
 
         // 2. Quét toàn bộ quy tắc giá (PriceTableRule) thuộc các bảng giá đang Active của chi nhánh
-        var priceStats = await dbContext.PriceTableRules
+        var activeRules = await dbContext.PriceTableRules
             .Where(r => r.PriceTable.CourtType.BranchId == notification.BranchId && r.PriceTable.IsActive)
-            .GroupBy(_ => 1)
-            .Select(g => new
-            {
-                MinPrice = g.Min(r => r.WalkInCustomerPrice),
-                MaxPrice = g.Max(r => r.WalkInCustomerPrice)
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+            .Select(r => new { r.FixedCustomerPrice, r.WalkInCustomerPrice })
+            .ToListAsync(cancellationToken);
 
         decimal newMinPrice;
         decimal newMaxPrice;
 
-        if (priceStats is not null)
+        if (activeRules.Count > 0)
         {
-            newMinPrice = priceStats.MinPrice;
-            newMaxPrice = priceStats.MaxPrice;
+            var validPrices = activeRules
+                .SelectMany(r => new[] { r.FixedCustomerPrice, r.WalkInCustomerPrice })
+                .Where(p => p > 0)
+                .ToList();
+
+            newMinPrice = validPrices.Count > 0 ? validPrices.Min() : 0m;
+            newMaxPrice = validPrices.Count > 0 ? validPrices.Max() : 0m;
         }
         else
         {
             // Trường hợp chi nhánh chưa có rule nào hoặc đã bị xóa hết rule trong bảng giá active:
-            // Fallback sang DefaultPrice của các bảng giá đang active (nếu có), hoặc 0
+            // Fallback sang DefaultPrice và DefaultWalkInPrice của các bảng giá đang active (nếu có), hoặc 0
             var defaultPrices = await dbContext.PriceTables
                 .Where(pt => pt.CourtType.BranchId == notification.BranchId && pt.IsActive)
-                .Select(pt => pt.DefaultPrice)
+                .Select(pt => new { pt.DefaultPrice, pt.DefaultWalkInPrice })
                 .ToListAsync(cancellationToken);
 
-            if (defaultPrices.Count > 0)
+            var validDefaultPrices = defaultPrices
+                .SelectMany(pt => new[] { pt.DefaultPrice, pt.DefaultWalkInPrice })
+                .Where(p => p > 0)
+                .ToList();
+
+            if (validDefaultPrices.Count > 0)
             {
-                newMinPrice = defaultPrices.Min();
-                newMaxPrice = defaultPrices.Max();
+                newMinPrice = validDefaultPrices.Min();
+                newMaxPrice = validDefaultPrices.Max();
             }
             else
             {

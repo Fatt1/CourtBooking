@@ -10,4 +10,5 @@ public sealed record CreatePriceTableCommand(
     Guid CourtTypeId,
     string Name,
     decimal DefaultPrice,
+    decimal DefaultWalkInPrice,
     bool IsActive) : ICommand<Guid>;

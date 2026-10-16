@@ -97,6 +97,7 @@ public sealed class PricingEndpoints : IEndpointGroup
                 request.CourtTypeId,
                 request.Name,
                 request.DefaultPrice,
+                request.DefaultWalkInPrice,
                 request.IsActive);
 
             var result = await sender.Send(command, ct);
@@ -128,6 +129,7 @@ public sealed class PricingEndpoints : IEndpointGroup
                 priceTableId,
                 request.Name,
                 request.DefaultPrice,
+                request.DefaultWalkInPrice,
                 request.IsActive);
 
             var result = await sender.Send(command, ct);
