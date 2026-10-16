@@ -10,6 +10,10 @@ import { ProtectedRoute, OwnerProtectedRoute } from '@/components/layouts/Protec
 // Customer / Public Pages
 import { HomePage } from '@/features/customer/pages/HomePage';
 import { CreateReviewPage } from '@/features/customer/pages/CreateReviewPage';
+import { EventsPage } from '@/features/events/pages/EventsPage';
+import { EventDetailPage } from '@/features/events/pages/EventDetailPage';
+import { EventCheckoutPage } from '@/features/events/pages/EventCheckoutPage';
+import { EventSuccessPage } from '@/features/events/pages/EventSuccessPage';
 
 
 // Admin Pages
@@ -44,7 +48,11 @@ export const router = createBrowserRouter([
       // Placeholder routes trỏ tạm về HomePage nếu khách click
       { path: '/courts', element: <HomePage /> },
       { path: '/matches', element: <HomePage /> },
-      { path: '/events', element: <HomePage /> },
+      // Sự kiện thể thao (Matchday Events)
+      { path: '/events', element: <EventsPage /> },
+      { path: '/events/:id', element: <EventDetailPage /> },
+      { path: '/events/:id/checkout', element: <EventCheckoutPage /> },
+      { path: '/events/:id/success', element: <EventSuccessPage /> },
       { path: '/ai-assistant', element: <HomePage /> },
       { path: '/branches/:id', element: <HomePage /> },
     ],
