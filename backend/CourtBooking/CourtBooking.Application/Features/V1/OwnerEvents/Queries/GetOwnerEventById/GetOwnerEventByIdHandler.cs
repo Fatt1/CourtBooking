@@ -22,13 +22,18 @@ internal sealed class GetOwnerEventByIdHandler(
             .Select(e => new
             {
                 e.Id,
+                e.OrderId,
+                e.Order.OrderCode,
                 e.Order.BranchId,
+                BranchName = e.Order.Branch.Name,
+                e.Order.CustomerName,
+                e.Order.CustomerPhone,
+                e.Order.Note,
                 e.Title,
                 e.SportTypeId,
                 SportTypeName = e.SportType.Name,
-                e.Date,
-                e.StartTime,
-                e.EndTime,
+                e.StartDate,
+                e.EndDate,
                 e.TicketPrice,
                 e.Slots,
                 e.AvailableSlot,
@@ -38,6 +43,16 @@ internal sealed class GetOwnerEventByIdHandler(
                 e.Status,
                 CourtIds = e.Order.Details.Select(d => d.CourtId).Distinct().ToList(),
                 Courts = e.Order.Details.Select(d => new CourtSummaryDto(d.CourtId, d.Court.Name)).Distinct().ToList(),
+                SlotDetails = e.Order.Details.Select(d => new OwnerEventSlotDetailDto(
+                    d.Id,
+                    d.CourtId,
+                    d.Court.Name,
+                    d.Court.CourtTypeId,
+                    d.Court.CourtType.Name,
+                    d.Date,
+                    d.StartTime,
+                    d.EndTime,
+                    d.Price)).ToList(),
                 SoldTickets = e.Tickets.Where(t => t.Status != EventTicketStatus.Cancelled).Sum(t => (int?)t.Quantity) ?? 0
             })
             .AsSplitQuery()
@@ -57,12 +72,18 @@ internal sealed class GetOwnerEventByIdHandler(
 
         var dto = new OwnerEventDetailDto(
             rawEvent.Id,
+            rawEvent.OrderId,
+            rawEvent.OrderCode,
+            rawEvent.BranchId,
+            rawEvent.BranchName,
+            rawEvent.CustomerName,
+            rawEvent.CustomerPhone,
+            rawEvent.Note,
             rawEvent.Title,
             rawEvent.SportTypeId,
             rawEvent.SportTypeName,
-            rawEvent.Date,
-            rawEvent.StartTime,
-            rawEvent.EndTime,
+            rawEvent.StartDate,
+            rawEvent.EndDate,
             rawEvent.TicketPrice,
             rawEvent.Slots,
             rawEvent.AvailableSlot,
@@ -72,7 +93,8 @@ internal sealed class GetOwnerEventByIdHandler(
             rawEvent.Description,
             rawEvent.Status,
             rawEvent.CourtIds,
-            rawEvent.Courts);
+            rawEvent.Courts,
+            rawEvent.SlotDetails);
 
         return Result.Success(dto);
     }

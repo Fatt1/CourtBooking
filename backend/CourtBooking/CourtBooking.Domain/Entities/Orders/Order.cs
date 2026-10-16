@@ -141,6 +141,34 @@ public class Order : EntityBase<Guid>, IAuditable
         };
     }
 
+    public static Order CreateEventOrder(
+        Guid branchId,
+        DateOnly orderDate,
+        string customerName,
+        string customerPhone,
+        string? note)
+    {
+        string orderCode = $"EVT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N", System.Globalization.CultureInfo.InvariantCulture)[..6].ToUpperInvariant()}";
+        return new Order
+        {
+            Id = Guid.CreateVersion7(),
+            OrderCode = orderCode,
+            BranchId = branchId,
+            PlayerId = null,
+            CustomerName = customerName,
+            CustomerPhone = customerPhone,
+            Channel = OrderChannel.Pos,
+            TotalCourtAmount = 0,
+            TotalServiceAmount = 0,
+            DiscountAmount = 0,
+            Status = OrderStatus.Confirmed,
+            HoldExpiresAt = DateTime.UtcNow.AddYears(100),
+            OrderDate = orderDate,
+            OrderType = OrderType.Event,
+            Note = note
+        };
+    }
+
     public void AddFixedConfig(FixedOrderConfig config)
     {
         FixedConfigs.Add(config);

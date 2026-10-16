@@ -22,6 +22,7 @@ export interface BookingTimelineGridProps {
   onToggleSlot: (slot: SelectedCourtSlot, blockSlots?: SelectedCourtSlot[]) => void;
   isLoading?: boolean;
   excludeOrderCode?: string;
+  excludeTitle?: string;
 }
 
 export function BookingTimelineGrid({
@@ -36,6 +37,7 @@ export function BookingTimelineGrid({
   onToggleSlot,
   isLoading,
   excludeOrderCode,
+  excludeTitle,
 }: BookingTimelineGridProps) {
   const openMinutes = useMemo(() => timeToMinutes(branchOpenTime) || 360, [branchOpenTime]); // 6:00 default
   const closeMinutes = useMemo(() => {
@@ -210,7 +212,14 @@ export function BookingTimelineGrid({
                                 if (excludeOrderCode) {
                                   const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
                                   const cleanCurrent = os.orderCode?.replace(/^#/, '').trim().toLowerCase();
-                                  if (cleanTarget === cleanCurrent) return false;
+                                  if (cleanTarget && cleanCurrent && cleanTarget === cleanCurrent) return false;
+                                }
+                                if (excludeTitle) {
+                                  const cleanTargetTitle = excludeTitle.trim().toLowerCase();
+                                  const cleanCurrentTitle = os.title?.trim().toLowerCase();
+                                  if (cleanTargetTitle && cleanCurrentTitle && (cleanCurrentTitle === cleanTargetTitle || cleanCurrentTitle.includes(cleanTargetTitle))) {
+                                    return false;
+                                  }
                                 }
                                 return (
                                   timeToMinutes(os.startTime) < ts.endMin &&
@@ -268,7 +277,9 @@ export function BookingTimelineGrid({
 
                             // Xử lý khi click vào ô
                             const handleClick = () => {
-                              if (isUnavailable) {
+                              // Nếu ô đang được chọn -> Thao tác click là để BỎ CHỌN (deselection)
+                              // Bỏ chọn luôn được cho phép, không bị chặn bởi xung đột hay quá khứ
+                              if (!isSelected && isUnavailable) {
                                 if (isPastDate || isPastOrTooClose) {
                                   toast.warning('Khung giờ này đã kết thúc trong quá khứ.');
                                 } else if (isBlockPastOrTooClose) {

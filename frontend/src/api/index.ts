@@ -10,4 +10,6 @@ export * from './service-categories';
 export * from './services';
 export * from './pricing';
 export * from './reviews';
-export * from './analytics';
+export * from './analytics';
+export * from './events';
+

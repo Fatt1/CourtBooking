@@ -885,45 +885,6 @@ public static class DatabaseSeeder
         await context.MatchParticipants.AddAsync(participant, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
-        // ──────────────────────────────────────────────────────────────
-        // 17. SportEvents & EventTickets
-        // ──────────────────────────────────────────────────────────────
-        var sportEvent = new SportEvent
-        {
-            Id = Guid.NewGuid(),
-            OrderId = order3.Id,
-            SportTypeId = sportBadminton.Id,
-            Date = today.AddDays(14),
-            StartTime = new TimeOnly(8, 0),
-            EndTime = new TimeOnly(18, 0),
-            Title = "Giải Cầu Lông Mở Rộng Sài Gòn Star Cup 2026",
-            Slots = 32,
-            AvailableSlot = 32,
-            TicketPrice = 200000m,
-            SkillLevelFrom = "Tự do",
-            SkillLevelTo = "Tự do",
-            Description = "Giải đấu giao lưu tranh cúp mùa thu 2026, cơ cấu giải thưởng cờ, cúp và tiền thưởng hấp dẫn.",
-            Status = EventStatus.Open,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await context.SportEvents.AddAsync(sportEvent, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
-
-        var ticket = new EventTicket
-        {
-            Id = Guid.NewGuid(),
-            EventId = sportEvent.Id,
-            PlayerId = userPlayer2.Id,
-            Quantity = 1,
-            PaymentMethod = PaymentMethod.QrTransfer,
-            Price = 200000m,
-            Status = EventTicketStatus.PendingApproval,
-            CreatedAt = DateTime.UtcNow
-        };
-        await context.EventTickets.AddAsync(ticket, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
-
         logger.LogInformation("Database seeded successfully with all entities!");
     }
 }

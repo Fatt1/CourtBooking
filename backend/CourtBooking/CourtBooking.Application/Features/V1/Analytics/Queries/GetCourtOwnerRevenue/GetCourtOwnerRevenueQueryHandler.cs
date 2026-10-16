@@ -173,12 +173,14 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
             .ToListAsync(cancellationToken);
 
         // 6. Truy vấn EventTickets (Vé sự kiện)
+        var fromUtc = fromDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var toUtc = toDate.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
         var eventTickets = await dbContext.EventTickets
             .AsNoTracking()
             .Where(t => branchIds.Contains(t.Event.Order.BranchId)
                         && t.Status == EventTicketStatus.Confirmed
-                        && t.Event.Date >= fromDate
-                        && t.Event.Date <= toDate)
+                        && t.Event.StartDate <= toUtc
+                        && t.Event.EndDate >= fromUtc)
             .Select(t => new
             {
                 t.Id,
