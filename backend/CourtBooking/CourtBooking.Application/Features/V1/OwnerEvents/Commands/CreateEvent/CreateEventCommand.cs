@@ -1,3 +1,4 @@
+using CourtBooking.Application.Features.V1.Orders.SharedInputs;
 using CourtBooking.Application.Messaging;
 
 namespace CourtBooking.Application.Features.V1.OwnerEvents.Commands.CreateEvent;
@@ -14,7 +15,11 @@ public sealed record CreateEventCommand(
     TimeOnly EndTime,
     decimal TicketPrice,
     int Slots,
-    string? SkillLevelFrom,
-    string? SkillLevelTo,
-    string? Description,
-    List<Guid> CourtIds) : ICommand<Guid>;
+    List<CourtBookingSlot> CourtSlots,
+    string? SkillLevelFrom = null,
+    string? SkillLevelTo = null,
+    string? Description = null,
+    string? CustomerName = null,
+    string? CustomerPhone = null,
+    string? Note = null) : ICommand<Guid>;
+
