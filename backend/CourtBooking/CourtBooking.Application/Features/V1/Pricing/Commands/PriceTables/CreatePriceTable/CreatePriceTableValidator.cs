@@ -18,5 +18,8 @@ public sealed class CreatePriceTableValidator : AbstractValidator<CreatePriceTab
 
         RuleFor(x => x.DefaultPrice)
             .GreaterThanOrEqualTo(0).WithMessage("Giá mặc định không được âm.");
+
+        RuleFor(x => x.DefaultWalkInPrice)
+            .GreaterThanOrEqualTo(0).WithMessage("Giá vãng lai mặc định không được âm.");
     }
 }

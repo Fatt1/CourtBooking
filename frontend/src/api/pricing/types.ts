@@ -34,6 +34,7 @@ export interface PriceTableDto {
   name: string;
   isActive: boolean;
   defaultPrice: number;
+  defaultWalkInPrice: number;
   rules: PriceTableRuleDto[];
 }
 
@@ -54,6 +55,7 @@ export interface CreatePriceTablePayload {
   courtTypeId: string;
   name: string;
   defaultPrice: number;
+  defaultWalkInPrice: number;
   isActive?: boolean;
 }
 
@@ -62,6 +64,7 @@ export interface UpdatePriceTablePayload {
   priceTableId: string;
   name: string;
   defaultPrice: number;
+  defaultWalkInPrice: number;
   isActive: boolean;
 }
 

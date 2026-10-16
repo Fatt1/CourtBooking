@@ -446,6 +446,7 @@ public static class DatabaseSeeder
             CourtTypeId = courtType1.Id,
             Name = "Bảng Giá Cầu Lông Tiêu Chuẩn 2026",
             DefaultPrice = 80000m,
+            DefaultWalkInPrice = 100000m,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -457,6 +458,7 @@ public static class DatabaseSeeder
             CourtTypeId = courtType3.Id,
             Name = "Bảng Giá Pickleball 2026",
             DefaultPrice = 150000m,
+            DefaultWalkInPrice = 180000m,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
