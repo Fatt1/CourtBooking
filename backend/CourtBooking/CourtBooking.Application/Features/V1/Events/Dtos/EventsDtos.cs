@@ -94,6 +94,7 @@ public sealed record BookEventTicketResponse(
     PaymentMethod PaymentMethod,
     EventTicketStatus Status,
     DateTime CreatedAt,
+    DateTime ExpiresAt,
     string? AccountNumber,
     string? AccountName,
     ImageDto? QrImage);

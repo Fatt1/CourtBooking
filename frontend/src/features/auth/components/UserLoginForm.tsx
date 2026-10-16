@@ -23,7 +23,9 @@ export function UserLoginForm() {
   const onSubmit = async (values: UserLoginValues) => {
     try {
       await login(values);
-      navigate('/');
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirect = searchParams.get('redirect') || '/';
+      navigate(redirect);
     } catch {
       // Form handles or toast will alert
     }
