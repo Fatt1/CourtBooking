@@ -10,9 +10,8 @@ public sealed record CreateEventCommand(
     Guid BranchId,
     string Title,
     Guid SportTypeId,
-    DateOnly Date,
-    TimeOnly StartTime,
-    TimeOnly EndTime,
+    DateTime StartDate,
+    DateTime EndDate,
     decimal TicketPrice,
     int Slots,
     List<CourtBookingSlot> CourtSlots,
@@ -22,4 +21,3 @@ public sealed record CreateEventCommand(
     string? CustomerName = null,
     string? CustomerPhone = null,
     string? Note = null) : ICommand<Guid>;
-

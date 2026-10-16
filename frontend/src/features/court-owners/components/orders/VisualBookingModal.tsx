@@ -33,6 +33,7 @@ interface VisualBookingModalProps {
   initialDate?: string;
   initialSlots?: SelectedCourtSlot[];
   excludeOrderCode?: string;
+  excludeTitle?: string;
   title?: string;
   confirmText?: string;
   onConfirm: (slots: SelectedCourtSlot[]) => void;
@@ -56,6 +57,7 @@ export function VisualBookingModal({
   initialDate,
   initialSlots = EMPTY_INITIAL_SLOTS,
   excludeOrderCode,
+  excludeTitle,
   title = 'Đặt lịch ngày trực quan',
   confirmText = 'Xác nhận lịch chọn',
   onConfirm,
@@ -522,6 +524,7 @@ export function VisualBookingModal({
                 onToggleSlot={handleToggleSlot}
                 isLoading={isScheduleLoading || isPricingLoading}
                 excludeOrderCode={excludeOrderCode}
+                excludeTitle={excludeTitle}
               />
             </div>
           </div>

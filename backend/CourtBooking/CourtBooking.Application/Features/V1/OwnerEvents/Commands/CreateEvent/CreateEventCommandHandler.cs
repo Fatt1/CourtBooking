@@ -75,7 +75,7 @@ internal sealed class CreateEventCommandHandler(
 
             var order = Order.CreateEventOrder(
                 request.BranchId,
-                request.Date,
+                DateOnly.FromDateTime(request.StartDate),
                 customerName,
                 customerPhone,
                 note);
@@ -96,9 +96,8 @@ internal sealed class CreateEventCommandHandler(
                 Id = Guid.CreateVersion7(),
                 OrderId = order.Id,
                 SportTypeId = request.SportTypeId,
-                Date = request.Date,
-                StartTime = request.StartTime,
-                EndTime = request.EndTime,
+                StartDate = DateTime.SpecifyKind(request.StartDate, DateTimeKind.Utc),
+                EndDate = DateTime.SpecifyKind(request.EndDate, DateTimeKind.Utc),
                 Title = request.Title.Trim(),
                 SkillLevelFrom = string.IsNullOrWhiteSpace(request.SkillLevelFrom) ? null : request.SkillLevelFrom.Trim(),
                 SkillLevelTo = string.IsNullOrWhiteSpace(request.SkillLevelTo) ? null : request.SkillLevelTo.Trim(),

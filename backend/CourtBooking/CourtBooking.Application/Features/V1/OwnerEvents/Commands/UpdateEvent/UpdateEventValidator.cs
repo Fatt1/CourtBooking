@@ -16,6 +16,20 @@ public sealed class UpdateEventValidator : AbstractValidator<UpdateEventCommand>
             .MaximumLength(255)
             .WithMessage("Tên sự kiện tối đa 255 ký tự.");
 
+        RuleFor(x => x.SportTypeId)
+            .NotEmpty()
+            .WithMessage("Vui lòng chọn bộ môn thể thao.");
+
+        RuleFor(x => x.StartDate)
+            .NotEmpty()
+            .WithMessage("Thời gian bắt đầu không được để trống.");
+
+        RuleFor(x => x.EndDate)
+            .NotEmpty()
+            .WithMessage("Thời gian kết thúc không được để trống.")
+            .GreaterThan(x => x.StartDate)
+            .WithMessage("Thời gian kết thúc phải sau thời gian bắt đầu.");
+
         RuleFor(x => x.TicketPrice)
             .GreaterThanOrEqualTo(0)
             .WithMessage("Giá vé không thể là số âm.");

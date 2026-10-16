@@ -246,6 +246,7 @@ export function useUpdateOrderItemsMutation() {
         queryKey: ['owner', 'orders', 'daily-detail', variables.orderId],
       });
       queryClient.invalidateQueries({ queryKey: ['branches', 'one-time-booking'] });
+      queryClient.invalidateQueries({ queryKey: ['owner', 'events'] });
     },
   });
 }

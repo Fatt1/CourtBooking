@@ -1,3 +1,4 @@
+using CourtBooking.Application.Features.V1.Storages.Dtos;
 using CourtBooking.Domain.Enums;
 
 namespace CourtBooking.Application.Features.V1.OwnerEvents.Dtos;
@@ -16,34 +17,49 @@ public sealed record OwnerEventItemDto(
     Guid Id,
     string EventCode,
     string Title,
-    Guid SportTypeId,
-    string SportTypeName,
     IReadOnlyList<CourtSummaryDto> Courts,
-    string CourtNames,
-    DateOnly Date,
-    TimeOnly StartTime,
-    TimeOnly EndTime,
+    DateTime StartDate,
+    DateTime EndDate,
     int Slots,
     int SoldTickets,
     int AvailableSlot,
     decimal TicketPrice,
     decimal EstimatedRevenue,
     EventStatus Status,
-    string? Description,
     string? SkillLevelFrom,
     string? SkillLevelTo);
+
+/// <summary>
+/// DTO chi tiết từng slot sân đang được giữ bởi sự kiện.
+/// </summary>
+public sealed record OwnerEventSlotDetailDto(
+    Guid OrderDetailId,
+    Guid CourtId,
+    string CourtName,
+    Guid CourtTypeId,
+    string CourtTypeName,
+    DateOnly Date,
+    TimeOnly StartTime,
+    TimeOnly EndTime,
+    decimal Price);
 
 /// <summary>
 /// DTO chi tiết sự kiện nạp vào Modal "Cập nhật sự kiện" của Chủ sân.
 /// </summary>
 public sealed record OwnerEventDetailDto(
     Guid Id,
+    Guid OrderId,
+    string OrderCode,
+    Guid BranchId,
+    string BranchName,
+    string? CustomerName,
+    string? CustomerPhone,
+    string? Note,
     string Title,
     Guid SportTypeId,
     string SportTypeName,
-    DateOnly Date,
-    TimeOnly StartTime,
-    TimeOnly EndTime,
+    DateTime StartDate,
+    DateTime EndDate,
     decimal TicketPrice,
     int Slots,
     int AvailableSlot,
@@ -53,14 +69,9 @@ public sealed record OwnerEventDetailDto(
     string? Description,
     EventStatus Status,
     IReadOnlyList<Guid> CourtIds,
-    IReadOnlyList<CourtSummaryDto> Courts);
+    IReadOnlyList<CourtSummaryDto> Courts,
+    IReadOnlyList<OwnerEventSlotDetailDto> SlotDetails);
 
-/// <summary>
-/// DTO ảnh chụp màn hình chuyển khoản của người tham gia.
-/// </summary>
-public sealed record EventTicketProofImageDto(
-    Guid Id,
-    string Key);
 
 /// <summary>
 /// DTO từng dòng vé trong Modal "Người tham gia" (Quản lý vé & duyệt chuyển khoản).
@@ -75,7 +86,7 @@ public sealed record EventParticipantItemDto(
     decimal TotalPrice,
     PaymentMethod PaymentMethod,
     EventTicketStatus Status,
-    EventTicketProofImageDto? ProofImage,
+    ImageDto? ProofImage,
     string? RefundNote,
     DateTime CreatedAt,
     DateTime? ReviewedAt);

@@ -137,11 +137,14 @@ export const API_ENDPOINTS = {
 
     // Owner
     OWNER_LIST: '/owner/events',
+    DETAIL: (id: string) => `/owner/events/${id}`,
     CREATE: '/owner/events',
     UPDATE: (id: string) => `/owner/events/${id}`,
+    CANCEL: (id: string) => `/owner/events/${id}/cancel`,
+    PARTICIPANTS: (id: string) => `/owner/events/${id}/participants`,
     TICKETS_LIST: (id: string) => `/owner/events/${id}/tickets`,
-    APPROVE_TICKET: (ticketId: string) => `/owner/events/tickets/${ticketId}/approve`,
-    REJECT_TICKET: (ticketId: string) => `/owner/events/tickets/${ticketId}/reject`,
+    APPROVE_TICKET: (id: string, ticketId: string) => `/owner/events/${id}/tickets/${ticketId}/approve`,
+    REJECT_TICKET: (id: string, ticketId: string) => `/owner/events/${id}/tickets/${ticketId}/reject`,
   },
 
   // 8. Dịch vụ & Loại dịch vụ (Services & ServiceCategories)

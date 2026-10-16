@@ -21,13 +21,15 @@ public sealed class CreateEventValidator : AbstractValidator<CreateEventCommand>
             .NotEmpty()
             .WithMessage("Môn thể thao không được để trống.");
 
-        RuleFor(x => x.Date)
-            .GreaterThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow.Date))
-            .WithMessage("Ngày tổ chức sự kiện không thể ở quá khứ.");
+        RuleFor(x => x.StartDate)
+            .NotEmpty()
+            .WithMessage("Thời gian bắt đầu không được để trống.");
 
-        RuleFor(x => x.EndTime)
-            .GreaterThan(x => x.StartTime)
-            .WithMessage("Giờ kết thúc phải sau giờ bắt đầu.");
+        RuleFor(x => x.EndDate)
+            .NotEmpty()
+            .WithMessage("Thời gian kết thúc không được để trống.")
+            .GreaterThan(x => x.StartDate)
+            .WithMessage("Thời gian kết thúc phải sau thời gian bắt đầu.");
 
         RuleFor(x => x.TicketPrice)
             .GreaterThanOrEqualTo(0)

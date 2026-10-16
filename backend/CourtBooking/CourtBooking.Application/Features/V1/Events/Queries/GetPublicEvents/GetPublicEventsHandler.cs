@@ -35,7 +35,9 @@ internal sealed class GetPublicEventsHandler(
 
         if (request.Date.HasValue)
         {
-            query = query.Where(e => e.Date == request.Date.Value);
+            var dStart = request.Date.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            var dEnd = request.Date.Value.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
+            query = query.Where(e => e.StartDate <= dEnd && e.EndDate >= dStart);
         }
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -53,8 +55,7 @@ internal sealed class GetPublicEventsHandler(
 
         // 4. Sắp xếp theo ngày diễn ra gần nhất và phân trang
         var items = await query
-            .OrderBy(e => e.Date)
-            .ThenBy(e => e.StartTime)
+            .OrderBy(e => e.StartDate)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(e => new EventCardDto(
@@ -65,9 +66,8 @@ internal sealed class GetPublicEventsHandler(
                 e.Order.BranchId,
                 e.Order.Branch.Name,
                 $"{e.Order.Branch.Street}, {e.Order.Branch.District}, {e.Order.Branch.Province}",
-                e.Date,
-                e.StartTime,
-                e.EndTime,
+                e.StartDate,
+                e.EndDate,
                 e.SkillLevelFrom,
                 e.SkillLevelTo,
                 e.TicketPrice,
