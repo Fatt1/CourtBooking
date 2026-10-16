@@ -9,6 +9,8 @@ interface PriceTableBlockProps {
   onEditTable: (table: PriceTableGroup) => void;
   onDeleteTable: (table: PriceTableGroup) => void;
   onEditRule: (table: PriceTableGroup, group: PriceRuleGroup, rule: PriceRuleItem) => void;
+  onDeleteRule?: (table: PriceTableGroup, rule: PriceRuleItem) => void;
+  disableDeleteTable?: boolean;
 }
 
 export function PriceTableBlock({
@@ -16,6 +18,8 @@ export function PriceTableBlock({
   onEditTable,
   onDeleteTable,
   onEditRule,
+  onDeleteRule,
+  disableDeleteTable = false,
 }: PriceTableBlockProps) {
   const isHSSV = table.isHSSV ?? false;
 
@@ -37,9 +41,21 @@ export function PriceTableBlock({
           </button>
           <button
             type="button"
-            onClick={() => onDeleteTable(table)}
-            title={`Xóa ${table.name}`}
-            className="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-card text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            disabled={disableDeleteTable}
+            onClick={() => {
+              if (disableDeleteTable) return;
+              onDeleteTable(table);
+            }}
+            title={
+              disableDeleteTable
+                ? 'Mỗi loại sân phải có ít nhất một bảng giá, không thể xóa bảng giá cuối cùng.'
+                : `Xóa ${table.name}`
+            }
+            className={`flex size-8 items-center justify-center rounded-lg border border-border/80 bg-card transition-colors ${
+              disableDeleteTable
+                ? 'opacity-40 cursor-not-allowed text-muted-foreground'
+                : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer'
+            }`}
           >
             <Trash2 className="size-3.5" />
           </button>
@@ -67,7 +83,17 @@ export function PriceTableBlock({
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
-              {table.groups.map((group) => {
+              {table.groups.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={isHSSV ? 5 : 6}
+                    className="py-8 text-center text-muted-foreground text-xs font-medium"
+                  >
+                    Bảng giá này chưa có khung giờ giá nào. Vui lòng bấm &quot;+ Thêm khung giờ giá&quot; để thiết lập.
+                  </td>
+                </tr>
+              ) : (
+                table.groups.map((group) => {
                 const totalRows = Math.max(group.items.length, 1);
 
                 return (
@@ -129,22 +155,35 @@ export function PriceTableBlock({
 
                           {/* Cột Thao tác */}
                           <td className="py-3.5 px-4 text-right pr-5">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onEditRule(table, group, item)}
-                              className="h-8 px-3 rounded-lg border-border/80 bg-background hover:bg-accent font-semibold text-xs cursor-pointer"
-                            >
-                              Sửa
-                            </Button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onEditRule(table, group, item)}
+                                className="h-8 px-2.5 rounded-lg border-border/80 bg-background hover:bg-accent font-semibold text-xs cursor-pointer"
+                              >
+                                Sửa
+                              </Button>
+                              {onDeleteRule && (
+                                <button
+                                  type="button"
+                                  onClick={() => onDeleteRule(table, item)}
+                                  title="Xóa khung giờ giá này"
+                                  className="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
                     })}
                   </React.Fragment>
                 );
-              })}
+              })
+            )}
             </tbody>
           </table>
         </div>

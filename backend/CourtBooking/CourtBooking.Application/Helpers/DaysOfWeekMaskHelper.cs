@@ -1,4 +1,4 @@
-﻿namespace CourtBooking.Application.Helpers;
+namespace CourtBooking.Application.Helpers;
 
 /// <summary>
 /// Helper tiện ích cho việc tính toán và giải mã bitmask ngày trong tuần (0 = Chủ nhật, 1 = Thứ hai, ..., 6 = Thứ bảy).
@@ -50,6 +50,12 @@ public static class DaysOfWeekMaskHelper
 
     public static string GetDayRangeText(byte from, byte to)
     {
+        // Khi chọn trọn vẹn cả tuần (0..6 hoặc 1..0), hiển thị chuẩn theo tiếng Việt là T2 - CN
+        if ((from == 0 && to == 6) || (from == 1 && to == 0))
+        {
+            return "T2 - CN";
+        }
+
         if (from == to)
         {
             return GetDayName(from);

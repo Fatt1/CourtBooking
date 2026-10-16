@@ -24,11 +24,14 @@ public sealed class PriceCalculator(IApplicationDbContext dbContext) : IPriceCal
 
         byte dayOfWeek = (byte)date.DayOfWeek;
 
-        // Lọc các rule phù hợp với ngày và thứ trong tuần
+        // Lọc các rule phù hợp với ngày và thứ trong tuần.
+        // Ưu tiên các quy tắc có ngày cụ thể (ngày lễ, khuyến mãi) lên trước để ghi đè quy tắc mặc định!
         var applicableRules = priceTable.Rules
             .Where(r => (!r.StartDate.HasValue || date >= r.StartDate.Value)
                      && (!r.EndDate.HasValue || date <= r.EndDate.Value)
                      && IsDayMatching(dayOfWeek, r.DayOfWeekFrom, r.DayOfWeekTo))
+            .OrderByDescending(r => r.StartDate.HasValue || r.EndDate.HasValue)
+            .ThenBy(r => r.StartTime)
             .ToList();
 
         decimal totalPrice = 0m;
@@ -39,7 +42,9 @@ public sealed class PriceCalculator(IApplicationDbContext dbContext) : IPriceCal
             // Tìm rule bao phủ mốc 'current' hiện tại
             var activeRule = applicableRules.FirstOrDefault(r => r.StartTime <= current && current < r.EndTime);
 
-            decimal hourlyRate = priceTable.DefaultPrice;
+            decimal hourlyRate = isFixedCustomer
+                ? priceTable.DefaultPrice
+                : (priceTable.DefaultWalkInPrice > 0 ? priceTable.DefaultWalkInPrice : priceTable.DefaultPrice);
             if (activeRule != null)
             {
                 hourlyRate = isFixedCustomer ? activeRule.FixedCustomerPrice : activeRule.WalkInCustomerPrice;

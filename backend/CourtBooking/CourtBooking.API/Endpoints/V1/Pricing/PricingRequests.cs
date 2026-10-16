@@ -7,6 +7,7 @@ public sealed record CreatePriceTableRequest(
     Guid CourtTypeId,
     string Name,
     decimal DefaultPrice,
+    decimal DefaultWalkInPrice,
     bool IsActive = true);
 
 /// <summary>
@@ -15,6 +16,7 @@ public sealed record CreatePriceTableRequest(
 public sealed record UpdatePriceTableRequest(
     string Name,
     decimal DefaultPrice,
+    decimal DefaultWalkInPrice,
     bool IsActive);
 
 /// <summary>

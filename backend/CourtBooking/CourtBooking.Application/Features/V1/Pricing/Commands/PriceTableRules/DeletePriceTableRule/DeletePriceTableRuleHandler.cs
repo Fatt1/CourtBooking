@@ -1,14 +1,17 @@
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Messaging;
+using CourtBooking.Domain.Events;
 using CourtBooking.SharedKernel;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.Pricing.Commands.PriceTableRules.DeletePriceTableRule;
 
 internal sealed class DeletePriceTableRuleHandler(
     IApplicationDbContext dbContext,
-    IBranchAuthorizationService branchAuth) : ICommandHandler<DeletePriceTableRuleCommand>
+    IBranchAuthorizationService branchAuth,
+    IPublisher publisher) : ICommandHandler<DeletePriceTableRuleCommand>
 {
     public async Task<Result> Handle(
         DeletePriceTableRuleCommand request,
@@ -35,6 +38,9 @@ internal sealed class DeletePriceTableRuleHandler(
         // 3. Xóa quy tắc
         dbContext.PriceTableRules.Remove(rule);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // 4. Phát sự kiện cập nhật lại khoảng giá của chi nhánh
+        await publisher.Publish(new BranchPriceChangedEvent(request.BranchId), cancellationToken);
 
         return Result.Success();
     }

@@ -5,6 +5,7 @@ import { OwnerModal } from '@/features/court-owners/components/shared';
 export interface PriceTableFormValues {
   name: string;
   defaultPrice: number;
+  walkInPrice: number;
   isActive: boolean;
 }
 
@@ -12,6 +13,7 @@ export interface PriceTableToEdit {
   id: string;
   name: string;
   defaultPrice?: number;
+  walkInPrice?: number;
   isActive?: boolean;
 }
 
@@ -40,6 +42,7 @@ export function AddPriceTableModal({
 
   const [name, setName] = useState('');
   const [defaultPrice, setDefaultPrice] = useState<number>(80000);
+  const [walkInPrice, setWalkInPrice] = useState<number>(100000);
   const [isActive, setIsActive] = useState<boolean>(true);
 
   useEffect(() => {
@@ -47,10 +50,12 @@ export function AddPriceTableModal({
       if (tableToEdit) {
         setName(tableToEdit.name || '');
         setDefaultPrice(tableToEdit.defaultPrice ?? 80000);
+        setWalkInPrice(tableToEdit.walkInPrice ?? Math.round((tableToEdit.defaultPrice ?? 80000) * 1.25));
         setIsActive(tableToEdit.isActive ?? true);
       } else {
         setName('');
         setDefaultPrice(80000);
+        setWalkInPrice(100000);
         setIsActive(true);
       }
     }
@@ -63,6 +68,7 @@ export function AddPriceTableModal({
       {
         name: name.trim(),
         defaultPrice,
+        walkInPrice,
         isActive,
       },
       tableToEdit?.id
@@ -78,7 +84,7 @@ export function AddPriceTableModal({
       submitText={isEditing ? 'Lưu thay đổi' : 'Tạo bảng giá'}
       cancelText="Hủy"
       onSubmit={handleFormSubmit}
-      maxWidth="max-w-md"
+      maxWidth="max-w-lg"
     >
       <div className="space-y-4.5 pt-1 text-sm">
         {/* 1. Tên loại bảng giá */}
@@ -93,7 +99,7 @@ export function AddPriceTableModal({
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="VD: Bảng giá tiêu chuẩn, Đặc quyền HSSV..."
+            placeholder="VD: Bảng giá tiêu chuẩn, Bảng giá giờ vàng..."
             className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
           />
 
@@ -116,27 +122,47 @@ export function AddPriceTableModal({
           </div>
         </div>
 
-        {/* 2. Giá mặc định cơ sở (VNĐ/giờ) */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-            <DollarSign className="size-3.5 text-muted-foreground" />
-            <span>Giá cơ sở mặc định (VNĐ/giờ)</span>
-            <span className="text-rose-500">*</span>
-          </label>
-          <input
-            type="number"
-            min={0}
-            step={1000}
-            required
-            value={defaultPrice}
-            onChange={(e) => setDefaultPrice(Math.max(0, Number(e.target.value)))}
-            placeholder="80000"
-            className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
-          />
-          <p className="text-[11px] text-muted-foreground">
-            Mức giá này sẽ làm giá tham chiếu khi chưa áp dụng quy tắc khung giờ riêng.
-          </p>
+        {/* 2. Cấu hình giá mặc định: Giá cố định & Giá vãng lai */}
+        <div className="grid grid-cols-2 gap-3.5">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <DollarSign className="size-3.5 text-muted-foreground" />
+              <span>Giá cố định mặc định (đ/h)</span>
+              <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="number"
+              min={0}
+              step={1000}
+              required
+              value={defaultPrice}
+              onChange={(e) => setDefaultPrice(Math.max(0, Number(e.target.value)))}
+              placeholder="80000"
+              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <DollarSign className="size-3.5 text-muted-foreground" />
+              <span>Giá vãng lai mặc định (đ/h)</span>
+              <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="number"
+              min={0}
+              step={1000}
+              required
+              value={walkInPrice}
+              onChange={(e) => setWalkInPrice(Math.max(0, Number(e.target.value)))}
+              placeholder="100000"
+              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+            />
+          </div>
         </div>
+        <p className="text-[11px] text-muted-foreground">
+          Hai mức giá này sẽ được áp dụng cho khung giờ mặc định ban đầu của bảng giá.
+        </p>
 
         {/* 3. Trạng thái kích hoạt */}
         <div className="pt-1">

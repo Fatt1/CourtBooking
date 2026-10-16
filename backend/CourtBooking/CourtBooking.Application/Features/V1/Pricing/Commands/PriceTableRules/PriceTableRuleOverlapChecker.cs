@@ -18,9 +18,21 @@ public static class PriceTableRuleOverlapChecker
         TimeOnly endTime,
         Guid? ignoreRuleId = null)
     {
+        bool isCurrentSpecial = startDate.HasValue || endDate.HasValue;
+
         foreach (var rule in existingRules)
         {
             if (ignoreRuleId.HasValue && rule.Id == ignoreRuleId.Value)
+            {
+                continue;
+            }
+
+            bool isExistingSpecial = rule.StartDate.HasValue || rule.EndDate.HasValue;
+
+            // Quy tắc đặc biệt (có ngày bắt đầu/kết thúc cụ thể như dịp lễ, khuyến mãi)
+            // ĐƯỢC PHÉP ghi đè lên quy tắc mặc định quanh năm (không có ngày cụ thể).
+            // Do đó: Nếu một bên là quy tắc có ngày cụ thể và bên kia là quy tắc mặc định -> KHÔNG XUNG ĐỘT!
+            if (isCurrentSpecial != isExistingSpecial)
             {
                 continue;
             }
@@ -48,7 +60,16 @@ public static class PriceTableRuleOverlapChecker
                 continue;
             }
 
-            // 3. Kiểm tra chồng lấn khoảng ngày hiệu lực (Date range overlap)
+            // 3. Kiểm tra chồng lấn khoảng ngày hiệu lực:
+            // - Nếu cả 2 đều là quy tắc mặc định quanh năm:
+            //   Đã trùng giờ và trùng thứ -> XUNG ĐỘT.
+            if (!isCurrentSpecial && !isExistingSpecial)
+            {
+                return true;
+            }
+
+            // - Nếu cả 2 đều là quy tắc có ngày cụ thể:
+            //   Kiểm tra xem 2 khoảng ngày có giao nhau hay không.
             var s1 = startDate ?? DateOnly.MinValue;
             var e1 = endDate ?? DateOnly.MaxValue;
             var s2 = rule.StartDate ?? DateOnly.MinValue;
@@ -56,7 +77,7 @@ public static class PriceTableRuleOverlapChecker
 
             if (s1 <= e2 && e1 >= s2)
             {
-                return true; // Xung đột
+                return true; // Xung đột giữa 2 rule đặc biệt giao nhau về khoảng ngày
             }
         }
 

@@ -2,14 +2,17 @@ using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Entities.Courts;
+using CourtBooking.Domain.Events;
 using CourtBooking.SharedKernel;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourtBooking.Application.Features.V1.Pricing.Commands.PriceTables.CreatePriceTable;
 
 internal sealed class CreatePriceTableHandler(
     IApplicationDbContext dbContext,
-    IBranchAuthorizationService branchAuth) : ICommandHandler<CreatePriceTableCommand, Guid>
+    IBranchAuthorizationService branchAuth,
+    IPublisher publisher) : ICommandHandler<CreatePriceTableCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(
         CreatePriceTableCommand request,
@@ -49,11 +52,15 @@ internal sealed class CreatePriceTableHandler(
             CourtTypeId = request.CourtTypeId,
             Name = normalizedName,
             DefaultPrice = request.DefaultPrice,
+            DefaultWalkInPrice = request.DefaultWalkInPrice,
             IsActive = request.IsActive
         };
 
         await dbContext.PriceTables.AddAsync(priceTable, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // 5. Phát sự kiện cập nhật lại khoảng giá của chi nhánh
+        await publisher.Publish(new BranchPriceChangedEvent(request.BranchId), cancellationToken);
 
         return Result<Guid>.Success(priceTable.Id);
     }
