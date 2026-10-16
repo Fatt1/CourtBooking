@@ -110,6 +110,7 @@ internal sealed class BookEventTicketHandler(
                 ticket.PaymentMethod,
                 ticket.Status,
                 ticket.CreatedAt,
+                ticket.CreatedAt.AddMinutes(15),
                 sportEvent.Order.Branch.AccountNumber,
                 sportEvent.Order.Branch.AccountName,
                 sportEvent.Order.Branch.QrImage != null
