@@ -1,383 +1,108 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
-import { OwnerPageHeader, OwnerModal } from '@/features/court-owners/components';
+import { CommonTable, type ColumnDef } from '@/components/common/CommonTable';
+import { OwnerPageHeader, OwnerStatusBadge } from '../components/shared';
+import { ServiceCategoryFormModal } from '../components/service-categories/ServiceCategoryFormModal';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-
-interface ServiceCategory {
-  id: string;
-  orderNumber: number;
-  name: string;
-  productCount: number;
-  createdAt: string;
-  description?: string;
-}
-
-// Dữ liệu mẫu khớp 100% với ảnh Figma
-const initialCategories: ServiceCategory[] = [
-  {
-    id: '1',
-    orderNumber: 1,
-    name: 'Nước giải khát',
-    productCount: 12,
-    createdAt: '16/09/2026',
-    description: 'Các loại nước ngọt, nước khoáng, nước tăng lực phục vụ người chơi',
-  },
-  {
-    id: '2',
-    orderNumber: 2,
-    name: 'Thuê dụng cụ',
-    productCount: 4,
-    createdAt: '16/09/2026',
-    description: 'Vợt cầu lông, vợt pickleball, bóng và giày thi đấu',
-  },
-];
+  useServiceCategoriesQuery, useCreateServiceCategoryMutation,
+  useUpdateServiceCategoryMutation, useDeleteServiceCategoryMutation,
+  type ServiceCategoryDto,
+} from '@/api/service-categories';
+import { formatDate } from '@/lib/format';
+import { getApiErrorMessage } from '@/types/api';
+import type { ServiceCategoryFormValues } from '../schemas/serviceCategorySchema';
 
 export function ServiceCategoriesPage() {
-  const [categories, setCategories] = useState<ServiceCategory[]>(initialCategories);
+  const { data: categories = [], isLoading, isError, error, refetch, isFetching } = useServiceCategoriesQuery();
+  const { mutateAsync: createCategory, isPending: isCreating } = useCreateServiceCategoryMutation();
+  const { mutateAsync: updateCategory, isPending: isUpdating } = useUpdateServiceCategoryMutation();
+  const { mutateAsync: deleteCategory, isPending: isDeleting } = useDeleteServiceCategoryMutation();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState<ServiceCategoryDto | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<ServiceCategoryDto | null>(null);
 
-  // States quản lý Modal Thêm / Sửa / Xóa
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
-
-  // Form states khớp 100% theo ảnh Figma
-  const [formData, setFormData] = useState({
-    name: '',
-    orderNumber: 1,
-    description: '',
-  });
-
-  // Mở modal tạo mới
-  const handleOpenCreate = () => {
-    setFormData({
-      name: '',
-      orderNumber: 1,
-      description: '',
-    });
-    setIsCreateOpen(true);
-  };
-
-  // Mở modal chỉnh sửa
-  const handleOpenEdit = (item: ServiceCategory) => {
-    setSelectedCategory(item);
-    setFormData({
-      name: item.name,
-      orderNumber: item.orderNumber,
-      description: item.description || '',
-    });
-    setIsEditOpen(true);
-  };
-
-  // Mở modal xác nhận xóa
-  const handleOpenDelete = (item: ServiceCategory) => {
-    setSelectedCategory(item);
-    setIsDeleteOpen(true);
-  };
-
-  // Xử lý tạo mới
-  const handleSaveCreate = () => {
-    if (!formData.name.trim()) {
-      alert('Vui lòng nhập tên danh mục');
-      return;
+  const handleSave = async (values: ServiceCategoryFormValues) => {
+    const payload = { ...values, description: values.description || null };
+    try {
+      if (categoryToEdit) await updateCategory({ id: categoryToEdit.id, ...payload });
+      else await createCategory(payload);
+      toast.success(categoryToEdit ? 'Đã cập nhật danh mục' : 'Đã tạo danh mục');
+      setIsFormOpen(false);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Không thể lưu danh mục'));
     }
-
-    const newCat: ServiceCategory = {
-      id: String(Date.now()),
-      orderNumber: Number(formData.orderNumber) || categories.length + 1,
-      name: formData.name.trim(),
-      productCount: 0,
-      createdAt: '16/09/2026',
-      description: formData.description,
-    };
-
-    setCategories((prev) => [...prev, newCat]);
-    setIsCreateOpen(false);
   };
 
-  // Xử lý lưu chỉnh sửa
-  const handleSaveEdit = () => {
-    if (!selectedCategory) return;
-    if (!formData.name.trim()) {
-      alert('Tên danh mục không được để trống');
-      return;
+  const handleDelete = async () => {
+    if (!categoryToDelete || isDeleting) return;
+    try {
+      await deleteCategory(categoryToDelete.id);
+      toast.success('Đã xóa danh mục');
+      setCategoryToDelete(null);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Không thể xóa danh mục'));
     }
-
-    setCategories((prev) =>
-      prev.map((c) =>
-        c.id === selectedCategory.id
-          ? {
-              ...c,
-              name: formData.name.trim(),
-              orderNumber: Number(formData.orderNumber) || c.orderNumber,
-              description: formData.description,
-            }
-          : c
-      )
-    );
-    setIsEditOpen(false);
   };
 
-  // Xử lý xác nhận xóa
-  const handleConfirmDelete = () => {
-    if (!selectedCategory) return;
-    setCategories((prev) => prev.filter((c) => c.id !== selectedCategory.id));
-    setIsDeleteOpen(false);
-  };
-
-  // Cấu hình Cột bảng (Columns) chuẩn theo ảnh Figma
-  const columns: ColumnDef<ServiceCategory>[] = [
+  const columns: ColumnDef<ServiceCategoryDto>[] = [
+    { header: 'TÊN DANH MỤC', cell: (item) => <span className="font-bold">{item.name}</span> },
+    { header: 'TRẠNG THÁI', cell: (item) => <OwnerStatusBadge
+      status={item.isActive ? 'Hoạt động' : 'Tạm ngưng'} variant={item.isActive ? 'success' : 'neutral'} /> },
+    { header: 'SỐ LƯỢNG DỊCH VỤ', cell: (item) => <span>{item.serviceCount} dịch vụ</span> },
+    { header: 'NGÀY TẠO', cell: (item) => formatDate(item.createdAt) },
+    { header: 'CẬP NHẬT', cell: (item) => formatDate(item.updatedAt) },
     {
-      header: 'THỨ TỰ',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground w-[120px]',
+      header: 'THAO TÁC', headerClassName: 'text-right', className: 'text-right',
       cell: (item) => (
-        <span className="text-sm font-medium text-muted-foreground pl-2">
-          {item.orderNumber}
-        </span>
-      ),
-    },
-    {
-      header: 'TÊN DANH MỤC',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[220px]',
-      cell: (item) => (
-        <span className="text-sm font-bold tracking-tight text-foreground">
-          {item.name}
-        </span>
-      ),
-    },
-    {
-      header: 'SỐ LƯỢNG SP',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[160px]',
-      cell: (item) => (
-        <span className="text-sm text-muted-foreground font-medium">
-          {item.productCount} sản phẩm
-        </span>
-      ),
-    },
-    {
-      header: 'NGÀY TẠO',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[160px]',
-      cell: (item) => (
-        <span className="text-sm text-muted-foreground">
-          {item.createdAt}
-        </span>
-      ),
-    },
-    {
-      header: 'THAO TÁC',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground text-right w-[120px] pr-4',
-      className: 'text-right pr-4',
-      cell: (item) => (
-        <div className="flex items-center justify-end gap-2">
-          {/* Nút sửa (Pencil) */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenEdit(item);
-            }}
-            title="Chỉnh sửa danh mục"
-            className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
-          >
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="icon" className="size-8 rounded-lg" aria-label={`Sửa ${item.name}`}
+            onClick={() => { setCategoryToEdit(item); setIsFormOpen(true); }}>
             <Pencil className="size-3.5" />
-          </button>
-
-          {/* Nút xóa (Trash) */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenDelete(item);
-            }}
-            title="Xóa danh mục"
-            className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground hover:border-destructive/40 hover:bg-destructive/15 hover:text-destructive transition-colors cursor-pointer"
-          >
+          </Button>
+          <Button variant="outline" size="icon" className="size-8 rounded-lg hover:bg-destructive/20 hover:text-destructive"
+            aria-label={`Xóa ${item.name}`} onClick={() => setCategoryToDelete(item)}>
             <Trash2 className="size-3.5" />
-          </button>
+          </Button>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header chuẩn: Category + Tiêu đề H1 + Nút "+ Tạo mới danh mục" */}
-      <OwnerPageHeader
-        category="Quản lý dịch vụ"
-        title="Danh mục dịch vụ"
-        actions={
-          <Button
-            className="gap-1.5 bg-[#a3e635] text-black hover:bg-[#8ece28] font-bold text-xs md:text-sm h-9.5 rounded-xl shadow-xs transition-colors"
-            onClick={handleOpenCreate}
-          >
-            <Plus className="size-4 stroke-[2.5]" />
-            <span>Tạo mới danh mục</span>
-          </Button>
-        }
-      />
-
-      {/* 2. Bảng Dữ Liệu Dùng Chung (CommonTable) */}
-      <CommonTable
-        columns={columns}
-        data={categories}
-        emptyTitle="Chưa có danh mục dịch vụ nào"
-        emptyDescription="Bấm nút '+ Tạo mới danh mục' phía trên để thêm danh mục đầu tiên."
-      />
-
-      {/* MODAL 1: Thông tin danh mục (Tạo mới) chuẩn 100% Figma */}
-      <OwnerModal
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        title="Thông tin danh mục"
-        onCancel={() => setIsCreateOpen(false)}
-        onSubmit={handleSaveCreate}
-        submitText="Lưu danh mục"
-        cancelText="Hủy"
-      >
-        <div className="space-y-4">
-          {/* Tên danh mục * */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-white flex items-center gap-1">
-              Tên danh mục <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Nhập tên danh mục..."
-              autoFocus
-              className="w-full h-12 rounded-xl bg-[#080E1C] px-4 text-sm text-white placeholder:text-muted-foreground/60 border border-[#a3e635] focus:outline-none focus:ring-1 focus:ring-[#a3e635] transition-all"
-            />
-          </div>
-
-          {/* Thứ tự hiển thị (POS) * */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-white flex items-center gap-1">
-              Thứ tự hiển thị (POS) <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="number"
-              value={formData.orderNumber}
-              onChange={(e) =>
-                setFormData({ ...formData, orderNumber: Number(e.target.value) || 1 })
-              }
-              className="w-full h-12 rounded-xl bg-[#080E1C] px-4 text-sm text-white border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] transition-all"
-            />
-            <p className="text-xs text-muted-foreground/80 leading-relaxed">
-              Quyết định thứ tự xuất hiện của Tab danh mục trên màn hình Bán lẻ POS.
-            </p>
-          </div>
-
-          {/* Mô tả */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-white">
-              Mô tả
-            </label>
-            <textarea
-              rows={4}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full rounded-xl bg-[#080E1C] p-3 text-sm text-white border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] transition-all resize-y min-h-[100px]"
-            />
-          </div>
+    <div className="min-w-0 space-y-6">
+      <OwnerPageHeader category="Quản lý dịch vụ" title="Danh mục dịch vụ" actions={
+        <Button className="h-9.5 gap-1.5 rounded-xl bg-[#a3e635] font-bold text-black hover:bg-[#8ece28]"
+          onClick={() => { setCategoryToEdit(null); setIsFormOpen(true); }}>
+          <Plus className="size-4" /> Tạo mới danh mục
+        </Button>
+      } />
+      {isError ? (
+        <div role="alert" className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4">
+          <p>{getApiErrorMessage(error, 'Không thể tải danh mục dịch vụ')}</p>
+          <Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>Thử lại</Button>
         </div>
-      </OwnerModal>
-
-      {/* MODAL 2: Thông tin danh mục (Chỉnh sửa) chuẩn 100% Figma */}
-      <OwnerModal
-        open={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        title="Thông tin danh mục"
-        onCancel={() => setIsEditOpen(false)}
-        onSubmit={handleSaveEdit}
-        submitText="Lưu danh mục"
-        cancelText="Hủy"
-      >
-        <div className="space-y-4">
-          {/* Tên danh mục * */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-white flex items-center gap-1">
-              Tên danh mục <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Nhập tên danh mục..."
-              className="w-full h-12 rounded-xl bg-[#080E1C] px-4 text-sm text-white placeholder:text-muted-foreground/60 border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] transition-all"
-            />
-          </div>
-
-          {/* Thứ tự hiển thị (POS) * */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-white flex items-center gap-1">
-              Thứ tự hiển thị (POS) <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="number"
-              value={formData.orderNumber}
-              onChange={(e) =>
-                setFormData({ ...formData, orderNumber: Number(e.target.value) || 1 })
-              }
-              className="w-full h-12 rounded-xl bg-[#080E1C] px-4 text-sm text-white border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] transition-all"
-            />
-            <p className="text-xs text-muted-foreground/80 leading-relaxed">
-              Quyết định thứ tự xuất hiện của Tab danh mục trên màn hình Bán lẻ POS.
-            </p>
-          </div>
-
-          {/* Mô tả */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-white">
-              Mô tả
-            </label>
-            <textarea
-              rows={4}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full rounded-xl bg-[#080E1C] p-3 text-sm text-white border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] transition-all resize-y min-h-[100px]"
-            />
-          </div>
-        </div>
-      </OwnerModal>
-
-      {/* MODAL 3: Xác nhận xóa danh mục */}
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="max-w-md bg-[#0B1324] border-border/70 rounded-2xl p-6 text-foreground">
+      ) : (
+        <CommonTable columns={columns} data={categories} isLoading={isLoading}
+          emptyTitle="Chưa có danh mục dịch vụ nào"
+          emptyDescription="Bấm 'Tạo mới danh mục' để thêm danh mục đầu tiên." />
+      )}
+      <ServiceCategoryFormModal open={isFormOpen} onOpenChange={setIsFormOpen} category={categoryToEdit}
+        onSubmit={handleSave} isSubmitting={isCreating || isUpdating} />
+      <Dialog open={Boolean(categoryToDelete)} onOpenChange={(open) => { if (!open && !isDeleting) setCategoryToDelete(null); }}>
+        <DialogContent className="rounded-2xl border-border bg-card text-card-foreground">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-rose-500 text-lg font-bold">
-              <Trash2 className="size-5" /> Xác nhận xóa danh mục
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground pt-1 text-sm">
-              Bạn có chắc chắn muốn xóa danh mục{' '}
-              <span className="font-bold text-white">"{selectedCategory?.name}"</span>? Các
-              sản phẩm thuộc danh mục này sẽ cần được phân loại lại.
+            <DialogTitle>Xác nhận xóa danh mục</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn xóa "{categoryToDelete?.name}"? Chỉ có thể xóa danh mục chưa được sử dụng.
             </DialogDescription>
           </DialogHeader>
-
-          <DialogFooter className="gap-2 sm:gap-0 pt-3">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteOpen(false)}
-              className="h-10 rounded-xl bg-[#131d31] border-border/60 text-white hover:bg-[#1a2742]"
-            >
-              Không, giữ lại
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              className="h-10 rounded-xl"
-            >
-              Xác nhận xóa
+          <DialogFooter>
+            <Button variant="outline" disabled={isDeleting} onClick={() => setCategoryToDelete(null)}>Hủy</Button>
+            <Button variant="destructive" disabled={isDeleting} onClick={handleDelete}>
+              {isDeleting ? 'Đang xóa...' : 'Xác nhận xóa'}
             </Button>
           </DialogFooter>
         </DialogContent>
