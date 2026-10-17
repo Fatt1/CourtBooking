@@ -166,6 +166,7 @@ export const API_ENDPOINTS = {
     CREATE_ORDER: '/owner/retail-orders',
     ORDER_LIST: '/owner/retail-orders',
     ORDER_DETAIL: (id: string) => `/owner/retail-orders/${id}`,
+    ORDER_SUMMARY: '/owner/retail-orders/summary',
   },
 
   // 9. Kèo giao lưu cộng đồng người chơi (Matches)

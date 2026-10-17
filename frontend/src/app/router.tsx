@@ -27,6 +27,9 @@ import { CourtTypesPage } from '@/features/court-owners/pages/CourtTypesPage';
 import { CourtsPage } from '@/features/court-owners/pages/CourtsPage';
 import { ServiceCategoriesPage } from '@/features/court-owners/pages/ServiceCategoriesPage';
 import { ProductsPage } from '@/features/court-owners/pages/ProductsPage';
+import { PosPage } from '@/features/court-owners/pages/PosPage';
+import { PosLayout } from '@/features/court-owners/components/pos/PosLayout';
+import { RetailOrdersPage } from '@/features/court-owners/pages/RetailOrdersPage';
 import { PricingPage } from '@/features/court-owners/pages/PricingPage';
 import { CourtOwnerLoginPage } from '@/features/court-owners/pages/CourtOwnerLoginPage';
 import { OwnerReportsPage } from '@/features/court-owners/pages/OwnerReportsPage';
@@ -96,7 +99,10 @@ export const router = createBrowserRouter([
       { path: 'pricing', element: <PricingPage /> },
       { path: 'service-categories', element: <ServiceCategoriesPage /> },
       { path: 'products', element: <ProductsPage /> },
-      { path: 'pos', element: <OrdersPage /> },
+      { path: 'pos', element: <PosLayout />, children: [
+        { index: true, element: <PosPage /> },
+        { path: 'history', element: <RetailOrdersPage /> },
+      ] },
       { path: 'wallet', element: <OrdersPage /> },
       { path: 'reports', element: <OwnerReportsPage /> },
       { path: 'analytics', element: <OwnerReportsPage /> },
