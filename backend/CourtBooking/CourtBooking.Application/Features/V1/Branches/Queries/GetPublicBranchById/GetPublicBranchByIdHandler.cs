@@ -1,6 +1,7 @@
 using CourtBooking.Application.Data;
 using CourtBooking.Application.Features.V1.Branches.Dtos;
 using CourtBooking.Application.Features.V1.Storages.Dtos;
+using CourtBooking.Application.Helpers;
 using CourtBooking.Application.Messaging;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,8 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
         var branch = await dbContext.Branches.AsNoTracking()
             .AsSplitQuery()
             .Where(b => b.Id == request.Id && b.IsActive)
-            .Select(b => new PublicBranchDetailDto(
+            .Select(b => new
+            {
                 b.Id,
                 b.Name,
                 b.Hotline,
@@ -25,18 +27,22 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
                 b.District,
                 b.Street,
                 b.GgMapUrl,
+                b.Latitude,
+                b.Longitude,
                 b.OpenTime,
                 b.CloseTime,
                 b.Policy,
                 b.MinPrice,
                 b.MaxPrice,
                 b.ReviewAverage,
-                b.Images
+                Images = b.Images
                     .OrderBy(i => i.DisplayOrder)
                     .Select(i => new ImageDto(i.Image.StorageKey, i.ImageId))
                     .ToList(),
-                b.BranchSportTypes.Select(bst => new BranchSportDto(bst.SportTypeId, bst.SportType.Name))
-                    .ToList()))
+                Sports = b.BranchSportTypes
+                    .Select(bst => new BranchSportDto(bst.SportTypeId, bst.SportType.Name))
+                    .ToList()
+            })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (branch == null)
@@ -44,6 +50,38 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
             return Result.Failure<PublicBranchDetailDto>(new NotFoundError("Branch", request.Id));
         }
 
-        return Result.Success(branch);
+        // Tọa độ người chơi: nếu người dùng không mở định vị, mặc định lấy tọa độ Dinh Độc Lập
+        var userLat = request.Latitude ?? GeoHelper.DefaultLatitude;
+        var userLng = request.Longitude ?? GeoHelper.DefaultLongitude;
+
+        double? distanceKm = null;
+        if (branch.Latitude.HasValue && branch.Longitude.HasValue)
+        {
+            distanceKm = GeoHelper.CalculateDistanceKm(
+                (double)userLat,
+                (double)userLng,
+                (double)branch.Latitude.Value,
+                (double)branch.Longitude.Value);
+        }
+
+        var dto = new PublicBranchDetailDto(
+            branch.Id,
+            branch.Name,
+            branch.Hotline,
+            branch.Province,
+            branch.District,
+            branch.Street,
+            branch.GgMapUrl,
+            distanceKm,
+            branch.OpenTime,
+            branch.CloseTime,
+            branch.Policy,
+            branch.MinPrice,
+            branch.MaxPrice,
+            branch.ReviewAverage,
+            branch.Images,
+            branch.Sports);
+
+        return Result.Success(dto);
     }
 }

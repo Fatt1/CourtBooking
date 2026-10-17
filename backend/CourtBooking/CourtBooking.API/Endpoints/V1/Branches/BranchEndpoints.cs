@@ -122,10 +122,12 @@ public sealed class BranchEndpoints : IEndpointGroup
         // 2. Xem chi tiết chi nhánh công khai
         group.MapGet("/{id:guid}", async (
             Guid id,
+            [FromQuery] decimal? latitude,
+            [FromQuery] decimal? longitude,
             ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new GetPublicBranchByIdQuery(id), ct);
+            var result = await sender.Send(new GetPublicBranchByIdQuery(id, latitude, longitude), ct);
             return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
         })
         .WithName("GetPublicBranchById")

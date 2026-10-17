@@ -2,6 +2,7 @@ using CourtBooking.Application.Data;
 using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Branches.Dtos;
 using CourtBooking.Application.Features.V1.Storages.Dtos;
+using CourtBooking.Application.Helpers;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Entities.Courts;
 using CourtBooking.Domain.Enums;
@@ -83,18 +84,23 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
         }
 
         // ── Khoảng cách toạ độ: tính ngay trong SQL nếu có toạ độ ──────
-        var hasGeo = request.Latitude is not null && request.Longitude is not null;
-        double lat = (double)(request.Latitude ?? 0);
-        double lng = (double)(request.Longitude ?? 0);
+        // Nếu người dùng không mở định vị (latitude/longitude null), mặc định lấy tọa độ Dinh Độc Lập
+        var userLat = request.Latitude ?? GeoHelper.DefaultLatitude;
+        var userLng = request.Longitude ?? GeoHelper.DefaultLongitude;
+
+        double lat = (double)userLat;
+        double lng = (double)userLng;
         double kmPerDegLng = KmPerDegLngAtEquator * Math.Cos(lat * Math.PI / 180);
 
-        var rows = hasGeo
-            ? (from b in q
-               let dy = ((double)b.Latitude! - lat) * KmPerDegLat
-               let dx = ((double)b.Longitude! - lng) * kmPerDegLng
-               select new { Branch = b, DistanceKm = (double?)Math.Sqrt(dx * dx + dy * dy) })
-            : (from b in q
-               select new { Branch = b, DistanceKm = (double?)null });
+        var rows = from b in q
+                   let hasCoords = b.Latitude != null && b.Longitude != null
+                   let dy = hasCoords ? ((double)b.Latitude! - lat) * KmPerDegLat : 0
+                   let dx = hasCoords ? ((double)b.Longitude! - lng) * kmPerDegLng : 0
+                   select new
+                   {
+                       Branch = b,
+                       DistanceKm = hasCoords ? (double?)Math.Sqrt(dx * dx + dy * dy) : null
+                   };
 
         var totalCount = await rows.CountAsync(cancellationToken);
         if (totalCount == 0)
@@ -106,8 +112,10 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
         // ── Sắp xếp: có Id làm tie-breaker để phân trang ổn định ────────
         var sorted = request.Sort switch
         {
-            "distance" when hasGeo => rows
-                .OrderBy(x => x.DistanceKm)
+            // Sắp xếp theo khoảng cách: đẩy các chi nhánh chưa có tọa độ (null) xuống cuối
+            "distance" => rows
+                .OrderBy(x => x.DistanceKm == null)
+                .ThenBy(x => x.DistanceKm)
                 .ThenBy(x => x.Branch.Id),
 
             "rating_desc" => rows
@@ -179,7 +187,7 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                 p.OpenTime,
                 p.CloseTime,
                 p.ReviewAverage,
-                p.DistanceKm,
+                p.DistanceKm.HasValue ? Math.Round(p.DistanceKm.Value, 1) : null,
                 AvailableCourtCount: isTimeSearch ? freeCount : null,
                 p.MinPrice,
                 p.MaxPrice);
