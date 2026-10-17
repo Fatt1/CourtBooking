@@ -78,12 +78,24 @@ export function useUserLoginMutation() {
   const { setCredentials } = useAuthStore();
 
   return useMutation({
-    mutationFn: async (credentials: UserLoginRequest) => {
-      const response = await apiClient.post<UserAuthResponse>('/auth/login', credentials);
-      return response as unknown as UserAuthResponse;
+    mutationFn: async (credentials: UserLoginRequest): Promise<CourtOwnerLoginResponse> => {
+      const response = await apiClient.post<CourtOwnerLoginResponse>(
+        API_ENDPOINTS.AUTH.LOGIN,
+        credentials
+      );
+      return response as unknown as CourtOwnerLoginResponse;
     },
     onSuccess: (data) => {
-      setCredentials(data.user, data.tokens.accessToken, data.tokens.refreshToken);
+      setCredentials(
+        {
+          id: data.userId,
+          name: data.fullName,
+          email: data.email,
+          role: data.roleName,
+          mustChangePwd: data.mustChangePassword,
+        },
+        data.accessToken
+      );
     },
   });
 }

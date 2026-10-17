@@ -132,7 +132,7 @@ export const API_ENDPOINTS = {
   EVENTS: {
     PUBLIC_LIST: '/events',
     PUBLIC_DETAIL: (id: string) => `/events/${id}`,
-    BUY_TICKETS: (id: string) => `/events/${id}/buy-tickets`,
+    BUY_TICKETS: (id: string) => `/events/${id}/tickets`,
     MY_TICKETS: '/events/my-tickets',
 
     // Owner
