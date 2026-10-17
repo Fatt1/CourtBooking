@@ -42,6 +42,7 @@ internal sealed class CreateBranchHandler(IApplicationDbContext dbContext, IUser
             AccountNumber = request.AccountNumber.Trim(),
             AccountName = request.AccountName.Trim(),
             Policy = request.Policy?.Trim(),
+            Description = request.Description?.Trim(),
             Latitude = request.Latitude,
             Longitude = request.Longitude
         };

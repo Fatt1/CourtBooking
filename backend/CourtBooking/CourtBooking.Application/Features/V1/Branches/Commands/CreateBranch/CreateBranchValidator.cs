@@ -14,7 +14,7 @@ public sealed class CreateBranchValidator : AbstractValidator<CreateBranchComman
         RuleFor(x => x.GgMapUrl).NotEmpty().MaximumLength(255);
         RuleFor(x => x.AccountNumber).NotEmpty().MaximumLength(255);
         RuleFor(x => x.AccountName).NotEmpty().MaximumLength(255);
-        RuleFor(x => x.Policy).MaximumLength(255);
+        RuleFor(x => x.Policy).MaximumLength(4000);
         RuleFor(x => x.QrImageId).NotEmpty();
         RuleFor(x => x.CloseTime).NotEqual(x => x.OpenTime)
             .WithMessage("Giờ đóng cửa phải khác giờ mở cửa.");

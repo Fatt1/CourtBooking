@@ -26,6 +26,7 @@ export interface ReviewDto {
  * Phản hồi danh sách đánh giá của chi nhánh
  */
 export interface BranchReviewsResponse {
+  branchId?: string;
   items: ReviewDto[];
   totalCount: number;
   page: number;

@@ -57,8 +57,9 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
         builder.Property(b => b.MaxPrice)
             .HasPrecision(18, 2);
 
-        builder.Property(b => b.Policy)
-            .HasMaxLength(255);
+        builder.Property(b => b.Policy);
+
+        builder.Property(b => b.Description);
 
         builder.Property(b => b.QrImageId)
             .IsRequired();

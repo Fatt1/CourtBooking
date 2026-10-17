@@ -9,6 +9,7 @@ import {
   CreditCard,
   Loader2,
   Pencil,
+  FileText,
 } from 'lucide-react';
 import { OwnerModal } from '@/features/court-owners/components/shared/OwnerModal';
 import { OwnerStatusBadge } from '@/features/court-owners/components/shared/OwnerStatusBadge';
@@ -246,6 +247,20 @@ export function BranchDetailModal({
               <p className="text-[11px] text-muted-foreground leading-relaxed whitespace-pre-line">
                 {detail.policy}
               </p>
+            </div>
+          )}
+
+          {/* Giới thiệu & Mô tả chi nhánh */}
+          {detail?.description && (
+            <div className="space-y-2 p-3.5 rounded-xl bg-card/40 border border-border/40">
+              <div className="flex items-center gap-1.5 text-slate-300 font-semibold text-[11px]">
+                <FileText className="size-3.5 text-[#a3e635]" />
+                <span>Giới thiệu chi nhánh:</span>
+              </div>
+              <div
+                className="text-[11px] text-slate-300 leading-relaxed prose prose-invert max-w-none prose-p:my-1 prose-headings:my-1.5"
+                dangerouslySetInnerHTML={{ __html: detail.description }}
+              />
             </div>
           )}
         </div>

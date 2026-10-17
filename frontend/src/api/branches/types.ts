@@ -35,6 +35,7 @@ export interface OwnerBranchDetail {
   openTime: string;
   closeTime: string;
   policy?: string | null;
+  description?: string | null;
   isActive: boolean;
   qrImage?: { key: string; id: string };
   accountNumber?: string;
@@ -61,6 +62,7 @@ export interface CreateBranchPayload {
   accountName: string;
   sportTypeIds: string[];
   policy?: string | null;
+  description?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   imageIds: string[];
@@ -112,6 +114,29 @@ export interface PublicBranchListItemDto {
   availableCourtCount?: number | null;
   minPrice: number;
   maxPrice: number;
+}
+
+/**
+ * Chi tiết chi nhánh công khai (Public)
+ */
+export interface PublicBranchDetailDto {
+  id: string;
+  name: string;
+  hotline: string;
+  province: string;
+  district: string;
+  street: string;
+  ggMapUrl: string;
+  distanceKm?: number | null;
+  openTime: string;
+  closeTime: string;
+  policy?: string | null;
+  description?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  reviewAverage: number;
+  images: Array<{ key: string; id: string }>;
+  sports: BranchSportDto[];
 }
 
 /**

@@ -32,7 +32,8 @@ internal sealed class GetCourtTypesByBranchHandler(
                 ct.Id,
                 ct.BranchId,
                 ct.Name,
-                ct.MinutesConfig))
+                ct.MinutesConfig,
+                ct.Courts.Count))
             .ToListAsync(cancellationToken);
 
         return Result.Success<IReadOnlyList<CourtTypeDto>>(courtTypes);

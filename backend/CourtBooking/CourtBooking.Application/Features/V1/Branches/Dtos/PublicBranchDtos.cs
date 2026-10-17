@@ -28,6 +28,7 @@ public sealed record PublicBranchDetailDto(
     TimeOnly OpenTime,
     TimeOnly CloseTime,
     string? Policy,
+    string? Description,
     decimal? MinPrice,
     decimal? MaxPrice,
     double ReviewAverage,

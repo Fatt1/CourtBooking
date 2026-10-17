@@ -68,6 +68,7 @@ internal sealed class UpdateBranchHandler(
         branch.AccountNumber = request.AccountNumber.Trim();
         branch.AccountName = request.AccountName.Trim();
         branch.Policy = request.Policy?.Trim();
+        branch.Description = request.Description?.Trim();
         branch.Latitude = request.Latitude;
         branch.Longitude = request.Longitude;
 
