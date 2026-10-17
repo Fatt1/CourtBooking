@@ -1,17 +1,13 @@
 import { useState } from 'react';
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
-  Clock,
-  MapPin,
-  Calendar,
   Sparkles,
   Minus,
   Plus,
   Loader2,
-  CheckCircle2,
-  Users,
+  Trophy,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { getImageUrl } from '@/api/storage';
@@ -20,6 +16,8 @@ import {
   formatEventPrice,
   getFullDateText,
   getTimeRangeText,
+  isEventBookingExpired,
+  formatSkillLevel,
 } from '../utils/dateUtils';
 
 function ParticipantAvatar({ p }: { p: any }) {
@@ -35,7 +33,7 @@ function ParticipantAvatar({ p }: { p: any }) {
   return (
     <div
       title={p.fullName}
-      className="flex size-9 items-center justify-center rounded-full border-2 border-[#0d1629] bg-slate-800 text-[11px] font-bold text-white overflow-hidden shrink-0"
+      className="flex size-9 items-center justify-center rounded-full border-2 border-background bg-muted text-[11px] font-bold text-foreground overflow-hidden shrink-0 shadow-xs"
     >
       {p.avatar?.key && !hasError ? (
         <img
@@ -54,7 +52,6 @@ function ParticipantAvatar({ p }: { p: any }) {
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { isAuthenticated } = useAuthStore();
 
   const { data: event, isLoading, isError } = usePublicEventDetailQuery(id);
@@ -62,22 +59,22 @@ export function EventDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[600px] flex-col items-center justify-center gap-3 bg-[#080e1c] text-white">
-        <Loader2 className="size-8 animate-spin text-[#a3e635]" />
-        <p className="text-xs text-slate-400">Đang tải chi tiết sự kiện...</p>
+      <div className="flex min-h-[600px] flex-col items-center justify-center gap-3 bg-background text-foreground">
+        <Loader2 className="size-8 animate-spin text-[#397B48] dark:text-[#a3e635]" />
+        <p className="text-xs text-muted-foreground">Đang tải chi tiết sự kiện...</p>
       </div>
     );
   }
 
   if (isError || !event) {
     return (
-      <div className="flex min-h-[600px] flex-col items-center justify-center bg-[#080e1c] px-4 text-center text-white">
-        <div className="rounded-2xl border border-red-900/40 bg-red-950/20 p-8 max-w-md">
-          <p className="font-semibold text-red-400">Không tìm thấy thông tin sự kiện.</p>
-          <p className="mt-1 text-xs text-slate-400">Sự kiện có thể đã kết thúc hoặc bị hủy.</p>
+      <div className="flex min-h-[600px] flex-col items-center justify-center bg-background px-4 text-center text-foreground">
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-8 max-w-md">
+          <p className="font-semibold text-red-600 dark:text-red-400">Không tìm thấy thông tin sự kiện.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Sự kiện có thể đã kết thúc hoặc bị hủy.</p>
           <Link
             to="/events"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-950"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-foreground text-background px-4 py-2 text-xs font-bold"
           >
             <ArrowLeft className="size-4" />
             <span>Quay lại danh sách</span>
@@ -88,6 +85,9 @@ export function EventDetailPage() {
   }
 
   const isFull = event.availableSlot <= 0 || event.status === 1;
+  // Kiểm tra thời gian: Chỉ có thể mua vé khi thời gian hiện tại bé hơn thời gian giờ bắt đầu trận đấu
+  const isExpired = isEventBookingExpired(event.date, event.startTime);
+  const canBuy = !isFull && !isExpired && event.status === 0;
   const maxAvailable = Math.max(0, event.availableSlot);
 
   // Chọn ảnh banner từ branch images hoặc cover
@@ -95,12 +95,14 @@ export function EventDetailPage() {
     ? getImageUrl(event.branch.images[0].key)
     : 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?auto=format&fit=crop&w=1200&q=80';
 
-  const fullDateText = getFullDateText(event.startDate, 'Thứ Bảy, 10/10/2026');
-  const timeRangeText = getTimeRangeText(event.startDate, event.endDate, '08:00 - 12:00');
+  const fullDateText = getFullDateText(event.date, 'Thứ Bảy, 25/10/2026');
+  // Hiển thị giờ bắt đầu và giờ kết thúc của trận đấu
+  const timeRangeText = getTimeRangeText(event.startTime, event.endTime, '08:00 - 12:00');
+  const skillLevelText = formatSkillLevel(event.skillLevelFrom, event.skillLevelTo);
 
   // Xử lý chuyển sang trang thanh toán / xác nhận vé
   const handleProceedToCheckout = () => {
-    if (isFull) return;
+    if (!canBuy) return;
 
     const checkoutUrl = `/events/${event.id}/checkout?quantity=${quantity}`;
     if (!isAuthenticated) {
@@ -112,12 +114,12 @@ export function EventDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080e1c] text-white">
+    <div className="min-h-screen bg-background text-foreground transition-colors">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Back Link */}
         <Link
           to="/events"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 transition-colors hover:text-white mb-6"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground mb-6"
         >
           <ArrowLeft className="size-3.5" />
           <span>Tất cả sự kiện</span>
@@ -128,7 +130,7 @@ export function EventDetailPage() {
           {/* LEFT COLUMN (lg:col-span-8) */}
           <div className="lg:col-span-8 space-y-6">
             {/* 1. Hero Image Banner */}
-            <div className="relative aspect-16/9 sm:h-[400px] w-full overflow-hidden rounded-2xl bg-slate-900 shadow-2xl">
+            <div className="relative aspect-16/9 sm:h-[400px] w-full overflow-hidden rounded-2xl bg-muted shadow-2xl">
               <img
                 src={bannerImage}
                 alt={event.title}
@@ -139,102 +141,115 @@ export function EventDetailPage() {
                 }}
                 className="h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#080e1c]/80 via-transparent to-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
 
               {/* Floating Bottom-Left Badge */}
-              <div className="absolute bottom-4 left-4 rounded-lg bg-[#a3e635] px-3.5 py-1.5 text-xs font-black tracking-wider text-slate-950 uppercase shadow-lg">
+              <div className="absolute bottom-4 left-4 rounded-lg bg-[#397B48] dark:bg-[#a3e635] px-3.5 py-1.5 text-xs font-black tracking-wider text-white dark:text-slate-950 uppercase shadow-lg">
                 MATCHDAY EVENTS
               </div>
             </div>
 
             {/* 2. Category, Title & Status */}
             <div>
-              <div className="text-xs font-bold tracking-widest text-[#a3e635] uppercase">
-                {event.skillLevelFrom
-                  ? `GIẢI PHONG TRÀO · ${event.sportTypeName}`
-                  : `GIAO LƯU CỘNG ĐỒNG · ${event.sportTypeName}`}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-black tracking-widest text-[#397B48] dark:text-[#a3e635] uppercase">
+                  MÔN {event.sportTypeName}
+                </span>
+                <span className="text-muted-foreground">·</span>
+                {/* Bổ sung hiển thị trình độ trong trang chi tiết event theo Yêu cầu 4 */}
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-muted px-2.5 py-0.5 text-xs font-bold text-foreground">
+                  <Trophy className="size-3 text-[#397B48] dark:text-[#a3e635]" />
+                  <span>Trình độ: {skillLevelText}</span>
+                </div>
               </div>
-              <h1 className="mt-2 font-heading text-3xl font-black tracking-tight text-white uppercase sm:text-5xl">
+
+              <h1 className="mt-2 font-heading text-3xl font-black tracking-tight text-foreground uppercase sm:text-5xl">
                 {event.title}
               </h1>
-              <div className="mt-3 flex items-center gap-2 text-xs font-semibold">
-                {isFull ? (
-                  <span className="flex items-center gap-1.5 text-red-400">
-                    <span className="size-2 rounded-full bg-red-400" />
+
+              <div className="mt-3 flex items-center gap-3 text-xs font-semibold">
+                {isExpired ? (
+                  <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    Đã hết thời gian mua vé (trận đấu đã diễn ra)
+                  </span>
+                ) : isFull ? (
+                  <span className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+                    <span className="size-2 rounded-full bg-red-500" />
                     Đã hết vé đăng ký
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1.5 text-[#a3e635]">
-                    <span className="size-2 rounded-full bg-[#a3e635] animate-pulse" />
-                    Đang mở đăng ký
+                  <span className="flex items-center gap-1.5 text-[#397B48] dark:text-[#a3e635]">
+                    <span className="size-2 rounded-full bg-[#397B48] dark:bg-[#a3e635] animate-pulse" />
+                    Đang mở đăng ký mua vé
                   </span>
                 )}
               </div>
             </div>
 
             {/* 3. Card: VỀ SỰ KIỆN */}
-            <div className="rounded-2xl border border-slate-800 bg-[#0d1629] p-6 shadow-xl">
-              <span className="text-[11px] font-bold tracking-wider text-[#a3e635] uppercase">
+            <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-6 shadow-sm">
+              <span className="text-[11px] font-bold tracking-wider text-[#397B48] dark:text-[#a3e635] uppercase">
                 VỀ SỰ KIỆN
               </span>
-              <h3 className="mt-1 font-heading text-xl font-bold text-white">
+              <h3 className="mt-1 font-heading text-xl font-bold text-foreground">
                 Một ngày chơi thật đã
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {event.description ||
-                  `Một buổi sáng dành cho tất cả người yêu ${event.sportTypeName}. Bạn sẽ được ghép trận theo trình độ, thử sức với nhiều người chơi mới và cùng nhau tận hưởng không khí thể thao sôi động.`}
+                  `Một buổi thi đấu và giao lưu dành cho tất cả người yêu ${event.sportTypeName}. Bạn sẽ được ghép trận theo trình độ (${skillLevelText}), thử sức với nhiều người chơi mới và cùng nhau tận hưởng không khí thể thao sôi động.`}
               </p>
             </div>
 
             {/* 4. Side-by-side Cards: Lịch trình & Lưu ý */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {/* Lịch trình */}
-              <div className="rounded-2xl border border-slate-800 bg-[#0d1629] p-6 shadow-xl">
-                <span className="text-[11px] font-bold tracking-wider text-[#a3e635] uppercase">
+              <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-6 shadow-sm">
+                <span className="text-[11px] font-bold tracking-wider text-[#397B48] dark:text-[#a3e635] uppercase">
                   CHƯƠNG TRÌNH
                 </span>
-                <h3 className="mt-1 font-heading text-xl font-bold text-white">
-                  Lịch trình
+                <h3 className="mt-1 font-heading text-xl font-bold text-foreground">
+                  Lịch trình trận đấu
                 </h3>
-                <ul className="mt-4 space-y-2.5 text-xs text-slate-300">
+                <ul className="mt-4 space-y-2.5 text-xs text-muted-foreground">
                   <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#a3e635] shrink-0" />
-                    <span><strong>08:00</strong> · Đón khách và nhận vòng tay thi đấu</span>
+                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
+                    <span><strong>{event.startTime ? event.startTime.slice(0, 5) : '08:00'}</strong> · Đón khách, điểm danh nhận vé tham gia</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#a3e635] shrink-0" />
-                    <span><strong>08:30</strong> · Khởi động, chia nhóm giao lưu theo trình độ</span>
+                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
+                    <span>Khởi động, chia nhóm giao lưu theo trình độ <strong>{skillLevelText}</strong></span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#a3e635] shrink-0" />
-                    <span><strong>09:00</strong> · Thi đấu xoay vòng giao lưu tính điểm</span>
+                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
+                    <span>Thi đấu xoay vòng giao lưu tính điểm trên các sân</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#a3e635] shrink-0" />
-                    <span><strong>11:30</strong> · Trao kỷ niệm chương, tổng kết và chụp ảnh</span>
+                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
+                    <span><strong>{event.endTime ? event.endTime.slice(0, 5) : '12:00'}</strong> · Kết thúc trận đấu, tổng kết và trao giải giao lưu</span>
                   </li>
                 </ul>
               </div>
 
               {/* Lưu ý & quy định */}
-              <div className="rounded-2xl border border-slate-800 bg-[#0d1629] p-6 shadow-xl">
-                <span className="text-[11px] font-bold tracking-wider text-[#a3e635] uppercase">
+              <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-6 shadow-sm">
+                <span className="text-[11px] font-bold tracking-wider text-[#397B48] dark:text-[#a3e635] uppercase">
                   THAM GIA CÙNG NHAU
                 </span>
-                <h3 className="mt-1 font-heading text-xl font-bold text-white">
+                <h3 className="mt-1 font-heading text-xl font-bold text-foreground">
                   Lưu ý & quy định
                 </h3>
-                <ul className="mt-4 space-y-2.5 text-xs text-slate-300">
+                <ul className="mt-4 space-y-2.5 text-xs text-muted-foreground">
                   <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#a3e635] shrink-0" />
-                    <span>Có mặt trước giờ bắt đầu ít nhất 15 phút để làm thủ tục nhận vé.</span>
+                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
+                    <span>Có mặt trước giờ bắt đầu ({event.startTime ? event.startTime.slice(0, 5) : '08:00'}) ít nhất 15 phút.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#a3e635] shrink-0" />
+                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
                     <span>Mang giày thể thao chuyên dụng; có thể mang theo vợt cá nhân.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#a3e635] shrink-0" />
+                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
                     <span>Tôn trọng tinh thần fair-play và tuân thủ hướng dẫn của ban tổ chức.</span>
                   </li>
                 </ul>
@@ -242,15 +257,15 @@ export function EventDetailPage() {
             </div>
 
             {/* 5. Card: Người sẽ cùng tham gia */}
-            <div className="rounded-2xl border border-slate-800 bg-[#0d1629] p-6 shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <span className="text-[11px] font-bold tracking-wider text-[#a3e635] uppercase">
+                <span className="text-[11px] font-bold tracking-wider text-[#397B48] dark:text-[#a3e635] uppercase">
                   CỘNG ĐỒNG MATCHDAY
                 </span>
-                <h3 className="mt-1 font-heading text-xl font-bold text-white">
+                <h3 className="mt-1 font-heading text-xl font-bold text-foreground">
                   Người sẽ cùng tham gia
                 </h3>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Gặp thêm bạn chơi mới ở sự kiện này.
                 </p>
               </div>
@@ -262,13 +277,13 @@ export function EventDetailPage() {
                     <ParticipantAvatar key={p.playerId + idx} p={p} />
                   ))
                 ) : (
-                  <div className="flex size-9 items-center justify-center rounded-full border-2 border-[#0d1629] bg-[#a3e635] text-[11px] font-bold text-slate-950">
+                  <div className="flex size-9 items-center justify-center rounded-full border-2 border-background bg-[#397B48] dark:bg-[#a3e635] text-[11px] font-bold text-white dark:text-slate-950">
                     +0
                   </div>
                 )}
 
                 {event.participants && event.participants.length > 5 && (
-                  <div className="flex size-9 items-center justify-center rounded-full border-2 border-[#0d1629] bg-[#a3e635] text-[11px] font-black text-slate-950">
+                  <div className="flex size-9 items-center justify-center rounded-full border-2 border-background bg-[#397B48] dark:bg-[#a3e635] text-[11px] font-black text-white dark:text-slate-950">
                     +{event.participants.length - 5}
                   </div>
                 )}
@@ -280,100 +295,109 @@ export function EventDetailPage() {
           <div className="lg:col-span-4">
             <div className="sticky top-24 space-y-4">
               {/* Ticket Card */}
-              <div className="rounded-2xl border border-slate-800 bg-[#0d1629] p-6 shadow-2xl text-white">
+              <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-6 shadow-xl">
                 {/* Price Header */}
-                <div className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+                <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
                   VÉ THAM GIA
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="font-heading text-3xl font-black text-white">
+                  <span className="font-heading text-3xl font-black text-foreground">
                     {formatEventPrice(event.ticketPrice)}
                   </span>
-                  <span className="text-xs text-slate-400">/ người</span>
+                  <span className="text-xs text-muted-foreground">/ người</span>
                 </div>
 
-                <div className="my-4 border-t border-slate-800/80" />
+                <div className="my-4 border-t border-border/60" />
 
-                {/* Event Schedule Info */}
+                {/* Event Schedule Info (Hiển thị ngày diễn ra + giờ bắt đầu & giờ kết thúc) */}
                 <div className="space-y-3 text-xs">
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                       NGÀY DIỄN RA
                     </div>
-                    <div className="mt-0.5 font-semibold text-slate-200">
+                    <div className="mt-0.5 font-semibold text-foreground">
                       {fullDateText}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                      THỜI GIAN
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      THỜI GIAN TRẬN ĐẤU (BẮT ĐẦU - KẾT THÚC)
                     </div>
-                    <div className="mt-0.5 font-semibold text-slate-200">
+                    <div className="mt-0.5 font-semibold text-foreground">
                       {timeRangeText}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      TRÌNH ĐỘ YÊU CẦU
+                    </div>
+                    <div className="mt-0.5 font-semibold text-[#397B48] dark:text-[#a3e635]">
+                      {skillLevelText}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                       ĐỊA ĐIỂM
                     </div>
-                    <div className="mt-0.5 font-semibold text-slate-200">
+                    <div className="mt-0.5 font-semibold text-foreground">
                       {event.branch.branchName}
                     </div>
-                    <div className="text-slate-400 text-[11px]">
+                    <div className="text-muted-foreground text-[11px]">
                       {event.branch.address}
                     </div>
                   </div>
                 </div>
 
-                <div className="my-4 border-t border-slate-800/80" />
+                <div className="my-4 border-t border-border/60" />
 
                 {/* Participant Count */}
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Người tham gia</span>
-                  <span className="font-bold text-white">
+                  <span className="text-muted-foreground">Người tham gia</span>
+                  <span className="font-bold text-foreground">
                     {event.bookedSlots} / {event.slots} người
                   </span>
                 </div>
 
-                <div className="my-4 border-t border-slate-800/80" />
+                <div className="my-4 border-t border-border/60" />
 
                 {/* Quantity Stepper */}
                 <div>
-                  <div className="text-xs font-medium text-slate-400 mb-2">
+                  <div className="text-xs font-medium text-muted-foreground mb-2">
                     Số lượng vé
                   </div>
-                  <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-[#080e1c] p-1.5">
+                  <div className="flex items-center justify-between rounded-xl border border-border/80 bg-muted p-1.5">
                     <button
                       type="button"
-                      disabled={quantity <= 1 || isFull}
+                      disabled={quantity <= 1 || !canBuy}
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="flex size-9 items-center justify-center rounded-lg bg-slate-800/60 text-slate-300 hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                      className="flex size-9 items-center justify-center rounded-lg bg-card text-foreground hover:bg-accent disabled:opacity-40 transition-colors cursor-pointer"
                     >
                       <Minus className="size-4" />
                     </button>
-                    <span className="font-heading text-base font-bold text-white">
+                    <span className="font-heading text-base font-bold text-foreground">
                       {quantity}
                     </span>
                     <button
                       type="button"
-                      disabled={quantity >= maxAvailable || isFull}
+                      disabled={quantity >= maxAvailable || !canBuy}
                       onClick={() => setQuantity((q) => Math.min(maxAvailable, q + 1))}
-                      className="flex size-9 items-center justify-center rounded-lg bg-slate-800/60 text-slate-300 hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                      className="flex size-9 items-center justify-center rounded-lg bg-card text-foreground hover:bg-accent disabled:opacity-40 transition-colors cursor-pointer"
                     >
                       <Plus className="size-4" />
                     </button>
                   </div>
-                  <div className="mt-1.5 text-right text-[11px] text-slate-400">
+                  <div className="mt-1.5 text-right text-[11px] text-muted-foreground">
                     {event.availableSlot} vé còn lại
                   </div>
                 </div>
 
                 {/* Subtotal */}
-                <div className="mt-4 flex items-baseline justify-between border-t border-slate-800/80 pt-4">
-                  <span className="text-xs font-medium text-slate-400">Tạm tính</span>
-                  <span className="font-heading text-xl font-black text-white">
+                <div className="mt-4 flex items-baseline justify-between border-t border-border/60 pt-4">
+                  <span className="text-xs font-medium text-muted-foreground">Tạm tính</span>
+                  <span className="font-heading text-xl font-black text-foreground">
                     {formatEventPrice(event.ticketPrice * quantity)}
                   </span>
                 </div>
@@ -381,29 +405,37 @@ export function EventDetailPage() {
                 {/* Purchase Button */}
                 <button
                   type="button"
-                  disabled={isFull}
+                  disabled={!canBuy}
                   onClick={handleProceedToCheckout}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#a3e635] py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-[#a3e635]/20 transition-all hover:bg-[#bef264] active:scale-98 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#397B48] text-white hover:bg-[#2e633a] dark:bg-[#a3e635] dark:text-slate-950 dark:hover:bg-[#bef264] py-3.5 text-sm font-bold shadow-lg transition-all active:scale-98 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                 >
-                  <span>{isFull ? 'Đã hết vé' : 'Mua vé'}</span>
-                  {!isFull && <ArrowRight className="size-4" />}
+                  <span>
+                    {isExpired
+                      ? 'Đã hết thời gian mua vé'
+                      : isFull
+                      ? 'Đã hết vé'
+                      : 'Mua vé'}
+                  </span>
+                  {canBuy && <ArrowRight className="size-4" />}
                 </button>
 
-                <p className="mt-2 text-center text-[11px] text-slate-500">
-                  Bạn có thể điều chỉnh số lượng vé trước khi tiếp tục.
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  {isExpired
+                    ? 'Trận đấu đã bắt đầu hoặc kết thúc, không thể đặt vé thêm.'
+                    : 'Bạn có thể điều chỉnh số lượng vé trước khi tiếp tục.'}
                 </p>
               </div>
 
               {/* Callout Card Below */}
-              <div className="rounded-2xl border border-slate-800 bg-[#0d1629]/70 p-4 flex items-start gap-3 text-slate-300 shadow-md">
-                <div className="flex size-8 items-center justify-center rounded-xl bg-[#a3e635]/15 text-[#a3e635] shrink-0 mt-0.5">
+              <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-4 flex items-start gap-3 shadow-sm">
+                <div className="flex size-8 items-center justify-center rounded-xl bg-[#397B48]/15 dark:bg-[#a3e635]/15 text-[#397B48] dark:text-[#a3e635] shrink-0 mt-0.5">
                   <Sparkles className="size-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-white">
+                  <div className="text-xs font-bold text-foreground">
                     Cùng cộng đồng ra sân
                   </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                  <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
                     Gặp người chơi mới, tận hưởng một ngày thể thao đáng nhớ.
                   </div>
                 </div>

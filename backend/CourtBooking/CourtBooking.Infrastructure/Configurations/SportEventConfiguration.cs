@@ -22,6 +22,7 @@ public class SportEventConfiguration : IEntityTypeConfiguration<SportEvent>
             .HasMaxLength(255)
             .IsRequired();
 
+
         builder.Property(e => e.SkillLevelFrom)
             .HasMaxLength(50);
 
