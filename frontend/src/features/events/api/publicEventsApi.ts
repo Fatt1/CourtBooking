@@ -87,3 +87,25 @@ export function useBookEventTicketMutation(eventId: string) {
     },
   });
 }
+
+/**
+ * Hook hủy đơn vé sự kiện đang chờ thanh toán
+ * Endpoint: POST /api/v1/events/{id}/tickets/{ticketId}/cancel
+ */
+export function useCancelEventTicketMutation(eventId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ success: boolean; message: string }, Error, string>({
+    mutationFn: async (ticketId: string): Promise<{ success: boolean; message: string }> => {
+      const response = await apiClient.post<{ success: boolean; message: string }>(
+        API_ENDPOINTS.EVENTS.CANCEL_TICKET(eventId, ticketId)
+      );
+      return response as unknown as { success: boolean; message: string };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['public', 'events'] });
+      queryClient.invalidateQueries({ queryKey: ['public', 'events', 'detail', eventId] });
+    },
+  });
+}
+
