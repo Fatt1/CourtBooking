@@ -479,6 +479,25 @@ export function useDeleteFixedOrderCycleMutation() {
   });
 }
 
+/**
+ * Hook lấy danh sách đơn đặt sân của người chơi (GET /api/v1/orders/my-orders)
+ */
+export function useMyOrdersQuery(onlyAvailableForMatch?: boolean) {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery<import('./types').MyOrderDto[]>({
+    queryKey: ['orders', 'my-orders', { onlyAvailableForMatch }],
+    queryFn: async (): Promise<import('./types').MyOrderDto[]> => {
+      const response = await apiClient.get<import('./types').MyOrderDto[]>(
+        API_ENDPOINTS.ORDERS.MY_ORDERS,
+        { params: { onlyAvailableForMatch } }
+      );
+      return (response as unknown as import('./types').MyOrderDto[]) || [];
+    },
+    enabled: isAuthenticated,
+  });
+}
+
 
 
 

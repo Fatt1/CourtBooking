@@ -40,6 +40,31 @@ public sealed class MatchEndpoints : IEndpointGroup
         .WithSummary("Mở kèo giao lưu mới từ đơn đặt sân đã xác nhận")
         .Produces<CreateMatchResponse>(StatusCodes.Status201Created);
 
+        // 1b. PUT /api/v1/matches/{id:guid} — Chỉnh sửa kèo giao lưu (Yêu cầu đăng nhập)
+        group.MapPut("{id:guid}", async (
+            [FromRoute] Guid id,
+            [FromBody] CourtBooking.Application.Features.V1.Matches.Commands.UpdateMatch.UpdateMatchRequest request,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new CourtBooking.Application.Features.V1.Matches.Commands.UpdateMatch.UpdateMatchCommand(
+                id,
+                request.SkillLevel,
+                request.MissingPlayers,
+                request.FeePerPlayer,
+                request.ApprovalMode,
+                request.Description);
+
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+        .RequireAuthorization()
+        .WithName("UpdateMatch")
+        .WithSummary("Chỉnh sửa thông tin kèo giao lưu của chính mình")
+        .Produces(StatusCodes.Status204NoContent);
+
         // 2. GET /api/v1/matches — Danh sách kèo giao lưu (Công khai - hỗ trợ bộ lọc và phân trang)
         group.MapGet("", async (
             [FromQuery] Guid? sportTypeId,
