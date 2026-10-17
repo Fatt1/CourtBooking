@@ -12,4 +12,5 @@ export * from './pricing';
 export * from './reviews';
 export * from './analytics';
 export * from './events';
+export * from './retail-orders';
 

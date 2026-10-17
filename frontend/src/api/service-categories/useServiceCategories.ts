@@ -15,15 +15,10 @@ export function useServiceCategoriesQuery() {
   return useQuery<ServiceCategoryDto[]>({
     queryKey: ['owner', 'service-categories'],
     queryFn: async (): Promise<ServiceCategoryDto[]> => {
-      try {
-        const response = await apiClient.get<ServiceCategoryDto[]>(
-          API_ENDPOINTS.SERVICES.CATEGORIES
-        );
-        return (response as unknown as ServiceCategoryDto[]) || [];
-      } catch (err) {
-        console.warn('Lỗi lấy danh sách service-categories:', err);
-        return [];
-      }
+      const response = await apiClient.get<ServiceCategoryDto[]>(
+        API_ENDPOINTS.SERVICES.CATEGORIES
+      );
+      return (response as unknown as ServiceCategoryDto[]) || [];
     },
     enabled: isAuthenticated && isOwner,
     staleTime: 1000 * 60 * 5, // 5 phút cache
