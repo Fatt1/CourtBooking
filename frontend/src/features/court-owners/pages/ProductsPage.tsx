@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { OwnerFilterBar, OwnerPageHeader, OwnerPagination } from '../components/shared';
@@ -71,6 +71,13 @@ function BranchProducts({ branchId, branchName }: { branchId: string; branchName
           <Plus className="size-4" /> Thêm sản phẩm
         </Button>
       } />
+      <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
+        <Store className="mt-0.5 size-5 shrink-0 text-brand-green" aria-hidden="true" />
+        <div className="space-y-1">
+          <p className="text-sm font-semibold">Đang quản lý sản phẩm tại: {branchName}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">Sản phẩm thêm mới, giá và trạng thái bán áp dụng tại chi nhánh này. Chọn chi nhánh khác trên thanh đầu trang để chuyển danh sách.</p>
+        </div>
+      </div>
       <OwnerFilterBar className="[&>div:last-child]:lg:justify-start" searchPlaceholder="Tìm tên sản phẩm..." searchValue={search}
         onSearchChange={(value) => { setSearch(value); setPage(1); }}>
         <select aria-label="Lọc danh mục" className={selectClass} value={categoryId}

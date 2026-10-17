@@ -102,8 +102,9 @@ export function ProductFormModal({ open, onOpenChange, productId, branchId, bran
           </span>
           <span className="relative z-10 block">
             <span className="block text-lg font-extrabold tracking-tight text-[#173e26] dark:text-emerald-100">{productId ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}</span>
-            <span className="mt-1.5 block text-[10px] font-normal leading-relaxed tracking-normal text-[#4d7b60] dark:text-emerald-200/80">
-              Giá và trạng thái bán áp dụng tại {branchName}.
+            <span className="mt-1.5 block text-xs font-normal leading-relaxed tracking-normal text-[#4d7b60] dark:text-emerald-200/80">
+              Chi nhánh: <strong className="font-semibold">{branchName}</strong>.
+              <span className="mt-1 block">{productId ? 'Giá và trạng thái bán áp dụng riêng tại đây. Tên, ảnh, đơn vị và danh mục dùng chung giữa các chi nhánh.' : 'Sản phẩm sẽ được thêm vào chi nhánh này.'}</span>
             </span>
           </span>
           <svg aria-hidden="true" viewBox="0 0 120 110" className="absolute bottom-1 right-2 w-[112px]">
