@@ -46,9 +46,15 @@ export function ProductTable({ items, categories, branchId, isLoading, isUpdatin
     } },
     { header: 'ĐANG BÁN (AVAILABLE)', headerClassName: 'min-w-[160px]', cell: (item) => {
       const branch = item.branches.find((entry) => entry.branchId === branchId);
-      return <Switch checked={branch?.isActive ?? false} disabled={!branch || isUpdating}
-        aria-label={`Đang bán ${item.name}`} onCheckedChange={(value) => onToggle(item, value)}
-        className="data-[state=checked]:bg-brand-green data-[state=unchecked]:bg-muted" />;
+      return <div className="flex items-center gap-2">
+        <span className={`inline-block w-20 shrink-0 whitespace-nowrap text-right text-xs ${branch?.isActive ? 'text-brand-green dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'}`}>
+          {branch?.isActive ? 'Đang bán' : 'Ngừng bán'}
+        </span>
+        <Switch checked={branch?.isActive ?? false} disabled={!branch || isUpdating}
+          aria-label={`${branch?.isActive ? 'Đang bán' : 'Ngừng bán'} ${item.name}`}
+          onCheckedChange={(value) => onToggle(item, value)}
+          className="data-[state=checked]:bg-brand-green data-[state=unchecked]:bg-muted" />
+      </div>;
     } },
     { header: 'THAO TÁC', headerClassName: 'text-right', className: 'text-right', cell: (item) => (
       <Button variant="outline" className="rounded-xl" onClick={() => onEdit(item.id)} aria-label={`Sửa ${item.name}`}>Sửa</Button>

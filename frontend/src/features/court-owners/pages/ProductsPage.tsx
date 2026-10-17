@@ -75,7 +75,7 @@ function BranchProducts({ branchId, branchName }: { branchId: string; branchName
         <Store className="mt-0.5 size-5 shrink-0 text-brand-green" aria-hidden="true" />
         <div className="space-y-1">
           <p className="text-sm font-semibold">Đang quản lý sản phẩm tại: {branchName}</p>
-          <p className="text-xs leading-relaxed text-muted-foreground">Sản phẩm thêm mới, giá và trạng thái bán áp dụng tại chi nhánh này. Chọn chi nhánh khác trên thanh đầu trang để chuyển danh sách.</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">Danh sách đang lọc theo chi nhánh này. Khi thêm hoặc sửa, bạn có thể chọn nhiều chi nhánh và đặt giá riêng cho từng nơi.</p>
         </div>
       </div>
       <OwnerFilterBar className="[&>div:last-child]:lg:justify-start" searchPlaceholder="Tìm tên sản phẩm..." searchValue={search}

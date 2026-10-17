@@ -2,17 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { ShoppingBag, Tag, List, Box, CircleDollarSign, Store, ImagePlus, Save, Loader2 } from 'lucide-react';
+import { ShoppingBag, Tag, List, Box, ImagePlus, Save, Loader2 } from 'lucide-react';
 import { OwnerModal } from '../shared';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useOwnerServiceDetailQuery, type CreateServicePayload } from '@/api/services';
+import { useBranchStore } from '@/stores/useBranchStore';
 import { useServiceCategoriesQuery } from '@/api/service-categories';
 import { getImageUrl, uploadImageApi } from '@/api/storage';
 import { getApiErrorMessage } from '@/types/api';
 import { productSchema, type ProductFormValues } from '../../schemas/productSchema';
+import { BranchPricingList } from './BranchPricingList';
 
 interface Props {
   open: boolean;
@@ -33,9 +34,12 @@ export function ProductFormModal({ open, onOpenChange, productId, branchId, bran
   const fileInput = useRef<HTMLInputElement>(null);
   const uploadVersion = useRef(0);
   const initialized = useRef(false);
+  const branchList = useBranchStore((state) => state.branches);
+  const allBranches = branchList.length ? branchList : [{ id: branchId, name: branchName }];
+  const existingIds = new Set(detail.data?.branches.map((item) => item.branchId) ?? []);
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: { name: '', unit: '', categoryId: '', price: 0, isActive: true, imageId: null },
+    defaultValues: { name: '', unit: '', categoryId: '', branches: [], imageId: null },
   });
 
   useEffect(() => {
@@ -43,20 +47,25 @@ export function ProductFormModal({ open, onOpenChange, productId, branchId, bran
     uploadVersion.current += 1;
     setUploading(false);
     if (!productId) {
-      form.reset({ name: '', unit: '', categoryId: '', price: 0, isActive: true, imageId: null });
+      form.reset({ name: '', unit: '', categoryId: '', imageId: null,
+        branches: allBranches.map((branch) => ({ branchId: branch.id, selected: branch.id === branchId, price: 0, isActive: true })) });
       setImageUrl('');
     }
-  }, [open, productId, branchId, form]);
+  }, [open, productId, branchId, branchList, form]);
 
   useEffect(() => {
     if (!open || !productId || !detail.data || detail.isFetching || initialized.current) return;
     const product = detail.data;
-    const branch = product.branches.find((item) => item.branchId === branchId);
     form.reset({ name: product.name, unit: product.unit, categoryId: product.categoryId,
-      price: branch?.price ?? 0, isActive: branch?.isActive ?? true, imageId: product.image?.id ?? null });
+      imageId: product.image?.id ?? null,
+      branches: [...allBranches, ...product.branches.filter((item) => !allBranches.some((branch) => branch.id === item.branchId))
+        .map((item) => ({ id: item.branchId, name: item.branchName }))].map((branch) => {
+        const current = product.branches.find((item) => item.branchId === branch.id);
+        return { branchId: branch.id, selected: Boolean(current), price: current?.price ?? 0, isActive: current?.isActive ?? true };
+      }) });
     setImageUrl(getImageUrl(product.image?.key || product.image?.url));
     initialized.current = true;
-  }, [open, productId, branchId, detail.data, detail.isFetching, form]);
+  }, [open, productId, branchId, branchList, detail.data, detail.isFetching, form]);
 
   useEffect(() => () => { uploadVersion.current += 1; }, []);
 
@@ -85,16 +94,24 @@ export function ProductFormModal({ open, onOpenChange, productId, branchId, bran
 
   const save = async (values: ProductFormValues) => {
     if (busy || !ready) return;
-    const otherBranches = (detail.data?.branches ?? []).filter((item) => item.branchId !== branchId)
-      .map(({ branchId: id, price, isActive }) => ({ branchId: id, price, isActive }));
     await onSubmit({ name: values.name, unit: values.unit, categoryId: values.categoryId, imageId: values.imageId,
-      branches: [...otherBranches, { branchId, price: values.price, isActive: values.isActive }] });
+      branches: values.branches.filter((branch) => branch.selected)
+        .map(({ branchId: id, price, isActive }) => ({ branchId: id, price, isActive })) });
+  };
+
+  const onInvalid: Parameters<typeof form.handleSubmit>[1] = (errors) => {
+    const index = form.getValues('branches').findIndex((_, i) => errors.branches?.[i]?.price);
+    if (index >= 0) {
+      const row = document.querySelector(`[data-branch-index="${index}"]`);
+      row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row?.querySelector<HTMLInputElement>('input[type="number"]')?.focus();
+    }
   };
 
   return (
     <OwnerModal open={open} onOpenChange={(next) => { if (!busy) onOpenChange(next); }}
-      maxWidth="max-w-[460px]" hideFooter bodyClassName="p-6"
-      className="gap-0 overflow-x-hidden rounded-2xl p-0 sm:p-0 [&>div:first-child]:border-0 [&>div:first-child]:p-0 [&>div:first-child>div]:w-full [&>div:first-child>div>div]:w-full [&>button]:z-10"
+      maxWidth="max-w-none sm:max-w-3xl" hideFooter bodyClassName="p-4 sm:p-6"
+      className="h-dvh max-h-dvh w-screen gap-0 overflow-x-hidden rounded-none p-0 sm:h-auto sm:max-h-[92vh] sm:w-[95vw] sm:rounded-2xl sm:p-0 [&>div:first-child]:border-0 [&>div:first-child]:p-0 [&>div:first-child>div]:w-full [&>div:first-child>div>div]:w-full [&>button]:z-10"
       title={
         <span className="relative flex min-h-[120px] items-center gap-4 overflow-hidden bg-gradient-to-br from-emerald-50 via-[#f5faf4] to-amber-50 px-6 py-6 pr-28 font-sans dark:from-emerald-950/60 dark:via-card dark:to-amber-950/20">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-brand-green shadow-sm dark:bg-emerald-900/40">
@@ -103,8 +120,8 @@ export function ProductFormModal({ open, onOpenChange, productId, branchId, bran
           <span className="relative z-10 block">
             <span className="block text-lg font-extrabold tracking-tight text-[#173e26] dark:text-emerald-100">{productId ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}</span>
             <span className="mt-1.5 block text-xs font-normal leading-relaxed tracking-normal text-[#4d7b60] dark:text-emerald-200/80">
-              Chi nhánh: <strong className="font-semibold">{branchName}</strong>.
-              <span className="mt-1 block">{productId ? 'Giá và trạng thái bán áp dụng riêng tại đây. Tên, ảnh, đơn vị và danh mục dùng chung giữa các chi nhánh.' : 'Sản phẩm sẽ được thêm vào chi nhánh này.'}</span>
+              Chi nhánh đang chọn: <strong className="font-semibold">{branchName}</strong>.
+              <span className="mt-1 block">Chọn nơi bán và giá riêng ở phần B.</span>
             </span>
           </span>
           <svg aria-hidden="true" viewBox="0 0 120 110" className="absolute bottom-1 right-2 w-[112px]">
@@ -123,7 +140,7 @@ export function ProductFormModal({ open, onOpenChange, productId, branchId, bran
           </svg>
         </span>
       }>
-      {productId && <p className="mb-4 text-xs text-muted-foreground">Tên, danh mục, đơn vị và ảnh dùng chung cho các chi nhánh.</p>}
+      {productId && <p className="mb-4 rounded-lg border border-amber-300/50 bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">Thay đổi tên, danh mục, đơn vị hoặc ảnh sẽ ảnh hưởng mọi chi nhánh đang bán sản phẩm này.</p>}
       {productId && detail.isError ? (
         <div role="alert" className="space-y-2 text-destructive">
           <p>{getApiErrorMessage(detail.error, 'Không thể tải sản phẩm')}</p>
@@ -131,8 +148,9 @@ export function ProductFormModal({ open, onOpenChange, productId, branchId, bran
         </div>
       ) : !ready ? <p role="status">Đang tải sản phẩm...</p> : (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(save)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(save, onInvalid)} className="space-y-4">
             <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
+              <div><h3 className="font-bold">A. Thông tin chung</h3><p className="mt-1 text-xs text-muted-foreground">Áp dụng cho mọi chi nhánh đã gắn sản phẩm.</p></div>
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem className="space-y-1.5"><FormLabel className="text-xs font-semibold">Tên sản phẩm *</FormLabel>
                   <div className="relative"><Tag className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
@@ -153,28 +171,11 @@ export function ProductFormModal({ open, onOpenChange, productId, branchId, bran
               {categories.isError && <p role="alert" className="text-destructive">{getApiErrorMessage(categories.error)}</p>}
               {!categories.isPending && !categories.isError && !categories.data?.some((item) => item.isActive) &&
                 <p className="text-muted-foreground">Hãy tạo hoặc kích hoạt danh mục dịch vụ trước khi thêm sản phẩm.</p>}
-              <div className="grid grid-cols-2 gap-3">
               <FormField control={form.control} name="unit" render={({ field }) => (
                 <FormItem className="space-y-1.5"><FormLabel className="text-xs font-semibold">Đơn vị tính *</FormLabel><div className="relative">
                   <Box className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
                   <FormControl><Input {...field} maxLength={50} placeholder="Chai, Lon, Ca..." className="rounded-lg pl-10 text-xs" /></FormControl>
                 </div><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="price" render={({ field }) => (
-                <FormItem className="space-y-1.5"><FormLabel className="text-xs font-semibold">Đơn giá (VNĐ) *</FormLabel><div className="relative">
-                  <CircleDollarSign className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" /><FormControl>
-                  <Input type="number" min={0} step="0.01" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="rounded-lg pl-10 text-xs" />
-                </FormControl></div><FormMessage /></FormItem>
-              )} />
-              </div>
-              <FormField control={form.control} name="isActive" render={({ field }) => (
-                <FormItem className="flex items-center justify-between space-y-0 rounded-xl bg-emerald-50/80 p-3.5 dark:bg-emerald-950/40">
-                  <div className="flex items-center gap-3"><Store className="size-5 text-brand-green" /><div>
-                    <FormLabel className="text-xs font-bold">Đang bán</FormLabel>
-                    <p className="mt-0.5 text-[10px] text-brand-green dark:text-emerald-300">Sản phẩm sẽ hiển thị trên hệ thống</p>
-                  </div></div><FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} className="h-6 w-11 data-[state=checked]:bg-[#4fc319] data-[state=unchecked]:bg-muted" />
-                </FormControl><FormMessage /></FormItem>
               )} />
               <div className="space-y-2">
                 <label htmlFor="product-image" className="text-xs font-semibold">Hình ảnh</label>
@@ -193,8 +194,10 @@ export function ProductFormModal({ open, onOpenChange, productId, branchId, bran
                 </button>
                 {imageUrl && <Button type="button" variant="ghost" size="sm" onClick={() => { form.setValue('imageId', null); setImageUrl(''); }}>Bỏ ảnh</Button>}
               </div>
+              <BranchPricingList branches={[...allBranches, ...(detail.data?.branches ?? []).filter((item) => !allBranches.some((branch) => branch.id === item.branchId))
+                .map((item) => ({ id: item.branchId, name: item.branchName }))]} currentBranchId={branchId} existingIds={existingIds} />
             </fieldset>
-            <div className="flex justify-end gap-3 pt-1">
+            <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 border-t border-border bg-card py-3">
               <Button type="button" variant="outline" className="h-10 rounded-xl px-6 text-xs" disabled={busy} onClick={() => onOpenChange(false)}>Hủy</Button>
               <Button type="submit" disabled={busy || categories.isPending || categories.isError}
                 className="h-10 gap-2 rounded-xl bg-brand-green px-5 text-xs font-bold text-white shadow-sm hover:bg-brand-green-hover">
