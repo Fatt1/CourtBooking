@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePublicBranchesQuery, type PublicBranchListItemDto } from '@/api/branches';
+import { BranchReviewsModal } from './BranchReviewsModal';
 
 // Fallback data khi backend chưa chạy hoặc chưa có data
 const FALLBACK_BRANCHES: PublicBranchListItemDto[] = [
@@ -66,6 +68,9 @@ const FALLBACK_BRANCHES: PublicBranchListItemDto[] = [
 ];
 
 export function FeaturedBranchesSection() {
+  const [selectedBranchForReviews, setSelectedBranchForReviews] =
+    useState<PublicBranchListItemDto | null>(null);
+
   // Gọi API backend GET /api/v1/branches
   const { data: pagedResult, isLoading } = usePublicBranchesQuery({ page: 1, pageSize: 6 });
 
@@ -172,13 +177,24 @@ export function FeaturedBranchesSection() {
                   {/* Card Content */}
                   <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
                     <div>
-                      {/* Sport Tag & Rating (Đã bỏ tổng số review theo yêu cầu) */}
+                      {/* Sport Tag & Rating */}
                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                         <span className="font-medium text-muted-foreground">{sportName}</span>
-                        <div className="flex items-center gap-1 font-bold text-foreground">
-                          <span>{branch.reviewAverage?.toFixed(1) || '5.0'}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelectedBranchForReviews(branch);
+                          }}
+                          className="flex items-center gap-1 font-bold text-foreground hover:text-[#397B48] bg-muted/60 hover:bg-[#397B48]/10 px-2 py-0.5 rounded-full transition-colors cursor-pointer group/star border border-border/40"
+                          title="Xem đánh giá tổng quan của cơ sở này"
+                        >
+                          <span className="group-hover/star:underline">
+                            {branch.reviewAverage?.toFixed(1) || '5.0'}
+                          </span>
                           <Star className="size-3 fill-amber-400 text-amber-400" />
-                        </div>
+                        </button>
                       </div>
 
                       {/* Branch Name */}
@@ -217,6 +233,17 @@ export function FeaturedBranchesSection() {
           </div>
         )}
       </div>
+
+      {/* Modal Xem Đánh Giá Chi Nhánh */}
+      {selectedBranchForReviews && (
+        <BranchReviewsModal
+          isOpen={Boolean(selectedBranchForReviews)}
+          onClose={() => setSelectedBranchForReviews(null)}
+          branchId={selectedBranchForReviews.id}
+          branchName={selectedBranchForReviews.name}
+          reviewAverage={selectedBranchForReviews.reviewAverage}
+        />
+      )}
     </section>
   );
 }
