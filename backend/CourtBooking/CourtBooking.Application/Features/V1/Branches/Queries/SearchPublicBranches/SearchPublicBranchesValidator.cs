@@ -35,8 +35,8 @@ public sealed class SearchPublicBranchesValidator : AbstractValidator<SearchPubl
             .WithMessage("Điểm đánh giá phải từ 1 đến 5.");
 
         RuleFor(x => x.Sort)
-            .Must(s => string.IsNullOrEmpty(s) || s == "relevance" || s == "rating_desc" || s == "distance" || s == "price_asc")
-            .WithMessage("Kiểu sắp xếp không hợp lệ (hỗ trợ: relevance, rating_desc, distance, price_asc).");
+            .Must(s => string.IsNullOrEmpty(s) || s == "relevance" || s == "rating_desc" || s == "distance" || s == "price_asc" || s == "price_desc")
+            .WithMessage("Kiểu sắp xếp không hợp lệ (hỗ trợ: relevance, rating_desc, distance, price_asc, price_desc).");
 
         // Ràng buộc tọa độ GPS nếu người dùng cung cấp
         RuleFor(x => x.Latitude)

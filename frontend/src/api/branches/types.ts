@@ -97,14 +97,16 @@ export interface BranchSportDto {
 export interface PublicBranchListItemDto {
   id: string;
   name: string;
-  province: string;
-  district: string;
-  street: string;
+  fullAddress?: string;
+  province?: string;
+  district?: string;
+  street?: string;
   latitude?: number | null;
   longitude?: number | null;
   coverImage?: {
-    id: string;
-    url: string;
+    id?: string;
+    url?: string;
+    key?: string;
   } | null;
   sports: BranchSportDto[];
   openTime: string;
@@ -114,6 +116,8 @@ export interface PublicBranchListItemDto {
   availableCourtCount?: number | null;
   minPrice: number;
   maxPrice: number;
+  courtTypes?: string[];
+  services?: string[];
 }
 
 /**
@@ -147,6 +151,7 @@ export interface SearchBranchesParams {
   province?: string;
   district?: string;
   sportTypeIds?: string[];
+  courtTypeName?: string;
   date?: string;
   startTime?: string;
   endTime?: string;

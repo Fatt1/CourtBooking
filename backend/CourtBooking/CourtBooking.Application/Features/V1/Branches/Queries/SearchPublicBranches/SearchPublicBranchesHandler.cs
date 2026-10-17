@@ -42,6 +42,13 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
         if (request.SportTypeIds is { Count: > 0 } sportTypeIds)
             q = q.Where(b => b.BranchSportTypes.Any(x => sportTypeIds.Contains(x.SportTypeId)));
 
+        // ── Loại sân (VD: Sân 5, Sân 7, Sân đôi...) ──────────────────
+        if (!string.IsNullOrWhiteSpace(request.CourtTypeName))
+        {
+            var ctPattern = $"%{request.CourtTypeName.Trim()}%";
+            q = q.Where(b => b.CourtTypes.Any(ct => EF.Functions.Like(ct.Name, ctPattern)));
+        }
+
         // ── Rating >= X ────────────────────────────────────────────────
         if (request.Rating is { } rating)
             q = q.Where(b => b.ReviewAverage >= rating);
@@ -128,6 +135,10 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                 .ThenBy(x => x.Branch.MinPrice)
                 .ThenBy(x => x.Branch.Id),
 
+            "price_desc" => rows
+                .OrderByDescending(x => x.Branch.MinPrice)
+                .ThenBy(x => x.Branch.Id),
+
             _ => rows
                 .OrderBy(x => x.Branch.Name)
                 .ThenBy(x => x.Branch.Id)
@@ -158,6 +169,13 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                     .FirstOrDefault(),
                 Sports = x.Branch.BranchSportTypes
                     .Select(s => new BranchSportDto(s.SportTypeId, s.SportType.Name))
+                    .ToList(),
+                CourtTypes = x.Branch.CourtTypes
+                    .Select(ct => ct.Name)
+                    .ToList(),
+                Services = x.Branch.ServiceBranches
+                    .Where(sb => sb.IsActive)
+                    .Select(sb => sb.Service.Name)
                     .ToList()
             })
             .ToListAsync(cancellationToken);
@@ -174,9 +192,48 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                 .ToDictionaryAsync(x => x.BranchId, x => x.Count, cancellationToken);
         }
 
+        // ── Tính khoảng giá thực tế từ tất cả bảng giá đang Active của các chi nhánh trang này ──
+        var pageIds = page.Select(p => p.Id).ToList();
+        var branchPriceRanges = new Dictionary<Guid, (decimal Min, decimal Max)>();
+        if (pageIds.Count > 0)
+        {
+            var priceTables = await dbContext.PriceTables.AsNoTracking()
+                .Where(pt => pageIds.Contains(pt.CourtType.BranchId) && pt.IsActive)
+                .Select(pt => new
+                {
+                    BranchId = pt.CourtType.BranchId,
+                    pt.DefaultPrice,
+                    pt.DefaultWalkInPrice,
+                    Rules = pt.Rules.Select(r => new { r.FixedCustomerPrice, r.WalkInCustomerPrice }).ToList()
+                })
+                .ToListAsync(cancellationToken);
+
+            foreach (var g in priceTables.GroupBy(x => x.BranchId))
+            {
+                var prices = new List<decimal>();
+                foreach (var pt in g)
+                {
+                    if (pt.DefaultPrice > 0) prices.Add(pt.DefaultPrice);
+                    if (pt.DefaultWalkInPrice > 0) prices.Add(pt.DefaultWalkInPrice);
+                    foreach (var r in pt.Rules)
+                    {
+                        if (r.FixedCustomerPrice > 0) prices.Add(r.FixedCustomerPrice);
+                        if (r.WalkInCustomerPrice > 0) prices.Add(r.WalkInCustomerPrice);
+                    }
+                }
+                if (prices.Count > 0)
+                {
+                    branchPriceRanges[g.Key] = (prices.Min(), prices.Max());
+                }
+            }
+        }
+
         var items = page.Select(p =>
         {
             var freeCount = freeCountByBranch.GetValueOrDefault(p.Id);
+            var (minPrice, maxPrice) = branchPriceRanges.TryGetValue(p.Id, out var range)
+                ? range
+                : (p.MinPrice, p.MaxPrice);
 
             return new PublicBranchListItemDto(
                 p.Id,
@@ -189,8 +246,10 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                 p.ReviewAverage,
                 p.DistanceKm.HasValue ? Math.Round(p.DistanceKm.Value, 1) : null,
                 AvailableCourtCount: isTimeSearch ? freeCount : null,
-                p.MinPrice,
-                p.MaxPrice);
+                minPrice,
+                maxPrice,
+                CourtTypes: p.CourtTypes,
+                Services: p.Services);
         }).ToList();
 
         return Result.Success(new PagedList<PublicBranchListItemDto>(

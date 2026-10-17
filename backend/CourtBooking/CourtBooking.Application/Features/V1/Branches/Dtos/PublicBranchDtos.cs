@@ -14,7 +14,9 @@ public sealed record PublicBranchListItemDto(
     double? DistanceKm,
     int? AvailableCourtCount,
     decimal MinPrice,
-    decimal MaxPrice);
+    decimal MaxPrice,
+    IReadOnlyList<string>? CourtTypes = null,
+    IReadOnlyList<string>? Services = null);
 
 public sealed record PublicBranchDetailDto(
     Guid Id,
