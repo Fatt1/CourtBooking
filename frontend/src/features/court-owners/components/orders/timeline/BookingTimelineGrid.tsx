@@ -120,11 +120,11 @@ export function BookingTimelineGrid({
 
   if (activeCourtTypes.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border/60 bg-[#070D1A]/60 p-10 text-center space-y-2">
-        <p className="text-sm font-semibold text-slate-300">
+      <div className="rounded-2xl border border-dashed border-border/60 bg-background/60 p-10 text-center space-y-2">
+        <p className="text-sm font-semibold text-muted-foreground">
           Chưa chọn loại sân nào để hiển thị lịch đặt
         </p>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Vui lòng tích chọn ít nhất 1 loại sân ở khối bên trên để xem bảng giờ và chọn ca sân.
         </p>
       </div>
@@ -136,26 +136,26 @@ export function BookingTimelineGrid({
       {/* 1. CHÚ THÍCH TRẠNG THÁI (LEGEND CHUẨN FIGMA) */}
       <div className="flex items-center gap-4 sm:gap-6 text-xs flex-wrap px-1 select-none">
         <div className="flex items-center gap-2">
-          <div className="size-4 rounded border border-slate-600 bg-[#0f172a]" />
-          <span className="text-slate-300">Trống</span>
+          <div className="size-4 rounded border border-border bg-muted/40" />
+          <span className="text-muted-foreground">Trống</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="size-4 rounded bg-slate-800 border border-slate-700" />
-          <span className="text-slate-400">Đã đặt</span>
+          <div className="size-4 rounded bg-muted border border-border" />
+          <span className="text-muted-foreground">Đã đặt</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="size-4 rounded bg-slate-900 border border-amber-500/40 flex items-center justify-center text-amber-400 text-[10px]">
+          <div className="size-4 rounded bg-muted/60 border border-amber-500/40 flex items-center justify-center text-amber-700 dark:text-amber-400 text-[10px]">
             <Lock className="size-2.5" />
           </div>
-          <span className="text-slate-400">Khóa</span>
+          <span className="text-muted-foreground">Khóa</span>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="size-4 rounded bg-emerald-700 border border-emerald-500 flex items-center justify-center">
             <div className="size-1.5 rounded-full bg-white" />
           </div>
-          <span className="text-[#a3e635] font-semibold">Đang chọn</span>
+          <span className="text-emerald-700 dark:text-[#a3e635] font-semibold">Đang chọn</span>
         </div>
 
         {lockSameTimeSlots && baseCourtInfo && (
@@ -188,19 +188,19 @@ export function BookingTimelineGrid({
           return (
             <div
               key={ct.courtTypeId}
-              className="rounded-2xl border border-border/70 bg-[#0B1324] overflow-hidden shadow-sm space-y-0"
+              className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm space-y-0"
             >
               {/* Header Loại sân & Nhóm khách */}
-              <div className="px-4 py-3 bg-[#131d31] border-b border-border/60 flex items-center justify-between flex-wrap gap-2">
+              <div className="px-4 py-3 bg-card border-b border-border/60 flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     {activePriceTable?.name || 'Khách vãng lai'}
                   </span>
-                  <h4 className="text-sm font-bold text-white tracking-tight">
+                  <h4 className="text-sm font-bold text-foreground tracking-tight">
                     {ct.courtTypeName}
                   </h4>
                 </div>
-                <div className="text-xs text-[#a3e635] font-mono bg-[#1a2742] px-2.5 py-1 rounded-lg border border-border/50">
+                <div className="text-xs text-emerald-700 dark:text-[#a3e635] font-mono bg-muted px-2.5 py-1 rounded-lg border border-border/50">
                   Bước nhảy: {stepMinutes} phút/ô
                 </div>
               </div>
@@ -209,14 +209,14 @@ export function BookingTimelineGrid({
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>
-                    <tr className="bg-[#0f172a] border-b border-border/60 text-xs text-slate-300">
-                      <th className="sticky left-0 z-20 bg-[#0f172a] p-3 w-32 min-w-32 font-bold text-white border-r border-border/60 uppercase text-[11px]">
+                    <tr className="bg-muted/40 border-b border-border/60 text-xs text-muted-foreground">
+                      <th className="sticky left-0 z-20 bg-muted/40 p-3 w-32 min-w-32 font-bold text-foreground border-r border-border/60 uppercase text-[11px]">
                         SÂN / GIỜ
                       </th>
                       {timeSlots.map((ts, idx) => (
                         <th
                           key={idx}
-                          className="p-2.5 text-center font-mono font-semibold text-slate-300 text-xs min-w-16 border-r border-border/40"
+                          className="p-2.5 text-center font-mono font-semibold text-muted-foreground text-xs min-w-16 border-r border-border/40"
                         >
                           {ts.timeLabel}
                         </th>
@@ -229,12 +229,12 @@ export function BookingTimelineGrid({
                       ct.availableCourts.map((court) => (
                         <tr
                           key={court.courtId}
-                          className="border-b border-border/40 hover:bg-[#101b33]/40 transition-colors"
+                          className="border-b border-border/40 hover:bg-card/40 transition-colors"
                         >
                           {/* Cột 1: Tên sân (Sticky) */}
-                          <td className="sticky left-0 z-10 bg-[#0B1324] p-3 font-semibold text-white text-xs border-r border-border/60 whitespace-nowrap shadow-xs">
+                          <td className="sticky left-0 z-10 bg-card p-3 font-semibold text-foreground text-xs border-r border-border/60 whitespace-nowrap shadow-xs">
                             <div>{court.courtName}</div>
-                            <div className="text-[10px] text-slate-500 font-normal">
+                            <div className="text-[10px] text-muted-foreground font-normal">
                               {ct.courtTypeName}
                             </div>
                           </td>
@@ -536,18 +536,18 @@ export function BookingTimelineGrid({
                                 className={`h-11 min-w-16 p-1 text-center border-r border-border/40 transition-all select-none ${isSelected
                                   ? 'bg-emerald-700/80 cursor-pointer shadow-inner'
                                   : isLockedByEventConstraint
-                                    ? 'bg-[#0b101d]/90 text-slate-600 opacity-40 cursor-not-allowed border-dashed border-slate-800'
+                                    ? 'bg-muted/40 text-muted-foreground opacity-40 cursor-not-allowed border-dashed border-border'
                                     : isPastOrTooClose
-                                      ? 'bg-[#151c2d]/90 text-slate-600 cursor-not-allowed border-slate-800/80'
+                                      ? 'bg-muted/90 text-slate-600 cursor-not-allowed border-slate-800/80'
                                       : isEvent
                                         ? 'bg-purple-900/60 cursor-not-allowed'
                                         : isLocked
-                                          ? 'bg-slate-900/90 cursor-not-allowed'
+                                          ? 'bg-muted/60 cursor-not-allowed'
                                           : isBooked
-                                            ? 'bg-slate-800/80 cursor-not-allowed'
+                                            ? 'bg-muted/80 cursor-not-allowed'
                                             : matchingBlock
-                                              ? 'bg-[#131d31] hover:bg-[#1a2742] cursor-pointer'
-                                              : 'bg-[#0f172a]/60 hover:bg-[#1a2742] cursor-pointer'
+                                              ? 'bg-card hover:bg-muted cursor-pointer'
+                                              : 'bg-muted/40 hover:bg-muted cursor-pointer'
                                   }`}
                               >
                                 <div className="size-full flex items-center justify-center">
@@ -560,11 +560,11 @@ export function BookingTimelineGrid({
                                   ) : isEvent ? (
                                     <Sparkles className="size-3 text-purple-300" />
                                   ) : isLocked ? (
-                                    <Lock className="size-3 text-amber-400" />
+                                    <Lock className="size-3 text-amber-700 dark:text-amber-400" />
                                   ) : isBooked ? (
-                                    <span className="text-[10px] text-slate-500 font-bold">•</span>
+                                    <span className="text-[10px] text-muted-foreground font-bold">•</span>
                                   ) : matchingBlock ? (
-                                    <span className="text-[9px] text-[#a3e635]/60 font-semibold select-none">
+                                    <span className="text-[9px] text-emerald-700 dark:text-[#a3e635]/60 font-semibold select-none">
                                       block
                                     </span>
                                   ) : null}
@@ -578,7 +578,7 @@ export function BookingTimelineGrid({
                       <tr>
                         <td
                           colSpan={timeSlots.length + 1}
-                          className="p-6 text-center text-xs text-slate-400 italic"
+                          className="p-6 text-center text-xs text-muted-foreground italic"
                         >
                           Không có sân nào thuộc loại sân này
                         </td>

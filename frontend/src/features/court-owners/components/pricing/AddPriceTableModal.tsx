@@ -100,7 +100,7 @@ export function AddPriceTableModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="VD: Bảng giá tiêu chuẩn, Bảng giá giờ vàng..."
-            className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+            className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
           />
 
           {/* Gợi ý chọn nhanh */}
@@ -138,7 +138,7 @@ export function AddPriceTableModal({
               value={defaultPrice}
               onChange={(e) => setDefaultPrice(Math.max(0, Number(e.target.value)))}
               placeholder="80000"
-              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+              className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
             />
           </div>
 
@@ -156,7 +156,7 @@ export function AddPriceTableModal({
               value={walkInPrice}
               onChange={(e) => setWalkInPrice(Math.max(0, Number(e.target.value)))}
               placeholder="100000"
-              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+              className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
             />
           </div>
         </div>
@@ -171,7 +171,7 @@ export function AddPriceTableModal({
               type="checkbox"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="size-4 rounded border-border/80 accent-[#a3e635] bg-[#080E1C] cursor-pointer"
+              className="size-4 rounded border-border/80 accent-[#a3e635] bg-background cursor-pointer"
             />
             <span className="text-xs font-semibold text-foreground">
               Kích hoạt áp dụng bảng giá này ngay

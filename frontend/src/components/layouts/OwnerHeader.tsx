@@ -55,6 +55,19 @@ export function OwnerHeader({ onMenuClick }: OwnerHeaderProps) {
 
   const isDark = theme === 'dark';
 
+  const changeTheme = (nextTheme: 'light' | 'dark') => {
+    if (theme === nextTheme) return;
+    if (!document.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTheme(nextTheme);
+      return;
+    }
+    document.documentElement.dataset.themeTransition = nextTheme;
+    const transition = document.startViewTransition(() => setTheme(nextTheme));
+    void transition.finished.finally(() => {
+      delete document.documentElement.dataset.themeTransition;
+    });
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/60 bg-card/85 px-4 backdrop-blur-md md:px-6">
       {/* Cụm Bên Trái: Toggle Sidebar & Bộ chọn Chi nhánh theo Figma */}
@@ -143,20 +156,27 @@ export function OwnerHeader({ onMenuClick }: OwnerHeaderProps) {
 
         {/* Pill Theme Switcher chuẩn Figma: [Light | Dark] */}
         <div
+          role="group"
+          aria-label="Giao diện sáng hoặc tối"
           className={cn(
-            'flex items-center rounded-full p-0.5 text-xs transition-all border',
+            'relative flex w-[180px] items-center rounded-full border p-0.5 text-xs transition-colors duration-300',
             !isDark
               ? 'bg-[#E8ECE9] border-slate-300/70'
               : 'bg-[#0B1324] border-slate-800'
           )}
         >
+          <span aria-hidden="true" className={cn(
+            'pointer-events-none absolute inset-y-0.5 left-0.5 w-[calc(50%_-_2px)] rounded-full shadow-xs transition-[transform,background-color] duration-300 ease-in-out motion-reduce:transition-none',
+            isDark ? 'translate-x-full bg-white' : 'translate-x-0 bg-[#18231C]'
+          )} />
           <button
             type="button"
-            onClick={() => setTheme('light')}
+            onClick={() => changeTheme('light')}
+            aria-pressed={!isDark}
             className={cn(
-              'flex items-center gap-1.5 rounded-full px-3 py-1 transition-all text-xs cursor-pointer',
+              'relative z-10 flex flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-1 text-xs transition-colors duration-300 cursor-pointer',
               !isDark
-                ? 'bg-[#18231C] text-white shadow-xs font-bold'
+                ? 'text-white font-bold'
                 : 'text-slate-400 hover:text-white font-semibold'
             )}
             title="Chế độ sáng"
@@ -166,11 +186,12 @@ export function OwnerHeader({ onMenuClick }: OwnerHeaderProps) {
           </button>
           <button
             type="button"
-            onClick={() => setTheme('dark')}
+            onClick={() => changeTheme('dark')}
+            aria-pressed={isDark}
             className={cn(
-              'flex items-center gap-1.5 rounded-full px-3 py-1 transition-all text-xs cursor-pointer',
+              'relative z-10 flex flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-1 text-xs transition-colors duration-300 cursor-pointer',
               isDark
-                ? 'bg-white text-slate-950 shadow-xs font-bold'
+                ? 'text-slate-950 font-bold'
                 : 'text-slate-600 hover:text-slate-900 font-semibold'
             )}
             title="Chế độ tối"

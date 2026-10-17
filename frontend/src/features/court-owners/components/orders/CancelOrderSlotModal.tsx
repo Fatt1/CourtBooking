@@ -88,34 +88,34 @@ export function CancelOrderSlotModal({
       onOpenChange={onOpenChange}
       title="Xác nhận hủy buổi chơi"
       description="Hành động này sẽ giải phóng ca sân trên lịch và hoàn tiền cho khách (nếu có)."
-      icon={<AlertTriangle className="size-5 text-rose-400" />}
+      icon={<AlertTriangle className="size-5 text-rose-600 dark:text-rose-400" />}
       maxWidth="max-w-md"
       onSubmit={handleConfirm}
       submitText={isPending ? 'Đang xử lý...' : 'Xác nhận hủy & Hoàn tiền'}
       cancelText="Đóng"
       isSubmitting={isPending}
     >
-      <div className="space-y-4 py-2 text-slate-200">
+      <div className="space-y-4 py-2 text-foreground">
         {/* Thông tin tóm tắt ca sân bị hủy */}
-        <div className="rounded-xl bg-[#131d31] border border-border/60 p-3 space-y-1.5 text-xs">
-          <div className="flex items-center justify-between text-slate-300">
-            <span className="flex items-center gap-1.5 font-semibold text-white">
-              <Calendar className="size-3.5 text-[#a3e635]" />
+        <div className="rounded-xl bg-card border border-border/60 p-3 space-y-1.5 text-xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="flex items-center gap-1.5 font-semibold text-foreground">
+              <Calendar className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
               Ngày chơi: {formatDate(slot.date)}
             </span>
-            <span className="font-mono font-bold text-[#a3e635] text-sm">
+            <span className="font-mono font-bold text-emerald-700 dark:text-[#a3e635] text-sm">
               {(slot.price || 0).toLocaleString('vi-VN')}đ
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-slate-400 pt-0.5">
+          <div className="flex items-center gap-3 text-muted-foreground pt-0.5">
             <span className="flex items-center gap-1">
-              <Clock className="size-3 text-slate-400" />
+              <Clock className="size-3 text-muted-foreground" />
               {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
             </span>
             <span>•</span>
-            <span className="flex items-center gap-1 text-slate-200 font-medium">
-              <MapPin className="size-3 text-slate-400" />
+            <span className="flex items-center gap-1 text-foreground font-medium">
+              <MapPin className="size-3 text-muted-foreground" />
               {slot.courtName}
               {slot.courtTypeName && ` (${slot.courtTypeName})`}
             </span>
@@ -124,8 +124,8 @@ export function CancelOrderSlotModal({
 
         {/* Lý do hủy */}
         <div className="space-y-1.5">
-          <label htmlFor="slot-cancel-reason" className="text-xs font-semibold text-slate-200">
-            Lý do hủy buổi chơi <span className="text-rose-400">*</span>
+          <label htmlFor="slot-cancel-reason" className="text-xs font-semibold text-foreground">
+            Lý do hủy buổi chơi <span className="text-rose-600 dark:text-rose-400">*</span>
           </label>
           <textarea
             id="slot-cancel-reason"
@@ -133,7 +133,7 @@ export function CancelOrderSlotModal({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Nhập lý do khách báo nghỉ, trời mưa, đổi lịch..."
-            className="w-full rounded-xl bg-[#131d31] border border-border/60 p-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-rose-400"
+            className="w-full rounded-xl bg-card border border-border/60 p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-rose-400"
             required
           />
         </div>
@@ -142,14 +142,14 @@ export function CancelOrderSlotModal({
         <div className="space-y-1.5">
           <label
             htmlFor="slot-refund-amount"
-            className="text-xs font-semibold text-slate-200 flex items-center justify-between"
+            className="text-xs font-semibold text-foreground flex items-center justify-between"
           >
             <span className="flex items-center gap-1.5">
-              <CircleDollarSign className="size-3.5 text-amber-300" />
+              <CircleDollarSign className="size-3.5 text-amber-700 dark:text-amber-300" />
               Số tiền hoàn lại cho khách (VNĐ)
             </span>
             {totalPaid > 0 && (
-              <span className="text-[11px] text-slate-400 font-normal">
+              <span className="text-[11px] text-muted-foreground font-normal">
                 Đã trả: {totalPaid.toLocaleString('vi-VN')}đ
               </span>
             )}
@@ -161,9 +161,9 @@ export function CancelOrderSlotModal({
             step={10000}
             value={refundAmount}
             onChange={(e) => setRefundAmount(Math.max(0, Number(e.target.value) || 0))}
-            className="bg-[#131d31] border-border/60 text-white focus-visible:ring-rose-400 h-9 text-xs font-mono"
+            className="bg-card border-border/60 text-foreground focus-visible:ring-rose-400 h-9 text-xs font-mono"
           />
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-muted-foreground">
             Điền 0 nếu không hoàn tiền (hoặc khách đã chơi/không được hoàn theo chính sách).
           </p>
         </div>
@@ -171,8 +171,8 @@ export function CancelOrderSlotModal({
         {/* Phương thức hoàn tiền */}
         {refundAmount > 0 && (
           <div className="space-y-1.5 pt-1">
-            <label className="text-xs font-semibold text-slate-200">
-              Hình thức hoàn tiền <span className="text-rose-400">*</span>
+            <label className="text-xs font-semibold text-foreground">
+              Hình thức hoàn tiền <span className="text-rose-600 dark:text-rose-400">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -181,7 +181,7 @@ export function CancelOrderSlotModal({
                 className={`p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer ${
                   refundMethod === PaymentMethod.QrTransfer
                     ? 'border-lime-500/80 bg-lime-500/10 text-lime-400 shadow-sm'
-                    : 'border-border/60 bg-[#131d31] text-slate-400 hover:text-white'
+                    : 'border-border/60 bg-card text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Chuyển khoản QR
@@ -192,7 +192,7 @@ export function CancelOrderSlotModal({
                 className={`p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer ${
                   refundMethod === PaymentMethod.Cash
                     ? 'border-lime-500/80 bg-lime-500/10 text-lime-400 shadow-sm'
-                    : 'border-border/60 bg-[#131d31] text-slate-400 hover:text-white'
+                    : 'border-border/60 bg-card text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Tiền mặt

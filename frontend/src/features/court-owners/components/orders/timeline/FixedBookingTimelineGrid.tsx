@@ -130,7 +130,7 @@ export function FixedBookingTimelineGrid({
   if (selectedDays.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground bg-card/20 rounded-2xl border border-dashed border-border/50">
-        <Sparkles className="size-8 mb-2 text-slate-500" />
+        <Sparkles className="size-8 mb-2 text-muted-foreground" />
         <p className="text-sm font-medium">
           Vui lòng chọn ít nhất một Thứ lặp lại trong tuần ở phía trên để hiển thị lịch
         </p>
@@ -147,8 +147,8 @@ export function FixedBookingTimelineGrid({
         <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
           {/* Trống */}
           <div className="flex items-center gap-2">
-            <div className="size-3.5 rounded border border-border/70 bg-[#0f172a]" />
-            <span className="text-slate-300">Trống</span>
+            <div className="size-3.5 rounded border border-border/70 bg-muted/40" />
+            <span className="text-muted-foreground">Trống</span>
           </div>
 
           {/* Đang chọn */}
@@ -156,23 +156,23 @@ export function FixedBookingTimelineGrid({
             <div className="size-3.5 rounded bg-emerald-700 border border-emerald-500 flex items-center justify-center">
               <div className="size-1.5 rounded-full bg-white" />
             </div>
-            <span className="text-[#a3e635] font-semibold">Đang chọn</span>
+            <span className="text-emerald-700 dark:text-[#a3e635] font-semibold">Đang chọn</span>
           </div>
 
           {/* Đã đặt */}
           <div className="flex items-center gap-2">
-            <div className="size-3.5 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500 font-bold text-[10px]">
+            <div className="size-3.5 rounded bg-muted border border-border flex items-center justify-center text-muted-foreground font-bold text-[10px]">
               •
             </div>
-            <span className="text-slate-400">Đã đặt</span>
+            <span className="text-muted-foreground">Đã đặt</span>
           </div>
 
           {/* Khóa */}
           <div className="flex items-center gap-2">
-            <div className="size-3.5 rounded bg-slate-900 border border-amber-500/40 flex items-center justify-center text-amber-400 text-[10px]">
+            <div className="size-3.5 rounded bg-muted/60 border border-amber-500/40 flex items-center justify-center text-amber-700 dark:text-amber-400 text-[10px]">
               <Lock className="size-2.5" />
             </div>
-            <span className="text-slate-400">Khóa</span>
+            <span className="text-muted-foreground">Khóa</span>
           </div>
 
           {/* Sự kiện */}
@@ -186,30 +186,30 @@ export function FixedBookingTimelineGrid({
           {/* Khung giờ Block cố định */}
           {courtTypeConfig?.fixedTimeBlocks && courtTypeConfig.fixedTimeBlocks.length > 0 && (
             <div className="flex items-center gap-2">
-              <div className="px-1.5 py-0.5 rounded bg-[#131d31] border border-border/60 text-[#a3e635]/80 text-[10px] font-semibold">
+              <div className="px-1.5 py-0.5 rounded bg-card border border-border/60 text-emerald-700 dark:text-[#a3e635]/80 text-[10px] font-semibold">
                 block
               </div>
-              <span className="text-slate-300">Khung giờ bắt buộc</span>
+              <span className="text-muted-foreground">Khung giờ bắt buộc</span>
             </div>
           )}
 
           {/* Chu kỳ trước đã chọn trong đơn này */}
           {existingCycles && existingCycles.length > 0 && (
             <div className="flex items-center gap-2">
-              <div className="px-1.5 py-0.5 rounded bg-sky-950/80 border border-sky-400 text-sky-300 font-bold text-[9px]">
+              <div className="px-1.5 py-0.5 rounded bg-sky-950/80 border border-sky-400 text-sky-700 dark:text-sky-300 font-bold text-[9px]">
                 CK#
               </div>
-              <span className="text-sky-300 font-semibold">Chu kỳ trước trong đơn</span>
+              <span className="text-sky-700 dark:text-sky-300 font-semibold">Chu kỳ trước trong đơn</span>
             </div>
           )}
         </div>
 
         {/* Thông tin cấu hình chi nhánh */}
-        <div className="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
-          <span className="px-2 py-0.5 rounded bg-[#131d31] border border-border/50 text-[#a3e635]">
+        <div className="flex items-center gap-2 text-muted-foreground font-mono text-[11px]">
+          <span className="px-2 py-0.5 rounded bg-card border border-border/50 text-emerald-700 dark:text-[#a3e635]">
             Bước nhảy: {stepMinutes} phút/ô
           </span>
-          <span className="px-2 py-0.5 rounded bg-[#131d31] border border-border/50 text-slate-300">
+          <span className="px-2 py-0.5 rounded bg-card border border-border/50 text-muted-foreground">
             Giờ mở: {minutesToTimeString(openMinutes)} - {minutesToTimeString(closeMinutes)}
           </span>
         </div>
@@ -218,7 +218,7 @@ export function FixedBookingTimelineGrid({
       {/* =================================================================== */}
       {/* 2. BẢNG TIMELINE THEO THỨ (LAYOUT DỌC TRỰC QUAN CHUẨN IMAGE 2) */}
       {/* =================================================================== */}
-      <div className="relative border border-border/70 rounded-2xl bg-[#070D1A] overflow-hidden shadow-2xl">
+      <div className="relative border border-border/70 rounded-2xl bg-background overflow-hidden shadow-2xl">
         {isLoading && (
           <div className="absolute inset-0 bg-background/60 backdrop-blur-xs flex items-center justify-center z-30">
             <div className="flex items-center gap-2 text-xs font-semibold text-foreground bg-card px-4 py-2 rounded-xl shadow-lg border border-border">
@@ -231,18 +231,18 @@ export function FixedBookingTimelineGrid({
         <div className="overflow-x-auto select-none max-h-[520px]">
           <table className="w-full border-collapse text-left text-xs min-w-[900px]">
             {/* Header: Cột Ngày, Cột Sân, Các mốc giờ */}
-            <thead className="sticky top-0 z-20 bg-[#0B1324] border-b border-border/70 shadow-sm">
+            <thead className="sticky top-0 z-20 bg-card border-b border-border/70 shadow-sm">
               <tr>
-                <th className="sticky left-0 z-30 bg-[#0B1324] p-3 w-28 min-w-[105px] border-r border-border/60 text-center font-bold text-slate-300 uppercase tracking-wider text-[11px]">
+                <th className="sticky left-0 z-30 bg-card p-3 w-28 min-w-[105px] border-r border-border/60 text-center font-bold text-muted-foreground uppercase tracking-wider text-[11px]">
                   Ngày
                 </th>
-                <th className="sticky left-28 z-30 bg-[#0B1324] p-3 w-24 min-w-[95px] border-r border-border/60 text-center font-bold text-slate-300 uppercase tracking-wider text-[11px]">
+                <th className="sticky left-28 z-30 bg-card p-3 w-24 min-w-[95px] border-r border-border/60 text-center font-bold text-muted-foreground uppercase tracking-wider text-[11px]">
                   Sân
                 </th>
                 {timeColumns.map((col, idx) => (
                   <th
                     key={idx}
-                    className="p-2.5 text-center font-mono text-[11px] font-semibold text-slate-400 border-r border-border/30 last:border-r-0 min-w-[62px]"
+                    className="p-2.5 text-center font-mono text-[11px] font-semibold text-muted-foreground border-r border-border/30 last:border-r-0 min-w-[62px]"
                   >
                     {col.label}
                   </th>
@@ -275,10 +275,10 @@ export function FixedBookingTimelineGrid({
                       {isFirstCourt && (
                         <td
                           rowSpan={courts.length}
-                          className="sticky left-0 z-10 bg-[#0c1527] border-r border-b border-border/70 p-3 text-center align-middle shadow-xs"
+                          className="sticky left-0 z-10 bg-muted/30 border-r border-b border-border/70 p-3 text-center align-middle shadow-xs"
                         >
                           <div className="flex flex-col items-center justify-center gap-1">
-                            <span className="font-bold text-sm text-[#a3e635] tracking-wide">
+                            <span className="font-bold text-sm text-emerald-700 dark:text-[#a3e635] tracking-wide">
                               {day.label}
                             </span>
                             <span className="text-[10px] text-muted-foreground font-medium">
@@ -291,7 +291,7 @@ export function FixedBookingTimelineGrid({
                       {/* Cột 2: Sân (Tên sân + Checkbox chọn) */}
                       <td
                         onClick={() => onToggleCourt(court.courtId)}
-                        className="sticky left-28 z-10 bg-[#091020] border-r border-border/60 p-2.5 cursor-pointer hover:bg-slate-800/40 transition-colors shadow-xs"
+                        className="sticky left-28 z-10 bg-background border-r border-border/60 p-2.5 cursor-pointer hover:bg-accent/40 transition-colors shadow-xs"
                         title="Nhấp để chọn/bỏ chọn sân này áp dụng vào chu kỳ"
                       >
                         <div className="flex items-center gap-2">
@@ -299,14 +299,14 @@ export function FixedBookingTimelineGrid({
                             className={`size-3.5 rounded flex items-center justify-center border text-[9px] transition-colors shrink-0 ${
                               isCourtSelected
                                 ? 'bg-[#a3e635] border-[#a3e635] text-black font-bold'
-                                : 'border-slate-500'
+                                : 'border-border'
                             }`}
                           >
                             {isCourtSelected && <Check className="size-2.5 stroke-[3]" />}
                           </span>
                           <span
                             className={`font-semibold text-xs truncate ${
-                              isCourtSelected ? 'text-white' : 'text-slate-400'
+                              isCourtSelected ? 'text-foreground' : 'text-muted-foreground'
                             }`}
                           >
                             {court.courtName}
@@ -390,7 +390,7 @@ export function FixedBookingTimelineGrid({
                           col.endMin <= selectedEndMin;
 
                         // Xử lý styling màu ô
-                        let cellBg = 'bg-[#0f172a]/60 hover:bg-[#1a2742] cursor-pointer';
+                        let cellBg = 'bg-muted/40 hover:bg-muted cursor-pointer';
                         if (isSelected) {
                           cellBg =
                             'bg-emerald-700/80 border-emerald-500 text-white cursor-pointer shadow-inner';
@@ -400,11 +400,11 @@ export function FixedBookingTimelineGrid({
                         } else if (isEvent) {
                           cellBg = 'bg-purple-900/60 cursor-not-allowed';
                         } else if (isLocked) {
-                          cellBg = 'bg-slate-900/90 cursor-not-allowed';
+                          cellBg = 'bg-muted/60 cursor-not-allowed';
                         } else if (isBooked) {
-                          cellBg = 'bg-slate-800/80 cursor-not-allowed';
+                          cellBg = 'bg-muted/80 cursor-not-allowed';
                         } else if (matchingBlock) {
-                          cellBg = 'bg-[#131d31] hover:bg-[#1a2742] cursor-pointer';
+                          cellBg = 'bg-card hover:bg-muted cursor-pointer';
                         }
 
                         return (
@@ -455,17 +455,17 @@ export function FixedBookingTimelineGrid({
                                 {isSelected ? (
                                   <div className="size-2.5 rounded-full bg-white shadow-xs animate-in zoom-in-50" />
                                 ) : isExistingCycle && matchingExistingCycle ? (
-                                  <span className="text-[9px] font-extrabold text-sky-300 bg-sky-900/80 px-1 py-0.5 rounded border border-sky-400/60 select-none shadow-xs">
+                                  <span className="text-[9px] font-extrabold text-sky-700 dark:text-sky-300 bg-sky-900/80 px-1 py-0.5 rounded border border-sky-400/60 select-none shadow-xs">
                                     CK#{matchingExistingCycle.cycleIndex + 1}
                                   </span>
                                 ) : isEvent ? (
                                   <Sparkles className="size-3 text-purple-300" />
                                 ) : isLocked ? (
-                                  <Lock className="size-3 text-amber-400" />
+                                  <Lock className="size-3 text-amber-700 dark:text-amber-400" />
                                 ) : isBooked ? (
-                                  <span className="text-[10px] text-slate-500 font-bold">•</span>
+                                  <span className="text-[10px] text-muted-foreground font-bold">•</span>
                                 ) : matchingBlock ? (
-                                  <span className="text-[9px] text-[#a3e635]/80 font-semibold select-none">
+                                  <span className="text-[9px] text-emerald-700 dark:text-[#a3e635]/80 font-semibold select-none">
                                     block
                                   </span>
                                 ) : null}

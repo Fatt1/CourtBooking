@@ -60,4 +60,23 @@ export interface GetOwnerServicesParams {
   branchId?: string;
   page?: number;
   pageSize?: number;
+  isActive?: boolean;
+}
+
+export interface ServiceBranchPayload {
+  branchId: string;
+  price: number;
+  isActive: boolean;
+}
+
+export interface CreateServicePayload {
+  name: string;
+  unit: string;
+  categoryId: string;
+  imageId: string | null;
+  branches: ServiceBranchPayload[];
+}
+
+export interface UpdateServicePayload extends CreateServicePayload {
+  id: string;
 }
