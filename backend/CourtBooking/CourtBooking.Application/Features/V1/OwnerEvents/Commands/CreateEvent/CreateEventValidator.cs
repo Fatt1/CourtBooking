@@ -21,19 +21,12 @@ public sealed class CreateEventValidator : AbstractValidator<CreateEventCommand>
             .NotEmpty()
             .WithMessage("Môn thể thao không được để trống.");
 
-        RuleFor(x => x.Date)
-            .NotEmpty()
-            .WithMessage("Ngày diễn ra sự kiện không được để trống.");
-
-        RuleFor(x => x.StartTime)
-            .NotEmpty()
-            .WithMessage("Giờ bắt đầu không được để trống.");
-
-        RuleFor(x => x.EndTime)
-            .NotEmpty()
-            .WithMessage("Giờ kết thúc không được để trống.")
-            .GreaterThan(x => x.StartTime)
-            .WithMessage("Giờ kết thúc phải sau giờ bắt đầu.");
+        When(x => x.StartTime.HasValue && x.EndTime.HasValue, () =>
+        {
+            RuleFor(x => x.EndTime!.Value)
+                .GreaterThan(x => x.StartTime!.Value)
+                .WithMessage("Giờ kết thúc phải sau giờ bắt đầu.");
+        });
 
         RuleFor(x => x.TicketPrice)
             .GreaterThanOrEqualTo(0)
@@ -45,7 +38,18 @@ public sealed class CreateEventValidator : AbstractValidator<CreateEventCommand>
 
         RuleFor(x => x.CourtSlots)
             .NotEmpty()
-            .WithMessage("Sự kiện phải có ít nhất một nhóm đặt sân.");
+            .WithMessage("Sự kiện phải có ít nhất một nhóm đặt sân.")
+            .Must(groups =>
+            {
+                if (groups == null || groups.Count == 0) return true;
+                var allSlots = groups.Where(g => g.Slots != null).SelectMany(g => g.Slots).ToList();
+                if (allSlots.Count <= 1) return true;
+
+                var first = allSlots[0];
+                return allSlots.All(s => s.Date == first.Date && s.StartTime == first.StartTime && s.EndTime == first.EndTime);
+            })
+            .WithMessage("Tất cả các ca sân trong sự kiện phải diễn ra cùng ngày và có cùng khung giờ (giờ bắt đầu và kết thúc) giống nhau.");
+
 
         RuleForEach(x => x.CourtSlots).ChildRules(group =>
         {

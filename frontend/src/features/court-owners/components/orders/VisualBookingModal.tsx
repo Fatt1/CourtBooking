@@ -36,6 +36,7 @@ interface VisualBookingModalProps {
   excludeTitle?: string;
   title?: string;
   confirmText?: string;
+  lockSameTimeSlots?: boolean;
   onConfirm: (slots: SelectedCourtSlot[]) => void;
 }
 
@@ -60,6 +61,7 @@ export function VisualBookingModal({
   excludeTitle,
   title = 'Đặt lịch ngày trực quan',
   confirmText = 'Xác nhận lịch chọn',
+  lockSameTimeSlots = false,
   onConfirm,
 }: VisualBookingModalProps) {
   const todayStr = useMemo(() => getTodayString(), []);
@@ -348,6 +350,32 @@ export function VisualBookingModal({
       return;
     }
 
+    // Kiểm tra tính đồng bộ khung giờ nếu lockSameTimeSlots = true (chế độ tạo sự kiện)
+    if (lockSameTimeSlots && singleDateMergedSlots.length > 0) {
+      // 1. Kiểm tra mỗi sân chỉ có 1 ca liền kề duy nhất (không bị đứt đoạn)
+      const courtCounts: Record<string, number> = {};
+      singleDateMergedSlots.forEach((s) => {
+        courtCounts[s.courtId] = (courtCounts[s.courtId] || 0) + 1;
+      });
+      const hasGaps = Object.values(courtCounts).some((cnt) => cnt > 1);
+      if (hasGaps) {
+        toast.error('Khung giờ sự kiện phải là một khoảng thời gian liên tục, không được ngắt quãng.');
+        return;
+      }
+
+      // 2. Kiểm tra tất cả các sân phải có cùng startTime và endTime
+      const firstSlot = singleDateMergedSlots[0];
+      const mismatched = singleDateMergedSlots.find(
+        (s) => s.startTime !== firstSlot.startTime || s.endTime !== firstSlot.endTime
+      );
+      if (mismatched) {
+        toast.error(
+          `Tất cả các sân trong sự kiện phải có cùng khung giờ (${firstSlot.startTime.substring(0, 5)} - ${firstSlot.endTime.substring(0, 5)}). Sân "${mismatched.courtName}" đang có khung giờ khác (${mismatched.startTime.substring(0, 5)} - ${mismatched.endTime.substring(0, 5)})!`
+        );
+        return;
+      }
+    }
+
     // Đảm bảo courtTypeId luôn được resolve chính xác từ cấu hình chi nhánh
     const validatedSlots = singleDateMergedSlots.map((slot) => {
       const ct = pricingConfig.find(
@@ -512,6 +540,15 @@ export function VisualBookingModal({
                 </div>
               </div>
 
+              {lockSameTimeSlots && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300 flex items-center gap-2.5">
+                  <Clock className="size-4 shrink-0 text-amber-400" />
+                  <span>
+                    <strong>Chế độ sự kiện:</strong> Khung giờ chọn ở sân đầu tiên sẽ được cố định và đồng bộ cho tất cả các sân tiếp theo. Các khung giờ khác sẽ tự động bị khóa để đảm bảo cùng giờ thi đấu.
+                  </span>
+                </div>
+              )}
+
               <BookingTimelineGrid
                 branchOpenTime={scheduleData?.openTime || '06:00:00'}
                 branchCloseTime={scheduleData?.closeTime || '23:00:00'}
@@ -525,6 +562,7 @@ export function VisualBookingModal({
                 isLoading={isScheduleLoading || isPricingLoading}
                 excludeOrderCode={excludeOrderCode}
                 excludeTitle={excludeTitle}
+                lockSameTimeSlots={lockSameTimeSlots}
               />
             </div>
           </div>

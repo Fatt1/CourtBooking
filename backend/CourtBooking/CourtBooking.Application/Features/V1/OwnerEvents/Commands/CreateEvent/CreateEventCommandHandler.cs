@@ -73,9 +73,11 @@ internal sealed class CreateEventCommandHandler(
                 ? request.Note.Trim()
                 : $"Tổ chức sự kiện: {request.Title.Trim()}";
 
+            var eventDate = request.Date ?? bookingContext.CalculatedSlots.Min(s => s.Date);
+
             var order = Order.CreateEventOrder(
                 request.BranchId,
-                request.Date,
+                eventDate,
                 customerName,
                 customerPhone,
                 note);

@@ -91,8 +91,6 @@ export function CreateEventModal({
   // Form states
   const [title, setTitle] = useState('');
   const [sportTypeId, setSportTypeId] = useState('');
-  const [startDate, setStartDate] = useState(`${todayStr}T08:00`);
-  const [endDate, setEndDate] = useState(`${todayStr}T21:00`);
   const [ticketPrice, setTicketPrice] = useState<number | ''>(100000);
   const [slots, setSlots] = useState<number | ''>(16);
   const [skillLevelFrom, setSkillLevelFrom] = useState('Trung bình (Intermediate)');
@@ -118,8 +116,6 @@ export function CreateEventModal({
     if (!newOpen) {
       setTitle('');
       setSportTypeId('');
-      setStartDate(`${todayStr}T08:00`);
-      setEndDate(`${todayStr}T21:00`);
       setTicketPrice(100000);
       setSlots(16);
       setSkillLevelFrom('Trung bình (Intermediate)');
@@ -155,29 +151,48 @@ export function CreateEventModal({
     }, {} as Record<string, SelectedCourtSlot[]>);
   }, [mergedSelectedSlots]);
 
-  // Khi chọn slot từ visual booking, nếu đã có slot thì đồng bộ thời gian bắt đầu và kết thúc
+  // Tự động tính toán ngày và khung giờ tổ chức từ các ca sân đã chọn
+  const eventSchedule = useMemo(() => {
+    if (mergedSelectedSlots.length === 0) return null;
+    let minDate = mergedSelectedSlots[0].date;
+    let minStart = mergedSelectedSlots[0].startTime;
+    let maxEnd = mergedSelectedSlots[0].endTime;
+
+    mergedSelectedSlots.forEach((s) => {
+      if (s.date < minDate) {
+        minDate = s.date;
+      }
+      if (s.startTime < minStart) {
+        minStart = s.startTime;
+      }
+      if (s.endTime > maxEnd) {
+        maxEnd = s.endTime;
+      }
+    });
+
+    const dateParts = minDate.split('-');
+    const displayDate =
+      dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : minDate;
+
+    return {
+      date: minDate,
+      displayDate,
+      startTime: minStart.substring(0, 5),
+      endTime: maxEnd.substring(0, 5),
+      fullStartTime: minStart.length === 5 ? `${minStart}:00` : minStart,
+      fullEndTime: maxEnd.length === 5 ? `${maxEnd}:00` : maxEnd,
+    };
+  }, [mergedSelectedSlots]);
+
+  // Khi chọn slot từ visual booking, cập nhật danh sách slot đã chọn
   const handleConfirmSlots = (slotsPicked: SelectedCourtSlot[]) => {
     setSelectedSlots(slotsPicked);
-
     if (slotsPicked.length > 0) {
-      let minDate = slotsPicked[0].date;
-      let maxDate = slotsPicked[0].date;
-      let minStart = slotsPicked[0].startTime;
-      let maxEnd = slotsPicked[0].endTime;
-
-      slotsPicked.forEach((s) => {
-        if (s.date < minDate || (s.date === minDate && s.startTime < minStart)) {
-          minDate = s.date;
-          minStart = s.startTime;
-        }
-        if (s.date > maxDate || (s.date === maxDate && s.endTime > maxEnd)) {
-          maxDate = s.date;
-          maxEnd = s.endTime;
-        }
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next.courtSlots;
+        return next;
       });
-
-      setStartDate(`${minDate}T${minStart.substring(0, 5)}`);
-      setEndDate(`${maxDate}T${maxEnd.substring(0, 5)}`);
     }
   };
 
@@ -189,6 +204,16 @@ export function CreateEventModal({
   // Xử lý submit
   const handleSubmit = async () => {
     setFormErrors({});
+
+    // 0. Kiểm tra đã chọn ít nhất một ca sân chưa
+    if (mergedSelectedSlots.length === 0 || !eventSchedule) {
+      toast.error('Vui lòng chọn ít nhất một ca sân trên Time Grid để xác định thời gian tổ chức sự kiện');
+      setFormErrors((prev) => ({
+        ...prev,
+        courtSlots: 'Vui lòng chọn ít nhất một ca sân để khóa lịch và xác định ngày, giờ sự kiện.',
+      }));
+      return;
+    }
 
     // 1. Chuẩn hóa số điện thoại
     let formattedPhone = customerPhone.trim();
@@ -205,8 +230,8 @@ export function CreateEventModal({
       branchId: activeBranchId,
       title: title.trim(),
       sportTypeId,
-      startDate,
-      endDate,
+      startDate: `${eventSchedule.date}T${eventSchedule.startTime}:00`,
+      endDate: `${eventSchedule.date}T${eventSchedule.endTime}:00`,
       ticketPrice: ticketPrice === '' ? 0 : Number(ticketPrice),
       slots: slots === '' ? 0 : Number(slots),
       skillLevelFrom: skillLevelFrom.trim() || null,
@@ -262,8 +287,11 @@ export function CreateEventModal({
         branchId: activeBranchId,
         title: title.trim(),
         sportTypeId,
-        startDate: new Date(startDate).toISOString(),
-        endDate: new Date(endDate).toISOString(),
+        date: eventSchedule.date,
+        startTime: eventSchedule.fullStartTime,
+        endTime: eventSchedule.fullEndTime,
+        startDate: `${eventSchedule.date}T${eventSchedule.fullStartTime}`,
+        endDate: `${eventSchedule.date}T${eventSchedule.fullEndTime}`,
         ticketPrice: Number(ticketPrice),
         slots: Number(slots),
         skillLevelFrom: skillLevelFrom.trim() || null,
@@ -414,43 +442,72 @@ export function CreateEventModal({
                 </div>
               </div>
 
-              {/* Thời gian bắt đầu và kết thúc sự kiện */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
-                    Thời gian bắt đầu tham gia <span className="text-rose-400">*</span>
+              {/* Thời gian tổ chức sự kiện (Tự động từ các ca sân đã chọn trên Time Grid) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Clock className="size-3.5 text-[#a3e635]" />
+                    <span>Thời gian diễn ra sự kiện</span>
+                    <span className="text-[10px] text-slate-400 font-normal">
+                      (Tự động xác định từ ca sân khóa lịch trên Time Grid)
+                    </span>
                   </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-2.5 size-4 text-slate-500" />
-                    <Input
-                      type="datetime-local"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="pl-9 h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white text-xs focus:border-[#a3e635]"
-                    />
-                  </div>
-                  {formErrors.startDate && (
-                    <span className="text-[11px] text-rose-400">{formErrors.startDate}</span>
-                  )}
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
-                    Thời gian kết thúc tham gia <span className="text-rose-400">*</span>
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-2.5 size-4 text-slate-500" />
-                    <Input
-                      type="datetime-local"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="pl-9 h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white text-xs focus:border-[#a3e635]"
-                    />
+                {eventSchedule ? (
+                  <div className="p-3 rounded-xl bg-[#131d31] border border-[#a3e635]/40 flex flex-wrap items-center justify-between gap-3 shadow-inner">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-lg bg-[#a3e635]/20 text-[#a3e635] flex items-center justify-center shrink-0">
+                        <Calendar className="size-4" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Ngày diễn ra</div>
+                        <div className="text-xs font-bold text-white tracking-wide">
+                          {eventSchedule.displayDate}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                        <Clock className="size-4" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Khung giờ thi đấu</div>
+                        <div className="text-xs font-bold text-amber-300 font-mono">
+                          {eventSchedule.startTime} - {eventSchedule.endTime}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0e172a] border border-border/50 text-[11px] text-slate-300">
+                      <Grid className="size-3 text-[#a3e635]" />
+                      <span>{mergedSelectedSlots.length} ca sân</span>
+                    </div>
                   </div>
-                  {formErrors.endDate && (
-                    <span className="text-[11px] text-rose-400">{formErrors.endDate}</span>
-                  )}
-                </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-[#131d31]/60 border border-dashed border-border/70 text-slate-400 text-xs flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <Clock className="size-4 text-slate-500 shrink-0" />
+                      <span>Chưa chọn ca sân. Bấm <strong>"Chọn ca sân trực quan"</strong> ở dưới để tự động xác định ngày & giờ.</span>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (!activeBranchId) {
+                          toast.warning('Vui lòng chọn chi nhánh trước khi chọn ca sân.');
+                          return;
+                        }
+                        setIsVisualBookingOpen(true);
+                      }}
+                      className="h-7 text-[11px] px-2.5 rounded-lg border-slate-700 bg-[#1a2742] hover:bg-[#223354] text-slate-200 cursor-pointer shrink-0"
+                    >
+                      Chọn ca sân
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Giá vé & Số lượng vé */}
@@ -717,6 +774,7 @@ export function CreateEventModal({
         branchName={activeBranchName}
         initialSlots={selectedSlots}
         onConfirm={handleConfirmSlots}
+        lockSameTimeSlots={true}
       />
     </>
   );
