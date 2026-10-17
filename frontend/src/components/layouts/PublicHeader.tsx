@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Sun, Moon, LogOut, User as UserIcon, ShieldCheck } from 'lucide-react';
+import { Menu, Sun, Moon, LogOut, User as UserIcon, ShieldCheck, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useAppThemeStore } from '@/stores/useAppThemeStore';
 import { cn } from '@/lib/utils';
+import { MyOrdersModal } from '@/features/customer/components/MyOrdersModal';
 
 const navLinks = [
   { label: 'Tìm sân', href: '/courts' },
@@ -16,6 +17,7 @@ const navLinks = [
 
 export function PublicHeader() {
   const [openMobile, setOpenMobile] = useState(false);
+  const [openMyOrders, setOpenMyOrders] = useState(false);
   const { user, isAuthenticated, logout } = useAuthStore();
   const { theme, setTheme } = useAppThemeStore();
   const navigate = useNavigate();
@@ -103,7 +105,19 @@ export function PublicHeader() {
         {/* Right: Auth CTA Buttons */}
         <div className="hidden md:flex items-center gap-4">
           {isAuthenticated ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              {/* Nút Đơn của tôi cho Người chơi */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOpenMyOrders(true)}
+                className="gap-1.5 border-border/80 text-foreground hover:bg-[#397B48]/10 hover:text-[#397B48] rounded-xl text-xs font-semibold cursor-pointer"
+                title="Xem đơn đặt sân của bạn"
+              >
+                <Receipt className="size-3.5 text-[#397B48]" />
+                <span>Đơn của tôi</span>
+              </Button>
+
               {isManagementRole && (
                 <Button variant="outline" asChild size="sm" className="gap-2 border-[#397B48]/40 text-[#397B48] hover:bg-[#397B48]/10 rounded-xl">
                   <Link to="/admin">
@@ -116,7 +130,7 @@ export function PublicHeader() {
                 <UserIcon className="size-3.5 text-[#397B48]" />
                 <span className="max-w-[120px] truncate">{user?.name || user?.email}</span>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleLogout} title="Đăng xuất" className="rounded-xl">
+              <Button variant="ghost" size="icon" onClick={handleLogout} title="Đăng xuất" className="rounded-xl cursor-pointer">
                 <LogOut className="size-4 text-muted-foreground hover:text-destructive" />
               </Button>
             </div>
@@ -198,6 +212,12 @@ export function PublicHeader() {
           </Sheet>
         </div>
       </div>
+
+      {/* Modal Đơn của tôi */}
+      <MyOrdersModal
+        isOpen={openMyOrders}
+        onClose={() => setOpenMyOrders(false)}
+      />
     </header>
   );
 }
