@@ -1146,6 +1146,7 @@ export function EventDetailModal({
         title={`Cập nhật lịch sân #${orderCodeDisplay}`}
         confirmText={isUpdatingSlots ? 'Đang lưu...' : 'Lưu thay đổi lịch sân'}
         onConfirm={handleUpdateSlots}
+        lockSameTimeSlots={true}
       />
 
       {/* Dialog xác nhận hủy sự kiện */}
