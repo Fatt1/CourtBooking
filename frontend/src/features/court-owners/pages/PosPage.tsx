@@ -62,7 +62,8 @@ function BranchPos({ branchId, userId }: { branchId: string; userId: string }) {
   const productMap = new Map(products.map((item) => [item.id, item]));
   const lines = draft.lines.map((line) => {
     const current = productMap.get(line.serviceId);
-    return current ? { ...line, name: current.name, unit: current.unit, unitPrice: current.price } : line;
+    return current ? { ...line, name: current.name, unit: current.unit, unitPrice: current.price,
+      imageUrl: current.imageUrl } : line;
   });
   const unavailable = new Set(lines.filter((line) => !productMap.get(line.serviceId)?.available).map((line) => line.serviceId));
   const subtotal = lines.reduce((sum, line) => sum + Math.round(line.unitPrice * 100) * line.quantity, 0) / 100;

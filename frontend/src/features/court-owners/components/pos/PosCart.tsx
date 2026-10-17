@@ -1,11 +1,12 @@
-import { Minus, Plus, ShoppingBasket, Trash2, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Minus, Plus, ShoppingBasket, Trash2, Loader2, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatVND } from '@/lib/format';
 import type { PosCartLine } from '../../types/pos';
 
 interface Props {
-  lines: PosCartLine[];
+  lines: (PosCartLine & { imageUrl?: string })[];
   subtotal: number;
   discount: string;
   discountAmount: number;
@@ -18,6 +19,14 @@ interface Props {
   onDiscount: (value: string) => void;
   onClear: () => void;
   onPay: () => void;
+}
+
+function CartPhoto({ imageUrl }: { imageUrl?: string }) {
+  const [failed, setFailed] = useState(false);
+  return <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted/70">
+    {imageUrl && !failed ? <img src={imageUrl} alt="" loading="lazy" onError={() => setFailed(true)}
+      className="size-full object-cover" /> : <ImageIcon aria-hidden="true" className="size-5 text-muted-foreground/50" />}
+  </span>;
 }
 
 export function PosCart(props: Props) {
@@ -33,6 +42,7 @@ export function PosCart(props: Props) {
         <ShoppingBasket className="size-9 opacity-50" /><p className="text-xs">Chọn sản phẩm để bắt đầu bán hàng</p>
       </div> : props.lines.map((line) => <div key={line.serviceId} className="border-b border-border/60 py-4 last:border-0">
         <div className="flex items-start justify-between gap-3">
+          <CartPhoto key={line.imageUrl || 'no-image'} imageUrl={line.imageUrl} />
           <div className="min-w-0 flex-1"><p className="text-xs font-semibold leading-relaxed">{line.name}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">{formatVND(line.unitPrice)} / {line.unit}</p>
             {props.unavailable.has(line.serviceId) && <p className="mt-1 text-xs text-destructive">Sản phẩm không còn được bán. Hãy xóa khỏi giỏ.</p>}

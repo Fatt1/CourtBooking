@@ -122,11 +122,33 @@ export function useUpdateServiceMutation() {
 }
 
 export function useUpdateServiceStatusMutation() {
+  const client = useQueryClient();
   const invalidate = useInvalidateServices();
   return useMutation({
     mutationFn: async ({ id, branchId, isActive }: { id: string; branchId: string; isActive: boolean }) => {
       await apiClient.put(API_ENDPOINTS.SERVICES.UPDATE_STATUS(id, branchId), { isActive });
     },
-    onSuccess: invalidate,
+    onMutate: async ({ id, branchId, isActive }) => {
+      const listFilter = { queryKey: ['owner', 'services'], predicate: (query: { queryKey: readonly unknown[] }) =>
+        query.queryKey.length === 3 && typeof query.queryKey[2] === 'object' };
+      await client.cancelQueries(listFilter);
+      const previousLists = client.getQueriesData<PagedList<OwnerServiceDto>>(listFilter);
+      const detailKey = ['owner', 'services', 'detail', id];
+      await client.cancelQueries({ queryKey: detailKey });
+      const previousDetail = client.getQueryData<OwnerServiceDto>(detailKey);
+      const updateItem = (item: OwnerServiceDto): OwnerServiceDto => item.id !== id ? item : {
+        ...item,
+        branches: item.branches.map((branch) => branch.branchId === branchId ? { ...branch, isActive } : branch),
+      };
+      client.setQueriesData<PagedList<OwnerServiceDto>>(listFilter,
+        (data) => data ? { ...data, items: data.items.map(updateItem) } : data);
+      client.setQueryData<OwnerServiceDto>(detailKey, (data) => data ? updateItem(data) : data);
+      return { previousLists, previousDetail, detailKey };
+    },
+    onError: (_error, _variables, context) => {
+      context?.previousLists.forEach(([key, data]) => client.setQueryData(key, data));
+      if (context?.previousDetail) client.setQueryData(context.detailKey, context.previousDetail);
+    },
+    onSettled: invalidate,
   });
 }
