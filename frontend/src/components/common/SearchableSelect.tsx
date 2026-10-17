@@ -155,12 +155,12 @@ export function SearchableSelect({
           align={align}
           sideOffset={6}
           className={cn(
-            'w-(--radix-popover-trigger-width) min-w-[220px] max-w-[420px] p-0 rounded-xl border border-border/70 bg-[#0F172A] text-slate-100 shadow-2xl backdrop-blur-md overflow-hidden z-50',
+            'w-(--radix-popover-trigger-width) min-w-[220px] max-w-[420px] p-0 rounded-xl border border-border/70 bg-popover text-foreground shadow-2xl backdrop-blur-md overflow-hidden z-50',
             contentClassName
           )}
         >
           {/* Ô nhập tìm kiếm */}
-          <div className="flex items-center border-b border-border/50 px-3 py-2 bg-slate-900/60">
+          <div className="flex items-center border-b border-border/50 px-3 py-2 bg-muted/40">
             <Search className="size-4 shrink-0 text-muted-foreground mr-2" />
             <input
               ref={searchInputRef}
@@ -168,13 +168,13 @@ export function SearchableSelect({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full bg-transparent text-xs text-white placeholder:text-muted-foreground focus:outline-hidden"
+              className="w-full bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="text-muted-foreground hover:text-white p-0.5"
+                className="text-muted-foreground hover:text-foreground p-0.5"
               >
                 <X className="size-3.5" />
               </button>
@@ -199,8 +199,8 @@ export function SearchableSelect({
                     className={cn(
                       'flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium text-left transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed',
                       isSelected
-                        ? 'bg-[#a3e635]/15 text-[#a3e635] font-semibold'
-                        : 'text-slate-200 hover:bg-slate-800/80 hover:text-white'
+                        ? 'bg-[#a3e635]/15 text-emerald-700 dark:text-[#a3e635] font-semibold'
+                        : 'text-foreground hover:bg-accent hover:text-foreground'
                     )}
                   >
                     <div className="flex flex-col truncate pr-2">
@@ -212,7 +212,7 @@ export function SearchableSelect({
                       )}
                     </div>
                     {isSelected && (
-                      <Check className="size-4 shrink-0 text-[#a3e635] ml-1.5" />
+                      <Check className="size-4 shrink-0 text-emerald-700 dark:text-[#a3e635] ml-1.5" />
                     )}
                   </button>
                 );

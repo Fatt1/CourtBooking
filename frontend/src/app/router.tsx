@@ -103,7 +103,7 @@ export const router = createBrowserRouter([
         { index: true, element: <PosPage /> },
         { path: 'history', element: <RetailOrdersPage /> },
       ] },
-      { path: 'wallet', element: <OrdersPage /> },
+      // Tạm tắt /owner/wallet: route cũ chỉ hiển thị nhầm trang lịch đặt sân.
       { path: 'reports', element: <OwnerReportsPage /> },
       { path: 'analytics', element: <OwnerReportsPage /> },
       { path: 'packages', element: <OrdersPage /> },
