@@ -56,7 +56,7 @@ export function CancelOrderModal({
       onOpenChange={onOpenChange}
       title={`Xác nhận hủy đơn đặt #${orderCode}`}
       description="Hành động này sẽ giải phóng slot sân trên bảng lịch và hoàn tiền cọc (nếu có)."
-      icon={<AlertTriangle className="size-5 text-rose-400" />}
+      icon={<AlertTriangle className="size-5 text-rose-600 dark:text-rose-400" />}
       maxWidth="max-w-md"
       onSubmit={handleConfirm}
       submitText={isPending ? 'Đang xử lý...' : 'Xác nhận hủy & Giải phóng slot'}
@@ -65,8 +65,8 @@ export function CancelOrderModal({
     >
       <div className="space-y-4 py-2">
         <div className="space-y-1.5">
-          <label htmlFor="cancel-reason" className="text-xs font-semibold text-slate-200">
-            Lý do hủy đơn <span className="text-rose-400">*</span>
+          <label htmlFor="cancel-reason" className="text-xs font-semibold text-foreground">
+            Lý do hủy đơn <span className="text-rose-600 dark:text-rose-400">*</span>
           </label>
           <textarea
             id="cancel-reason"
@@ -74,14 +74,14 @@ export function CancelOrderModal({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Nhập lý do khách báo bận, đổi lịch hoặc lý do sân..."
-            className="w-full rounded-xl bg-[#131d31] border border-border/60 p-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-rose-400"
+            className="w-full rounded-xl bg-card border border-border/60 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-rose-400"
             required
           />
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="refund-amount" className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-            <CircleDollarSign className="size-3.5 text-amber-300" />
+          <label htmlFor="refund-amount" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+            <CircleDollarSign className="size-3.5 text-amber-700 dark:text-amber-300" />
             Số tiền hoàn lại cho khách (VNĐ)
           </label>
           <Input
@@ -91,17 +91,17 @@ export function CancelOrderModal({
             step={10000}
             value={refundAmount}
             onChange={(e) => setRefundAmount(Number(e.target.value) || 0)}
-            className="bg-[#131d31] border-border/60 text-white focus-visible:ring-rose-400"
+            className="bg-card border-border/60 text-foreground focus-visible:ring-rose-400"
           />
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-muted-foreground">
             Mặc định hoàn lại tiền cọc / đã trả nếu đủ điều kiện chính sách hoàn cọc.
           </p>
         </div>
 
         {refundAmount > 0 && (
           <div className="space-y-1.5 pt-1">
-            <label className="text-xs font-semibold text-slate-200">
-              Hình thức hoàn tiền <span className="text-rose-400">*</span>
+            <label className="text-xs font-semibold text-foreground">
+              Hình thức hoàn tiền <span className="text-rose-600 dark:text-rose-400">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -110,7 +110,7 @@ export function CancelOrderModal({
                 className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all ${
                   refundMethod === PaymentMethod.QrTransfer
                     ? 'border-lime-500/80 bg-lime-500/10 text-lime-400 shadow-sm'
-                    : 'border-border/60 bg-[#131d31] text-slate-400 hover:text-white'
+                    : 'border-border/60 bg-card text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Chuyển khoản QR
@@ -121,7 +121,7 @@ export function CancelOrderModal({
                 className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all ${
                   refundMethod === PaymentMethod.Cash
                     ? 'border-lime-500/80 bg-lime-500/10 text-lime-400 shadow-sm'
-                    : 'border-border/60 bg-[#131d31] text-slate-400 hover:text-white'
+                    : 'border-border/60 bg-card text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Tiền mặt

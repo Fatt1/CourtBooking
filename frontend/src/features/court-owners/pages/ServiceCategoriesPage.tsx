@@ -3,8 +3,9 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { CommonTable, type ColumnDef } from '@/components/common/CommonTable';
-import { OwnerPageHeader, OwnerStatusBadge } from '../components/shared';
+import { OwnerPageHeader } from '../components/shared';
 import { ServiceCategoryFormModal } from '../components/service-categories/ServiceCategoryFormModal';
+import { ServiceCategoryStatusToggle } from '../components/service-categories/ServiceCategoryStatusToggle';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   useServiceCategoriesQuery, useCreateServiceCategoryMutation,
@@ -19,10 +20,32 @@ export function ServiceCategoriesPage() {
   const { data: categories = [], isLoading, isError, error, refetch, isFetching } = useServiceCategoriesQuery();
   const { mutateAsync: createCategory, isPending: isCreating } = useCreateServiceCategoryMutation();
   const { mutateAsync: updateCategory, isPending: isUpdating } = useUpdateServiceCategoryMutation();
+  const { mutateAsync: toggleCategory } = useUpdateServiceCategoryMutation();
   const { mutateAsync: deleteCategory, isPending: isDeleting } = useDeleteServiceCategoryMutation();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<ServiceCategoryDto | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<ServiceCategoryDto | null>(null);
+  const [pendingToggleId, setPendingToggleId] = useState<string | null>(null);
+  const [optimisticStatus, setOptimisticStatus] = useState<Record<string, boolean>>({});
+
+  const handleToggle = async (item: ServiceCategoryDto, isActive: boolean) => {
+    if (pendingToggleId) return;
+    setPendingToggleId(item.id);
+    setOptimisticStatus((current) => ({ ...current, [item.id]: isActive }));
+    try {
+      await toggleCategory({ id: item.id, name: item.name, description: item.description ?? null, isActive });
+      toast.success(isActive ? 'Đã bật danh mục' : 'Đã tạm ngưng danh mục');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Không thể đổi trạng thái danh mục'));
+    } finally {
+      setOptimisticStatus((current) => {
+        const next = { ...current };
+        delete next[item.id];
+        return next;
+      });
+      setPendingToggleId(null);
+    }
+  };
 
   const handleSave = async (values: ServiceCategoryFormValues) => {
     const payload = { ...values, description: values.description || null };
@@ -49,8 +72,12 @@ export function ServiceCategoriesPage() {
 
   const columns: ColumnDef<ServiceCategoryDto>[] = [
     { header: 'TÊN DANH MỤC', cell: (item) => <span className="font-bold">{item.name}</span> },
-    { header: 'TRẠNG THÁI', cell: (item) => <OwnerStatusBadge
-      status={item.isActive ? 'Hoạt động' : 'Tạm ngưng'} variant={item.isActive ? 'success' : 'neutral'} /> },
+    { header: 'TRẠNG THÁI', headerClassName: 'min-w-[160px]', cell: (item) => {
+      const active = optimisticStatus[item.id] ?? item.isActive;
+      return <ServiceCategoryStatusToggle name={item.name} active={active}
+        disabled={pendingToggleId !== null || isUpdating}
+        onChange={(checked) => void handleToggle(item, checked)} />;
+    } },
     { header: 'SỐ LƯỢNG DỊCH VỤ', cell: (item) => <span>{item.serviceCount} dịch vụ</span> },
     { header: 'NGÀY TẠO', cell: (item) => formatDate(item.createdAt) },
     { header: 'CẬP NHẬT', cell: (item) => formatDate(item.updatedAt) },

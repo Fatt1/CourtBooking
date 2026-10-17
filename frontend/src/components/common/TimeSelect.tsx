@@ -99,13 +99,13 @@ export function TimeSelect({
           >
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
-          <SelectContent className="max-h-64 bg-[#0F172A] border-border text-white">
+          <SelectContent className="max-h-64 bg-popover border-border text-foreground">
             <SelectGroup>
               {timeSlots.map((time) => (
                 <SelectItem
                   key={time}
                   value={time}
-                  className="cursor-pointer hover:bg-slate-800 text-xs"
+                  className="cursor-pointer hover:bg-accent text-xs"
                 >
                   {time}
                 </SelectItem>
@@ -120,7 +120,7 @@ export function TimeSelect({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+        <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
           <Clock className="size-3.5 text-muted-foreground" />
           <span>
             {label} {required && <span className="text-rose-500">*</span>}
@@ -134,19 +134,19 @@ export function TimeSelect({
       >
         <SelectTrigger
           className={cn(
-            'h-11 rounded-xl bg-[#111c33] border-border/60 text-white font-mono text-sm focus:ring-[#a3e635]',
+            'h-11 rounded-xl bg-background border-border/60 text-foreground font-mono text-sm focus:ring-[#a3e635]',
             triggerClassName
           )}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="max-h-64 bg-[#111c33] border-border text-white font-mono">
+        <SelectContent className="max-h-64 bg-background border-border text-foreground font-mono">
           <SelectGroup>
             {timeSlots.map((time) => (
               <SelectItem
                 key={time}
                 value={time}
-                className="cursor-pointer hover:bg-slate-800 text-xs"
+                className="cursor-pointer hover:bg-accent text-xs"
               >
                 {time}
               </SelectItem>

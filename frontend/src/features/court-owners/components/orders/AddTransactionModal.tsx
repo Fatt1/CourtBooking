@@ -147,9 +147,9 @@ export function AddTransactionModal({
       description={`Mã đơn hàng: ${orderCode?.startsWith('#') ? orderCode : `#${orderCode || ''}`}`}
       icon={
         isRefund ? (
-          <ArrowDownLeft className="size-5 text-rose-400" />
+          <ArrowDownLeft className="size-5 text-rose-600 dark:text-rose-400" />
         ) : (
-          <CircleDollarSign className="size-5 text-[#a3e635]" />
+          <CircleDollarSign className="size-5 text-emerald-700 dark:text-[#a3e635]" />
         )
       }
       maxWidth="max-w-lg"
@@ -162,23 +162,23 @@ export function AddTransactionModal({
         {/* =================================================================== */}
         {/* KHỐI TỔNG QUAN TÀI CHÍNH */}
         {/* =================================================================== */}
-        <div className="rounded-xl bg-[#131d31] border border-border/60 p-3.5 space-y-2 text-xs">
-          <div className="flex items-center justify-between text-slate-300">
+        <div className="rounded-xl bg-card border border-border/60 p-3.5 space-y-2 text-xs">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span>Tổng tiền đơn hàng:</span>
-            <span className="font-bold text-white text-sm">
+            <span className="font-bold text-foreground text-sm">
               {safeTotal.toLocaleString('vi-VN')}đ
             </span>
           </div>
 
-          <div className="flex items-center justify-between text-slate-300">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span>Đã thanh toán thực tế:</span>
-            <span className="font-bold text-[#a3e635] text-sm">
+            <span className="font-bold text-emerald-700 dark:text-[#a3e635] text-sm">
               {safePaid.toLocaleString('vi-VN')}đ
             </span>
           </div>
 
           <div className="pt-2 border-t border-border/50 flex items-center justify-between">
-            <span className="font-semibold text-slate-200">
+            <span className="font-semibold text-foreground">
               {diff > 0
                 ? 'Số tiền còn thiếu:'
                 : diff < 0
@@ -187,9 +187,9 @@ export function AddTransactionModal({
             </span>
             <span
               className={`font-black text-sm sm:text-base ${diff > 0
-                  ? 'text-amber-400'
+                  ? 'text-amber-700 dark:text-amber-400'
                   : diff < 0
-                    ? 'text-rose-400'
+                    ? 'text-rose-600 dark:text-rose-400'
                     : 'text-emerald-400'
                 }`}
             >
@@ -206,8 +206,8 @@ export function AddTransactionModal({
         {/* CHỌN LOẠI GIAO DỊCH (THANH TOÁN / HOÀN TIỀN) */}
         {/* =================================================================== */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-200">
-            Loại giao dịch <span className="text-rose-400">*</span>
+          <label className="text-xs font-semibold text-foreground">
+            Loại giao dịch <span className="text-rose-600 dark:text-rose-400">*</span>
           </label>
           <div className="grid grid-cols-2 gap-2.5">
             <button
@@ -217,8 +217,8 @@ export function AddTransactionModal({
                 if (diff > 0) setAmount(diff);
               }}
               className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${type === PaymentTransactionType.Payment
-                  ? 'border-[#a3e635] bg-[#a3e635]/15 text-[#a3e635] shadow-sm'
-                  : 'border-border/60 bg-[#131d31] text-slate-400 hover:text-white'
+                  ? 'border-[#a3e635] bg-[#a3e635]/15 text-emerald-700 dark:text-[#a3e635] shadow-sm'
+                  : 'border-border/60 bg-card text-muted-foreground hover:text-foreground'
                 }`}
             >
               <ArrowUpRight className="size-4" />
@@ -232,8 +232,8 @@ export function AddTransactionModal({
                 if (diff < 0) setAmount(Math.abs(diff));
               }}
               className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${type === PaymentTransactionType.Refund
-                  ? 'border-rose-500 bg-rose-500/15 text-rose-400 shadow-sm'
-                  : 'border-border/60 bg-[#131d31] text-slate-400 hover:text-white'
+                  ? 'border-rose-500 bg-rose-500/15 text-rose-600 dark:text-rose-400 shadow-sm'
+                  : 'border-border/60 bg-card text-muted-foreground hover:text-foreground'
                 }`}
             >
               <ArrowDownLeft className="size-4" />
@@ -247,14 +247,14 @@ export function AddTransactionModal({
         {/* =================================================================== */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="transaction-amount" className="text-xs font-semibold text-slate-200">
-              Số tiền giao dịch (VNĐ) <span className="text-rose-400">*</span>
+            <label htmlFor="transaction-amount" className="text-xs font-semibold text-foreground">
+              Số tiền giao dịch (VNĐ) <span className="text-rose-600 dark:text-rose-400">*</span>
             </label>
             {Math.abs(diff) > 0 && (
               <button
                 type="button"
                 onClick={() => setAmount(Math.abs(diff))}
-                className="text-[11px] font-semibold text-[#a3e635] hover:underline cursor-pointer"
+                className="text-[11px] font-semibold text-emerald-700 dark:text-[#a3e635] hover:underline cursor-pointer"
               >
                 Điền khớp số tiền {isRefund ? 'cần hoàn' : 'còn thiếu'} ({Math.abs(diff).toLocaleString('vi-VN')}đ)
               </button>
@@ -269,9 +269,9 @@ export function AddTransactionModal({
               value={amount || ''}
               onChange={(e) => setAmount(Number(e.target.value) || 0)}
               placeholder="Nhập số tiền..."
-              className="bg-[#131d31] border-border/60 text-white font-bold text-base h-11 pr-12 focus-visible:ring-[#a3e635]"
+              className="bg-card border-border/60 text-foreground font-bold text-base h-11 pr-12 focus-visible:ring-[#a3e635]"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
               VNĐ
             </span>
           </div>
@@ -283,7 +283,7 @@ export function AddTransactionModal({
                 key={val}
                 type="button"
                 onClick={() => setAmount((prev) => (prev || 0) + val)}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-[#1a2742] hover:bg-[#223354] border border-border/50 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-muted hover:bg-accent border border-border/50 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 +{val.toLocaleString('vi-VN')}đ
               </button>
@@ -291,7 +291,7 @@ export function AddTransactionModal({
             <button
               type="button"
               onClick={() => setAmount(0)}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-muted hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               Xóa số
             </button>
@@ -302,16 +302,16 @@ export function AddTransactionModal({
         {/* PHƯƠNG THỨC THANH TOÁN */}
         {/* =================================================================== */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-200">
-            Phương thức giao dịch <span className="text-rose-400">*</span>
+          <label className="text-xs font-semibold text-foreground">
+            Phương thức giao dịch <span className="text-rose-600 dark:text-rose-400">*</span>
           </label>
           <div className="grid grid-cols-2 gap-2.5">
             <button
               type="button"
               onClick={() => setMethod(PaymentMethod.QrTransfer)}
               className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${method === PaymentMethod.QrTransfer
-                  ? 'border-[#a3e635] bg-[#a3e635]/15 text-[#a3e635] shadow-sm'
-                  : 'border-border/60 bg-[#131d31] text-slate-400 hover:text-white'
+                  ? 'border-[#a3e635] bg-[#a3e635]/15 text-emerald-700 dark:text-[#a3e635] shadow-sm'
+                  : 'border-border/60 bg-card text-muted-foreground hover:text-foreground'
                 }`}
             >
               <CreditCard className="size-4" />
@@ -322,8 +322,8 @@ export function AddTransactionModal({
               type="button"
               onClick={() => setMethod(PaymentMethod.Cash)}
               className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${method === PaymentMethod.Cash
-                  ? 'border-[#a3e635] bg-[#a3e635]/15 text-[#a3e635] shadow-sm'
-                  : 'border-border/60 bg-[#131d31] text-slate-400 hover:text-white'
+                  ? 'border-[#a3e635] bg-[#a3e635]/15 text-emerald-700 dark:text-[#a3e635] shadow-sm'
+                  : 'border-border/60 bg-card text-muted-foreground hover:text-foreground'
                 }`}
             >
               <CircleDollarSign className="size-4" />
@@ -336,9 +336,9 @@ export function AddTransactionModal({
         {/* ĐÍNH KÈM HÌNH ẢNH BIÊN LAI / CHỨNG TỪ (TÙY CHỌN) */}
         {/* =================================================================== */}
         <div className="space-y-2 pt-1 border-t border-border/50">
-          <label className="text-xs font-semibold text-slate-200 flex items-center justify-between">
+          <label className="text-xs font-semibold text-foreground flex items-center justify-between">
             <span className="flex items-center gap-1.5">
-              <ImageIcon className="size-3.5 text-[#a3e635]" />
+              <ImageIcon className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
               Chứng từ / Biên lai giao dịch (Tùy chọn)
             </span>
             {proofImageUrl && (
@@ -357,20 +357,20 @@ export function AddTransactionModal({
           />
 
           {proofImageUrl ? (
-            <div className="relative rounded-xl border border-border/60 bg-[#131d31] p-2.5 flex items-center gap-3">
+            <div className="relative rounded-xl border border-border/60 bg-card p-2.5 flex items-center gap-3">
               <img
                 src={proofImageUrl}
                 alt="Biên lai giao dịch"
                 className="size-14 rounded-lg object-cover border border-border/50"
               />
               <div className="flex-1 min-w-0 text-xs">
-                <p className="font-semibold text-white truncate">Ảnh chứng từ giao dịch</p>
-                <p className="text-slate-400 text-[11px]">Đã tải lên hệ thống</p>
+                <p className="font-semibold text-foreground truncate">Ảnh chứng từ giao dịch</p>
+                <p className="text-muted-foreground text-[11px]">Đã tải lên hệ thống</p>
               </div>
               <button
                 type="button"
                 onClick={handleRemoveImage}
-                className="size-7 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 flex items-center justify-center cursor-pointer transition-colors"
+                className="size-7 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-700 dark:text-rose-300 flex items-center justify-center cursor-pointer transition-colors"
                 title="Xóa ảnh"
               >
                 <X className="size-4" />
@@ -381,9 +381,9 @@ export function AddTransactionModal({
               type="button"
               disabled={isUploading}
               onClick={() => fileInputRef.current?.click()}
-              className="w-full py-3.5 px-4 rounded-xl border border-dashed border-border/70 hover:border-[#a3e635]/60 bg-[#131d31]/50 hover:bg-[#131d31] flex items-center justify-center gap-2 text-xs text-slate-300 hover:text-white transition-all cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 px-4 rounded-xl border border-dashed border-border/70 hover:border-[#a3e635]/60 bg-card/50 hover:bg-card flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-all cursor-pointer disabled:opacity-50"
             >
-              <Upload className="size-4 text-[#a3e635]" />
+              <Upload className="size-4 text-emerald-700 dark:text-[#a3e635]" />
               <span>{isUploading ? 'Đang tải ảnh lên...' : 'Tải lên ảnh biên lai / sao kê chuyển khoản'}</span>
             </button>
           )}
