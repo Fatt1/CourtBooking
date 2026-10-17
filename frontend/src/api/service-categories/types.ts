@@ -14,11 +14,10 @@ export interface ServiceCategoryDto {
 
 export interface CreateServiceCategoryPayload {
   name: string;
-  description?: string;
+  description?: string | null;
+  isActive: boolean;
 }
 
-export interface UpdateServiceCategoryPayload {
+export interface UpdateServiceCategoryPayload extends CreateServiceCategoryPayload {
   id: string;
-  name: string;
-  description?: string;
 }
