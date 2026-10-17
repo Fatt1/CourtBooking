@@ -26,7 +26,14 @@ internal sealed class GetOwnerServicesHandler(
 
         if (request.BranchId.HasValue)
         {
-            baseQuery = baseQuery.Where(s => s.Branches.Any(sb => sb.BranchId == request.BranchId.Value));
+            baseQuery = baseQuery.Where(s => s.Branches.Any(sb => sb.BranchId == request.BranchId.Value
+                && sb.Branch.CourtOwnerId == currentUserId
+                && (!request.IsActive.HasValue || sb.IsActive == request.IsActive.Value)));
+        }
+        else if (request.IsActive.HasValue)
+        {
+            baseQuery = baseQuery.Where(s => s.Branches.Any(sb => sb.Branch.CourtOwnerId == currentUserId
+                && sb.IsActive == request.IsActive.Value));
         }
 
         if (request.CategoryId.HasValue)

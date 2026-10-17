@@ -3,6 +3,7 @@ using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Services.Commands.CreateService;
 using CourtBooking.Application.Features.V1.Services.Commands.DeleteService;
 using CourtBooking.Application.Features.V1.Services.Commands.UpdateService;
+using CourtBooking.Application.Features.V1.Services.Commands.UpdateServiceStatus;
 using CourtBooking.Application.Features.V1.Services.Dtos;
 using CourtBooking.Application.Features.V1.Services.Queries.GetOwnerServices;
 using CourtBooking.Application.Features.V1.Services.Queries.GetServiceById;
@@ -56,17 +57,31 @@ public sealed class ServiceEndpoints : IEndpointGroup
     // Các endpoint dành cho chủ sở hữu chi nhánh
     private static void MapToOwner(RouteGroupBuilder group)
     {
+        group.MapPut("/{id:guid}/branches/{branchId:guid}/status", async (
+            Guid id, Guid branchId, UpdateServiceStatusRequest request, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new UpdateServiceStatusCommand(id, branchId, request.IsActive), ct);
+            return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
+        })
+            .WithName("UpdateServiceBranchStatus")
+            .WithSummary("Bật/tắt bán dịch vụ tại một chi nhánh")
+            .WithTags(ServiceTag)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         // GET /api/v1/owner/services — Danh sách toàn bộ dịch vụ của chủ sân kèm danh sách chi nhánh
         group.MapGet("/", async (
                 [FromQuery] string? search,
                 [FromQuery] Guid? categoryId,
                 [FromQuery] Guid? branchId,
+                [FromQuery] bool? isActive,
                 [FromQuery] int page = 1,
                 [FromQuery] int pageSize = 10,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
         {
-            var query = new GetOwnerServicesQuery(search, categoryId, branchId, page, pageSize);
+            var query = new GetOwnerServicesQuery(search, categoryId, branchId, page, pageSize, isActive);
             var result = await sender.Send(query, ct);
 
             return result.IsSuccess

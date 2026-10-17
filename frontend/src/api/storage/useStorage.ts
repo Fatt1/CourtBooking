@@ -33,11 +33,12 @@ export function getImageUrl(keyOrUrl?: string | null, fallback = ''): string {
     baseUrl = baseUrl.replace('/courtbooking', '/buckets/courtbooking');
   }
 
-  // Nếu là URL trỏ tới SeaweedFS/S3 localhost (port 8333 hoặc 8888) của bucket courtbooking,
+  // Backend chạy trong Docker trả URL có hostname seaweedfs, chỉ container mới truy cập được.
+  // Đổi URL nội bộ và URL S3 local sang Filer public để trình duyệt tải được ảnh.
   // chuẩn hóa lại về baseUrl hiện tại và lược bỏ query string chữ ký S3 nếu có
-  const localMatch = trimmed.match(/^https?:\/\/localhost:(?:8333|8888)\/(?:buckets\/)?courtbooking\/?([^?]*)/i);
+  const localMatch = trimmed.match(/^https?:\/\/(?:localhost:(?:8333|8888)|127\.0\.0\.1:(?:8333|8888)|seaweedfs(?::(?:8333|8888))?)\/(?:buckets\/)?courtbooking(?:\/([^?#]*))?(?:[?#].*)?$/i);
   if (localMatch) {
-    const cleanKey = localMatch[1].replace(/^\/+/, '');
+    const cleanKey = (localMatch[1] || '').replace(/^\/+/, '');
     return `${baseUrl}/${cleanKey}`;
   }
 

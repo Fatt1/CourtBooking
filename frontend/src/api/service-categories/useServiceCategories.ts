@@ -18,10 +18,10 @@ export function useServiceCategoriesQuery() {
   return useQuery<ServiceCategoryDto[]>({
     queryKey: categoryKey,
     queryFn: async (): Promise<ServiceCategoryDto[]> => {
-        const response = await apiClient.get<ServiceCategoryDto[]>(
-          categoryUrl
-        );
-        return (response as unknown as ServiceCategoryDto[]) || [];
+      const response = await apiClient.get<ServiceCategoryDto[]>(
+        API_ENDPOINTS.SERVICES.CATEGORIES
+      );
+      return (response as unknown as ServiceCategoryDto[]) || [];
     },
     enabled: isAuthenticated && isOwner,
     staleTime: 1000 * 60 * 5, // 5 phút cache
