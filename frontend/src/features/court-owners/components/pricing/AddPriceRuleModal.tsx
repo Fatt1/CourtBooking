@@ -163,10 +163,10 @@ export function AddPriceRuleModal({
               value={priceTableId}
               onChange={(e) => setPriceTableId(e.target.value)}
               disabled={isEditing}
-              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground appearance-none pr-10 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground appearance-none pr-10 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {availablePriceTables.map((tbl) => (
-                <option key={tbl.id} value={tbl.id} className="bg-[#0B1324] text-white">
+                <option key={tbl.id} value={tbl.id} className="bg-popover text-popover-foreground">
                   {tbl.name}
                 </option>
               ))}
@@ -186,7 +186,7 @@ export function AddPriceRuleModal({
             endHour={24}
             required
             className="space-y-1.5"
-            triggerClassName="h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
+            triggerClassName="h-11 rounded-xl bg-background border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
           />
 
           <TimeSelect
@@ -198,7 +198,7 @@ export function AddPriceRuleModal({
             endHour={24}
             required
             className="space-y-1.5"
-            triggerClassName="h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
+            triggerClassName="h-11 rounded-xl bg-background border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
           />
         </div>
 
@@ -215,13 +215,13 @@ export function AddPriceRuleModal({
                 return (
                   <label
                     key={opt.value}
-                    className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold select-none text-foreground hover:text-white transition-colors"
+                    className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold select-none text-foreground hover:text-emerald-700 dark:hover:text-[#a3e635] transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleDay(opt.value)}
-                      className="size-4 rounded border-border/80 accent-[#a3e635] bg-[#080E1C] cursor-pointer"
+                      className="size-4 rounded border-border/80 accent-[#a3e635] bg-background cursor-pointer"
                     />
                     <span>{opt.label}</span>
                   </label>
@@ -236,13 +236,13 @@ export function AddPriceRuleModal({
                 return (
                   <label
                     key={opt.value}
-                    className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold select-none text-foreground hover:text-white transition-colors"
+                    className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold select-none text-foreground hover:text-emerald-700 dark:hover:text-[#a3e635] transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleDay(opt.value)}
-                      className="size-4 rounded border-border/80 accent-[#a3e635] bg-[#080E1C] cursor-pointer"
+                      className="size-4 rounded border-border/80 accent-[#a3e635] bg-background cursor-pointer"
                     />
                     <span>{opt.label}</span>
                   </label>
@@ -264,7 +264,7 @@ export function AddPriceRuleModal({
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 placeholder="yyyy-mm-dd"
-                className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+                className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground dark:[color-scheme:dark] focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
               />
               <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             </div>
@@ -280,7 +280,7 @@ export function AddPriceRuleModal({
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 placeholder="yyyy-mm-dd"
-                className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+                className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground dark:[color-scheme:dark] focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
               />
               <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             </div>
@@ -298,7 +298,7 @@ export function AddPriceRuleModal({
               value={fixedPrice}
               onChange={(e) => setFixedPrice(Number(e.target.value))}
               placeholder="100000"
-              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+              className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
             />
           </div>
 
@@ -311,7 +311,7 @@ export function AddPriceRuleModal({
               value={walkInPrice}
               onChange={(e) => setWalkInPrice(Number(e.target.value))}
               placeholder="120000"
-              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+              className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
             />
           </div>
         </div>
@@ -327,7 +327,7 @@ export function AddPriceRuleModal({
               value={unitMinutes}
               onChange={(e) => setUnitMinutes(Number(e.target.value))}
               placeholder="60"
-              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+              className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
             />
           </div>
 
@@ -340,7 +340,7 @@ export function AddPriceRuleModal({
               value={unitLabel}
               onChange={(e) => setUnitLabel(e.target.value)}
               placeholder="h"
-              className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+              className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
             />
           </div>
         </div>
@@ -355,7 +355,7 @@ export function AddPriceRuleModal({
             value={minBookingMinutes}
             onChange={(e) => setMinBookingMinutes(Number(e.target.value))}
             placeholder="60"
-            className="w-full h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
+            className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
           />
         </div>
 

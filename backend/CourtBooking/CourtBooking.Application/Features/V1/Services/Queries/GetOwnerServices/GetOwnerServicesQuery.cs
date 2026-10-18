@@ -9,4 +9,5 @@ public sealed record GetOwnerServicesQuery(
     Guid? CategoryId = null,
     Guid? BranchId = null,
     int Page = 1,
-    int PageSize = 10) : PaginationQuery(Page, PageSize), IQuery<PagedList<OwnerServiceDto>>;
+    int PageSize = 10,
+    bool? IsActive = null) : PaginationQuery(Page, PageSize), IQuery<PagedList<OwnerServiceDto>>;

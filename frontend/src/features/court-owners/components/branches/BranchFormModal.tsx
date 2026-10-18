@@ -367,11 +367,6 @@ export function BranchFormModal({
       return;
     }
 
-    if (!ggMapUrl.trim()) {
-      toast.error('Vui lòng nhập liên kết Google Maps của chi nhánh');
-      return;
-    }
-
     // Yêu cầu bắt buộc tải ít nhất 1 ảnh chi nhánh
     if (images.length === 0) {
       toast.error('Yêu cầu phải tải lên ít nhất 1 tấm ảnh cho chi nhánh!');
@@ -407,7 +402,7 @@ export function BranchFormModal({
       province: selectedProvinceName,
       district: district.trim(),
       street: street.trim(),
-      ggMapUrl: cleanGgMapUrl,
+      ggMapUrl: cleanGgMapUrl || (latitude && longitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : undefined),
       openTime: openTime.length === 5 ? `${openTime}:00` : openTime,
       closeTime: closeTime.length === 5 ? `${closeTime}:00` : closeTime,
       qrImageId: qrImage.id,
@@ -461,7 +456,7 @@ export function BranchFormModal({
 
         {isEditMode && isLoadingDetail ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-            <Loader2 className="size-8 animate-spin text-[#a3e635]" />
+            <Loader2 className="size-8 animate-spin text-emerald-700 dark:text-[#a3e635]" />
             <span className="text-xs">Đang tải thông tin chi nhánh...</span>
           </div>
         ) : (
@@ -472,7 +467,7 @@ export function BranchFormModal({
               <div className="space-y-4">
                 {/* 1. Tên chi nhánh */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200">
+                  <label className="text-xs font-semibold text-foreground">
                     Tên chi nhánh <span className="text-rose-500">*</span>
                   </label>
                   <Input
@@ -480,7 +475,7 @@ export function BranchFormModal({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ví dụ: Matchday Quận 7"
-                    className="h-11 rounded-xl bg-[#111c33] border-border/60 text-white placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
+                    className="h-11 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
                   />
                 </div>
 
@@ -498,7 +493,7 @@ export function BranchFormModal({
                 {/* 3. Thư viện ảnh chi nhánh (Aspect Ratio 3/2, Kéo thả sắp xếp, upload API) */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-200">
+                    <label className="text-xs font-semibold text-foreground">
                       Thư viện ảnh chi nhánh (Cho phép chọn nhiều ảnh){' '}
                       <span className="text-rose-500">*</span>
                     </label>
@@ -514,7 +509,7 @@ export function BranchFormModal({
                         handleUploadGalleryFiles(e.dataTransfer.files);
                       }
                     }}
-                    className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/70 bg-[#0d162b]/80 p-6 text-center hover:border-[#a3e635]/60 hover:bg-[#111d38] transition-all"
+                    className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/70 bg-muted/30 p-6 text-center hover:border-[#a3e635]/60 hover:bg-accent transition-all"
                   >
                     <input
                       ref={galleryInputRef}
@@ -530,8 +525,8 @@ export function BranchFormModal({
 
                     {isUploadingGallery ? (
                       <div className="flex flex-col items-center gap-2 text-muted-foreground py-2">
-                        <Loader2 className="size-7 animate-spin text-[#a3e635]" />
-                        <span className="text-xs text-white">Đang tải và xử lý hình ảnh...</span>
+                        <Loader2 className="size-7 animate-spin text-emerald-700 dark:text-[#a3e635]" />
+                        <span className="text-xs text-foreground">Đang tải và xử lý hình ảnh...</span>
                       </div>
                     ) : (
                       <>
@@ -539,7 +534,7 @@ export function BranchFormModal({
                           type="button"
                           variant="secondary"
                           onClick={() => galleryInputRef.current?.click()}
-                          className="h-10 rounded-xl bg-[#1b2742] text-white hover:bg-[#233355] border border-border/60 font-semibold px-5 cursor-pointer"
+                          className="h-10 rounded-xl bg-muted text-foreground hover:bg-accent border border-border/60 font-semibold px-5 cursor-pointer"
                         >
                           <Upload className="size-4 mr-2" />
                           <span>Tải ảnh lên</span>
@@ -556,7 +551,7 @@ export function BranchFormModal({
                     <div className="space-y-1.5 pt-1">
                       <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                         <span>Đã tải {images.length} ảnh (Kéo thả để sắp xếp thứ tự)</span>
-                        <span className="text-[#a3e635] font-semibold">Ảnh đầu tiên là ảnh bìa</span>
+                        <span className="text-emerald-700 dark:text-[#a3e635] font-semibold">Ảnh đầu tiên là ảnh bìa</span>
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -568,12 +563,12 @@ export function BranchFormModal({
                             onDragOver={(e) => handleDragOver(e, index)}
                             onDrop={(e) => handleDrop(e, index)}
                             onDragEnd={handleDragEnd}
-                            className={`group relative aspect-[3/2] rounded-xl overflow-hidden border bg-slate-900 cursor-grab active:cursor-grabbing transition-all select-none ${
+                            className={`group relative aspect-[3/2] rounded-xl overflow-hidden border bg-muted cursor-grab active:cursor-grabbing transition-all select-none ${
                               draggedIndex === index
                                 ? 'opacity-40 scale-95 border-amber-400'
                                 : dragOverIndex === index
                                 ? 'border-[#a3e635] scale-105 shadow-md'
-                                : 'border-border/60 hover:border-slate-500'
+                                : 'border-border/60 hover:border-foreground/40'
                             }`}
                           >
                             <img
@@ -608,7 +603,7 @@ export function BranchFormModal({
 
                 {/* 4. Địa chỉ chi tiết */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200">
+                  <label className="text-xs font-semibold text-foreground">
                     Địa chỉ chi tiết (Số nhà, Tên đường, Phường/Xã){' '}
                     <span className="text-rose-500">*</span>
                   </label>
@@ -617,7 +612,7 @@ export function BranchFormModal({
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
                     placeholder="Ví dụ: 123 Nguyễn Văn Linh, P. Tân Phong"
-                    className="h-11 rounded-xl bg-[#111c33] border-border/60 text-white placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
+                    className="h-11 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
                   />
                 </div>
               </div>
@@ -627,22 +622,21 @@ export function BranchFormModal({
                 {/* 1. Tọa độ GPS / Google Maps URL */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-200">
-                      Tọa độ GPS / Google Maps URL <span className="text-rose-500">*</span>
+                    <label className="text-xs font-semibold text-foreground">
+                      Tọa độ GPS / Google Maps URL <span className="text-xs text-muted-foreground font-normal">(tùy chọn)</span>
                     </label>
                     {latitude && longitude && (
-                      <span className="text-[11px] text-[#a3e635] flex items-center gap-1 font-medium">
+                      <span className="text-[11px] text-emerald-700 dark:text-[#a3e635] flex items-center gap-1 font-medium">
                         <CheckCircle2 className="size-3" />
                         Đã xác định tọa độ
                       </span>
                     )}
                   </div>
                   <Input
-                    required
                     value={ggMapUrl}
                     onChange={(e) => handleGgMapUrlChange(e.target.value)}
-                    placeholder="Dán link Google Maps vào đây (https://www.google.com/maps/...)"
-                    className="h-11 rounded-xl bg-[#111c33] border-border/60 text-white placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
+                    placeholder="Dán link Google Maps hoặc tọa độ (https://www.google.com/maps/...)"
+                    className="h-11 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
                   />
                 </div>
 
@@ -658,7 +652,7 @@ export function BranchFormModal({
                         readOnly
                         value={latitude !== null ? latitude.toString() : ''}
                         placeholder="Tự động bóc tách"
-                        className="h-10 rounded-xl bg-[#090f1d] border-border/40 text-slate-300 font-mono text-xs cursor-not-allowed"
+                        className="h-10 rounded-xl bg-muted/40 border-border/40 text-muted-foreground font-mono text-xs cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-1">
@@ -670,12 +664,12 @@ export function BranchFormModal({
                         readOnly
                         value={longitude !== null ? longitude.toString() : ''}
                         placeholder="Tự động bóc tách"
-                        className="h-10 rounded-xl bg-[#090f1d] border-border/40 text-slate-300 font-mono text-xs cursor-not-allowed"
+                        className="h-10 rounded-xl bg-muted/40 border-border/40 text-muted-foreground font-mono text-xs cursor-not-allowed"
                       />
                     </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground flex items-center gap-1 pt-0.5">
-                    <Info className="size-3 text-sky-400" />
+                    <Info className="size-3 text-sky-700 dark:text-sky-400" />
                     <span>Tọa độ được tự động lấy từ đường dẫn Google Maps, không cho phép nhập tay.</span>
                   </p>
                 </div>
@@ -683,7 +677,7 @@ export function BranchFormModal({
                 {/* 3. Hotline & Khung giờ mở cửa */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1.5 sm:col-span-1">
-                    <label className="text-xs font-semibold text-slate-200">
+                    <label className="text-xs font-semibold text-foreground">
                       Hotline <span className="text-rose-500">*</span>
                     </label>
                     <Input
@@ -691,7 +685,7 @@ export function BranchFormModal({
                       value={hotline}
                       onChange={(e) => setHotline(e.target.value)}
                       placeholder="090..."
-                      className="h-11 rounded-xl bg-[#111c33] border-border/60 text-white placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
+                      className="h-11 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
                     />
                   </div>
 
@@ -722,7 +716,7 @@ export function BranchFormModal({
 
                 {/* 4. Điều khoản hủy đặt sân */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200">
+                  <label className="text-xs font-semibold text-foreground">
                     Điều khoản hủy đặt sân
                   </label>
                   <textarea
@@ -730,20 +724,20 @@ export function BranchFormModal({
                     value={policy}
                     onChange={(e) => setPolicy(e.target.value)}
                     placeholder="Khách hàng được hủy miễn phí trước 24h..."
-                    className="w-full rounded-xl bg-[#111c33] border border-border/60 p-3 text-xs text-white placeholder:text-muted-foreground/60 focus:outline-hidden focus:ring-2 focus:ring-[#a3e635] resize-none"
+                    className="w-full rounded-xl bg-background border border-border/60 p-3 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:ring-2 focus:ring-[#a3e635] resize-none"
                   />
                 </div>
 
                 {/* 5. TÁCH RIÊNG: Thông tin VietQR thanh toán */}
-                <div className="rounded-2xl border border-border/60 bg-[#0d162b] p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-100">
-                    <CreditCard className="size-4 text-[#a3e635]" />
+                <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                    <CreditCard className="size-4 text-emerald-700 dark:text-[#a3e635]" />
                     <span>Thông tin thanh toán VietQR (Tách riêng biệt)</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-slate-300">
+                      <label className="text-[11px] font-medium text-muted-foreground">
                         Số tài khoản <span className="text-rose-500">*</span>
                       </label>
                       <Input
@@ -751,12 +745,12 @@ export function BranchFormModal({
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value)}
                         placeholder="Số tài khoản ngân hàng"
-                        className="h-10 rounded-xl bg-[#111c33] border-border/60 text-white font-mono text-xs focus-visible:ring-[#a3e635]"
+                        className="h-10 rounded-xl bg-background border-border/60 text-foreground font-mono text-xs focus-visible:ring-[#a3e635]"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-slate-300">
+                      <label className="text-[11px] font-medium text-muted-foreground">
                         Tên chủ tài khoản <span className="text-rose-500">*</span>
                       </label>
                       <Input
@@ -764,14 +758,14 @@ export function BranchFormModal({
                         value={accountName}
                         onChange={(e) => setAccountName(e.target.value)}
                         placeholder="NGUYEN VAN A"
-                        className="h-10 rounded-xl bg-[#111c33] border-border/60 text-white uppercase text-xs focus-visible:ring-[#a3e635]"
+                        className="h-10 rounded-xl bg-background border-border/60 text-foreground uppercase text-xs focus-visible:ring-[#a3e635]"
                       />
                     </div>
                   </div>
 
                   {/* Upload Ảnh QR Code riêng */}
                   <div className="space-y-1.5 pt-1">
-                    <label className="text-[11px] font-medium text-slate-300">
+                    <label className="text-[11px] font-medium text-muted-foreground">
                       Ảnh mã QR thanh toán <span className="text-rose-500">*</span>
                     </label>
 
@@ -784,24 +778,24 @@ export function BranchFormModal({
                     />
 
                     {qrImage ? (
-                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#111c33] border border-border/60">
+                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-background border border-border/60">
                         <img
                           src={qrImage.url}
                           alt="VietQR Code"
                           className="size-14 rounded-lg object-contain bg-white p-1 border border-border/50"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-white truncate">
+                          <p className="text-xs font-semibold text-foreground truncate">
                             {qrImage.name || 'Mã QR thanh toán'}
                           </p>
-                          <span className="text-[10px] text-[#a3e635]">✓ Đã tải lên sẵn sàng</span>
+                          <span className="text-[10px] text-emerald-700 dark:text-[#a3e635]">✓ Đã tải lên sẵn sàng</span>
                         </div>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           onClick={() => setQrImage(null)}
-                          className="size-8 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg cursor-pointer"
+                          className="size-8 p-0 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:text-rose-300 hover:bg-rose-500/10 rounded-lg cursor-pointer"
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -809,17 +803,17 @@ export function BranchFormModal({
                     ) : (
                       <div
                         onClick={() => qrInputRef.current?.click()}
-                        className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-border/70 bg-[#111c33]/60 hover:bg-[#15233f] cursor-pointer transition-colors"
+                        className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-border/70 bg-muted/40 hover:bg-accent cursor-pointer transition-colors"
                       >
                         {isUploadingQr ? (
                           <>
-                            <Loader2 className="size-4 animate-spin text-[#a3e635]" />
+                            <Loader2 className="size-4 animate-spin text-emerald-700 dark:text-[#a3e635]" />
                             <span className="text-xs text-muted-foreground">Đang tải mã QR...</span>
                           </>
                         ) : (
                           <>
-                            <QrCode className="size-4 text-[#a3e635]" />
-                            <span className="text-xs font-medium text-slate-200">
+                            <QrCode className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                            <span className="text-xs font-medium text-foreground">
                               Bấm để tải ảnh mã QR VietQR (PNG, JPG)
                             </span>
                           </>
@@ -846,7 +840,7 @@ export function BranchFormModal({
                 variant="ghost"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
-                className="h-11 rounded-xl border border-border/60 bg-[#131d31] px-6 text-sm font-bold text-white hover:bg-[#1a2742] transition-colors cursor-pointer"
+                className="h-11 rounded-xl border border-border/60 bg-card px-6 text-sm font-bold text-foreground hover:bg-accent transition-colors cursor-pointer"
               >
                 Hủy
               </Button>

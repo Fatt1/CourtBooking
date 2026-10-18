@@ -44,6 +44,7 @@ public sealed class ReviewEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : Results.Problem("Failed to retrieve reviews.");
         })
+        .AllowAnonymous()
         .WithName("GetReviews")
         .WithSummary("Lấy danh sách đánh giá")
         .WithDescription("Lấy danh sách đánh giá của 1 chi nhánh.")

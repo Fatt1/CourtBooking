@@ -43,6 +43,8 @@ internal sealed class BookEventTicketHandler(
                 .Include(e => e.Order)
                     .ThenInclude(o => o.Branch)
                         .ThenInclude(b => b.QrImage)
+                .Include(e => e.Order)
+                    .ThenInclude(o => o.Details)
                 .FirstOrDefaultAsync(cancellationToken);
 
             // 3.1. Kiểm tra sự kiện có tồn tại không
@@ -59,7 +61,20 @@ internal sealed class BookEventTicketHandler(
                 return Result.Failure<BookEventTicketResponse>(new ConflictError("Sự kiện hiện không mở bán vé hoặc đã kết thúc."));
             }
 
-            // 3.3. Kiểm tra số lượng vé còn lại
+            // 3.3. Kiểm tra thời gian từ Order.Details: Chỉ có thể mua vé khi thời gian hiện tại bé hơn giờ bắt đầu trận đấu
+            var matchDate = sportEvent.Order.Details.Min(d => d.Date);
+            var matchStartTime = sportEvent.Order.Details.Min(d => d.StartTime);
+            var matchEndTime = sportEvent.Order.Details.Max(d => d.EndTime);
+            var matchStartDateTime = matchDate.ToDateTime(matchStartTime);
+            var vnNow = DateTime.UtcNow.AddHours(7);
+            if (vnNow >= matchStartDateTime)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return Result.Failure<BookEventTicketResponse>(
+                    new ConflictError("Sự kiện đã bắt đầu hoặc đã quá thời hạn mua vé."));
+            }
+
+            // 3.4. Kiểm tra số lượng vé còn lại
             if (sportEvent.AvailableSlot < request.Quantity)
             {
                 await transaction.RollbackAsync(cancellationToken);
@@ -102,8 +117,9 @@ internal sealed class BookEventTicketHandler(
                 sportEvent.Id,
                 sportEvent.Title,
                 sportEvent.Order.Branch.Name,
-                sportEvent.StartDate,
-                sportEvent.EndDate,
+                matchDate,
+                matchStartTime,
+                matchEndTime,
                 ticket.Quantity,
                 ticket.Price,
                 ticket.Price * ticket.Quantity,

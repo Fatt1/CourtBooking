@@ -22,8 +22,9 @@ export interface EventCardDto {
   branchId: string;
   branchName: string;
   branchAddress: string;
-  startDate: string;
-  endDate: string;
+  date: string;
+  startTime: string;
+  endTime: string;
   skillLevelFrom?: string | null;
   skillLevelTo?: string | null;
   ticketPrice: number;
@@ -59,8 +60,9 @@ export interface EventDetailDto {
   description?: string | null;
   sportTypeId: string;
   sportTypeName: string;
-  startDate: string;
-  endDate: string;
+  date: string;
+  startTime: string;
+  endTime: string;
   skillLevelFrom?: string | null;
   skillLevelTo?: string | null;
   ticketPrice: number;
@@ -83,8 +85,9 @@ export interface BookEventTicketResponse {
   eventId: string;
   eventTitle: string;
   branchName: string;
-  startDate: string;
-  endDate: string;
+  date: string;
+  startTime: string;
+  endTime: string;
   quantity: number;
   unitPrice: number;
   totalAmount: number;

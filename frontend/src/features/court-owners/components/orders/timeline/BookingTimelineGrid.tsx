@@ -23,6 +23,7 @@ export interface BookingTimelineGridProps {
   isLoading?: boolean;
   excludeOrderCode?: string;
   excludeTitle?: string;
+  lockSameTimeSlots?: boolean;
 }
 
 export function BookingTimelineGrid({
@@ -38,6 +39,7 @@ export function BookingTimelineGrid({
   isLoading,
   excludeOrderCode,
   excludeTitle,
+  lockSameTimeSlots,
 }: BookingTimelineGridProps) {
   const openMinutes = useMemo(() => timeToMinutes(branchOpenTime) || 360, [branchOpenTime]); // 6:00 default
   const closeMinutes = useMemo(() => {
@@ -74,6 +76,43 @@ export function BookingTimelineGrid({
   // Quy tắc: Chỉ cho phép đặt trước tối thiểu 30 phút
   const minBookableMinutes = currentMinutes + 30;
 
+  // Khi lockSameTimeSlots = true (chế độ tạo sự kiện), tính toán khung giờ cố định từ sân đầu tiên được chọn
+  const baseCourtInfo = useMemo(() => {
+    if (!lockSameTimeSlots || selectedSlots.length === 0) return null;
+
+    // Lọc các slot thuộc ngày hiện tại
+    const slotsForDate = selectedSlots.filter((s) => s.date === date);
+    if (slotsForDate.length === 0) return null;
+
+    // Sân đầu tiên có slot được chọn
+    const baseCourtId = slotsForDate[0].courtId;
+    const baseCourtSlots = slotsForDate.filter((s) => s.courtId === baseCourtId);
+    if (baseCourtSlots.length === 0) return null;
+
+    const minStart = Math.min(...baseCourtSlots.map((s) => timeToMinutes(s.startTime)));
+    const maxEnd = Math.max(...baseCourtSlots.map((s) => timeToMinutes(s.endTime)));
+
+    // Danh sách các sân đã có slot
+    const uniqueCourtIds = Array.from(new Set(slotsForDate.map((s) => s.courtId)));
+
+    // Set các slot time keys: `${timeToMinutes(s.startTime)}-${timeToMinutes(s.endTime)}`
+    const slotKeys = new Set(
+      baseCourtSlots.map((s) => `${timeToMinutes(s.startTime)}-${timeToMinutes(s.endTime)}`)
+    );
+
+    return {
+      baseCourtId,
+      baseCourtName: baseCourtSlots[0]?.courtName || 'Sân ban đầu',
+      baseCourtSlots,
+      minStart,
+      maxEnd,
+      startTimeStr: minutesToTimeString(minStart),
+      endTimeStr: minutesToTimeString(maxEnd),
+      uniqueCourtIds,
+      slotKeys,
+    };
+  }, [lockSameTimeSlots, selectedSlots, date]);
+
   // Các loại sân được chọn để hiển thị timeline
   const activeCourtTypes = useMemo(() => {
     return courtTypesConfig.filter((ct) => selectedCourtTypeIds.includes(ct.courtTypeId));
@@ -81,11 +120,11 @@ export function BookingTimelineGrid({
 
   if (activeCourtTypes.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border/60 bg-[#070D1A]/60 p-10 text-center space-y-2">
-        <p className="text-sm font-semibold text-slate-300">
+      <div className="rounded-2xl border border-dashed border-border/60 bg-background/60 p-10 text-center space-y-2">
+        <p className="text-sm font-semibold text-muted-foreground">
           Chưa chọn loại sân nào để hiển thị lịch đặt
         </p>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Vui lòng tích chọn ít nhất 1 loại sân ở khối bên trên để xem bảng giờ và chọn ca sân.
         </p>
       </div>
@@ -97,27 +136,36 @@ export function BookingTimelineGrid({
       {/* 1. CHÚ THÍCH TRẠNG THÁI (LEGEND CHUẨN FIGMA) */}
       <div className="flex items-center gap-4 sm:gap-6 text-xs flex-wrap px-1 select-none">
         <div className="flex items-center gap-2">
-          <div className="size-4 rounded border border-slate-600 bg-[#0f172a]" />
-          <span className="text-slate-300">Trống</span>
+          <div className="size-4 rounded border border-border bg-muted/40" />
+          <span className="text-muted-foreground">Trống</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="size-4 rounded bg-slate-800 border border-slate-700" />
-          <span className="text-slate-400">Đã đặt</span>
+          <div className="size-4 rounded bg-muted border border-border" />
+          <span className="text-muted-foreground">Đã đặt</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="size-4 rounded bg-slate-900 border border-amber-500/40 flex items-center justify-center text-amber-400 text-[10px]">
+          <div className="size-4 rounded bg-muted/60 border border-amber-500/40 flex items-center justify-center text-amber-700 dark:text-amber-400 text-[10px]">
             <Lock className="size-2.5" />
           </div>
-          <span className="text-slate-400">Khóa</span>
+          <span className="text-muted-foreground">Khóa</span>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="size-4 rounded bg-emerald-700 border border-emerald-500 flex items-center justify-center">
             <div className="size-1.5 rounded-full bg-white" />
           </div>
-          <span className="text-[#a3e635] font-semibold">Đang chọn</span>
+          <span className="text-emerald-700 dark:text-[#a3e635] font-semibold">Đang chọn</span>
         </div>
+
+        {lockSameTimeSlots && baseCourtInfo && (
+          <div className="flex items-center gap-2 ml-auto text-xs bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full text-amber-300 animate-in fade-in">
+            <Lock className="size-3" />
+            <span>
+              Khung giờ sự kiện: <strong>{baseCourtInfo.startTimeStr} - {baseCourtInfo.endTimeStr}</strong> (Đồng bộ các sân)
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 2. CÁC BẢNG TIMELINE THEO TỪNG LOẠI SÂN */}
@@ -140,19 +188,19 @@ export function BookingTimelineGrid({
           return (
             <div
               key={ct.courtTypeId}
-              className="rounded-2xl border border-border/70 bg-[#0B1324] overflow-hidden shadow-sm space-y-0"
+              className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm space-y-0"
             >
               {/* Header Loại sân & Nhóm khách */}
-              <div className="px-4 py-3 bg-[#131d31] border-b border-border/60 flex items-center justify-between flex-wrap gap-2">
+              <div className="px-4 py-3 bg-card border-b border-border/60 flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     {activePriceTable?.name || 'Khách vãng lai'}
                   </span>
-                  <h4 className="text-sm font-bold text-white tracking-tight">
+                  <h4 className="text-sm font-bold text-foreground tracking-tight">
                     {ct.courtTypeName}
                   </h4>
                 </div>
-                <div className="text-xs text-[#a3e635] font-mono bg-[#1a2742] px-2.5 py-1 rounded-lg border border-border/50">
+                <div className="text-xs text-emerald-700 dark:text-[#a3e635] font-mono bg-muted px-2.5 py-1 rounded-lg border border-border/50">
                   Bước nhảy: {stepMinutes} phút/ô
                 </div>
               </div>
@@ -161,14 +209,14 @@ export function BookingTimelineGrid({
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>
-                    <tr className="bg-[#0f172a] border-b border-border/60 text-xs text-slate-300">
-                      <th className="sticky left-0 z-20 bg-[#0f172a] p-3 w-32 min-w-32 font-bold text-white border-r border-border/60 uppercase text-[11px]">
+                    <tr className="bg-muted/40 border-b border-border/60 text-xs text-muted-foreground">
+                      <th className="sticky left-0 z-20 bg-muted/40 p-3 w-32 min-w-32 font-bold text-foreground border-r border-border/60 uppercase text-[11px]">
                         SÂN / GIỜ
                       </th>
                       {timeSlots.map((ts, idx) => (
                         <th
                           key={idx}
-                          className="p-2.5 text-center font-mono font-semibold text-slate-300 text-xs min-w-16 border-r border-border/40"
+                          className="p-2.5 text-center font-mono font-semibold text-muted-foreground text-xs min-w-16 border-r border-border/40"
                         >
                           {ts.timeLabel}
                         </th>
@@ -181,12 +229,12 @@ export function BookingTimelineGrid({
                       ct.availableCourts.map((court) => (
                         <tr
                           key={court.courtId}
-                          className="border-b border-border/40 hover:bg-[#101b33]/40 transition-colors"
+                          className="border-b border-border/40 hover:bg-card/40 transition-colors"
                         >
                           {/* Cột 1: Tên sân (Sticky) */}
-                          <td className="sticky left-0 z-10 bg-[#0B1324] p-3 font-semibold text-white text-xs border-r border-border/60 whitespace-nowrap shadow-xs">
+                          <td className="sticky left-0 z-10 bg-card p-3 font-semibold text-foreground text-xs border-r border-border/60 whitespace-nowrap shadow-xs">
                             <div>{court.courtName}</div>
-                            <div className="text-[10px] text-slate-500 font-normal">
+                            <div className="text-[10px] text-muted-foreground font-normal">
                               {ct.courtTypeName}
                             </div>
                           </td>
@@ -195,6 +243,25 @@ export function BookingTimelineGrid({
                           {timeSlots.map((ts) => {
                             const startTimeStr = minutesToTimeString(ts.startMin);
                             const endTimeStr = minutesToTimeString(ts.endMin);
+
+                            // 0. Kiểm tra khóa bởi sự kiện khi lockSameTimeSlots = true
+                            let isLockedByEventConstraint = false;
+                            if (lockSameTimeSlots && baseCourtInfo) {
+                              const isBaseCourt = court.courtId === baseCourtInfo.baseCourtId;
+                              const slotKey = `${ts.startMin}-${ts.endMin}`;
+
+                              if (!isBaseCourt) {
+                                // Sân khác: Chỉ được chọn các slot khớp chính xác với baseCourtSlots
+                                if (!baseCourtInfo.slotKeys.has(slotKey)) {
+                                  isLockedByEventConstraint = true;
+                                }
+                              } else {
+                                // Sân cơ sở: Nếu đã chọn >= 2 sân, các ô ngoài khung giờ cũng bị khóa để giữ đồng bộ
+                                if (baseCourtInfo.uniqueCourtIds.length > 1 && !baseCourtInfo.slotKeys.has(slotKey)) {
+                                  isLockedByEventConstraint = true;
+                                }
+                              }
+                            }
 
                             // 1. Kiểm tra xem ô này đã được chọn chưa (hỗ trợ cả atomic slot và merged slot)
                             const isSelected = selectedSlots.some(
@@ -277,6 +344,95 @@ export function BookingTimelineGrid({
 
                             // Xử lý khi click vào ô
                             const handleClick = () => {
+                              // Nếu ô đang bị khóa bởi ràng buộc sự kiện
+                              if (!isSelected && isLockedByEventConstraint) {
+                                if (baseCourtInfo && baseCourtInfo.uniqueCourtIds.length > 1 && court.courtId === baseCourtInfo.baseCourtId) {
+                                  toast.warning(
+                                    `Sự kiện đang áp dụng khung giờ ${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr} cho nhiều sân. Để đổi khung giờ, vui lòng bỏ chọn các sân phụ trước.`
+                                  );
+                                } else if (baseCourtInfo) {
+                                  toast.warning(
+                                    `Sự kiện chỉ áp dụng khung giờ ${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr} (theo ${baseCourtInfo.baseCourtName}). Không thể chọn khung giờ khác!`
+                                  );
+                                }
+                                return;
+                              }
+
+                              // Thao tác với sân phụ trong chế độ sự kiện (lockSameTimeSlots): Đồng bộ toàn bộ khung giờ sự kiện
+                              if (lockSameTimeSlots && baseCourtInfo && court.courtId !== baseCourtInfo.baseCourtId) {
+                                if (isSelected) {
+                                  // Bỏ chọn toàn bộ các slot của sân phụ này
+                                  const courtSlotsToToggle: SelectedCourtSlot[] = baseCourtInfo.baseCourtSlots.map((bs) => ({
+                                    courtId: court.courtId,
+                                    courtName: court.courtName,
+                                    courtTypeId: ct.courtTypeId,
+                                    courtTypeName: ct.courtTypeName,
+                                    date,
+                                    startTime: bs.startTime,
+                                    endTime: bs.endTime,
+                                    priceTableId: activePriceTableId || '',
+                                    priceTableName: activePriceTable?.name || 'Mặc định',
+                                    price: 0,
+                                  }));
+                                  onToggleSlot(courtSlotsToToggle[0], courtSlotsToToggle);
+                                  return;
+                                }
+
+                                // Chọn toàn bộ khung giờ sự kiện cho sân phụ này
+                                // Kiểm tra xem có slot nào trong khung giờ bị trùng/quá khứ không
+                                const hasConflict = baseCourtInfo.baseCourtSlots.some((bs) => {
+                                  const bStart = timeToMinutes(bs.startTime);
+                                  const bEnd = timeToMinutes(bs.endTime);
+                                  const occ = occupiedSlots.find((os) => {
+                                    if (os.courtId !== court.courtId) return false;
+                                    if (excludeOrderCode) {
+                                      const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
+                                      const cleanCurrent = os.orderCode?.replace(/^#/, '').trim().toLowerCase();
+                                      if (cleanTarget && cleanCurrent && cleanTarget === cleanCurrent) return false;
+                                    }
+                                    if (excludeTitle) {
+                                      const cleanTargetTitle = excludeTitle.trim().toLowerCase();
+                                      const cleanCurrentTitle = os.title?.trim().toLowerCase();
+                                      if (cleanTargetTitle && cleanCurrentTitle && (cleanCurrentTitle === cleanTargetTitle || cleanCurrentTitle.includes(cleanTargetTitle))) {
+                                        return false;
+                                      }
+                                    }
+                                    return timeToMinutes(os.startTime) < bEnd && timeToMinutes(os.endTime) > bStart;
+                                  });
+                                  const past = isPastDate || (isToday && bEnd <= currentMinutes);
+                                  return Boolean(occ) || past;
+                                });
+
+                                if (hasConflict) {
+                                  toast.warning(
+                                    `Sân ${court.courtName} có ca đã bị đặt hoặc đã qua trong khung giờ sự kiện (${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr}). Vui lòng chọn sân khác!`
+                                  );
+                                  return;
+                                }
+
+                                const courtSlotsToToggle: SelectedCourtSlot[] = baseCourtInfo.baseCourtSlots.map((bs) => {
+                                  const sStr = bs.startTime.substring(0, 5);
+                                  const eStr = bs.endTime.substring(0, 5);
+                                  const sPrice = calculateSlotPrice(date, sStr, eStr, activePriceTable);
+                                  return {
+                                    courtId: court.courtId,
+                                    courtName: court.courtName,
+                                    courtTypeId: ct.courtTypeId,
+                                    courtTypeName: ct.courtTypeName,
+                                    date,
+                                    startTime: bs.startTime,
+                                    endTime: bs.endTime,
+                                    priceTableId: activePriceTableId || '',
+                                    priceTableName: activePriceTable?.name || 'Mặc định',
+                                    price: sPrice,
+                                    fixedBlockId: bs.fixedBlockId,
+                                  };
+                                });
+
+                                onToggleSlot(courtSlotsToToggle[0], courtSlotsToToggle);
+                                return;
+                              }
+
                               // Nếu ô đang được chọn -> Thao tác click là để BỎ CHỌN (deselection)
                               // Bỏ chọn luôn được cho phép, không bị chặn bởi xung đột hay quá khứ
                               if (!isSelected && isUnavailable) {
@@ -361,48 +517,54 @@ export function BookingTimelineGrid({
                                 title={
                                   isSelected
                                     ? `Đang chọn: ${startTimeStr} - ${endTimeStr}`
-                                    : isPastOrTooClose
-                                      ? isPastDate
-                                        ? 'Thời gian đã qua (không thể đặt)'
-                                        : 'Chỉ cho phép đặt trước giờ chơi tối thiểu 30 phút'
-                                      : isEvent
-                                        ? `Sự kiện: ${conflict?.title || 'Đang diễn ra'}`
-                                        : isLocked
-                                          ? 'Sân đang khóa / bảo trì'
-                                          : isBooked
-                                            ? `Đã đặt bởi: ${conflict?.customerName || 'Khách'}`
-                                            : matchingBlock
-                                              ? `Khung giờ bắt buộc: ${matchingBlock.startTime.substring(0, 5)} - ${matchingBlock.endTime.substring(0, 5)}`
-                                              : `Trống: ${startTimeStr} - ${endTimeStr}`
+                                    : isLockedByEventConstraint && baseCourtInfo
+                                      ? `Khóa bởi sự kiện: Chỉ áp dụng khung giờ ${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr}`
+                                      : isPastOrTooClose
+                                        ? isPastDate
+                                          ? 'Thời gian đã qua (không thể đặt)'
+                                          : 'Chỉ cho phép đặt trước giờ chơi tối thiểu 30 phút'
+                                        : isEvent
+                                          ? `Sự kiện: ${conflict?.title || 'Đang diễn ra'}`
+                                          : isLocked
+                                            ? 'Sân đang khóa / bảo trì'
+                                            : isBooked
+                                              ? `Đã đặt bởi: ${conflict?.customerName || 'Khách'}`
+                                              : matchingBlock
+                                                ? `Khung giờ bắt buộc: ${matchingBlock.startTime.substring(0, 5)} - ${matchingBlock.endTime.substring(0, 5)}`
+                                                : `Trống: ${startTimeStr} - ${endTimeStr}`
                                 }
                                 className={`h-11 min-w-16 p-1 text-center border-r border-border/40 transition-all select-none ${isSelected
                                   ? 'bg-emerald-700/80 cursor-pointer shadow-inner'
-                                  : isPastOrTooClose
-                                    ? 'bg-[#151c2d]/90 text-slate-600 cursor-not-allowed border-slate-800/80'
-                                    : isEvent
-                                      ? 'bg-purple-900/60 cursor-not-allowed'
-                                      : isLocked
-                                        ? 'bg-slate-900/90 cursor-not-allowed'
-                                        : isBooked
-                                          ? 'bg-slate-800/80 cursor-not-allowed'
-                                          : matchingBlock
-                                            ? 'bg-[#131d31] hover:bg-[#1a2742] cursor-pointer'
-                                            : 'bg-[#0f172a]/60 hover:bg-[#1a2742] cursor-pointer'
+                                  : isLockedByEventConstraint
+                                    ? 'bg-muted/40 text-muted-foreground opacity-40 cursor-not-allowed border-dashed border-border'
+                                    : isPastOrTooClose
+                                      ? 'bg-muted/90 text-slate-600 cursor-not-allowed border-slate-800/80'
+                                      : isEvent
+                                        ? 'bg-purple-900/60 cursor-not-allowed'
+                                        : isLocked
+                                          ? 'bg-muted/60 cursor-not-allowed'
+                                          : isBooked
+                                            ? 'bg-muted/80 cursor-not-allowed'
+                                            : matchingBlock
+                                              ? 'bg-card hover:bg-muted cursor-pointer'
+                                              : 'bg-muted/40 hover:bg-muted cursor-pointer'
                                   }`}
                               >
                                 <div className="size-full flex items-center justify-center">
                                   {isSelected ? (
                                     <div className="size-2.5 rounded-full bg-white shadow-xs animate-in zoom-in-50" />
+                                  ) : isLockedByEventConstraint ? (
+                                    <Lock className="size-2.5 text-slate-600" />
                                   ) : isPastOrTooClose ? (
                                     <div className="size-1.5 rounded-full bg-slate-700/80" />
                                   ) : isEvent ? (
                                     <Sparkles className="size-3 text-purple-300" />
                                   ) : isLocked ? (
-                                    <Lock className="size-3 text-amber-400" />
+                                    <Lock className="size-3 text-amber-700 dark:text-amber-400" />
                                   ) : isBooked ? (
-                                    <span className="text-[10px] text-slate-500 font-bold">•</span>
+                                    <span className="text-[10px] text-muted-foreground font-bold">•</span>
                                   ) : matchingBlock ? (
-                                    <span className="text-[9px] text-[#a3e635]/60 font-semibold select-none">
+                                    <span className="text-[9px] text-emerald-700 dark:text-[#a3e635]/60 font-semibold select-none">
                                       block
                                     </span>
                                   ) : null}
@@ -416,7 +578,7 @@ export function BookingTimelineGrid({
                       <tr>
                         <td
                           colSpan={timeSlots.length + 1}
-                          className="p-6 text-center text-xs text-slate-400 italic"
+                          className="p-6 text-center text-xs text-muted-foreground italic"
                         >
                           Không có sân nào thuộc loại sân này
                         </td>

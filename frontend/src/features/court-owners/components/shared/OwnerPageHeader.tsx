@@ -5,6 +5,8 @@ interface OwnerPageHeaderProps {
   title: string;
   category?: string;
   actions?: ReactNode;
+  icon?: ReactNode;
+  description?: string;
   className?: string;
 }
 
@@ -16,6 +18,8 @@ export function OwnerPageHeader({
   title,
   category,
   actions,
+  icon,
+  description,
   className,
 }: OwnerPageHeaderProps) {
   return (
@@ -25,7 +29,9 @@ export function OwnerPageHeader({
         className
       )}
     >
-      <div className="space-y-1">
+      <div className="flex items-center gap-4">
+        {icon && <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/75 text-emerald-800 shadow-sm dark:border-white/10 dark:bg-emerald-950/70 dark:text-emerald-300">{icon}</div>}
+        <div className="space-y-1">
         {category && (
           <p className="text-xs md:text-sm font-medium text-muted-foreground/80 tracking-wide">
             {category}
@@ -34,6 +40,8 @@ export function OwnerPageHeader({
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
           {title}
         </h1>
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        </div>
       </div>
 
       {actions && (

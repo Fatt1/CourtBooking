@@ -35,23 +35,21 @@ public sealed class SearchPublicBranchesValidator : AbstractValidator<SearchPubl
             .WithMessage("Điểm đánh giá phải từ 1 đến 5.");
 
         RuleFor(x => x.Sort)
-            .Must(s => string.IsNullOrEmpty(s) || s == "relevance" || s == "rating_desc" || s == "distance" || s == "price_asc")
-            .WithMessage("Kiểu sắp xếp không hợp lệ (hỗ trợ: relevance, rating_desc, distance, price_asc).");
+            .Must(s => string.IsNullOrEmpty(s) || s == "relevance" || s == "rating_desc" || s == "distance" || s == "price_asc" || s == "price_desc")
+            .WithMessage("Kiểu sắp xếp không hợp lệ (hỗ trợ: relevance, rating_desc, distance, price_asc, price_desc).");
 
-        // Khi sort=distance thì phải có tọa độ
+        // Ràng buộc tọa độ GPS nếu người dùng cung cấp
         RuleFor(x => x.Latitude)
-            .NotNull().When(x => x.Sort == "distance")
-            .WithMessage("Vui lòng cung cấp tọa độ (latitude) khi sắp xếp theo khoảng cách.");
+            .InclusiveBetween(-90m, 90m).When(x => x.Latitude.HasValue)
+            .WithMessage("Vĩ độ (latitude) phải nằm trong khoảng từ -90 đến 90.");
 
         RuleFor(x => x.Longitude)
-            .NotNull().When(x => x.Sort == "distance")
-            .WithMessage("Vui lòng cung cấp tọa độ (longitude) khi sắp xếp theo khoảng cách.");
+            .InclusiveBetween(-180m, 180m).When(x => x.Longitude.HasValue)
+            .WithMessage("Kinh độ (longitude) phải nằm trong khoảng từ -180 đến 180.");
 
-        // Tìm theo toạ độ và tìm theo địa chỉ là 2 mode riêng biệt
         RuleFor(x => x)
-            .Must(x => !(x.Latitude.HasValue || x.Longitude.HasValue)
-                    || (string.IsNullOrWhiteSpace(x.Province) && string.IsNullOrWhiteSpace(x.District)))
-            .WithMessage("Tìm theo toạ độ (latitude/longitude) và theo địa chỉ (province/district) không dùng đồng thời.");
+            .Must(x => (x.Latitude.HasValue && x.Longitude.HasValue) || (!x.Latitude.HasValue && !x.Longitude.HasValue))
+            .WithMessage("Nếu cung cấp tọa độ thì phải truyền đủ cả latitude và longitude.");
 
         RuleFor(x => x.Page)
             .GreaterThanOrEqualTo(1).WithMessage("Page phải lớn hơn hoặc bằng 1.");

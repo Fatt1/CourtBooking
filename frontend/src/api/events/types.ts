@@ -100,8 +100,11 @@ export interface CreateEventPayload {
   branchId: string;
   title: string;
   sportTypeId: string;
-  startDate: string;
-  endDate: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  startDate?: string;
+  endDate?: string;
   ticketPrice: number;
   slots: number;
   courtSlots: CourtBookingSlotPayload[];
@@ -119,8 +122,11 @@ export interface CreateEventPayload {
 export interface UpdateEventPayload {
   title: string;
   sportTypeId: string;
-  startDate: string;
-  endDate: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  startDate?: string;
+  endDate?: string;
   ticketPrice: number;
   slots: number;
   status: EventStatus;

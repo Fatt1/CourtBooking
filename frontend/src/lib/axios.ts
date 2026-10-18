@@ -10,6 +10,9 @@ export const apiClient = axios.create({
   },
   timeout: 20000,
   withCredentials: true, // Bắt buộc để trình duyệt tự động gửi và nhận HttpOnly Cookie (Refresh Token)
+  paramsSerializer: {
+    indexes: null, // Bắt buộc cho ASP.NET Core: serialize array thành key=val1&key=val2 thay vì key[]=val1
+  },
 });
 
 // Request Interceptor: Tự động gán Bearer JWT Token

@@ -99,7 +99,7 @@ export function TipTapEditor({
     return (
       <div
         className={cn(
-          'rounded-xl border border-border/70 bg-[#0B1324] p-4 text-xs text-slate-400',
+          'rounded-xl border border-border/70 bg-card p-4 text-xs text-muted-foreground',
           className
         )}
         style={{ minHeight }}
@@ -112,22 +112,22 @@ export function TipTapEditor({
   return (
     <div
       className={cn(
-        'rounded-xl border border-border/70 bg-[#0B1324] overflow-hidden focus-within:border-[#a3e635]/60 focus-within:ring-1 focus-within:ring-[#a3e635]/30 transition-all flex flex-col',
+        'rounded-xl border border-border/70 bg-card overflow-hidden focus-within:border-[#a3e635]/60 focus-within:ring-1 focus-within:ring-[#a3e635]/30 transition-all flex flex-col',
         className
       )}
     >
       {/* Toolbar Document Docx-like */}
       {editable && (
-        <div className="flex flex-wrap items-center gap-1 p-1.5 bg-[#070D1A]/90 border-b border-border/60 text-slate-300">
+        <div className="flex flex-wrap items-center gap-1 p-1.5 bg-muted/40 border-b border-border/60 text-muted-foreground">
           {/* Nhóm Headings */}
           <button
             type="button"
             onClick={() => editor.chain().focus().setParagraph().run()}
             className={cn(
-              'px-2 py-1 text-[11px] font-semibold rounded hover:bg-slate-800 transition-colors cursor-pointer',
+              'px-2 py-1 text-[11px] font-semibold rounded hover:bg-accent transition-colors cursor-pointer',
               editor.isActive('paragraph') && !editor.isActive('heading')
-                ? 'bg-[#a3e635]/20 text-[#a3e635]'
-                : 'text-slate-300'
+                ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]'
+                : 'text-muted-foreground'
             )}
             title="Đoạn văn bình thường"
           >
@@ -137,10 +137,10 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
               editor.isActive('heading', { level: 1 })
-                ? 'bg-[#a3e635]/20 text-[#a3e635]'
-                : 'text-slate-300'
+                ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]'
+                : 'text-muted-foreground'
             )}
             title="Tiêu đề 1 (H1)"
           >
@@ -150,10 +150,10 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
               editor.isActive('heading', { level: 2 })
-                ? 'bg-[#a3e635]/20 text-[#a3e635]'
-                : 'text-slate-300'
+                ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]'
+                : 'text-muted-foreground'
             )}
             title="Tiêu đề 2 (H2)"
           >
@@ -163,10 +163,10 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
               editor.isActive('heading', { level: 3 })
-                ? 'bg-[#a3e635]/20 text-[#a3e635]'
-                : 'text-slate-300'
+                ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]'
+                : 'text-muted-foreground'
             )}
             title="Tiêu đề 3 (H3)"
           >
@@ -180,8 +180,8 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
-              editor.isActive('bold') ? 'bg-[#a3e635]/20 text-[#a3e635]' : 'text-slate-300'
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
+              editor.isActive('bold') ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]' : 'text-muted-foreground'
             )}
             title="In đậm (Ctrl+B)"
           >
@@ -191,8 +191,8 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleItalic().run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
-              editor.isActive('italic') ? 'bg-[#a3e635]/20 text-[#a3e635]' : 'text-slate-300'
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
+              editor.isActive('italic') ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]' : 'text-muted-foreground'
             )}
             title="In nghiêng (Ctrl+I)"
           >
@@ -202,8 +202,8 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
-              editor.isActive('underline') ? 'bg-[#a3e635]/20 text-[#a3e635]' : 'text-slate-300'
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
+              editor.isActive('underline') ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]' : 'text-muted-foreground'
             )}
             title="Gạch chân (Ctrl+U)"
           >
@@ -213,8 +213,8 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleStrike().run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
-              editor.isActive('strike') ? 'bg-[#a3e635]/20 text-[#a3e635]' : 'text-slate-300'
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
+              editor.isActive('strike') ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]' : 'text-muted-foreground'
             )}
             title="Gạch ngang"
           >
@@ -224,8 +224,8 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
-              editor.isActive('highlight') ? 'bg-yellow-400/20 text-yellow-300' : 'text-slate-300'
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
+              editor.isActive('highlight') ? 'bg-yellow-400/20 text-yellow-700 dark:text-yellow-300' : 'text-muted-foreground'
             )}
             title="Bôi màu dạ quang"
           >
@@ -235,8 +235,8 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleCode().run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
-              editor.isActive('code') ? 'bg-[#a3e635]/20 text-[#a3e635]' : 'text-slate-300'
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
+              editor.isActive('code') ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]' : 'text-muted-foreground'
             )}
             title="Đoạn mã (Code inline)"
           >
@@ -250,10 +250,10 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().setTextAlign('left').run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
               editor.isActive({ textAlign: 'left' })
-                ? 'bg-[#a3e635]/20 text-[#a3e635]'
-                : 'text-slate-300'
+                ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]'
+                : 'text-muted-foreground'
             )}
             title="Căn trái"
           >
@@ -263,10 +263,10 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().setTextAlign('center').run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
               editor.isActive({ textAlign: 'center' })
-                ? 'bg-[#a3e635]/20 text-[#a3e635]'
-                : 'text-slate-300'
+                ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]'
+                : 'text-muted-foreground'
             )}
             title="Căn giữa"
           >
@@ -276,10 +276,10 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().setTextAlign('right').run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
               editor.isActive({ textAlign: 'right' })
-                ? 'bg-[#a3e635]/20 text-[#a3e635]'
-                : 'text-slate-300'
+                ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]'
+                : 'text-muted-foreground'
             )}
             title="Căn phải"
           >
@@ -289,10 +289,10 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().setTextAlign('justify').run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
               editor.isActive({ textAlign: 'justify' })
-                ? 'bg-[#a3e635]/20 text-[#a3e635]'
-                : 'text-slate-300'
+                ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]'
+                : 'text-muted-foreground'
             )}
             title="Căn đều 2 bên"
           >
@@ -306,8 +306,8 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
-              editor.isActive('bulletList') ? 'bg-[#a3e635]/20 text-[#a3e635]' : 'text-slate-300'
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
+              editor.isActive('bulletList') ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]' : 'text-muted-foreground'
             )}
             title="Danh sách dấu chấm"
           >
@@ -317,8 +317,8 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
-              editor.isActive('orderedList') ? 'bg-[#a3e635]/20 text-[#a3e635]' : 'text-slate-300'
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
+              editor.isActive('orderedList') ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]' : 'text-muted-foreground'
             )}
             title="Danh sách số"
           >
@@ -328,8 +328,8 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             className={cn(
-              'p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer',
-              editor.isActive('blockquote') ? 'bg-[#a3e635]/20 text-[#a3e635]' : 'text-slate-300'
+              'p-1.5 rounded hover:bg-accent transition-colors cursor-pointer',
+              editor.isActive('blockquote') ? 'bg-[#a3e635]/20 text-emerald-700 dark:text-[#a3e635]' : 'text-muted-foreground'
             )}
             title="Khối trích dẫn"
           >
@@ -338,7 +338,7 @@ export function TipTapEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            className="p-1.5 rounded hover:bg-slate-800 text-slate-300 transition-colors cursor-pointer"
+            className="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors cursor-pointer"
             title="Đường kẻ ngang phân cách"
           >
             <Minus className="size-3.5" />
@@ -351,7 +351,7 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
-            className="p-1.5 rounded hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+            className="p-1.5 rounded hover:bg-accent text-muted-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
             title="Hoàn tác (Ctrl+Z)"
           >
             <Undo className="size-3.5" />
@@ -360,7 +360,7 @@ export function TipTapEditor({
             type="button"
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
-            className="p-1.5 rounded hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+            className="p-1.5 rounded hover:bg-accent text-muted-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
             title="Làm lại (Ctrl+Y)"
           >
             <Redo className="size-3.5" />
@@ -368,7 +368,7 @@ export function TipTapEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
-            className="p-1.5 rounded hover:bg-slate-800 text-slate-300 transition-colors cursor-pointer"
+            className="p-1.5 rounded hover:bg-accent text-muted-foreground transition-colors cursor-pointer"
             title="Xóa định dạng"
           >
             <RemoveFormatting className="size-3.5" />

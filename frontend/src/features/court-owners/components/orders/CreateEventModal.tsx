@@ -91,8 +91,6 @@ export function CreateEventModal({
   // Form states
   const [title, setTitle] = useState('');
   const [sportTypeId, setSportTypeId] = useState('');
-  const [startDate, setStartDate] = useState(`${todayStr}T08:00`);
-  const [endDate, setEndDate] = useState(`${todayStr}T21:00`);
   const [ticketPrice, setTicketPrice] = useState<number | ''>(100000);
   const [slots, setSlots] = useState<number | ''>(16);
   const [skillLevelFrom, setSkillLevelFrom] = useState('Trung bình (Intermediate)');
@@ -118,8 +116,6 @@ export function CreateEventModal({
     if (!newOpen) {
       setTitle('');
       setSportTypeId('');
-      setStartDate(`${todayStr}T08:00`);
-      setEndDate(`${todayStr}T21:00`);
       setTicketPrice(100000);
       setSlots(16);
       setSkillLevelFrom('Trung bình (Intermediate)');
@@ -155,29 +151,48 @@ export function CreateEventModal({
     }, {} as Record<string, SelectedCourtSlot[]>);
   }, [mergedSelectedSlots]);
 
-  // Khi chọn slot từ visual booking, nếu đã có slot thì đồng bộ thời gian bắt đầu và kết thúc
+  // Tự động tính toán ngày và khung giờ tổ chức từ các ca sân đã chọn
+  const eventSchedule = useMemo(() => {
+    if (mergedSelectedSlots.length === 0) return null;
+    let minDate = mergedSelectedSlots[0].date;
+    let minStart = mergedSelectedSlots[0].startTime;
+    let maxEnd = mergedSelectedSlots[0].endTime;
+
+    mergedSelectedSlots.forEach((s) => {
+      if (s.date < minDate) {
+        minDate = s.date;
+      }
+      if (s.startTime < minStart) {
+        minStart = s.startTime;
+      }
+      if (s.endTime > maxEnd) {
+        maxEnd = s.endTime;
+      }
+    });
+
+    const dateParts = minDate.split('-');
+    const displayDate =
+      dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : minDate;
+
+    return {
+      date: minDate,
+      displayDate,
+      startTime: minStart.substring(0, 5),
+      endTime: maxEnd.substring(0, 5),
+      fullStartTime: minStart.length === 5 ? `${minStart}:00` : minStart,
+      fullEndTime: maxEnd.length === 5 ? `${maxEnd}:00` : maxEnd,
+    };
+  }, [mergedSelectedSlots]);
+
+  // Khi chọn slot từ visual booking, cập nhật danh sách slot đã chọn
   const handleConfirmSlots = (slotsPicked: SelectedCourtSlot[]) => {
     setSelectedSlots(slotsPicked);
-
     if (slotsPicked.length > 0) {
-      let minDate = slotsPicked[0].date;
-      let maxDate = slotsPicked[0].date;
-      let minStart = slotsPicked[0].startTime;
-      let maxEnd = slotsPicked[0].endTime;
-
-      slotsPicked.forEach((s) => {
-        if (s.date < minDate || (s.date === minDate && s.startTime < minStart)) {
-          minDate = s.date;
-          minStart = s.startTime;
-        }
-        if (s.date > maxDate || (s.date === maxDate && s.endTime > maxEnd)) {
-          maxDate = s.date;
-          maxEnd = s.endTime;
-        }
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next.courtSlots;
+        return next;
       });
-
-      setStartDate(`${minDate}T${minStart.substring(0, 5)}`);
-      setEndDate(`${maxDate}T${maxEnd.substring(0, 5)}`);
     }
   };
 
@@ -189,6 +204,16 @@ export function CreateEventModal({
   // Xử lý submit
   const handleSubmit = async () => {
     setFormErrors({});
+
+    // 0. Kiểm tra đã chọn ít nhất một ca sân chưa
+    if (mergedSelectedSlots.length === 0 || !eventSchedule) {
+      toast.error('Vui lòng chọn ít nhất một ca sân trên Time Grid để xác định thời gian tổ chức sự kiện');
+      setFormErrors((prev) => ({
+        ...prev,
+        courtSlots: 'Vui lòng chọn ít nhất một ca sân để khóa lịch và xác định ngày, giờ sự kiện.',
+      }));
+      return;
+    }
 
     // 1. Chuẩn hóa số điện thoại
     let formattedPhone = customerPhone.trim();
@@ -205,8 +230,8 @@ export function CreateEventModal({
       branchId: activeBranchId,
       title: title.trim(),
       sportTypeId,
-      startDate,
-      endDate,
+      startDate: `${eventSchedule.date}T${eventSchedule.startTime}:00`,
+      endDate: `${eventSchedule.date}T${eventSchedule.endTime}:00`,
       ticketPrice: ticketPrice === '' ? 0 : Number(ticketPrice),
       slots: slots === '' ? 0 : Number(slots),
       skillLevelFrom: skillLevelFrom.trim() || null,
@@ -262,8 +287,11 @@ export function CreateEventModal({
         branchId: activeBranchId,
         title: title.trim(),
         sportTypeId,
-        startDate: new Date(startDate).toISOString(),
-        endDate: new Date(endDate).toISOString(),
+        date: eventSchedule.date,
+        startTime: eventSchedule.fullStartTime,
+        endTime: eventSchedule.fullEndTime,
+        startDate: `${eventSchedule.date}T${eventSchedule.fullStartTime}`,
+        endDate: `${eventSchedule.date}T${eventSchedule.fullEndTime}`,
         ticketPrice: Number(ticketPrice),
         slots: Number(slots),
         skillLevelFrom: skillLevelFrom.trim() || null,
@@ -286,21 +314,21 @@ export function CreateEventModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="w-[95vw] max-w-4xl p-0 overflow-hidden bg-[#070D1A] border border-border/70 text-slate-100 shadow-2xl rounded-2xl flex flex-col max-h-[92vh]">
+        <DialogContent className="w-[95vw] max-w-4xl p-0 overflow-hidden bg-background border border-border/70 text-foreground shadow-2xl rounded-2xl flex flex-col max-h-[92vh]">
           {/* Header Modal - Lưu ý: Không thêm nút X thủ công vì Shadcn DialogContent đã có sẵn */}
-          <DialogHeader className="px-6 py-4 bg-[#0f172a] border-b border-border/60 flex flex-row items-center justify-between shrink-0">
+          <DialogHeader className="px-6 py-4 bg-muted/40 border-b border-border/60 flex flex-row items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="size-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+              <div className="size-9 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center">
                 <Trophy className="size-5" />
               </div>
               <div>
-                <DialogTitle className="text-base sm:text-lg font-bold text-white tracking-wide">
+                <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-wide">
                   Tạo Sự Kiện Thể Thao Mới
                 </DialogTitle>
-                <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
-                  <Store className="size-3 text-[#a3e635]" />
+                <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                  <Store className="size-3 text-emerald-700 dark:text-[#a3e635]" />
                   <span>Chi nhánh:</span>
-                  <span className="font-semibold text-slate-200">
+                  <span className="font-semibold text-foreground">
                     {activeBranchName || 'Chưa chọn'}
                   </span>
                 </div>
@@ -311,96 +339,96 @@ export function CreateEventModal({
           {/* Body Form cuộn mượt */}
           <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
             {/* 1. THÔNG TIN NGƯỜI TẠO / ĐẠI DIỆN TỔ CHỨC */}
-            <div className="rounded-xl bg-[#0e172a]/90 border border-border/60 p-4 space-y-3.5">
-              <div className="flex items-center gap-2 pb-2 border-b border-border/40 text-slate-200 font-bold text-xs">
-                <User className="size-4 text-[#a3e635]" />
+            <div className="rounded-xl bg-muted/30 border border-border/60 p-4 space-y-3.5">
+              <div className="flex items-center gap-2 pb-2 border-b border-border/40 text-foreground font-bold text-xs">
+                <User className="size-4 text-emerald-700 dark:text-[#a3e635]" />
                 <span>Thông tin người tạo / đại diện ban tổ chức</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
+                  <label className="text-[11px] font-semibold text-muted-foreground">
                     Họ tên người tạo
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-2.5 size-4 text-slate-500" />
+                    <User className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
                     <Input
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="VD: Nguyễn Văn A (CLB Pickleball)"
-                      className="pl-9 h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white placeholder:text-slate-500 text-xs focus:border-[#a3e635]"
+                      className="pl-9 h-9.5 rounded-xl bg-card border-border/60 text-foreground placeholder:text-muted-foreground text-xs focus:border-[#a3e635]"
                     />
                   </div>
                   {formErrors.customerName && (
-                    <span className="text-[11px] text-rose-400">{formErrors.customerName}</span>
+                    <span className="text-[11px] text-rose-600 dark:text-rose-400">{formErrors.customerName}</span>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
+                  <label className="text-[11px] font-semibold text-muted-foreground">
                     Số điện thoại liên hệ
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-2.5 size-4 text-slate-500" />
+                    <Phone className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
                     <Input
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="VD: 0912345678"
-                      className="pl-9 h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white placeholder:text-slate-500 text-xs focus:border-[#a3e635]"
+                      className="pl-9 h-9.5 rounded-xl bg-card border-border/60 text-foreground placeholder:text-muted-foreground text-xs focus:border-[#a3e635]"
                     />
                   </div>
                   {formErrors.customerPhone && (
-                    <span className="text-[11px] text-rose-400">{formErrors.customerPhone}</span>
+                    <span className="text-[11px] text-rose-600 dark:text-rose-400">{formErrors.customerPhone}</span>
                   )}
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-slate-300">
+                <label className="text-[11px] font-semibold text-muted-foreground">
                   Ghi chú nội bộ
                 </label>
                 <Input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Nhập ghi chú cho quản trị viên sân (không bắt buộc)..."
-                  className="h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white placeholder:text-slate-500 text-xs focus:border-[#a3e635]"
+                  className="h-9.5 rounded-xl bg-card border-border/60 text-foreground placeholder:text-muted-foreground text-xs focus:border-[#a3e635]"
                 />
               </div>
             </div>
 
             {/* 2. THÔNG TIN CƠ BẢN CỦA SỰ KIỆN */}
-            <div className="rounded-xl bg-[#0e172a]/90 border border-border/60 p-4 space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-border/40 text-slate-200 font-bold text-xs">
-                <Trophy className="size-4 text-amber-400" />
+            <div className="rounded-xl bg-muted/30 border border-border/60 p-4 space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-border/40 text-foreground font-bold text-xs">
+                <Trophy className="size-4 text-amber-700 dark:text-amber-400" />
                 <span>Thông tin chi tiết sự kiện</span>
               </div>
 
               {/* Tên sự kiện & Môn thể thao */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div className="sm:col-span-2 space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
-                    Tên sự kiện / giải đấu <span className="text-rose-400">*</span>
+                  <label className="text-[11px] font-semibold text-muted-foreground">
+                    Tên sự kiện / giải đấu <span className="text-rose-600 dark:text-rose-400">*</span>
                   </label>
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="VD: Giải Pickleball Mở Rộng Mùa Thu 2026"
-                    className="h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white placeholder:text-slate-500 text-xs focus:border-[#a3e635]"
+                    className="h-9.5 rounded-xl bg-card border-border/60 text-foreground placeholder:text-muted-foreground text-xs focus:border-[#a3e635]"
                   />
                   {formErrors.title && (
-                    <span className="text-[11px] text-rose-400">{formErrors.title}</span>
+                    <span className="text-[11px] text-rose-600 dark:text-rose-400">{formErrors.title}</span>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
-                    Bộ môn <span className="text-rose-400">*</span>
+                  <label className="text-[11px] font-semibold text-muted-foreground">
+                    Bộ môn <span className="text-rose-600 dark:text-rose-400">*</span>
                   </label>
                   <Select value={sportTypeId} onValueChange={setSportTypeId}>
-                    <SelectTrigger className="h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white text-xs focus:border-[#a3e635]">
+                    <SelectTrigger className="h-9.5 rounded-xl bg-card border-border/60 text-foreground text-xs focus:border-[#a3e635]">
                       <SelectValue placeholder="Chọn bộ môn" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0f172a] border-border/70 text-slate-200">
+                    <SelectContent className="bg-muted/40 border-border/70 text-foreground">
                       {sportTypes.map((st) => (
                         <SelectItem key={st.id} value={st.id} className="text-xs">
                           {st.name}
@@ -409,55 +437,84 @@ export function CreateEventModal({
                     </SelectContent>
                   </Select>
                   {formErrors.sportTypeId && (
-                    <span className="text-[11px] text-rose-400">{formErrors.sportTypeId}</span>
+                    <span className="text-[11px] text-rose-600 dark:text-rose-400">{formErrors.sportTypeId}</span>
                   )}
                 </div>
               </div>
 
-              {/* Thời gian bắt đầu và kết thúc sự kiện */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
-                    Thời gian bắt đầu tham gia <span className="text-rose-400">*</span>
+              {/* Thời gian tổ chức sự kiện (Tự động từ các ca sân đã chọn trên Time Grid) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+                    <Clock className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
+                    <span>Thời gian diễn ra sự kiện</span>
+                    <span className="text-[10px] text-muted-foreground font-normal">
+                      (Tự động xác định từ ca sân khóa lịch trên Time Grid)
+                    </span>
                   </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-2.5 size-4 text-slate-500" />
-                    <Input
-                      type="datetime-local"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="pl-9 h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white text-xs focus:border-[#a3e635]"
-                    />
-                  </div>
-                  {formErrors.startDate && (
-                    <span className="text-[11px] text-rose-400">{formErrors.startDate}</span>
-                  )}
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
-                    Thời gian kết thúc tham gia <span className="text-rose-400">*</span>
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-2.5 size-4 text-slate-500" />
-                    <Input
-                      type="datetime-local"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="pl-9 h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white text-xs focus:border-[#a3e635]"
-                    />
+                {eventSchedule ? (
+                  <div className="p-3 rounded-xl bg-card border border-emerald-500/40 flex flex-wrap items-center justify-between gap-3 shadow-inner">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-[#a3e635] flex items-center justify-center shrink-0">
+                        <Calendar className="size-4" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Ngày diễn ra</div>
+                        <div className="text-xs font-bold text-foreground tracking-wide">
+                          {eventSchedule.displayDate}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <Clock className="size-4" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Khung giờ thi đấu</div>
+                        <div className="text-xs font-bold text-amber-700 dark:text-amber-300 font-mono">
+                          {eventSchedule.startTime} - {eventSchedule.endTime}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border/50 text-[11px] text-foreground">
+                      <Grid className="size-3 text-emerald-700 dark:text-[#a3e635]" />
+                      <span>{mergedSelectedSlots.length} ca sân</span>
+                    </div>
                   </div>
-                  {formErrors.endDate && (
-                    <span className="text-[11px] text-rose-400">{formErrors.endDate}</span>
-                  )}
-                </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-card/60 border border-dashed border-border/70 text-muted-foreground text-xs flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock className="size-4 text-muted-foreground shrink-0" />
+                      <span>Chưa chọn ca sân. Bấm <strong>"Chọn ca sân trực quan"</strong> ở dưới để tự động xác định ngày & giờ.</span>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (!activeBranchId) {
+                          toast.warning('Vui lòng chọn chi nhánh trước khi chọn ca sân.');
+                          return;
+                        }
+                        setIsVisualBookingOpen(true);
+                      }}
+                      className="h-7 text-[11px] px-2.5 rounded-lg border-border bg-card hover:bg-muted text-foreground cursor-pointer shrink-0"
+                    >
+                      Chọn ca sân
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Giá vé & Số lượng vé */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
-                    Giá vé / người (VNĐ) <span className="text-rose-400">*</span>
+                  <label className="text-[11px] font-semibold text-muted-foreground">
+                    Giá vé / người (VNĐ) <span className="text-rose-600 dark:text-rose-400">*</span>
                   </label>
                   <div className="relative">
                     <CircleDollarSign className="absolute left-3 top-2.5 size-4 text-emerald-400" />
@@ -470,20 +527,20 @@ export function CreateEventModal({
                         setTicketPrice(e.target.value === '' ? '' : Number(e.target.value))
                       }
                       placeholder="0 (Miễn phí)"
-                      className="pl-9 h-9.5 rounded-xl bg-[#131d31] border-border/60 text-emerald-400 font-mono font-semibold text-xs focus:border-[#a3e635]"
+                      className="pl-9 h-9.5 rounded-xl bg-card border-border/60 text-emerald-400 font-mono font-semibold text-xs focus:border-[#a3e635]"
                     />
                   </div>
                   {formErrors.ticketPrice && (
-                    <span className="text-[11px] text-rose-400">{formErrors.ticketPrice}</span>
+                    <span className="text-[11px] text-rose-600 dark:text-rose-400">{formErrors.ticketPrice}</span>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
-                    Số lượng người tham gia tối đa (Slots) <span className="text-rose-400">*</span>
+                  <label className="text-[11px] font-semibold text-muted-foreground">
+                    Số lượng người tham gia tối đa (Slots) <span className="text-rose-600 dark:text-rose-400">*</span>
                   </label>
                   <div className="relative">
-                    <Users className="absolute left-3 top-2.5 size-4 text-[#a3e635]" />
+                    <Users className="absolute left-3 top-2.5 size-4 text-emerald-700 dark:text-[#a3e635]" />
                     <Input
                       type="number"
                       min={1}
@@ -492,11 +549,11 @@ export function CreateEventModal({
                         setSlots(e.target.value === '' ? '' : Number(e.target.value))
                       }
                       placeholder="16"
-                      className="pl-9 h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white font-mono font-semibold text-xs focus:border-[#a3e635]"
+                      className="pl-9 h-9.5 rounded-xl bg-card border-border/60 text-foreground font-mono font-semibold text-xs focus:border-[#a3e635]"
                     />
                   </div>
                   {formErrors.slots && (
-                    <span className="text-[11px] text-rose-400">{formErrors.slots}</span>
+                    <span className="text-[11px] text-rose-600 dark:text-rose-400">{formErrors.slots}</span>
                   )}
                 </div>
               </div>
@@ -504,14 +561,14 @@ export function CreateEventModal({
               {/* Yêu cầu trình độ người tham gia */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
+                  <label className="text-[11px] font-semibold text-muted-foreground">
                     Trình độ tối thiểu (Từ)
                   </label>
                   <Select value={skillLevelFrom} onValueChange={setSkillLevelFrom}>
-                    <SelectTrigger className="h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white text-xs focus:border-[#a3e635]">
+                    <SelectTrigger className="h-9.5 rounded-xl bg-card border-border/60 text-foreground text-xs focus:border-[#a3e635]">
                       <SelectValue placeholder="Chọn trình độ" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0f172a] border-border/70 text-slate-200">
+                    <SelectContent className="bg-muted/40 border-border/70 text-foreground">
                       {SKILL_LEVEL_OPTIONS.map((opt) => (
                         <SelectItem key={opt} value={opt} className="text-xs">
                           {opt}
@@ -522,14 +579,14 @@ export function CreateEventModal({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">
+                  <label className="text-[11px] font-semibold text-muted-foreground">
                     Trình độ tối đa (Đến)
                   </label>
                   <Select value={skillLevelTo} onValueChange={setSkillLevelTo}>
-                    <SelectTrigger className="h-9.5 rounded-xl bg-[#131d31] border-border/60 text-white text-xs focus:border-[#a3e635]">
+                    <SelectTrigger className="h-9.5 rounded-xl bg-card border-border/60 text-foreground text-xs focus:border-[#a3e635]">
                       <SelectValue placeholder="Chọn trình độ" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0f172a] border-border/70 text-slate-200">
+                    <SelectContent className="bg-muted/40 border-border/70 text-foreground">
                       {SKILL_LEVEL_OPTIONS.map((opt) => (
                         <SelectItem key={opt} value={opt} className="text-xs">
                           {opt}
@@ -542,13 +599,13 @@ export function CreateEventModal({
             </div>
 
             {/* 3. MÔ TẢ SỰ KIỆN VỚI TIPTAP EDITOR (DOCX STYLE TOOLBAR) */}
-            <div className="rounded-xl bg-[#0e172a]/90 border border-border/60 p-4 space-y-2">
+            <div className="rounded-xl bg-muted/30 border border-border/60 p-4 space-y-2">
               <div className="flex items-center justify-between pb-2 border-b border-border/40">
-                <div className="flex items-center gap-2 text-slate-200 font-bold text-xs">
-                  <FileText className="size-4 text-[#a3e635]" />
+                <div className="flex items-center gap-2 text-foreground font-bold text-xs">
+                  <FileText className="size-4 text-emerald-700 dark:text-[#a3e635]" />
                   <span>Nội dung & Thể lệ sự kiện (Trình soạn thảo TipTap Rich Text)</span>
                 </div>
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-muted-foreground">
                   Hỗ trợ tiêu đề, in đậm, nghiêng, gạch chân, danh sách, màu sắc...
                 </span>
               </div>
@@ -562,12 +619,12 @@ export function CreateEventModal({
             </div>
 
             {/* 4. KHÓA LỊCH SÂN (COURT SLOTS) - TÁI SỬ DỤNG VISUAL BOOKING MODAL */}
-            <div className="rounded-xl bg-[#0e172a]/90 border border-border/60 p-4 space-y-3">
+            <div className="rounded-xl bg-muted/30 border border-border/60 p-4 space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-border/40">
-                <div className="flex items-center gap-2 text-slate-200 font-bold text-xs">
-                  <Grid className="size-4 text-[#a3e635]" />
+                <div className="flex items-center gap-2 text-foreground font-bold text-xs">
+                  <Grid className="size-4 text-emerald-700 dark:text-[#a3e635]" />
                   <span>Các ca sân khóa lịch trên Time Grid</span>
-                  <span className="text-rose-400">*</span>
+                  <span className="text-rose-600 dark:text-rose-400">*</span>
                 </div>
 
                 <Button
@@ -588,7 +645,7 @@ export function CreateEventModal({
               </div>
 
               {formErrors.courtSlots && (
-                <div className="text-xs text-rose-400 font-medium">
+                <div className="text-xs text-rose-600 dark:text-rose-400 font-medium">
                   {formErrors.courtSlots}
                 </div>
               )}
@@ -606,11 +663,11 @@ export function CreateEventModal({
                     return (
                       <div
                         key={dateKey}
-                        className="rounded-xl bg-[#070D1A] border border-border/50 p-3 space-y-2"
+                        className="rounded-xl bg-background border border-border/50 p-3 space-y-2"
                       >
-                        <div className="flex items-center justify-between text-xs font-bold text-[#a3e635]">
+                        <div className="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-[#a3e635]">
                           <span>Ngày: {displayDate}</span>
-                          <span className="text-[11px] text-slate-400 font-normal">
+                          <span className="text-[11px] text-muted-foreground font-normal">
                             {slotsGroup.length} ca sân được giữ
                           </span>
                         </div>
@@ -619,25 +676,25 @@ export function CreateEventModal({
                           {slotsGroup.map((slot, sIdx) => (
                             <div
                               key={sIdx}
-                              className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-200 hover:border-slate-700"
+                              className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-muted/40 border border-border text-foreground hover:border-border"
                             >
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold text-white">
+                                <span className="font-semibold text-foreground">
                                   {slot.courtName}
                                 </span>
-                                <span className="text-slate-400 font-mono text-[11px]">
+                                <span className="text-muted-foreground font-mono text-[11px]">
                                   ({slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)})
                                 </span>
                               </div>
 
                               <div className="flex items-center gap-3">
-                                <span className="font-mono text-[#a3e635] font-semibold text-xs">
+                                <span className="font-mono text-emerald-700 dark:text-[#a3e635] font-semibold text-xs">
                                   {slot.price.toLocaleString('vi-VN')} đ
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveSlot(sIdx)}
-                                  className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                                  className="text-muted-foreground hover:text-rose-600 dark:text-rose-400 transition-colors p-1"
                                   title="Xóa ca sân này"
                                 >
                                   <Trash2 className="size-3.5" />
@@ -653,13 +710,13 @@ export function CreateEventModal({
               ) : (
                 <div
                   onClick={() => setIsVisualBookingOpen(true)}
-                  className="p-6 rounded-xl border border-dashed border-border/60 text-center text-xs text-slate-400 hover:border-[#a3e635]/60 hover:text-slate-300 cursor-pointer transition-colors space-y-1.5"
+                  className="p-6 rounded-xl border border-dashed border-border/60 text-center text-xs text-muted-foreground hover:border-[#a3e635]/60 hover:text-muted-foreground cursor-pointer transition-colors space-y-1.5"
                 >
-                  <Grid className="size-6 text-slate-500 mx-auto" />
-                  <div className="font-semibold text-slate-300">
+                  <Grid className="size-6 text-muted-foreground mx-auto" />
+                  <div className="font-semibold text-muted-foreground">
                     Chưa có ca sân nào được chọn cho sự kiện này
                   </div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-muted-foreground">
                     Bấm vào đây để mở Time Grid và chọn các sân con cùng khung giờ tổ chức.
                   </div>
                 </div>
@@ -668,12 +725,12 @@ export function CreateEventModal({
           </div>
 
           {/* Footer Modal: Submit Action */}
-          <div className="px-6 py-4 bg-[#0f172a] border-t border-border/60 flex items-center justify-between shrink-0">
-            <div className="text-xs text-slate-400">
+          <div className="px-6 py-4 bg-muted/40 border-t border-border/60 flex items-center justify-between shrink-0">
+            <div className="text-xs text-muted-foreground">
               {selectedSlots.length > 0 && (
                 <span>
                   Đã chọn{' '}
-                  <strong className="text-white">{mergedSelectedSlots.length}</strong> ca sân
+                  <strong className="text-foreground">{mergedSelectedSlots.length}</strong> ca sân
                   khóa lịch
                 </span>
               )}
@@ -684,7 +741,7 @@ export function CreateEventModal({
                 type="button"
                 variant="outline"
                 onClick={() => handleOpenChange(false)}
-                className="h-9 px-4 rounded-xl border-slate-700 bg-transparent hover:bg-slate-800 text-slate-300 text-xs font-semibold cursor-pointer"
+                className="h-9 px-4 rounded-xl border-border bg-transparent hover:bg-accent text-muted-foreground text-xs font-semibold cursor-pointer"
               >
                 Hủy bỏ
               </Button>
@@ -717,6 +774,7 @@ export function CreateEventModal({
         branchName={activeBranchName}
         initialSlots={selectedSlots}
         onConfirm={handleConfirmSlots}
+        lockSameTimeSlots={true}
       />
     </>
   );

@@ -120,14 +120,14 @@ export function FixedOrderTable({
                   className="border-l-2 border-[#a3e635] pl-2.5 py-0.5 space-y-0.5"
                 >
                   <div className="font-semibold text-foreground text-xs flex items-center gap-1.5 flex-wrap">
-                    <span className="text-white">Chu kỳ {idx + 1}:</span>
-                    <span className="text-slate-200">{courtText}</span>
+                    <span className="text-foreground">Chu kỳ {idx + 1}:</span>
+                    <span className="text-foreground">{courtText}</span>
                   </div>
                   <div className="text-xs text-muted-foreground font-mono">
-                    <span className="text-slate-300 font-medium">{timeText}</span>{' '}
+                    <span className="text-muted-foreground font-medium">{timeText}</span>{' '}
                     <span>({daysText})</span>{' '}
-                    <span className="text-slate-500">•</span>{' '}
-                    <span className="text-slate-300">{dateRangeText}</span>
+                    <span className="text-muted-foreground">•</span>{' '}
+                    <span className="text-muted-foreground">{dateRangeText}</span>
                   </div>
                 </div>
               );

@@ -1,8 +1,66 @@
+import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import Autoplay from 'embla-carousel-autoplay';
 import { Button } from '@/components/ui/button';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from '@/components/ui/carousel';
+import { cn } from '@/lib/utils';
+
+interface HeroSlide {
+  image: string;
+  alt: string;
+  badgeTitle: string;
+  badgeSubtitle: string;
+}
+
+const HERO_SLIDES: HeroSlide[] = [
+  {
+    image: '/images/hero-1.jpg',
+    alt: 'Nhóm bạn thư giãn sau giờ chơi thể thao tại công viên Vinhomes',
+    badgeTitle: 'Kèo bóng đá tối nay',
+    badgeSubtitle: '19:30 · Thủ Đức · còn 2 chỗ',
+  },
+  {
+    image: '/images/hero-2.jpg',
+    alt: 'Trận giao lưu pickleball sôi nổi tại cụm sân hiện đại',
+    badgeTitle: 'Kèo Pickleball đôi nam nữ',
+    badgeSubtitle: '18:00 · Quận 7 · còn 1 chỗ',
+  },
+  {
+    image: '/images/hero-3.jpg',
+    alt: 'Trận bóng đá giao hữu dưới ánh đèn sân cỏ nhân tạo',
+    badgeTitle: 'Kèo bóng đá sân 7',
+    badgeSubtitle: '20:00 · Bình Thạnh · còn 3 chỗ',
+  },
+];
 
 export function HeroSection() {
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [current, setCurrent] = React.useState(0);
+  const [count, setCount] = React.useState(HERO_SLIDES.length);
+
+  const autoplayPlugin = React.useRef(
+    Autoplay({ delay: 3500, stopOnInteraction: false, stopOnMouseEnter: true })
+  );
+
+  React.useEffect(() => {
+    if (!api) return;
+
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+
+    api.on('select', () => {
+      setCurrent(api.selectedScrollSnap());
+    });
+  }, [api]);
+
+  const activeSlide = HERO_SLIDES[current] || HERO_SLIDES[0];
+
   return (
     <section className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-8 max-w-7xl">
@@ -44,14 +102,14 @@ export function HeroSection() {
 
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-4 pt-6 sm:pt-8 border-t border-border/50 max-w-md">
-              <div>
-                <div className="font-heading font-black text-2xl sm:text-3xl text-foreground">
+              <Link to="/courts" className="group block cursor-pointer">
+                <div className="font-heading font-black text-2xl sm:text-3xl text-foreground group-hover:text-[#397B48] transition-colors">
                   300+
                 </div>
-                <div className="text-xs text-muted-foreground mt-0.5 font-medium">
+                <div className="text-xs text-muted-foreground mt-0.5 font-medium group-hover:text-foreground transition-colors">
                   sân đang hoạt động
                 </div>
-              </div>
+              </Link>
               <div>
                 <div className="font-heading font-black text-2xl sm:text-3xl text-foreground">
                   4,8/5
@@ -60,53 +118,113 @@ export function HeroSection() {
                   từ người chơi
                 </div>
               </div>
-              <div>
-                <div className="font-heading font-black text-2xl sm:text-3xl text-foreground">
+              <Link to="/courts" className="group block cursor-pointer">
+                <div className="font-heading font-black text-2xl sm:text-3xl text-foreground group-hover:text-[#397B48] transition-colors">
                   24/7
                 </div>
-                <div className="text-xs text-muted-foreground mt-0.5 font-medium">
+                <div className="text-xs text-muted-foreground mt-0.5 font-medium group-hover:text-foreground transition-colors">
                   đặt sân trực tuyến
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
 
-          {/* Right Column: Hero Image with Floating Badges */}
+          {/* Right Column: Hero Image Carousel with Floating Badges */}
           <div className="lg:col-span-6 relative">
-            <div className="relative mx-auto max-w-md lg:max-w-none">
-              {/* Main Image Container */}
-              <div className="relative aspect-[4/3] sm:aspect-[14/11] rounded-3xl overflow-hidden shadow-2xl border border-border/40 bg-muted">
-                <img
-                  src="https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=1200&q=80"
-                  alt="Nhóm bạn thư giãn sau giờ chơi thể thao"
-                  className="w-full h-full object-cover object-center"
-                  loading="eager"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
-              </div>
+            <div className="relative mx-auto max-w-md lg:max-w-none group">
+              <Carousel
+                plugins={[autoplayPlugin.current]}
+                className="w-full relative"
+                opts={{
+                  loop: true,
+                }}
+                setApi={setApi}
+              >
+                {/* Main Carousel Slides */}
+                <CarouselContent className="-ml-0">
+                  {HERO_SLIDES.map((slide, index) => (
+                    <CarouselItem key={index} className="pl-0">
+                      <div className="relative aspect-[4/3] sm:aspect-[14/11] w-full rounded-3xl overflow-hidden shadow-2xl border border-border/40 bg-muted">
+                        <img
+                          src={slide.image}
+                          alt={slide.alt}
+                          className="w-full h-full object-cover object-center select-none"
+                          loading={index === 0 ? 'eager' : 'lazy'}
+                          draggable={false}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
 
-              {/* Floating Badge 1: Top-Right (Kèo đang chờ) */}
-              <div className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-[#18231A]/95 text-white backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-white/10 flex flex-col items-center min-w-[70px]">
-                <span className="font-heading font-black text-2xl sm:text-3xl leading-none text-[#51B367]">
-                  12
-                </span>
-                <span className="text-[9px] font-bold tracking-wider uppercase text-slate-300 mt-1">
-                  KÈO ĐANG CHỜ
-                </span>
-              </div>
+                {/* Left/Right manual slide buttons on hover */}
+                <button
+                  type="button"
+                  onClick={() => api?.scrollPrev()}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 size-9 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-md"
+                  aria-label="Hình trước"
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => api?.scrollNext()}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 size-9 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-md"
+                  aria-label="Hình kế tiếp"
+                >
+                  <ChevronRight className="size-5" />
+                </button>
 
-              {/* Floating Card 2: Bottom-Left (Kèo bóng đá tối nay) */}
-              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 bg-card/95 text-card-foreground backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-border/60 max-w-[260px] animate-in fade-in-50 duration-500">
-                <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[#397B48] animate-pulse" />
-                  <span className="font-bold text-xs sm:text-sm text-foreground">
-                    Kèo bóng đá tối nay
-                  </span>
+                {/* Slide Indicators / Dots */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 pointer-events-auto">
+                  {Array.from({ length: count }).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => api?.scrollTo(i)}
+                      className={cn(
+                        'h-1.5 rounded-full transition-all duration-300 cursor-pointer shadow-sm',
+                        current === i
+                          ? 'w-6 bg-white'
+                          : 'w-1.5 bg-white/50 hover:bg-white/80'
+                      )}
+                      aria-label={`Chuyển tới ảnh ${i + 1}`}
+                    />
+                  ))}
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-1 font-medium pl-4">
-                  19:30 · Thủ Đức · còn 2 chỗ
-                </p>
-              </div>
+
+                {/* Floating Badge 1: Top-Right (12 KÈO ĐANG CHỜ - Clickable) */}
+                <Link
+                  to="/matches"
+                  className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 bg-[#18231A]/95 hover:bg-[#203323] text-white backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-white/10 flex flex-col items-center min-w-[72px] transition-all hover:scale-105 active:scale-95 cursor-pointer group/badge"
+                  title="Xem các kèo giao lưu đang mở"
+                >
+                  <span className="font-heading font-black text-2xl sm:text-3xl leading-none text-[#51B367] group-hover/badge:text-emerald-400">
+                    12
+                  </span>
+                  <span className="text-[9px] font-bold tracking-wider uppercase text-slate-300 mt-1">
+                    KÈO ĐANG CHỜ
+                  </span>
+                </Link>
+
+                {/* Floating Card 2: Bottom-Left (Kèo thể thao - Clickable) */}
+                <Link
+                  to="/matches"
+                  className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 z-20 bg-card/95 hover:bg-card text-card-foreground backdrop-blur-md px-4 py-3 rounded-2xl shadow-2xl border border-border/70 max-w-[270px] transition-all duration-300 hover:scale-105 hover:border-[#397B48]/50 active:scale-95 cursor-pointer block"
+                  title="Xem chi tiết kèo"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-[#397B48] animate-pulse shrink-0" />
+                    <span className="font-bold text-xs sm:text-sm text-foreground truncate">
+                      {activeSlide.badgeTitle}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 font-medium pl-4 truncate">
+                    {activeSlide.badgeSubtitle}
+                  </p>
+                </Link>
+              </Carousel>
             </div>
           </div>
         </div>

@@ -805,13 +805,13 @@ export function FixedVisualBookingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-screen max-w-none h-screen max-h-none p-0 m-0 rounded-none border-none bg-[#070D1A] text-foreground flex flex-col overflow-hidden shadow-2xl z-[70]">
+      <DialogContent className="w-screen max-w-none h-screen max-h-none p-0 m-0 rounded-none border-none bg-background text-foreground flex flex-col overflow-hidden shadow-2xl z-[70]">
         {/* =================================================================== */}
         {/* HEADER MODAL TOÀN MÀN HÌNH */}
         {/* =================================================================== */}
-        <div className="px-6 py-3.5 bg-[#0B1324] border-b border-border/70 flex items-center justify-between shrink-0">
+        <div className="px-6 py-3.5 bg-card border-b border-border/70 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-[#a3e635]/15 text-[#a3e635] flex items-center justify-center font-bold">
+            <div className="size-9 rounded-xl bg-[#a3e635]/15 text-emerald-700 dark:text-[#a3e635] flex items-center justify-center font-bold">
               <Repeat className="size-5" />
             </div>
             <div>
@@ -819,7 +819,7 @@ export function FixedVisualBookingModal({
                 <h2 className="text-base sm:text-lg font-bold text-foreground">
                   {title}
                 </h2>
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-400 border border-sky-500/30">
                   Toàn màn hình
                 </span>
               </div>
@@ -838,16 +838,16 @@ export function FixedVisualBookingModal({
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           {/* BANNER HIỂN THỊ CÁC CHU KỲ ĐÃ CHỌN TRƯỚC ĐÓ ĐỂ DỄ THEO DÕI */}
           {existingCycles && existingCycles.length > 0 && (
-            <div className="p-3.5 bg-[#09152a] border border-sky-500/40 rounded-xl space-y-2.5">
+            <div className="p-3.5 bg-background border border-sky-500/40 rounded-xl space-y-2.5">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2 text-xs font-bold text-sky-300">
-                  <div className="size-5 rounded-md bg-sky-500/20 flex items-center justify-center text-sky-400">
+                <div className="flex items-center gap-2 text-xs font-bold text-sky-700 dark:text-sky-300">
+                  <div className="size-5 rounded-md bg-sky-500/20 flex items-center justify-center text-sky-700 dark:text-sky-400">
                     <Layers className="size-3.5" />
                   </div>
                   <span>Các chu kỳ đã thêm trước đó trong đơn này ({existingCycles.length} chu kỳ):</span>
                 </div>
-                <span className="text-[11px] text-sky-400/90 font-medium bg-sky-950/60 px-2 py-0.5 rounded border border-sky-500/30">
-                  Đã được đánh dấu huy hiệu <span className="font-bold text-white">CK#</span> trên lưới timeline bên dưới
+                <span className="text-[11px] text-sky-700 dark:text-sky-400/90 font-medium bg-sky-950/60 px-2 py-0.5 rounded border border-sky-500/30">
+                  Đã được đánh dấu huy hiệu <span className="font-bold text-foreground">CK#</span> trên lưới timeline bên dưới
                 </span>
               </div>
 
@@ -855,27 +855,27 @@ export function FixedVisualBookingModal({
                 {existingCycles.map((c, idx) => (
                   <div
                     key={idx}
-                    className="p-2.5 rounded-lg bg-[#0c1a33] border border-sky-500/30 text-xs text-slate-200 space-y-1 shadow-xs"
+                    className="p-2.5 rounded-lg bg-muted/30 border border-sky-500/30 text-xs text-foreground space-y-1 shadow-xs"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
+                      <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-700 dark:text-sky-300 font-bold text-[10px] border border-sky-500/30">
                         Chu kỳ #{idx + 1}
                       </span>
-                      <span className="text-[11px] text-[#a3e635] font-bold">
+                      <span className="text-[11px] text-emerald-700 dark:text-[#a3e635] font-bold">
                         {c.totalSessions} buổi
                       </span>
                     </div>
-                    <div className="font-semibold text-white truncate" title={c.courtTypeName}>
+                    <div className="font-semibold text-foreground truncate" title={c.courtTypeName}>
                       {c.courtTypeName}
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-300 font-mono">
-                      <span className="text-[#a3e635] font-bold">
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-mono">
+                      <span className="text-emerald-700 dark:text-[#a3e635] font-bold">
                         {c.startTime.slice(0, 5)} - {c.endTime.slice(0, 5)}
                       </span>
                       <span>•</span>
-                      <span className="text-sky-300">{c.daysOfWeekLabels.join(', ')}</span>
+                      <span className="text-sky-700 dark:text-sky-300">{c.daysOfWeekLabels.join(', ')}</span>
                     </div>
-                    <div className="text-[11px] text-slate-400 truncate">
+                    <div className="text-[11px] text-muted-foreground truncate">
                       Sân: {c.courtNames.join(', ')}
                     </div>
                   </div>
@@ -886,8 +886,8 @@ export function FixedVisualBookingModal({
 
           {/* BANNER BÁO LỖI TRÙNG LỊCH NỔI BẬT NẾU CÓ CONFLICT */}
           {conflicts.length > 0 && (
-            <div className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-xl flex items-start gap-3 text-rose-300 animate-in fade-in-0 duration-200">
-              <AlertCircle className="size-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-xl flex items-start gap-3 text-rose-700 dark:text-rose-300 animate-in fade-in-0 duration-200">
+              <AlertCircle className="size-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
               <div className="space-y-1 text-xs flex-1">
                 <div className="font-bold text-rose-200 flex items-center justify-between">
                   <span>Phát hiện trùng lịch đặt sân ({conflicts.length} ca bị trùng)!</span>
@@ -895,7 +895,7 @@ export function FixedVisualBookingModal({
                     Không thể lưu chu kỳ
                   </span>
                 </div>
-                <p className="text-[11px] text-rose-300">
+                <p className="text-[11px] text-rose-700 dark:text-rose-300">
                   Khung giờ bạn đang chọn bị trùng với các lịch đã đặt trước đó trong tháng:
                 </p>
                 <div className="flex flex-wrap gap-2 pt-1 max-h-24 overflow-y-auto">
@@ -917,8 +917,8 @@ export function FixedVisualBookingModal({
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 bg-card/40 p-4 rounded-xl border border-border/60">
             {/* Chọn Tháng áp dụng (Bắt buộc trong 1 tháng duy nhất, không chọn tháng quá khứ) */}
             <div className="md:col-span-3 space-y-1.5">
-              <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                <Calendar className="size-3.5 text-white" />
+              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Calendar className="size-3.5 text-foreground" />
                 Tháng áp dụng
               </label>
               <Input
@@ -927,7 +927,7 @@ export function FixedVisualBookingModal({
                 value={selectedMonth}
                 onChange={(e) => handleMonthChange(e.target.value)}
                 style={{ colorScheme: 'dark' }}
-                className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg font-semibold text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
+                className="bg-background border-border/70 text-xs h-9 rounded-lg font-semibold text-foreground dark:[color-scheme:dark] dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
               />
               <span className="text-[10px] text-muted-foreground block">
                 Chỉ trong tháng {selectedMonth.slice(5)}/{selectedMonth.slice(0, 4)}
@@ -936,8 +936,8 @@ export function FixedVisualBookingModal({
 
             {/* Khoảng ngày trong tháng (min/max khóa chặt từ ngày hôm nay đến cuối tháng) */}
             <div className="md:col-span-4 space-y-1.5">
-              <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                <Calendar className="size-3.5 text-white" />
+              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Calendar className="size-3.5 text-foreground" />
                 Từ ngày - Đến ngày
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -948,7 +948,7 @@ export function FixedVisualBookingModal({
                   value={startDate}
                   onChange={(e) => handleStartDateChange(e.target.value)}
                   style={{ colorScheme: 'dark' }}
-                  className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg font-semibold text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
+                  className="bg-background border-border/70 text-xs h-9 rounded-lg font-semibold text-foreground dark:[color-scheme:dark] dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
                 />
                 <Input
                   type="date"
@@ -957,7 +957,7 @@ export function FixedVisualBookingModal({
                   value={endDate}
                   onChange={(e) => handleEndDateChange(e.target.value)}
                   style={{ colorScheme: 'dark' }}
-                  className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg font-semibold text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
+                  className="bg-background border-border/70 text-xs h-9 rounded-lg font-semibold text-foreground dark:[color-scheme:dark] dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
                 />
               </div>
               <span className="text-[10px] text-muted-foreground block">
@@ -969,8 +969,8 @@ export function FixedVisualBookingModal({
 
             {/* Các Thứ lặp lại trong tuần */}
             <div className="md:col-span-5 space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <Clock className="size-3.5 text-[#a3e635]" />
+              <label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <Clock className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
                 Các Thứ lặp lại trong tuần
               </label>
               <div className="flex flex-wrap gap-1.5">
@@ -983,7 +983,7 @@ export function FixedVisualBookingModal({
                       onClick={() => toggleDayOfWeek(d.maskValue)}
                       className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isSelected
                           ? 'bg-[#a3e635] text-black shadow-sm'
-                          : 'bg-[#0b1324] text-slate-400 border border-border/60 hover:text-white'
+                          : 'bg-background text-muted-foreground border border-border/60 hover:text-foreground'
                         }`}
                     >
                       {d.short}
@@ -991,7 +991,7 @@ export function FixedVisualBookingModal({
                   );
                 })}
               </div>
-              <span className="text-[11px] text-[#a3e635] font-semibold block">
+              <span className="text-[11px] text-emerald-700 dark:text-[#a3e635] font-semibold block">
                 Đã chọn: {activeSelectedDays.map((d) => d.label).join(', ') || 'Chưa chọn'}
               </span>
             </div>
@@ -1001,12 +1001,12 @@ export function FixedVisualBookingModal({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 bg-card/40 p-4 rounded-xl border border-border/60">
             {/* Loại sân */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">Loại sân</label>
+              <label className="text-xs font-bold text-muted-foreground">Loại sân</label>
               <Select value={selectedCourtTypeId} onValueChange={handleCourtTypeChange}>
-                <SelectTrigger className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg">
+                <SelectTrigger className="bg-background border-border/70 text-xs h-9 rounded-lg">
                   <SelectValue placeholder="Chọn loại sân" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0B1324] border-border">
+                <SelectContent className="bg-card border-border">
                   {pricingConfig.map((ct) => (
                     <SelectItem key={ct.courtTypeId} value={ct.courtTypeId} className="text-xs">
                       {ct.courtTypeName}
@@ -1018,12 +1018,12 @@ export function FixedVisualBookingModal({
 
             {/* Bảng giá */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">Bảng giá áp dụng</label>
+              <label className="text-xs font-bold text-muted-foreground">Bảng giá áp dụng</label>
               <Select value={selectedPriceTableId} onValueChange={setSelectedPriceTableId}>
-                <SelectTrigger className="bg-[#0b1324] border-border/70 text-xs h-9 rounded-lg">
+                <SelectTrigger className="bg-background border-border/70 text-xs h-9 rounded-lg">
                   <SelectValue placeholder="Chọn bảng giá" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0B1324] border-border">
+                <SelectContent className="bg-card border-border">
                   {activeCourtType?.priceTables?.map((pt) => (
                     <SelectItem key={pt.id} value={pt.id} className="text-xs">
                       {pt.name}
@@ -1036,15 +1036,15 @@ export function FixedVisualBookingModal({
             {/* Khung giờ đã chọn từ Lưới Timeline */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <Clock className="size-3.5 text-[#a3e635]" />
+                <label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
                   Khung giờ chọn từ Lưới
                 </label>
                 {startTime && endTime && (
                   <button
                     type="button"
                     onClick={handleResetTimeSelection}
-                    className="text-[11px] text-slate-400 hover:text-rose-400 flex items-center gap-1 cursor-pointer transition-colors"
+                    className="text-[11px] text-muted-foreground hover:text-rose-600 dark:text-rose-400 flex items-center gap-1 cursor-pointer transition-colors"
                     title="Nhấp để xóa và chọn lại giờ trên lưới"
                   >
                     <RotateCcw className="size-3" />
@@ -1052,10 +1052,10 @@ export function FixedVisualBookingModal({
                   </button>
                 )}
               </div>
-              <div className="h-9 px-3 rounded-lg bg-[#0b1324] border border-border/70 flex items-center justify-between">
+              <div className="h-9 px-3 rounded-lg bg-background border border-border/70 flex items-center justify-between">
                 {startTime && endTime ? (
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-xs text-[#a3e635]">
+                    <span className="font-mono font-bold text-xs text-emerald-700 dark:text-[#a3e635]">
                       {startTime} - {endTime}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
@@ -1068,7 +1068,7 @@ export function FixedVisualBookingModal({
                   </span>
                 )}
                 {conflicts.length > 0 && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/40">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300 font-semibold border border-rose-500/40">
                     Trùng lịch
                   </span>
                 )}
@@ -1079,8 +1079,8 @@ export function FixedVisualBookingModal({
           {/* HÀNG 3: NGÀY LOẠI TRỪ THÔNG MINH (CHỈ HIỆN CÁC NGÀY TRÙNG VỚI THỨ ĐÃ CHỌN) */}
           <div className="bg-card/40 p-4 rounded-xl border border-border/60 space-y-2.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <AlertTriangle className="size-3.5 text-amber-400" />
+              <label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <AlertTriangle className="size-3.5 text-amber-700 dark:text-amber-400" />
                 Ngày loại trừ (Chỉ hiển thị các ngày trong tháng trùng đúng Thứ đã chọn)
               </label>
               <span className="text-[11px] text-muted-foreground">
@@ -1102,15 +1102,15 @@ export function FixedVisualBookingModal({
                       type="button"
                       onClick={() => handleToggleExceptionDate(item.dateStr)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${isExcluded
-                          ? 'bg-rose-500/15 border-rose-500/50 text-rose-300 line-through'
-                          : 'bg-[#0b1324] border-border/60 text-slate-300 hover:border-slate-500'
+                          ? 'bg-rose-500/15 border-rose-500/50 text-rose-700 dark:text-rose-300 line-through'
+                          : 'bg-background border-border/60 text-muted-foreground hover:border-border'
                         }`}
                     >
                       <span>{item.label}</span>
                       {isExcluded ? (
-                        <X className="size-3 text-rose-400" />
+                        <X className="size-3 text-rose-600 dark:text-rose-400" />
                       ) : (
-                        <Check className="size-3 text-slate-500 opacity-40" />
+                        <Check className="size-3 text-muted-foreground opacity-40" />
                       )}
                     </button>
                   );
@@ -1119,7 +1119,7 @@ export function FixedVisualBookingModal({
             )}
 
             {exceptionDates.length > 0 && (
-              <div className="text-[11px] text-rose-400 font-medium">
+              <div className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">
                 Đã loại trừ {exceptionDates.length} buổi (sẽ không tính vào chu kỳ)
               </div>
             )}
@@ -1128,7 +1128,7 @@ export function FixedVisualBookingModal({
           {/* HÀNG 4: DANH SÁCH SÂN ĐƯỢC CHỌN */}
           {courts.length > 0 && (
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">
+              <label className="text-xs font-bold text-muted-foreground">
                 Sân áp dụng cho chu kỳ:
               </label>
               <div className="flex flex-wrap gap-2">
@@ -1140,14 +1140,14 @@ export function FixedVisualBookingModal({
                       type="button"
                       onClick={() => handleToggleCourt(court.courtId)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer ${isChecked
-                          ? 'bg-[#a3e635]/15 border-[#a3e635] text-[#a3e635]'
-                          : 'bg-[#0b1324] border-border/60 text-slate-300 hover:border-slate-500'
+                          ? 'bg-[#a3e635]/15 border-[#a3e635] text-emerald-700 dark:text-[#a3e635]'
+                          : 'bg-background border-border/60 text-muted-foreground hover:border-border'
                         }`}
                     >
                       <span
                         className={`size-3.5 rounded flex items-center justify-center border text-[9px] ${isChecked
                             ? 'bg-[#a3e635] border-[#a3e635] text-black font-bold'
-                            : 'border-slate-500'
+                            : 'border-border'
                           }`}
                       >
                         {isChecked && <Check className="size-2.5 stroke-[3]" />}
@@ -1163,8 +1163,8 @@ export function FixedVisualBookingModal({
           {/* HÀNG 5: LƯỚI TIMELINE THEO THỨ Ở BÊN TRÁI (LAYOUT DỌC LIÊN TỤC CHUẨN IMAGE 2) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <Layers className="size-3.5 text-[#a3e635]" />
+              <label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <Layers className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
                 Lưới lịch theo các Thứ lặp lại trong tuần (Layout dọc)
               </label>
               <span className="text-[11px] text-muted-foreground">
@@ -1196,10 +1196,10 @@ export function FixedVisualBookingModal({
         {/* =================================================================== */}
         {/* FOOTER MODAL */}
         {/* =================================================================== */}
-        <div className="px-6 py-3.5 bg-[#0B1324] border-t border-border/70 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-3.5 bg-card border-t border-border/70 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>Dự kiến:</span>
-            <span className="font-bold text-[#a3e635] text-sm">{totalSessions} buổi</span>
+            <span className="font-bold text-emerald-700 dark:text-[#a3e635] text-sm">{totalSessions} buổi</span>
             <span>•</span>
             <span>{selectedCourtIds.length} sân</span>
             <span>•</span>
@@ -1207,7 +1207,7 @@ export function FixedVisualBookingModal({
               {startTime && endTime ? `${startTime} - ${endTime}` : 'Chưa chọn giờ trên lưới'}
             </span>
             {conflicts.length > 0 && (
-              <span className="text-rose-400 font-bold ml-2">
+              <span className="text-rose-600 dark:text-rose-400 font-bold ml-2">
                 (Đang trùng {conflicts.length} ca)
               </span>
             )}
@@ -1227,7 +1227,7 @@ export function FixedVisualBookingModal({
               onClick={handleSave}
               disabled={conflicts.length > 0 || !startTime || !endTime}
               className={`font-bold text-xs h-9 rounded-xl cursor-pointer ${conflicts.length > 0 || !startTime || !endTime
-                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
                   : 'bg-[#a3e635] text-black hover:bg-[#8ece28]'
                 }`}
             >
