@@ -2,6 +2,7 @@ using CourtBooking.Application.Data;
 using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Branches.Dtos;
 using CourtBooking.Application.Features.V1.Storages.Dtos;
+using CourtBooking.Application.Helpers;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Entities.Courts;
 using CourtBooking.Domain.Enums;
@@ -40,6 +41,13 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
         // ── Môn thể thao ───────────────────────────────────────────────
         if (request.SportTypeIds is { Count: > 0 } sportTypeIds)
             q = q.Where(b => b.BranchSportTypes.Any(x => sportTypeIds.Contains(x.SportTypeId)));
+
+        // ── Loại sân (VD: Sân 5, Sân 7, Sân đôi...) ──────────────────
+        if (!string.IsNullOrWhiteSpace(request.CourtTypeName))
+        {
+            var ctPattern = $"%{request.CourtTypeName.Trim()}%";
+            q = q.Where(b => b.CourtTypes.Any(ct => EF.Functions.Like(ct.Name, ctPattern)));
+        }
 
         // ── Rating >= X ────────────────────────────────────────────────
         if (request.Rating is { } rating)
@@ -83,18 +91,23 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
         }
 
         // ── Khoảng cách toạ độ: tính ngay trong SQL nếu có toạ độ ──────
-        var hasGeo = request.Latitude is not null && request.Longitude is not null;
-        double lat = (double)(request.Latitude ?? 0);
-        double lng = (double)(request.Longitude ?? 0);
+        // Nếu người dùng không mở định vị (latitude/longitude null), mặc định lấy tọa độ Dinh Độc Lập
+        var userLat = request.Latitude ?? GeoHelper.DefaultLatitude;
+        var userLng = request.Longitude ?? GeoHelper.DefaultLongitude;
+
+        double lat = (double)userLat;
+        double lng = (double)userLng;
         double kmPerDegLng = KmPerDegLngAtEquator * Math.Cos(lat * Math.PI / 180);
 
-        var rows = hasGeo
-            ? (from b in q
-               let dy = ((double)b.Latitude! - lat) * KmPerDegLat
-               let dx = ((double)b.Longitude! - lng) * kmPerDegLng
-               select new { Branch = b, DistanceKm = (double?)Math.Sqrt(dx * dx + dy * dy) })
-            : (from b in q
-               select new { Branch = b, DistanceKm = (double?)null });
+        var rows = from b in q
+                   let hasCoords = b.Latitude != null && b.Longitude != null
+                   let dy = hasCoords ? ((double)b.Latitude! - lat) * KmPerDegLat : 0
+                   let dx = hasCoords ? ((double)b.Longitude! - lng) * kmPerDegLng : 0
+                   select new
+                   {
+                       Branch = b,
+                       DistanceKm = hasCoords ? (double?)Math.Sqrt(dx * dx + dy * dy) : null
+                   };
 
         var totalCount = await rows.CountAsync(cancellationToken);
         if (totalCount == 0)
@@ -106,8 +119,10 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
         // ── Sắp xếp: có Id làm tie-breaker để phân trang ổn định ────────
         var sorted = request.Sort switch
         {
-            "distance" when hasGeo => rows
-                .OrderBy(x => x.DistanceKm)
+            // Sắp xếp theo khoảng cách: đẩy các chi nhánh chưa có tọa độ (null) xuống cuối
+            "distance" => rows
+                .OrderBy(x => x.DistanceKm == null)
+                .ThenBy(x => x.DistanceKm)
                 .ThenBy(x => x.Branch.Id),
 
             "rating_desc" => rows
@@ -118,6 +133,10 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
             "price_asc" => rows
                 .OrderBy(x => x.Branch.MinPrice == null)
                 .ThenBy(x => x.Branch.MinPrice)
+                .ThenBy(x => x.Branch.Id),
+
+            "price_desc" => rows
+                .OrderByDescending(x => x.Branch.MinPrice)
                 .ThenBy(x => x.Branch.Id),
 
             _ => rows
@@ -150,6 +169,13 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                     .FirstOrDefault(),
                 Sports = x.Branch.BranchSportTypes
                     .Select(s => new BranchSportDto(s.SportTypeId, s.SportType.Name))
+                    .ToList(),
+                CourtTypes = x.Branch.CourtTypes
+                    .Select(ct => ct.Name)
+                    .ToList(),
+                Services = x.Branch.ServiceBranches
+                    .Where(sb => sb.IsActive)
+                    .Select(sb => sb.Service.Name)
                     .ToList()
             })
             .ToListAsync(cancellationToken);
@@ -166,9 +192,48 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                 .ToDictionaryAsync(x => x.BranchId, x => x.Count, cancellationToken);
         }
 
+        // ── Tính khoảng giá thực tế từ tất cả bảng giá đang Active của các chi nhánh trang này ──
+        var pageIds = page.Select(p => p.Id).ToList();
+        var branchPriceRanges = new Dictionary<Guid, (decimal Min, decimal Max)>();
+        if (pageIds.Count > 0)
+        {
+            var priceTables = await dbContext.PriceTables.AsNoTracking()
+                .Where(pt => pageIds.Contains(pt.CourtType.BranchId) && pt.IsActive)
+                .Select(pt => new
+                {
+                    BranchId = pt.CourtType.BranchId,
+                    pt.DefaultPrice,
+                    pt.DefaultWalkInPrice,
+                    Rules = pt.Rules.Select(r => new { r.FixedCustomerPrice, r.WalkInCustomerPrice }).ToList()
+                })
+                .ToListAsync(cancellationToken);
+
+            foreach (var g in priceTables.GroupBy(x => x.BranchId))
+            {
+                var prices = new List<decimal>();
+                foreach (var pt in g)
+                {
+                    if (pt.DefaultPrice > 0) prices.Add(pt.DefaultPrice);
+                    if (pt.DefaultWalkInPrice > 0) prices.Add(pt.DefaultWalkInPrice);
+                    foreach (var r in pt.Rules)
+                    {
+                        if (r.FixedCustomerPrice > 0) prices.Add(r.FixedCustomerPrice);
+                        if (r.WalkInCustomerPrice > 0) prices.Add(r.WalkInCustomerPrice);
+                    }
+                }
+                if (prices.Count > 0)
+                {
+                    branchPriceRanges[g.Key] = (prices.Min(), prices.Max());
+                }
+            }
+        }
+
         var items = page.Select(p =>
         {
             var freeCount = freeCountByBranch.GetValueOrDefault(p.Id);
+            var (minPrice, maxPrice) = branchPriceRanges.TryGetValue(p.Id, out var range)
+                ? range
+                : (p.MinPrice, p.MaxPrice);
 
             return new PublicBranchListItemDto(
                 p.Id,
@@ -179,10 +244,12 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                 p.OpenTime,
                 p.CloseTime,
                 p.ReviewAverage,
-                p.DistanceKm,
+                p.DistanceKm.HasValue ? Math.Round(p.DistanceKm.Value, 1) : null,
                 AvailableCourtCount: isTimeSearch ? freeCount : null,
-                p.MinPrice,
-                p.MaxPrice);
+                minPrice,
+                maxPrice,
+                CourtTypes: p.CourtTypes,
+                Services: p.Services);
         }).ToList();
 
         return Result.Success(new PagedList<PublicBranchListItemDto>(

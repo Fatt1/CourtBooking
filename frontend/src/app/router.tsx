@@ -9,6 +9,8 @@ import { ProtectedRoute, OwnerProtectedRoute } from '@/components/layouts/Protec
 
 // Customer / Public Pages
 import { HomePage } from '@/features/customer/pages/HomePage';
+import { CourtsPage as CustomerCourtsPage } from '@/features/customer/pages/CourtsPage';
+import { BranchDetailPage } from '@/features/customer/pages/BranchDetailPage';
 import { CreateReviewPage } from '@/features/customer/pages/CreateReviewPage';
 import { EventsPage } from '@/features/events/pages/EventsPage';
 import { EventDetailPage } from '@/features/events/pages/EventDetailPage';
@@ -49,16 +51,18 @@ export const router = createBrowserRouter([
       // Đánh giá sân
       { path: '/orders/:orderId/review', element: <CreateReviewPage /> },
       { path: '/reviews/create', element: <CreateReviewPage /> },
-      // Placeholder routes trỏ tạm về HomePage nếu khách click
-      { path: '/courts', element: <HomePage /> },
-      { path: '/matches', element: <HomePage /> },
+      // Danh sách sân & Chi nhánh công khai
+      { path: '/courts', element: <CustomerCourtsPage /> },
+      { path: '/matches', element: <EventsPage /> },
+      { path: '/matches/:id', element: <EventsPage /> },
       // Sự kiện thể thao (Matchday Events)
       { path: '/events', element: <EventsPage /> },
       { path: '/events/:id', element: <EventDetailPage /> },
       { path: '/events/:id/checkout', element: <EventCheckoutPage /> },
       { path: '/events/:id/success', element: <EventSuccessPage /> },
       { path: '/ai-assistant', element: <HomePage /> },
-      { path: '/branches/:id', element: <HomePage /> },
+      { path: '/branches/:id', element: <BranchDetailPage /> },
+      { path: '/courts/:id', element: <BranchDetailPage /> },
     ],
   },
 

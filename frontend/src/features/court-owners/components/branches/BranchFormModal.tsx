@@ -367,11 +367,6 @@ export function BranchFormModal({
       return;
     }
 
-    if (!ggMapUrl.trim()) {
-      toast.error('Vui lòng nhập liên kết Google Maps của chi nhánh');
-      return;
-    }
-
     // Yêu cầu bắt buộc tải ít nhất 1 ảnh chi nhánh
     if (images.length === 0) {
       toast.error('Yêu cầu phải tải lên ít nhất 1 tấm ảnh cho chi nhánh!');
@@ -407,7 +402,7 @@ export function BranchFormModal({
       province: selectedProvinceName,
       district: district.trim(),
       street: street.trim(),
-      ggMapUrl: cleanGgMapUrl,
+      ggMapUrl: cleanGgMapUrl || (latitude && longitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : undefined),
       openTime: openTime.length === 5 ? `${openTime}:00` : openTime,
       closeTime: closeTime.length === 5 ? `${closeTime}:00` : closeTime,
       qrImageId: qrImage.id,
@@ -628,7 +623,7 @@ export function BranchFormModal({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-foreground">
-                      Tọa độ GPS / Google Maps URL <span className="text-rose-500">*</span>
+                      Tọa độ GPS / Google Maps URL <span className="text-xs text-muted-foreground font-normal">(tùy chọn)</span>
                     </label>
                     {latitude && longitude && (
                       <span className="text-[11px] text-emerald-700 dark:text-[#a3e635] flex items-center gap-1 font-medium">
@@ -638,10 +633,9 @@ export function BranchFormModal({
                     )}
                   </div>
                   <Input
-                    required
                     value={ggMapUrl}
                     onChange={(e) => handleGgMapUrlChange(e.target.value)}
-                    placeholder="Dán link Google Maps vào đây (https://www.google.com/maps/...)"
+                    placeholder="Dán link Google Maps hoặc tọa độ (https://www.google.com/maps/...)"
                     className="h-11 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
                   />
                 </div>

@@ -55,7 +55,7 @@ export function SocialMatchesSection() {
                   asChild
                   className="bg-white hover:bg-slate-100 text-[#132617] font-bold px-7 py-3 rounded-md text-sm shadow-md transition-transform active:scale-95 cursor-pointer"
                 >
-                  <Link to="/matches">Khám phá kèo</Link>
+                  <Link to="/events">Khám phá kèo</Link>
                 </Button>
               </div>
             </div>
@@ -83,8 +83,8 @@ export function SocialMatchesSection() {
                       </span>
                       <div className="mt-2">
                         <Link
-                          to={`/matches/${match.id}`}
-                          className="text-xs font-semibold text-white/90 hover:text-white underline underline-offset-4 transition-colors"
+                          to="/events"
+                          className="text-xs font-semibold text-white/90 hover:text-white underline underline-offset-4 transition-colors cursor-pointer"
                         >
                           Xem chi tiết
                         </Link>

@@ -29,7 +29,7 @@ export function BranchReviewsModal({
   const { data: reviewsData, isLoading } = useBranchReviewsQuery(branchId, 1, 20);
 
   const reviews = reviewsData?.items || [];
-  const average = reviewsData?.reviewAverage ?? reviewAverage ?? 5.0;
+  const average = reviewsData?.averageRating ?? reviewAverage ?? 5.0;
   const totalCount = reviewsData?.totalCount ?? reviews.length;
 
   return (

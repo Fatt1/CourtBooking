@@ -9,6 +9,7 @@ public sealed record SearchPublicBranchesQuery(
     string? Province = null,
     string? District = null,
     IReadOnlyList<Guid>? SportTypeIds = null,
+    string? CourtTypeName = null,
     DateOnly? Date = null,
     TimeOnly? StartTime = null,
     TimeOnly? EndTime = null,

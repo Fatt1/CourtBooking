@@ -3,4 +3,7 @@ using CourtBooking.Application.Messaging;
 
 namespace CourtBooking.Application.Features.V1.Branches.Queries.GetPublicBranchById;
 
-public sealed record GetPublicBranchByIdQuery(Guid Id) : IQuery<PublicBranchDetailDto>;
+public sealed record GetPublicBranchByIdQuery(
+    Guid Id,
+    decimal? Latitude = null,
+    decimal? Longitude = null) : IQuery<PublicBranchDetailDto>;

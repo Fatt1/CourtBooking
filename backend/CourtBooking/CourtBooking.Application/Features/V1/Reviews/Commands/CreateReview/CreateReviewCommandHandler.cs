@@ -59,6 +59,18 @@ public sealed class CreateReviewCommandHandler(
         };
 
         dbContext.Reviews.Add(review);
+
+        var branch = await dbContext.Branches.FirstOrDefaultAsync(b => b.Id == order.BranchId, cancellationToken);
+        if (branch != null)
+        {
+            var existingRatings = await dbContext.Reviews
+                .Where(r => r.BranchId == order.BranchId)
+                .Select(r => (double)r.Rating)
+                .ToListAsync(cancellationToken);
+            existingRatings.Add(request.Rating);
+            branch.ReviewAverage = Math.Round(existingRatings.Average(), 1);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result<Guid>.Success(review.Id);

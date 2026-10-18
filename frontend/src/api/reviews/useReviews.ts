@@ -47,20 +47,22 @@ export function useBranchReviewsQuery(branchId?: string, page = 1, pageSize = 10
         return { items: [], totalCount: 0, page, pageSize };
       }
       try {
-        const response = await apiClient.get<BranchReviewsResponse>('/reviews', {
+        const response = await apiClient.get<any>('/reviews', {
           params: { branchId, page, pageSize },
         });
-        return (
-          (response as unknown as BranchReviewsResponse) || {
-            items: [],
-            totalCount: 0,
-            page,
-            pageSize,
-          }
-        );
+        const res = response as any;
+        const paged = res?.reviews || res;
+        return {
+          branchId: res?.branchId || branchId,
+          averageRating: res?.averageRating ?? 0,
+          items: paged?.items || [],
+          totalCount: paged?.totalCount || 0,
+          page: paged?.page || page,
+          pageSize: paged?.pageSize || pageSize,
+        };
       } catch (err) {
         console.warn('Lỗi lấy danh sách đánh giá chi nhánh:', err);
-        return { items: [], totalCount: 0, page, pageSize };
+        return { items: [], totalCount: 0, page, pageSize, averageRating: 0 };
       }
     },
     enabled: Boolean(branchId),

@@ -4,4 +4,5 @@ public sealed record CourtTypeDto(
     Guid Id,
     Guid BranchId,
     string Name,
-    int MinutesConfig);
+    int MinutesConfig,
+    int CourtCount = 0);

@@ -131,7 +131,6 @@ public static class ServiceContainer
             });
 
             options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
-
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
         });
 
