@@ -1,12 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ArrowRight, SearchX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { usePublicBranchesQuery, type PublicBranchListItemDto } from '@/api/branches';
-import type { SportTypeItem } from '@/api/sport-types';
 import { getImageUrl } from '@/api/storage';
 import { formatVND } from '@/lib/format';
+import { BranchReviewsModal } from './BranchReviewsModal';
 
 const DEFAULT_BRANCH_FALLBACK =
   'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80';
@@ -73,6 +74,9 @@ const FALLBACK_BRANCHES: PublicBranchListItemDto[] = [
 ];
 
 export function FeaturedBranchesSection() {
+  const [selectedBranchForReviews, setSelectedBranchForReviews] =
+    useState<PublicBranchListItemDto | null>(null);
+
   // Gọi API backend GET /api/v1/branches
   const { data: pagedResult, isLoading } = usePublicBranchesQuery({
     page: 1,
@@ -201,17 +205,26 @@ export function FeaturedBranchesSection() {
                     <div>
                       {/* Sport Tag & Rating */}
                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                        <span className="font-semibold text-muted-foreground uppercase tracking-wide">
+<span className="font-semibold text-muted-foreground uppercase tracking-wide">
                           {sportName}
                         </span>
-                        <div className="flex items-center gap-1 font-bold text-foreground">
-                          <span className="text-[#397B48]">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelectedBranchForReviews(branch);
+                          }}
+                          className="flex items-center gap-1 font-bold text-foreground hover:text-[#397B48] bg-muted/60 hover:bg-[#397B48]/10 px-2 py-0.5 rounded-full transition-colors cursor-pointer group/star border border-border/40"
+                          title="Xem đánh giá tổng quan của cơ sở này"
+                        >
+                          <span className="text-[#397B48] group-hover/star:underline">
                             {branch.reviewAverage && branch.reviewAverage > 0
                               ? branch.reviewAverage.toFixed(1)
                               : '5.0'}
                           </span>
                           <Star className="size-3 fill-amber-400 text-amber-400" />
-                        </div>
+                        </button>
                       </div>
 
                       {/* Branch Name */}
@@ -268,6 +281,17 @@ export function FeaturedBranchesSection() {
           </div>
         )}
       </div>
+
+      {/* Modal Xem Đánh Giá Chi Nhánh */}
+      {selectedBranchForReviews && (
+        <BranchReviewsModal
+          isOpen={Boolean(selectedBranchForReviews)}
+          onClose={() => setSelectedBranchForReviews(null)}
+          branchId={selectedBranchForReviews.id}
+          branchName={selectedBranchForReviews.name}
+          reviewAverage={selectedBranchForReviews.reviewAverage}
+        />
+      )}
     </section>
   );
 }

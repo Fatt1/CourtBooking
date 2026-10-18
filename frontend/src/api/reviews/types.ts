@@ -32,4 +32,5 @@ export interface BranchReviewsResponse {
   page: number;
   pageSize: number;
   averageRating?: number;
+  reviewAverage?: number;
 }

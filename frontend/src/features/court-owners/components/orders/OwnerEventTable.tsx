@@ -48,7 +48,7 @@ function getEventDisplayStatus(item: OwnerEventItemDto): {
   if (item.status === EventStatus.Cancelled) {
     return {
       label: 'Đã hủy',
-      className: 'text-rose-400 font-bold text-xs',
+      className: 'text-rose-600 dark:text-rose-400 font-bold text-xs',
     };
   }
 
@@ -61,14 +61,14 @@ function getEventDisplayStatus(item: OwnerEventItemDto): {
     if (end < now || item.status === EventStatus.Closed) {
       return {
         label: 'Đã kết thúc',
-        className: 'bg-slate-800/90 text-slate-400 px-3 py-1 rounded-full text-xs font-medium',
+        className: 'bg-slate-100 text-slate-600 dark:bg-slate-800/90 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-medium',
       };
     }
 
     if (now >= start && now <= end) {
       return {
         label: 'Đang diễn ra',
-        className: 'bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold animate-pulse',
+        className: 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold animate-pulse',
       };
     }
   } catch {
@@ -78,13 +78,13 @@ function getEventDisplayStatus(item: OwnerEventItemDto): {
   if (item.status === EventStatus.Full || item.availableSlot <= 0) {
     return {
       label: 'Đóng đăng ký',
-      className: 'bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-xs font-medium',
+      className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-medium',
     };
   }
 
   return {
     label: 'Đang mở đăng ký',
-    className: 'text-[#a3e635] font-bold text-xs',
+    className: 'text-emerald-700 dark:text-[#a3e635] font-bold text-xs',
   };
 }
 
@@ -102,7 +102,7 @@ export function OwnerEventTable({
         headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[110px]',
         className: 'min-w-[110px] whitespace-nowrap',
         cell: (item) => (
-          <span className="font-bold tracking-tight text-foreground text-sm font-mono whitespace-nowrap select-all hover:text-[#a3e635] transition-colors">
+          <span className="font-bold tracking-tight text-foreground text-sm font-mono whitespace-nowrap select-all hover:text-emerald-700 dark:hover:text-[#a3e635] transition-colors">
             {item.eventCode?.startsWith('#')
               ? item.eventCode
               : `#${item.eventCode || item.id.slice(0, 8).toUpperCase()}`}
@@ -127,12 +127,12 @@ export function OwnerEventTable({
 
           return (
             <div className="space-y-0.5 max-w-[300px]">
-              <div className="font-bold text-slate-100 text-sm truncate" title={item.title}>
+              <div className="font-bold text-foreground text-sm truncate" title={item.title}>
                 {item.title}
               </div>
-              <div className="text-[11px] text-slate-400">{skillText}</div>
+              <div className="text-[11px] text-muted-foreground">{skillText}</div>
               {courtNames && (
-                <div className="text-[10px] text-[#a3e635] font-medium truncate">
+                <div className="text-[10px] text-emerald-700 dark:text-[#a3e635] font-medium truncate">
                   Sân: {courtNames}
                 </div>
               )}
@@ -157,10 +157,10 @@ export function OwnerEventTable({
 
           return (
             <div className="space-y-0.5 whitespace-nowrap">
-              <div className="font-semibold text-slate-200 text-xs">
+              <div className="font-semibold text-foreground text-xs">
                 {isSameDay ? sDate : `${sDate} - ${eDate}`}
               </div>
-              <div className="text-[11px] text-slate-400 font-mono">
+              <div className="text-[11px] text-muted-foreground font-mono">
                 {sTime} - {eTime}
               </div>
             </div>
@@ -175,10 +175,10 @@ export function OwnerEventTable({
         className: 'text-right whitespace-nowrap',
         cell: (item) => (
           <div className="space-y-0.5">
-            <span className="font-bold text-emerald-400 text-xs font-mono">
+            <span className="font-bold text-emerald-700 dark:text-emerald-400 text-xs font-mono">
               {Number(item.ticketPrice).toLocaleString('vi-VN')} đ
             </span>
-            <div className="text-[10px] text-slate-400">/ vé</div>
+            <div className="text-[10px] text-muted-foreground">/ vé</div>
           </div>
         ),
       },
@@ -192,14 +192,14 @@ export function OwnerEventTable({
           const isFull = item.soldTickets >= item.slots || item.availableSlot <= 0;
           return (
             <div className="space-y-0.5">
-              <div className="text-xs font-bold text-slate-100">
-                <span className="text-[#a3e635]">{item.soldTickets}</span>
-                <span className="text-slate-400 font-normal">/{item.slots}</span>
+              <div className="text-xs font-bold text-foreground">
+                <span className="text-emerald-700 dark:text-[#a3e635]">{item.soldTickets}</span>
+                <span className="text-muted-foreground font-normal">/{item.slots}</span>
               </div>
               <div
                 className={cn(
                   'text-[11px]',
-                  isFull ? 'text-amber-400 font-semibold' : 'text-slate-400'
+                  isFull ? 'text-amber-700 dark:text-amber-400 font-semibold' : 'text-muted-foreground'
                 )}
               >
                 {isFull ? 'Đã đầy' : `Còn ${item.availableSlot} chỗ`}
@@ -221,10 +221,10 @@ export function OwnerEventTable({
             0;
           return (
             <div className="space-y-0.5">
-              <span className="font-bold text-amber-300 text-xs font-mono">
+              <span className="font-bold text-amber-700 dark:text-amber-300 text-xs font-mono">
                 {Number(revenue).toLocaleString('vi-VN')} đ
               </span>
-              <div className="text-[10px] text-slate-400">tạm tính</div>
+              <div className="text-[10px] text-muted-foreground">tạm tính</div>
             </div>
           );
         },
@@ -259,7 +259,7 @@ export function OwnerEventTable({
                 e.stopPropagation();
                 onViewDetail(item);
               }}
-              className="h-8 px-3 text-xs font-semibold bg-[#0B1324] border-slate-700 hover:bg-slate-800 text-slate-200 hover:text-white rounded-lg cursor-pointer"
+              className="h-8 px-3 text-xs font-semibold bg-card border-border hover:bg-accent text-foreground hover:text-accent-foreground rounded-lg cursor-pointer"
             >
               Chi tiết
             </Button>
@@ -273,7 +273,7 @@ export function OwnerEventTable({
                   onViewParticipants(item);
                 }
               }}
-              className="h-8 px-3 text-xs font-semibold border-emerald-500/50 hover:bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 rounded-lg cursor-pointer"
+              className="h-8 px-3 text-xs font-semibold border-emerald-500/50 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-lg cursor-pointer"
             >
               Người tham gia
             </Button>
@@ -285,7 +285,7 @@ export function OwnerEventTable({
   );
 
   return (
-    <div className="rounded-2xl border border-border/70 bg-[#070D1A]/60 backdrop-blur-sm overflow-hidden shadow-xl">
+    <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm dark:shadow-xl">
       <CommonTable
         columns={columns}
         data={data}

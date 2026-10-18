@@ -73,9 +73,11 @@ internal sealed class CreateEventCommandHandler(
                 ? request.Note.Trim()
                 : $"Tổ chức sự kiện: {request.Title.Trim()}";
 
+            var eventDate = request.Date ?? bookingContext.CalculatedSlots.Min(s => s.Date);
+
             var order = Order.CreateEventOrder(
                 request.BranchId,
-                DateOnly.FromDateTime(request.StartDate),
+                eventDate,
                 customerName,
                 customerPhone,
                 note);
@@ -96,8 +98,6 @@ internal sealed class CreateEventCommandHandler(
                 Id = Guid.CreateVersion7(),
                 OrderId = order.Id,
                 SportTypeId = request.SportTypeId,
-                StartDate = DateTime.SpecifyKind(request.StartDate, DateTimeKind.Utc),
-                EndDate = DateTime.SpecifyKind(request.EndDate, DateTimeKind.Utc),
                 Title = request.Title.Trim(),
                 SkillLevelFrom = string.IsNullOrWhiteSpace(request.SkillLevelFrom) ? null : request.SkillLevelFrom.Trim(),
                 SkillLevelTo = string.IsNullOrWhiteSpace(request.SkillLevelTo) ? null : request.SkillLevelTo.Trim(),

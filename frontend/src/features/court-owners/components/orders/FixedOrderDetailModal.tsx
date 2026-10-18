@@ -336,16 +336,16 @@ export function FixedOrderDetailModal({
   if (isLoading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[95vw] max-w-5xl lg:max-w-6xl p-0 overflow-hidden bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl sm:rounded-3xl">
-          <div className="flex items-center justify-between px-5 py-4 bg-[#0f172a] border-b border-border/60">
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
+        <DialogContent className="w-[95vw] max-w-5xl lg:max-w-6xl p-0 overflow-hidden bg-card border border-border/70 text-foreground shadow-2xl rounded-2xl sm:rounded-3xl">
+          <div className="flex items-center justify-between px-5 py-4 bg-muted/40 border-b border-border/60">
+            <h2 className="text-base sm:text-lg font-bold text-foreground tracking-wide">
               Chi tiết đặt lịch cố định
             </h2>
 
           </div>
-          <div className="p-16 flex flex-col items-center justify-center gap-3 text-slate-300">
+          <div className="p-16 flex flex-col items-center justify-center gap-3 text-muted-foreground">
             <div className="size-10 rounded-full border-2 border-[#a3e635]/20 border-t-[#a3e635] animate-spin" />
-            <p className="text-sm font-medium text-slate-200">Đang tải thông tin chi tiết đơn hàng cố định...</p>
+            <p className="text-sm font-medium text-foreground">Đang tải thông tin chi tiết đơn hàng cố định...</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -355,12 +355,12 @@ export function FixedOrderDetailModal({
   if (!order) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[95vw] max-w-md p-6 bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl text-center space-y-4">
-          <p className="text-sm text-slate-300">Không tìm thấy thông tin đơn cố định hoặc đơn không tồn tại.</p>
+        <DialogContent className="w-[95vw] max-w-md p-6 bg-card border border-border/70 text-foreground shadow-2xl rounded-2xl text-center space-y-4">
+          <p className="text-sm text-muted-foreground">Không tìm thấy thông tin đơn cố định hoặc đơn không tồn tại.</p>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-border/60 bg-[#131d31] text-white hover:bg-[#1a2742]"
+            className="border-border/60 bg-card text-foreground hover:bg-muted"
           >
             Đóng
           </Button>
@@ -427,29 +427,29 @@ export function FixedOrderDetailModal({
               e.preventDefault();
             }
           }}
-          className="w-[95vw] max-w-5xl lg:max-w-6xl p-0 overflow-hidden bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl sm:rounded-3xl z-50"
+          className="w-[95vw] max-w-5xl lg:max-w-6xl p-0 overflow-hidden bg-card border border-border/70 text-foreground shadow-2xl rounded-2xl sm:rounded-3xl z-50"
         >
           {/* ================================================================= */}
           {/* 1. HEADER MODAL (Đồng bộ chuẩn DailyOrderDetailModal) */}
           {/* ================================================================= */}
-          <div className="flex items-center justify-between px-5 py-3.5 bg-[#0f172a] border-b border-border/60">
+          <div className="flex items-center justify-between px-5 py-3.5 bg-muted/40 border-b border-border/60">
             <div className="flex items-center gap-2.5 flex-wrap">
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                className="size-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="size-8 rounded-lg hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Quay lại"
               >
                 <ChevronLeft className="size-5 stroke-[2.5]" />
               </button>
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
+              <h2 className="text-base sm:text-lg font-bold text-foreground tracking-wide">
                 Chi tiết đặt lịch cố định
               </h2>
               <OwnerStatusBadge
                 status={isConfirmed ? 'Đang sử dụng' : getOrderStatusLabel(displayOrder.status)}
                 variant={isConfirmed ? 'success' : getOrderStatusVariant(displayOrder.status)}
               />
-              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
+              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-400 border border-sky-500/30">
                 Lịch cố định
               </span>
             </div>
@@ -460,32 +460,32 @@ export function FixedOrderDetailModal({
           {/* ================================================================= */}
           {/* 2. BODY CHÍNH (Layout 2 cột chuẩn Matchday) */}
           {/* ================================================================= */}
-          <div className="p-4 sm:p-6 bg-[#070D1A] grid grid-cols-1 md:grid-cols-2 gap-4.5 sm:gap-6 max-h-[78vh] overflow-y-auto">
+          <div className="p-4 sm:p-6 bg-background grid grid-cols-1 md:grid-cols-2 gap-4.5 sm:gap-6 max-h-[78vh] overflow-y-auto">
             {/* --------------------------------------------------------------- */}
             {/* CỘT TRÁI: KHÁCH HÀNG & THÔNG TIN LỊCH & CHU KỲ & CÁC NGÀY CHƠI */}
             {/* --------------------------------------------------------------- */}
             <div className="space-y-4">
               {/* CARD 1: THÔNG TIN KHÁCH HÀNG */}
-              <div className="rounded-2xl bg-[#131d31] border border-border/60 p-4.5 text-white relative shadow-sm hover:border-slate-700 transition-all">
+              <div className="rounded-2xl bg-card border border-border/60 p-4.5 text-foreground relative shadow-sm hover:border-border transition-all">
                 <div className="flex items-start gap-3.5">
                   <div className="relative size-14 sm:size-16 rounded-full bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-400 p-0.5 shrink-0 shadow-md flex items-center justify-center text-white border-2 border-amber-300/60">
                     <span className="text-2xl select-none">👨</span>
                   </div>
 
                   <div className="flex-1 min-w-0 pr-8 space-y-1.5">
-                    <div className="text-sm font-semibold text-slate-300">
+                    <div className="text-sm font-semibold text-muted-foreground">
                       KH:{' '}
-                      <span className="font-bold text-white text-base">
+                      <span className="font-bold text-foreground text-base">
                         {displayOrder.customerName || 'Khách vãng lai'}
                       </span>
                     </div>
 
-                    <div className="text-xs text-slate-300">
+                    <div className="text-xs text-muted-foreground">
                       SĐT:{' '}
                       <span
                         className={`font-semibold ${displayOrder.customerPhone && displayOrder.customerPhone !== 'Không cung cấp'
-                          ? 'text-[#a3e635]'
-                          : 'text-slate-400'
+                          ? 'text-emerald-700 dark:text-[#a3e635]'
+                          : 'text-muted-foreground'
                           }`}
                       >
                         {displayOrder.customerPhone || 'Không cung cấp'}
@@ -497,7 +497,7 @@ export function FixedOrderDetailModal({
                   <button
                     type="button"
                     onClick={() => setIsUpdateCustomerOpen(true)}
-                    className="absolute top-4 right-4 size-8 rounded-lg bg-[#1a2742] border border-border/60 hover:bg-[#223354] text-white flex items-center justify-center cursor-pointer transition-colors"
+                    className="absolute top-4 right-4 size-8 rounded-lg bg-muted border border-border/60 hover:bg-accent text-foreground flex items-center justify-center cursor-pointer transition-colors"
                     title="Chỉnh sửa thông tin khách"
                   >
                     <Pencil className="size-3.5" />
@@ -506,11 +506,11 @@ export function FixedOrderDetailModal({
               </div>
 
               {/* CARD 2: THÔNG TIN ĐẶT LỊCH & DANH SÁCH CHU KỲ CỐ ĐỊNH */}
-              <div className="rounded-2xl bg-[#131d31] border border-border/60 p-4.5 text-white space-y-3.5 relative shadow-sm">
+              <div className="rounded-2xl bg-card border border-border/60 p-4.5 text-foreground space-y-3.5 relative shadow-sm">
                 <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-amber-400 text-base">📋</span>
-                    <span className="font-bold text-sm sm:text-base text-slate-100">
+                    <span className="text-amber-700 dark:text-amber-400 text-base">📋</span>
+                    <span className="font-bold text-sm sm:text-base text-foreground">
                       Thông tin đặt lịch cố định
                     </span>
                   </div>
@@ -519,9 +519,9 @@ export function FixedOrderDetailModal({
                 <div className="space-y-2.5 text-xs sm:text-sm">
                   {/* Mã lịch đặt với nút copy */}
                   <div className="flex items-start sm:items-center justify-between gap-2 flex-wrap">
-                    <div className="text-xs text-slate-300">
+                    <div className="text-xs text-muted-foreground">
                       <span>Mã lịch đặt: </span>
-                      <span className="font-bold text-white font-mono select-all text-xs sm:text-sm tracking-tight">
+                      <span className="font-bold text-foreground font-mono select-all text-xs sm:text-sm tracking-tight">
                         {displayOrder.orderCode.startsWith('#')
                           ? displayOrder.orderCode
                           : `#${displayOrder.orderCode}`}
@@ -533,7 +533,7 @@ export function FixedOrderDetailModal({
                         navigator.clipboard.writeText(displayOrder.orderCode);
                         toast.success('Đã sao chép mã đơn hàng!');
                       }}
-                      className="text-[11px] px-2 py-0.5 rounded-md bg-[#1a2742] hover:bg-[#223354] text-slate-300 hover:text-white flex items-center gap-1 border border-border/50 cursor-pointer transition-colors"
+                      className="text-[11px] px-2 py-0.5 rounded-md bg-muted hover:bg-accent text-muted-foreground hover:text-foreground flex items-center gap-1 border border-border/50 cursor-pointer transition-colors"
                       title="Sao chép mã đơn"
                     >
                       <Copy className="size-3" /> Sao chép
@@ -541,8 +541,8 @@ export function FixedOrderDetailModal({
                   </div>
 
                   <div>
-                    <span className="text-slate-300">Chi nhánh: </span>
-                    <span className="font-bold text-white">
+                    <span className="text-muted-foreground">Chi nhánh: </span>
+                    <span className="font-bold text-foreground">
                       {displayOrder.branchName || 'Chưa cập nhật'}
                     </span>
                   </div>
@@ -550,7 +550,7 @@ export function FixedOrderDetailModal({
                   {/* CỤM DANH SÁCH CHU KỲ CỐ ĐỊNH (CÓ NÚT SỬA & XÓA & THÊM) */}
                   <div className="pt-2 border-t border-border/50 space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#a3e635] uppercase tracking-wider">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-[#a3e635] uppercase tracking-wider">
                         <Repeat className="size-3.5" />
                         <span>Cấu hình các chu kỳ ({displayOrder.cycles?.length || 0})</span>
                       </div>
@@ -559,7 +559,7 @@ export function FixedOrderDetailModal({
                         <button
                           type="button"
                           onClick={() => setIsAddCycleOpen(true)}
-                          className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#1a2742] hover:bg-[#223354] text-[#a3e635] border border-border/60 flex items-center gap-1 cursor-pointer transition-colors"
+                          className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-muted hover:bg-accent text-emerald-700 dark:text-[#a3e635] border border-border/60 flex items-center gap-1 cursor-pointer transition-colors"
                         >
                           <Plus className="size-3" />
                           <span>Thêm chu kỳ</span>
@@ -572,35 +572,35 @@ export function FixedOrderDetailModal({
                         displayOrder.cycles.map((cycle, idx) => (
                           <div
                             key={cycle.cycleId || idx}
-                            className="rounded-xl bg-[#0e172a] border border-border/50 p-3 space-y-1.5 relative text-xs"
+                            className="rounded-xl bg-muted/30 border border-border/50 p-3 space-y-1.5 relative text-xs"
                           >
                             <div className="flex items-center justify-between gap-2 pr-16 flex-wrap">
                               <div className="flex items-center gap-2">
-                                <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 text-[10px] font-bold">
+                                <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-700 dark:text-sky-400 text-[10px] font-bold">
                                   Chu kỳ #{idx + 1}
                                 </span>
-                                <span className="font-bold text-white text-xs sm:text-sm">
+                                <span className="font-bold text-foreground text-xs sm:text-sm">
                                   {cycle.courtTypeName}
                                 </span>
                               </div>
-                              <span className="font-mono font-bold text-[#a3e635]">
+                              <span className="font-mono font-bold text-emerald-700 dark:text-[#a3e635]">
                                 {formatTime(cycle.startTime)} - {formatTime(cycle.endTime)}
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-3 text-slate-300 text-xs flex-wrap">
+                            <div className="flex items-center gap-3 text-muted-foreground text-xs flex-wrap">
                               <span>
-                                Thứ: <span className="font-semibold text-white">{cycle.dayNames?.join(', ') || '—'}</span>
+                                Thứ: <span className="font-semibold text-foreground">{cycle.dayNames?.join(', ') || '—'}</span>
                               </span>
                               <span>•</span>
                               <span>
-                                Thời gian: <span className="font-semibold text-white">{formatDate(cycle.startDate)} - {formatDate(cycle.endDate)}</span>
+                                Thời gian: <span className="font-semibold text-foreground">{formatDate(cycle.startDate)} - {formatDate(cycle.endDate)}</span>
                               </span>
                             </div>
 
-                            <div className="text-slate-400 text-[11px]">
+                            <div className="text-muted-foreground text-[11px]">
                               Sân áp dụng:{' '}
-                              <span className="font-semibold text-slate-200">
+                              <span className="font-semibold text-foreground">
                                 {cycle.courts?.map((c) => c.courtName).join(', ') || '—'}
                               </span>
                             </div>
@@ -611,7 +611,7 @@ export function FixedOrderDetailModal({
                                 <button
                                   type="button"
                                   onClick={() => setEditingCycle(cycle)}
-                                  className="size-7 rounded-lg bg-[#1a2742] hover:bg-[#223354] border border-border/50 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+                                  className="size-7 rounded-lg bg-muted hover:bg-accent border border-border/50 text-muted-foreground hover:text-foreground flex items-center justify-center cursor-pointer transition-colors"
                                   title="Chỉnh sửa chu kỳ này"
                                 >
                                   <Pencil className="size-3" />
@@ -619,7 +619,7 @@ export function FixedOrderDetailModal({
                                 <button
                                   type="button"
                                   onClick={() => setCycleToDelete(cycle)}
-                                  className="size-7 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 flex items-center justify-center cursor-pointer transition-colors"
+                                  className="size-7 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-600 dark:text-rose-400 flex items-center justify-center cursor-pointer transition-colors"
                                   title="Xóa chu kỳ này"
                                 >
                                   <Trash2 className="size-3" />
@@ -629,22 +629,22 @@ export function FixedOrderDetailModal({
                           </div>
                         ))
                       ) : (
-                        <div className="text-slate-500 italic text-xs py-1">Chưa có chu kỳ nào được lưu</div>
+                        <div className="text-muted-foreground italic text-xs py-1">Chưa có chu kỳ nào được lưu</div>
                       )}
                     </div>
                   </div>
 
                   {/* Ghi chú đặt sân */}
                   <div className="pt-2.5 border-t border-border/50 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
-                      <FileText className="size-3.5 text-amber-400" />
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                      <FileText className="size-3.5 text-amber-700 dark:text-amber-400" />
                       <span>Ghi chú:</span>
                     </div>
-                    <div className="rounded-xl bg-[#0e172a] border border-border/40 p-2.5 text-xs text-slate-200">
+                    <div className="rounded-xl bg-muted/30 border border-border/40 p-2.5 text-xs text-foreground">
                       {displayOrder.note?.trim() ? (
                         <p className="whitespace-pre-wrap">{displayOrder.note}</p>
                       ) : (
-                        <p className="text-slate-500 italic">Không có ghi chú</p>
+                        <p className="text-muted-foreground italic">Không có ghi chú</p>
                       )}
                     </div>
                   </div>
@@ -652,11 +652,11 @@ export function FixedOrderDetailModal({
                   {/* Lý do hủy nếu đơn bị hủy */}
                   {displayOrder.cancelReason && (
                     <div className="pt-2 border-t border-border/50 space-y-1">
-                      <div className="flex items-center gap-1.5 text-xs text-rose-400 font-medium">
+                      <div className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium">
                         <AlertTriangle className="size-3.5" />
                         <span>Lý do hủy đơn:</span>
                       </div>
-                      <div className="rounded-xl bg-rose-950/30 border border-rose-800/40 p-2.5 text-xs text-rose-200">
+                      <div className="rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 p-2.5 text-xs text-rose-800 dark:text-rose-200">
                         <p className="whitespace-pre-wrap">{displayOrder.cancelReason}</p>
                       </div>
                     </div>
@@ -666,20 +666,20 @@ export function FixedOrderDetailModal({
                 {/* Cụm tiền & Link Chi tiết dưới đáy Card */}
                 <div className="pt-3 border-t border-border/50 flex items-end justify-between">
                   <div className="space-y-0.5 text-xs sm:text-sm">
-                    <div className="font-semibold text-slate-300">
+                    <div className="font-semibold text-muted-foreground">
                       Tổng đơn cố định:{' '}
-                      <span className="font-bold text-white">{totalAmountFormatted}đ</span>
+                      <span className="font-bold text-foreground">{totalAmountFormatted}đ</span>
                     </div>
-                    <div className="font-semibold text-slate-300">
+                    <div className="font-semibold text-muted-foreground">
                       Cần thanh toán:{' '}
-                      <span className="font-bold text-amber-400">{remainingAmountFormatted}đ</span>
+                      <span className="font-bold text-amber-700 dark:text-amber-400">{remainingAmountFormatted}đ</span>
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setShowPriceDetail(!showPriceDetail)}
-                    className="text-xs font-semibold text-[#a3e635] hover:underline cursor-pointer pb-0.5"
+                    className="text-xs font-semibold text-emerald-700 dark:text-[#a3e635] hover:underline cursor-pointer pb-0.5"
                   >
                     {showPriceDetail ? 'Thu gọn' : 'Chi tiết'}
                   </button>
@@ -687,21 +687,21 @@ export function FixedOrderDetailModal({
 
                 {/* Khối xem chi tiết chiết tính giá */}
                 {showPriceDetail && (
-                  <div className="mt-2 p-2.5 rounded-lg bg-[#0e172a] border border-border/60 text-xs space-y-1 text-slate-300">
+                  <div className="mt-2 p-2.5 rounded-lg bg-muted/30 border border-border/60 text-xs space-y-1 text-muted-foreground">
                     <div className="flex justify-between">
                       <span>Tiền sân:</span>
-                      <span className="text-white font-medium">
+                      <span className="text-foreground font-medium">
                         {(displayOrder.totalCourtAmount || 0).toLocaleString('vi-VN')}đ
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tiền dịch vụ:</span>
-                      <span className="text-white font-medium">
+                      <span className="text-foreground font-medium">
                         {(displayOrder.totalServiceAmount || 0).toLocaleString('vi-VN')}đ
                       </span>
                     </div>
                     {displayOrder.discountAmount > 0 && (
-                      <div className="flex justify-between text-rose-300">
+                      <div className="flex justify-between text-rose-700 dark:text-rose-300">
                         <span>Giảm giá:</span>
                         <span>-{displayOrder.discountAmount.toLocaleString('vi-VN')}đ</span>
                       </div>
@@ -711,14 +711,14 @@ export function FixedOrderDetailModal({
               </div>
 
               {/* CARD 3: DANH SÁCH CHI TIẾT CÁC NGÀY CHƠI (CÓ ICON XÓA VÀ THÊM NGÀY LẺ) */}
-              <div className="rounded-2xl bg-[#131d31] border border-border/60 p-4.5 text-white space-y-3.5 relative shadow-sm">
+              <div className="rounded-2xl bg-card border border-border/60 p-4.5 text-foreground space-y-3.5 relative shadow-sm">
                 <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
                   <div className="flex items-center gap-2">
-                    <Calendar className="size-4 text-[#a3e635]" />
-                    <span className="font-bold text-sm sm:text-base text-slate-100">
+                    <Calendar className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                    <span className="font-bold text-sm sm:text-base text-foreground">
                       Chi tiết các ngày chơi
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a2742] text-slate-300 font-semibold border border-border/50">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold border border-border/50">
                       {displayOrder.slots?.length || 0} buổi
                     </span>
                   </div>
@@ -743,16 +743,16 @@ export function FixedOrderDetailModal({
                     Object.entries(groupedSlotsByDate).map(([dateKey, slots]) => (
                       <div
                         key={dateKey}
-                        className="rounded-xl bg-[#0e172a] border border-border/40 p-3 space-y-2"
+                        className="rounded-xl bg-muted/30 border border-border/40 p-3 space-y-2"
                       >
-                        <div className="flex items-center justify-between text-xs font-bold text-[#a3e635]">
+                        <div className="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-[#a3e635]">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="size-3.5" />
                             <span>
                               {getDayOfWeekLabel(dateKey)} • {formatDate(dateKey)}
                             </span>
                           </div>
-                          <span className="text-[11px] text-slate-400 font-normal">
+                          <span className="text-[11px] text-muted-foreground font-normal">
                             {slots.length} ca
                           </span>
                         </div>
@@ -761,24 +761,24 @@ export function FixedOrderDetailModal({
                           {slots.map((slot) => (
                             <div
                               key={slot.orderDetailId}
-                              className="flex items-center justify-between gap-2 rounded-lg bg-[#131d31] border border-border/40 px-3 py-2 text-xs text-slate-200 hover:border-slate-600 transition-colors"
+                              className="flex items-center justify-between gap-2 rounded-lg bg-card border border-border/40 px-3 py-2 text-xs text-foreground hover:border-border transition-colors"
                             >
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="font-semibold text-white truncate">
+                                <span className="font-semibold text-foreground truncate">
                                   {slot.courtName}
                                 </span>
                                 {slot.courtTypeName && (
-                                  <span className="text-[10px] text-slate-400 truncate hidden sm:inline">
+                                  <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">
                                     ({slot.courtTypeName})
                                   </span>
                                 )}
                               </div>
 
                               <div className="flex items-center gap-2.5 shrink-0">
-                                <div className="font-mono text-[#a3e635] bg-[#1a2742] px-2 py-0.5 rounded border border-border/40 text-[11px]">
+                                <div className="font-mono text-emerald-700 dark:text-[#a3e635] bg-muted px-2 py-0.5 rounded border border-border/40 text-[11px]">
                                   {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
                                 </div>
-                                <span className="font-mono font-bold text-white text-xs">
+                                <span className="font-mono font-bold text-foreground text-xs">
                                   {(slot.price || 0).toLocaleString('vi-VN')}đ
                                 </span>
 
@@ -787,7 +787,7 @@ export function FixedOrderDetailModal({
                                   <button
                                     type="button"
                                     onClick={() => handleOpenCancelSlot(slot)}
-                                    className="size-7 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 flex items-center justify-center cursor-pointer transition-colors"
+                                    className="size-7 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/30 text-rose-600 dark:text-rose-400 flex items-center justify-center cursor-pointer transition-colors"
                                     title="Hủy buổi chơi này và hoàn tiền"
                                   >
                                     <Trash2 className="size-3" />
@@ -800,7 +800,7 @@ export function FixedOrderDetailModal({
                       </div>
                     ))
                   ) : (
-                    <div className="py-6 text-center text-xs text-slate-400">
+                    <div className="py-6 text-center text-xs text-muted-foreground">
                       Chưa có ca chơi nào được ghi nhận trong đơn hàng này.
                     </div>
                   )}
@@ -813,12 +813,12 @@ export function FixedOrderDetailModal({
             {/* --------------------------------------------------------------- */}
             <div className="space-y-4">
               {/* CARD 4: DỊCH VỤ TRONG ĐƠN */}
-              <div className="rounded-2xl bg-[#131d31] border border-border/60 p-4.5 shadow-sm space-y-3">
+              <div className="rounded-2xl bg-card border border-border/60 p-4.5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between pb-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2">
-                    <Layers className="size-4 text-[#a3e635]" />
-                    <span className="font-bold text-sm text-slate-100">Dịch vụ đính kèm</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a2742] text-slate-300 font-semibold border border-border/50">
+                    <Layers className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                    <span className="font-bold text-sm text-foreground">Dịch vụ đính kèm</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold border border-border/50">
                       {displayOrder.services?.length || 0}
                     </span>
                   </div>
@@ -827,7 +827,7 @@ export function FixedOrderDetailModal({
                     <Button
                       size="sm"
                       onClick={() => setIsAddServiceOpen(true)}
-                      className="h-8 rounded-xl bg-[#1a2742] hover:bg-[#223354] border border-border/60 text-white text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
+                      className="h-8 rounded-xl bg-muted hover:bg-accent border border-border/60 text-foreground text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
                     >
                       <Plus className="size-3.5" />
                       <span>Thêm dịch vụ</span>
@@ -841,45 +841,45 @@ export function FixedOrderDetailModal({
                       {displayOrder.services.map((srv, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between rounded-xl bg-[#0e172a] border border-border/50 px-3.5 py-2.5 text-xs text-white"
+                          className="flex items-center justify-between rounded-xl bg-muted/30 border border-border/50 px-3.5 py-2.5 text-xs text-foreground"
                         >
                           <div>
-                            <div className="font-semibold text-slate-200">{srv.serviceName}</div>
-                            <div className="text-slate-400 text-[11px]">
+                            <div className="font-semibold text-foreground">{srv.serviceName}</div>
+                            <div className="text-muted-foreground text-[11px]">
                               {srv.quantity} {srv.unit || 'phần'} x{' '}
                               {srv.unitPrice.toLocaleString('vi-VN')}đ
                             </div>
                           </div>
-                          <div className="font-bold text-[#a3e635]">
+                          <div className="font-bold text-emerald-700 dark:text-[#a3e635]">
                             {srv.totalPrice.toLocaleString('vi-VN')}đ
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center text-xs sm:text-sm text-slate-400 font-medium select-none">
+                    <div className="text-center text-xs sm:text-sm text-muted-foreground font-medium select-none">
                       Không có dịch vụ nào đính kèm
                     </div>
                   )}
                 </div>
 
                 <div className="pt-2.5 border-t border-border/50 flex items-center justify-between text-xs">
-                  <div className="font-semibold text-slate-300">
+                  <div className="font-semibold text-muted-foreground">
                     Tổng dịch vụ:{' '}
-                    <span className="font-bold text-white">{totalServiceFormatted}đ</span>
+                    <span className="font-bold text-foreground">{totalServiceFormatted}đ</span>
                   </div>
                 </div>
               </div>
 
               {/* CARD 5: LỊCH SỬ GIAO DỊCH THANH TOÁN (PAYMENT TRANSACTIONS) */}
-              <div className="rounded-2xl bg-[#131d31] border border-border/60 p-4.5 shadow-sm space-y-3">
+              <div className="rounded-2xl bg-card border border-border/60 p-4.5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between pb-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2">
-                    <CreditCard className="size-4 text-[#a3e635]" />
-                    <span className="font-bold text-sm text-slate-100">
+                    <CreditCard className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                    <span className="font-bold text-sm text-foreground">
                       Giao dịch thanh toán
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a2742] text-slate-300 font-semibold border border-border/50">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold border border-border/50">
                       {displayOrder.paymentTransactions?.length || 0}
                     </span>
                   </div>
@@ -888,7 +888,7 @@ export function FixedOrderDetailModal({
                     <Button
                       size="sm"
                       onClick={() => setIsAddTransactionOpen(true)}
-                      className="h-8 rounded-xl bg-[#1a2742] hover:bg-[#223354] border border-border/60 text-white text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
+                      className="h-8 rounded-xl bg-muted hover:bg-accent border border-border/60 text-foreground text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
                     >
                       <Plus className="size-3.5" />
                       <span>Thêm giao dịch</span>
@@ -906,26 +906,26 @@ export function FixedOrderDetailModal({
                       return (
                         <div
                           key={tx.id}
-                          className="rounded-xl bg-[#0e172a] border border-border/50 p-3 space-y-2 text-xs"
+                          className="rounded-xl bg-muted/30 border border-border/50 p-3 space-y-2 text-xs"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold text-white">
+                                <span className="font-semibold text-foreground">
                                   {getPaymentTypeLabel(tx.type)}
                                 </span>
-                                <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#1a2742] text-slate-300 border border-border/40">
+                                <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border/40">
                                   {getPaymentMethodLabel(tx.paymentMethod)}
                                 </span>
                               </div>
-                              <div className="text-[11px] text-slate-400">
+                              <div className="text-[11px] text-muted-foreground">
                                 {new Date(tx.createdAt).toLocaleString('vi-VN')}
                               </div>
                             </div>
 
                             <div className="text-right">
                               <span
-                                className={`font-bold text-sm ${isRefund ? 'text-rose-400' : 'text-[#a3e635]'
+                                className={`font-bold text-sm ${isRefund ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-[#a3e635]'
                                   }`}
                               >
                                 {isRefund ? '-' : '+'}
@@ -937,7 +937,7 @@ export function FixedOrderDetailModal({
                           {/* Nút xem chi tiết hình ảnh biên lai nếu có ảnh */}
                           {hasImage && (
                             <div className="pt-1.5 border-t border-border/40 flex items-center justify-between">
-                              <span className="text-[11px] text-slate-400">
+                              <span className="text-[11px] text-muted-foreground">
                                 Có đính kèm chứng từ thanh toán
                               </span>
                               <Button
@@ -951,7 +951,7 @@ export function FixedOrderDetailModal({
                                     )} • ${tx.amount.toLocaleString('vi-VN')}đ`,
                                   })
                                 }
-                                className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1.5 border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 hover:text-white cursor-pointer"
+                                className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1.5 border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20 hover:text-foreground cursor-pointer"
                               >
                                 <ImageIcon className="size-3" />
                                 <span>Xem chi tiết hình</span>
@@ -962,7 +962,7 @@ export function FixedOrderDetailModal({
                       );
                     })
                   ) : (
-                    <div className="py-4 text-center text-xs text-slate-400">
+                    <div className="py-4 text-center text-xs text-muted-foreground">
                       Chưa ghi nhận giao dịch thanh toán nào cho đơn này.
                     </div>
                   )}
@@ -974,7 +974,7 @@ export function FixedOrderDetailModal({
           {/* ================================================================= */}
           {/* 3. FOOTER MODAL (Đồng bộ nút bấm Matchday sang trọng) */}
           {/* ================================================================= */}
-          <div className="grid grid-cols-2 gap-3 p-3.5 sm:p-4 bg-[#0B1324] border-t border-border/60">
+          <div className="grid grid-cols-2 gap-3 p-3.5 sm:p-4 bg-card border-t border-border/60">
             {/* Nút HỦY ĐƠN màu cam đỏ */}
             <button
               type="button"
@@ -1089,31 +1089,31 @@ export function FixedOrderDetailModal({
       {/* Modal xác nhận xóa chu kỳ */}
       {cycleToDelete && (
         <Dialog open={!!cycleToDelete} onOpenChange={(op) => !op && setCycleToDelete(null)}>
-          <DialogContent className="w-[95vw] max-w-md p-6 bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl space-y-4">
-            <div className="flex items-center gap-3 text-rose-400">
+          <DialogContent className="w-[95vw] max-w-md p-6 bg-card border border-border/70 text-foreground shadow-2xl rounded-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
               <div className="size-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
                 <AlertTriangle className="size-5" />
               </div>
               <div>
-                <h3 className="font-bold text-base text-white">Xác nhận xóa chu kỳ</h3>
-                <p className="text-xs text-slate-400">Hành động này sẽ xóa các ca chơi thuộc chu kỳ này.</p>
+                <h3 className="font-bold text-base text-foreground">Xác nhận xóa chu kỳ</h3>
+                <p className="text-xs text-muted-foreground">Hành động này sẽ xóa các ca chơi thuộc chu kỳ này.</p>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-[#131d31] border border-border/50 text-xs space-y-1">
+            <div className="p-3 rounded-xl bg-card border border-border/50 text-xs space-y-1">
               <div>
-                <span className="text-slate-400">Loại sân: </span>
-                <span className="font-semibold text-white">{cycleToDelete.courtTypeName}</span>
+                <span className="text-muted-foreground">Loại sân: </span>
+                <span className="font-semibold text-foreground">{cycleToDelete.courtTypeName}</span>
               </div>
               <div>
-                <span className="text-slate-400">Khung giờ: </span>
-                <span className="font-mono text-[#a3e635]">
+                <span className="text-muted-foreground">Khung giờ: </span>
+                <span className="font-mono text-emerald-700 dark:text-[#a3e635]">
                   {formatTime(cycleToDelete.startTime)} - {formatTime(cycleToDelete.endTime)}
                 </span>
               </div>
               <div>
-                <span className="text-slate-400">Thứ áp dụng: </span>
-                <span className="text-white">{cycleToDelete.dayNames?.join(', ') || '—'}</span>
+                <span className="text-muted-foreground">Thứ áp dụng: </span>
+                <span className="text-foreground">{cycleToDelete.dayNames?.join(', ') || '—'}</span>
               </div>
             </div>
 
@@ -1122,7 +1122,7 @@ export function FixedOrderDetailModal({
                 variant="outline"
                 size="sm"
                 onClick={() => setCycleToDelete(null)}
-                className="border-border/60 text-slate-300 hover:text-white"
+                className="border-border/60 text-muted-foreground hover:text-foreground"
               >
                 Hủy bỏ
               </Button>
@@ -1169,23 +1169,23 @@ export function FixedOrderDetailModal({
       {/* Modal xem trước ảnh biên lai giao dịch thanh toán */}
       {previewImage && (
         <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-          <DialogContent className="w-[95vw] max-w-lg p-0 overflow-hidden bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl">
-            <div className="flex items-center justify-between px-4 py-3 bg-[#0f172a] border-b border-border/60">
+          <DialogContent className="w-[95vw] max-w-lg p-0 overflow-hidden bg-card border border-border/70 text-foreground shadow-2xl rounded-2xl">
+            <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b border-border/60">
               <div className="flex items-center gap-2">
-                <ImageIcon className="size-4 text-sky-400" />
-                <h3 className="text-xs sm:text-sm font-bold text-white truncate max-w-xs sm:max-w-sm">
+                <ImageIcon className="size-4 text-sky-700 dark:text-sky-400" />
+                <h3 className="text-xs sm:text-sm font-bold text-foreground truncate max-w-xs sm:max-w-sm">
                   {previewImage.title}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setPreviewImage(null)}
-                className="size-7 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer"
+                className="size-7 rounded-lg hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="size-4" />
               </button>
             </div>
-            <div className="p-4 flex flex-col items-center justify-center bg-[#070D1A] min-h-[300px]">
+            <div className="p-4 flex flex-col items-center justify-center bg-background min-h-[300px]">
               <img
                 src={previewImage.url}
                 alt="Biên lai thanh toán"
@@ -1196,7 +1196,7 @@ export function FixedOrderDetailModal({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="h-8 text-xs border-border/60 bg-[#131d31] text-white hover:bg-[#1a2742]"
+                  className="h-8 text-xs border-border/60 bg-card text-foreground hover:bg-muted"
                 >
                   <a href={previewImage.url} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="size-3.5 mr-1.5" />

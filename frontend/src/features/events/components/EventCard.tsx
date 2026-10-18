@@ -7,6 +7,7 @@ import {
   getDayNumber,
   getMonthText,
   getCardTimeText,
+  formatSkillLevel,
 } from '../utils/dateUtils';
 
 // Ảnh mặc định chất lượng cao cho các môn thể thao nếu sự kiện chưa tải ảnh sân
@@ -36,19 +37,18 @@ export function EventCard({ event }: EventCardProps) {
 
   const initialImageUrl = event.coverImage?.key ? getImageUrl(event.coverImage.key) : fallbackImage;
 
-  // Label phân loại
-  const categoryLabel = event.skillLevelFrom
-    ? 'GIẢI PHONG TRÀO'
-    : 'GIAO LƯU CỘNG ĐỒNG';
+  // Hiển thị trình độ của sự kiện thay thế cho chữ "GIẢI PHONG TRÀO" theo yêu cầu người dùng
+  const skillLevelText = formatSkillLevel(event.skillLevelFrom, event.skillLevelTo);
 
-  const dayNumber = getDayNumber(event.startDate, '10');
-  const monthText = getMonthText(event.startDate, 'THÁNG 10');
-  const timeText = getCardTimeText(event.startDate, '08:00 · Thứ Bảy, 10/10/2026');
+  const dayNumber = getDayNumber(event.date, '25');
+  const monthText = getMonthText(event.date, 'THÁNG 10');
+  // Hiển thị đủ cả giờ bắt đầu và giờ kết thúc trận đấu cùng ngày diễn ra
+  const timeText = getCardTimeText(event.date, event.startTime, event.endTime);
 
   return (
-    <div className="group flex flex-col rounded-2xl border border-slate-800 bg-[#0d1629] overflow-hidden transition-all duration-200 hover:border-slate-700 hover:shadow-xl hover:shadow-black/40">
+    <div className="group flex flex-col rounded-2xl border border-border/80 bg-card text-card-foreground overflow-hidden shadow-xs hover:border-[#397B48]/50 dark:hover:border-slate-700 hover:shadow-xl transition-all duration-200">
       {/* 1. Header Image with Date & Status Badges */}
-      <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
+      <div className="relative aspect-video w-full overflow-hidden bg-muted">
         <img
           src={initialImageUrl}
           alt={event.title}
@@ -59,7 +59,7 @@ export function EventCard({ event }: EventCardProps) {
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0d1629] via-transparent to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
 
         {/* Floating Top-Left Date Badge */}
         <div className="absolute top-3 left-3 flex min-w-[52px] flex-col items-center justify-center rounded-xl bg-white/95 px-2.5 py-1.5 text-center shadow-lg backdrop-blur-xs">
@@ -73,7 +73,7 @@ export function EventCard({ event }: EventCardProps) {
 
         {/* Floating Top-Right Status Badge (if full) */}
         {isFull && (
-          <div className="absolute top-3 right-3 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-black tracking-wide text-slate-900 shadow-md uppercase backdrop-blur-xs">
+          <div className="absolute top-3 right-3 rounded-lg bg-red-600 px-2.5 py-1 text-[11px] font-black tracking-wide text-white shadow-md uppercase backdrop-blur-xs">
             HẾT VÉ
           </div>
         )}
@@ -81,40 +81,42 @@ export function EventCard({ event }: EventCardProps) {
 
       {/* 2. Body Details */}
       <div className="flex flex-1 flex-col p-5">
-        {/* Category & Status Row */}
+        {/* Skill Level & Status Row (Bỏ chữ 'Giải phong trào', thay bằng Trình độ) */}
         <div className="flex items-center justify-between text-xs font-bold tracking-wider">
-          <span className="text-[#a3e635] uppercase">{categoryLabel}</span>
-          <span className={isFull ? 'text-slate-400 font-medium' : 'text-slate-300 font-semibold'}>
+          <span className="text-[#397B48] dark:text-[#a3e635] uppercase">
+            TRÌNH ĐỘ: {skillLevelText}
+          </span>
+          <span className={isFull ? 'text-muted-foreground font-medium' : 'text-foreground/80 font-semibold'}>
             {isFull ? 'ĐÃ HẾT VÉ' : 'ĐANG MỞ'}
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="mt-2 text-lg font-bold text-white transition-colors group-hover:text-[#a3e635] line-clamp-1">
+        <h3 className="mt-2 text-lg font-bold text-foreground transition-colors group-hover:text-[#397B48] dark:group-hover:text-[#a3e635] line-clamp-1">
           {event.title}
         </h3>
 
         {/* Branch / Sport Note */}
-        <p className="mt-1 text-xs text-slate-400 line-clamp-2 min-h-[32px]">
+        <p className="mt-1 text-xs text-muted-foreground line-clamp-2 min-h-[32px]">
           {event.branchName} · Môn {event.sportTypeName} dành cho người chơi yêu thể thao.
         </p>
 
-        {/* Time & Location */}
-        <div className="mt-4 space-y-1.5 text-xs text-slate-300">
+        {/* Time & Location (Hiển thị đầy đủ giờ bắt đầu - kết thúc) */}
+        <div className="mt-4 space-y-1.5 text-xs text-foreground/80">
           <div className="flex items-center gap-2">
-            <Clock className="size-3.5 text-slate-400 shrink-0" />
+            <Clock className="size-3.5 text-muted-foreground shrink-0" />
             <span className="truncate">{timeText}</span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin className="size-3.5 text-slate-400 shrink-0" />
+            <MapPin className="size-3.5 text-muted-foreground shrink-0" />
             <span className="truncate">{event.branchAddress || event.branchName}</span>
           </div>
         </div>
 
         {/* Participant Progress */}
-        <div className="mt-4 flex items-center justify-between border-t border-slate-800/80 pt-3 text-xs">
-          <span className="text-slate-400">Đã tham gia</span>
-          <span className="font-semibold text-slate-200">
+        <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3 text-xs">
+          <span className="text-muted-foreground">Đã tham gia</span>
+          <span className="font-semibold text-foreground">
             {event.bookedSlots} / {event.slots} người
           </span>
         </div>
@@ -122,12 +124,12 @@ export function EventCard({ event }: EventCardProps) {
         {/* 3. Footer Action */}
         <div className="mt-5 flex items-end justify-between gap-3 pt-2">
           <div>
-            <div className="text-[11px] font-medium text-slate-400">
+            <div className="text-[11px] font-medium text-muted-foreground">
               {isFull ? '' : 'Vé từ'}
             </div>
-            <div className="font-heading text-lg font-black text-white">
+            <div className="font-heading text-lg font-black text-foreground">
               {isFull ? (
-                <span className="text-slate-400 text-sm font-semibold">Đã hết vé</span>
+                <span className="text-muted-foreground text-sm font-semibold">Đã hết vé</span>
               ) : (
                 formatEventPrice(event.ticketPrice)
               )}
@@ -136,7 +138,7 @@ export function EventCard({ event }: EventCardProps) {
 
           <Link
             to={`/events/${event.id}`}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-950 shadow-sm transition-all hover:bg-slate-200 active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-foreground text-background dark:bg-white dark:text-slate-950 px-4 py-2 text-xs font-bold shadow-sm transition-all hover:opacity-90 active:scale-95"
           >
             <span>Xem chi tiết</span>
             <ArrowUpRight className="size-3.5 stroke-[2.5]" />

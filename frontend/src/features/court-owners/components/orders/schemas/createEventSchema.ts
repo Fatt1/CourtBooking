@@ -19,13 +19,8 @@ export const createEventSchema = z
       .string({ required_error: 'Vui lòng chọn môn thể thao' })
       .min(1, 'Vui lòng chọn môn thể thao'),
 
-    startDate: z
-      .string({ required_error: 'Thời gian bắt đầu không được để trống' })
-      .min(1, 'Thời gian bắt đầu không được để trống'),
-
-    endDate: z
-      .string({ required_error: 'Thời gian kết thúc không được để trống' })
-      .min(1, 'Thời gian kết thúc không được để trống'),
+    startDate: z.string().optional().nullable(),
+    endDate: z.string().optional().nullable(),
 
     ticketPrice: z
       .number({ invalid_type_error: 'Giá vé phải là số' })
@@ -83,13 +78,8 @@ export const updateEventSchema = z
       .string({ required_error: 'Vui lòng chọn môn thể thao' })
       .min(1, 'Vui lòng chọn môn thể thao'),
 
-    startDate: z
-      .string({ required_error: 'Thời gian bắt đầu không được để trống' })
-      .min(1, 'Thời gian bắt đầu không được để trống'),
-
-    endDate: z
-      .string({ required_error: 'Thời gian kết thúc không được để trống' })
-      .min(1, 'Thời gian kết thúc không được để trống'),
+    startDate: z.string().optional().nullable(),
+    endDate: z.string().optional().nullable(),
 
     ticketPrice: z
       .number({ invalid_type_error: 'Giá vé phải là số' })

@@ -92,7 +92,7 @@ export function ProvinceSelect({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label className="text-xs font-semibold text-slate-200">
+        <label className="text-xs font-semibold text-foreground">
           {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
@@ -103,7 +103,7 @@ export function ProvinceSelect({
         placeholder="Chọn Tỉnh / Thành phố"
         searchPlaceholder="Nhập tên tỉnh/thành..."
         disabled={disabled}
-        triggerClassName="h-11 rounded-xl bg-[#111c33] border-border/60 text-white"
+        triggerClassName="h-11 rounded-xl bg-background border-border/60 text-foreground"
       />
     </div>
   );
@@ -189,7 +189,7 @@ export function WardSelect({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label className="text-xs font-semibold text-slate-200">
+        <label className="text-xs font-semibold text-foreground">
           {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
@@ -200,7 +200,7 @@ export function WardSelect({
         placeholder={placeholder}
         searchPlaceholder="Nhập tên quận/huyện..."
         disabled={isSelectDisabled}
-        triggerClassName="h-11 rounded-xl bg-[#111c33] border-border/60 text-white"
+        triggerClassName="h-11 rounded-xl bg-background border-border/60 text-foreground"
       />
     </div>
   );
