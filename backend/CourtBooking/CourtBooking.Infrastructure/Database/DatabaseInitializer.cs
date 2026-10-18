@@ -22,6 +22,7 @@ public static class DatabaseInitializer
             var seederLogger = services.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DatabaseSeeder));
             await DatabaseSeeder.SeedAsync(context, seederLogger);
             await SyncAllBranchPricesAsync(context, seederLogger);
+            await SyncAllBranchReviewAveragesAsync(context, seederLogger);
         }
         catch (Exception ex)
         {
@@ -75,6 +76,41 @@ public static class DatabaseInitializer
                     branch.MaxPrice = range.Max;
                     hasChanges = true;
                     logger.LogInformation("Đã đồng bộ giá cho chi nhánh {BranchName}: {Min} - {Max}", branch.Name, range.Min, range.Max);
+                }
+            }
+        }
+
+        if (hasChanges)
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private static async Task SyncAllBranchReviewAveragesAsync(ApplicationDbContext context, ILogger logger, CancellationToken cancellationToken = default)
+    {
+        var branches = await context.Branches.ToListAsync(cancellationToken);
+        if (branches.Count == 0) return;
+
+        var reviewStats = await context.Reviews
+            .GroupBy(r => r.BranchId)
+            .Select(g => new
+            {
+                BranchId = g.Key,
+                Count = g.Count(),
+                Average = Math.Round(g.Average(r => (double)r.Rating), 1)
+            })
+            .ToDictionaryAsync(x => x.BranchId, cancellationToken);
+
+        bool hasChanges = false;
+        foreach (var branch in branches)
+        {
+            if (reviewStats.TryGetValue(branch.Id, out var stats) && stats.Count > 0)
+            {
+                if (Math.Abs(branch.ReviewAverage - stats.Average) > 0.01)
+                {
+                    branch.ReviewAverage = stats.Average;
+                    hasChanges = true;
+                    logger.LogInformation("Đã đồng bộ điểm đánh giá cho chi nhánh {BranchName}: {Average} ({Count} lượt)", branch.Name, stats.Average, stats.Count);
                 }
             }
         }

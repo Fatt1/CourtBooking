@@ -128,8 +128,19 @@ export function BranchDetailPage() {
 
   // 4. Fetch dữ liệu đánh giá thực tế từ Backend API
   const { data: reviewsData } = useBranchReviewsQuery(branch?.id, 1, 10);
-  const realReviewCount = reviewsData?.totalCount ?? 0;
-  const realReviewAverage = reviewsData?.averageRating ?? branch?.reviewAverage ?? 0;
+  const realReviewCount = reviewsData?.totalCount ?? reviewsData?.items?.length ?? 0;
+  const calculatedAvg =
+    reviewsData?.items && reviewsData.items.length > 0
+      ? reviewsData.items.reduce((acc, r) => acc + r.rating, 0) / reviewsData.items.length
+      : 0;
+  const realReviewAverage =
+    reviewsData?.averageRating && reviewsData.averageRating > 0
+      ? reviewsData.averageRating
+      : calculatedAvg > 0
+      ? calculatedAvg
+      : branch?.reviewAverage && branch.reviewAverage > 0
+      ? branch.reviewAverage
+      : 0;
 
   // Cập nhật thẻ title trình duyệt
   useEffect(() => {

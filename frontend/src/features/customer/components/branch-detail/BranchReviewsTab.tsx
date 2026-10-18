@@ -19,8 +19,22 @@ export function BranchReviewsTab({ branchId, branchName, reviewAverage = 0 }: Br
   const { data: reviewsData, isLoading } = useBranchReviewsQuery(branchId, page, pageSize);
 
   const reviewsList = reviewsData?.items || [];
-  const totalCount = reviewsData?.totalCount || 0;
-  const currentAverage = reviewsData?.averageRating || reviewAverage || 0;
+  const totalCount = reviewsData?.totalCount || reviewsList.length;
+
+  // Tính trung bình cộng từ danh sách đánh giá thực tế (tránh lỗi 0.0 khi đã có lượt đánh giá)
+  const calculatedAverage =
+    reviewsList.length > 0
+      ? reviewsList.reduce((acc, r) => acc + r.rating, 0) / reviewsList.length
+      : 0;
+
+  const currentAverage =
+    reviewsData?.averageRating && reviewsData.averageRating > 0
+      ? reviewsData.averageRating
+      : calculatedAverage > 0
+      ? calculatedAverage
+      : reviewAverage && reviewAverage > 0
+      ? reviewAverage
+      : 0;
 
   // Lọc theo số sao nếu người dùng chọn
   const filteredReviews = selectedRatingFilter
