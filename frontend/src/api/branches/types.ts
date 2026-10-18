@@ -54,7 +54,7 @@ export interface CreateBranchPayload {
   province: string;
   district: string;
   street: string;
-  ggMapUrl: string;
+  ggMapUrl?: string;
   openTime: string;
   closeTime: string;
   qrImageId: string;
@@ -130,7 +130,7 @@ export interface PublicBranchDetailDto {
   province: string;
   district: string;
   street: string;
-  ggMapUrl: string;
+  ggMapUrl?: string | null;
   distanceKm?: number | null;
   openTime: string;
   closeTime: string;

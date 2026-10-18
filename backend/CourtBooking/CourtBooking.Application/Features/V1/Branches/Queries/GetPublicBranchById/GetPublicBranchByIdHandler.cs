@@ -26,7 +26,6 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
                 b.Province,
                 b.District,
                 b.Street,
-                b.GgMapUrl,
                 b.Latitude,
                 b.Longitude,
                 b.OpenTime,
@@ -65,6 +64,10 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
                 (double)branch.Longitude.Value);
         }
 
+        var ggMapUrl = branch.Latitude.HasValue && branch.Longitude.HasValue
+            ? $"https://www.google.com/maps?q={branch.Latitude.Value},{branch.Longitude.Value}"
+            : null;
+
         var dto = new PublicBranchDetailDto(
             branch.Id,
             branch.Name,
@@ -72,7 +75,7 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
             branch.Province,
             branch.District,
             branch.Street,
-            branch.GgMapUrl,
+            ggMapUrl,
             distanceKm,
             branch.OpenTime,
             branch.CloseTime,

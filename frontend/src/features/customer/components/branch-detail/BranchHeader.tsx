@@ -11,7 +11,7 @@ interface BranchHeaderProps {
   province: string;
   distanceKm?: number | null;
   hotline?: string;
-  ggMapUrl?: string;
+  ggMapUrl?: string | null;
   reviewAverage?: number;
   reviewCount?: number;
 }

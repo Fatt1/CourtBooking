@@ -35,7 +35,6 @@ internal sealed class CreateBranchHandler(IApplicationDbContext dbContext, IUser
             Province = request.Province.Trim(),
             District = request.District.Trim(),
             Street = request.Street.Trim(),
-            GgMapUrl = request.GgMapUrl.Trim(),
             OpenTime = request.OpenTime,
             CloseTime = request.CloseTime,
             QrImageId = request.QrImageId,

@@ -24,7 +24,7 @@ public sealed record OwnerBranchListItemDto(
 
 public sealed record OwnerBranchDetailDto(
     Guid Id, string Name, string Hotline, string Province, string District, string Street,
-    string GgMapUrl, decimal? Latitude, decimal? Longitude,
+    string? GgMapUrl, decimal? Latitude, decimal? Longitude,
     TimeOnly OpenTime, TimeOnly CloseTime, string? Policy, string? Description, bool IsActive,
     ImageDto QrImage, string AccountNumber, string AccountName,
     IReadOnlyList<BranchSportDto> Sports, IReadOnlyList<ImageDto> Images,

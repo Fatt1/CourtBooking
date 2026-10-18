@@ -61,7 +61,6 @@ internal sealed class UpdateBranchHandler(
         branch.Province = request.Province.Trim();
         branch.District = request.District.Trim();
         branch.Street = request.Street.Trim();
-        branch.GgMapUrl = request.GgMapUrl.Trim();
         branch.OpenTime = request.OpenTime;
         branch.CloseTime = request.CloseTime;
         branch.QrImageId = request.QrImageId;

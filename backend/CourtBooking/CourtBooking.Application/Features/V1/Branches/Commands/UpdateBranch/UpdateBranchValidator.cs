@@ -12,7 +12,6 @@ public sealed class UpdateBranchValidator : AbstractValidator<UpdateBranchComman
         RuleFor(x => x.Province).NotEmpty().MaximumLength(100);
         RuleFor(x => x.District).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Street).NotEmpty().MaximumLength(255);
-        RuleFor(x => x.GgMapUrl).NotEmpty().MaximumLength(255);
         RuleFor(x => x.AccountNumber).NotEmpty().MaximumLength(255);
         RuleFor(x => x.AccountName).NotEmpty().MaximumLength(255);
         RuleFor(x => x.Policy).MaximumLength(4000);

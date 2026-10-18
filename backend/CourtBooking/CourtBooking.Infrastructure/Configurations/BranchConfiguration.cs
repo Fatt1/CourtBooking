@@ -22,11 +22,6 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
             .HasMaxLength(20)
             .IsRequired();
 
-        builder.Property(b => b.GgMapUrl)
-            .HasColumnName("GGMapUrl")
-            .HasMaxLength(255)
-            .IsRequired();
-
         builder.Property(b => b.Province)
             .HasMaxLength(100)
             .IsRequired();

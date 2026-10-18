@@ -25,7 +25,7 @@ public sealed record PublicBranchDetailDto(
     string Province,
     string District,
     string Street,
-    string GgMapUrl,
+    string? GgMapUrl,
     double? DistanceKm,
     TimeOnly OpenTime,
     TimeOnly CloseTime,
