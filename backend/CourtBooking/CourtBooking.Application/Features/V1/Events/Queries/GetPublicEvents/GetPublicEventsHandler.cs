@@ -21,10 +21,23 @@ internal sealed class GetPublicEventsHandler(
             .AsNoTracking()
             .Where(e => e.Status != EventStatus.Cancelled);
 
+        // Lọc chỉ hiển thị những event từ hiện tại tới tương lai, loại bỏ những event đã qua trong quá khứ
+        var vnNow = DateTime.UtcNow.AddHours(7);
+        var today = DateOnly.FromDateTime(vnNow);
+        var currentTime = TimeOnly.FromDateTime(vnNow);
+
+        query = query.Where(e => e.Order.Details.Any(d => d.Date > today || (d.Date == today && d.EndTime >= currentTime)));
+
         // 2. Áp dụng các bộ lọc động (Conditional Query Filtering)
         if (request.SportTypeId.HasValue)
         {
             query = query.Where(e => e.SportTypeId == request.SportTypeId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Sport) && !string.Equals(request.Sport.Trim(), "all", StringComparison.OrdinalIgnoreCase))
+        {
+            var sportName = request.Sport.Trim().ToLower();
+            query = query.Where(e => e.SportType.Name.ToLower().Contains(sportName));
         }
 
         if (request.BranchId.HasValue)
@@ -38,11 +51,34 @@ internal sealed class GetPublicEventsHandler(
             query = query.Where(e => e.Order.Details.Any(d => d.Date == request.Date.Value));
         }
 
+        if (!string.IsNullOrWhiteSpace(request.Province))
+        {
+            var prov = request.Province.Trim().ToLower();
+            query = query.Where(e => e.Order.Branch.Province.ToLower().Contains(prov));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.District))
+        {
+            var dist = request.District.Trim().ToLower();
+            query = query.Where(e => e.Order.Branch.District.ToLower().Contains(dist));
+        }
+
+        if (request.StartTime.HasValue)
+        {
+            query = query.Where(e => e.Order.Details.Any(d => d.StartTime >= request.StartTime.Value));
+        }
+
+        if (request.EndTime.HasValue)
+        {
+            query = query.Where(e => e.Order.Details.Any(d => d.EndTime <= request.EndTime.Value));
+        }
+
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var term = request.SearchTerm.Trim().ToLower();
             query = query.Where(e =>
                 e.Title.ToLower().Contains(term) ||
+                e.SportType.Name.ToLower().Contains(term) ||
                 e.Order.Branch.Name.ToLower().Contains(term) ||
                 e.Order.Branch.Province.ToLower().Contains(term) ||
                 e.Order.Branch.District.ToLower().Contains(term));

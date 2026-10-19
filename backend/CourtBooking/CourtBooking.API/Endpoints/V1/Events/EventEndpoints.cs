@@ -49,6 +49,11 @@ public sealed class EventEndpoints : IEndpointGroup
                 [FromQuery] Guid? sportTypeId,
                 [FromQuery] Guid? branchId,
                 [FromQuery] DateOnly? date,
+                [FromQuery] string? province,
+                [FromQuery] string? district,
+                [FromQuery] string? sport,
+                [FromQuery] TimeOnly? startTime,
+                [FromQuery] TimeOnly? endTime,
                 [FromQuery] int page = 1,
                 [FromQuery] int pageSize = 10,
                 ISender sender = default!,
@@ -59,6 +64,11 @@ public sealed class EventEndpoints : IEndpointGroup
                 sportTypeId,
                 branchId,
                 date,
+                province,
+                district,
+                sport,
+                startTime,
+                endTime,
                 page,
                 pageSize);
 
