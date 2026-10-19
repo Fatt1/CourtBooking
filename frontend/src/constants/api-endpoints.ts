@@ -175,9 +175,14 @@ export const API_ENDPOINTS = {
     LIST: '/matches',
     DETAIL: (id: string) => `/matches/${id}`,
     CREATE: '/matches',
+    UPDATE: (id: string) => `/matches/${id}`,
     JOIN: (id: string) => `/matches/${id}/join`,
-    APPROVE_PARTICIPANT: (matchId: string, userId: string) =>
-      `/matches/${matchId}/participants/${userId}/approve`,
+    APPROVE_PARTICIPANT: (matchId: string, participantId: string) =>
+      `/matches/${matchId}/participants/${participantId}/approve`,
+    REJECT_PARTICIPANT: (matchId: string, participantId: string) =>
+      `/matches/${matchId}/participants/${participantId}/reject`,
+    LEAVE: (id: string) => `/matches/${id}/leave`,
+    CANCEL: (id: string) => `/matches/${id}/cancel`,
   },
 
   // 10. Đánh giá & Nhận xét (Reviews)

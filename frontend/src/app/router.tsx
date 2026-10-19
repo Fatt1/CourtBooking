@@ -16,6 +16,10 @@ import { EventsPage } from '@/features/events/pages/EventsPage';
 import { EventDetailPage } from '@/features/events/pages/EventDetailPage';
 import { EventCheckoutPage } from '@/features/events/pages/EventCheckoutPage';
 import { EventSuccessPage } from '@/features/events/pages/EventSuccessPage';
+import { MatchesPage } from '@/features/matches/pages/MatchesPage';
+import { MatchDetailPage } from '@/features/matches/pages/MatchDetailPage';
+import { CreateMatchPage } from '@/features/matches/pages/CreateMatchPage';
+import { EditMatchPage } from '@/features/matches/pages/EditMatchPage';
 
 
 // Admin Pages
@@ -53,8 +57,11 @@ export const router = createBrowserRouter([
       { path: '/reviews/create', element: <CreateReviewPage /> },
       // Danh sách sân & Chi nhánh công khai
       { path: '/courts', element: <CustomerCourtsPage /> },
-      { path: '/matches', element: <EventsPage /> },
-      { path: '/matches/:id', element: <EventsPage /> },
+      // Kèo giao lưu thể thao (Matchday Social Matches)
+      { path: '/matches', element: <MatchesPage /> },
+      { path: '/matches/create', element: <CreateMatchPage /> },
+      { path: '/matches/:id', element: <MatchDetailPage /> },
+      { path: '/matches/:id/edit', element: <EditMatchPage /> },
       // Sự kiện thể thao (Matchday Events)
       { path: '/events', element: <EventsPage /> },
       { path: '/events/:id', element: <EventDetailPage /> },
