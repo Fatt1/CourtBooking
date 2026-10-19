@@ -192,48 +192,9 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                 .ToDictionaryAsync(x => x.BranchId, x => x.Count, cancellationToken);
         }
 
-        // ── Tính khoảng giá thực tế từ tất cả bảng giá đang Active của các chi nhánh trang này ──
-        var pageIds = page.Select(p => p.Id).ToList();
-        var branchPriceRanges = new Dictionary<Guid, (decimal Min, decimal Max)>();
-        if (pageIds.Count > 0)
-        {
-            var priceTables = await dbContext.PriceTables.AsNoTracking()
-                .Where(pt => pageIds.Contains(pt.CourtType.BranchId) && pt.IsActive)
-                .Select(pt => new
-                {
-                    BranchId = pt.CourtType.BranchId,
-                    pt.DefaultPrice,
-                    pt.DefaultWalkInPrice,
-                    Rules = pt.Rules.Select(r => new { r.FixedCustomerPrice, r.WalkInCustomerPrice }).ToList()
-                })
-                .ToListAsync(cancellationToken);
-
-            foreach (var g in priceTables.GroupBy(x => x.BranchId))
-            {
-                var prices = new List<decimal>();
-                foreach (var pt in g)
-                {
-                    if (pt.DefaultPrice > 0) prices.Add(pt.DefaultPrice);
-                    if (pt.DefaultWalkInPrice > 0) prices.Add(pt.DefaultWalkInPrice);
-                    foreach (var r in pt.Rules)
-                    {
-                        if (r.FixedCustomerPrice > 0) prices.Add(r.FixedCustomerPrice);
-                        if (r.WalkInCustomerPrice > 0) prices.Add(r.WalkInCustomerPrice);
-                    }
-                }
-                if (prices.Count > 0)
-                {
-                    branchPriceRanges[g.Key] = (prices.Min(), prices.Max());
-                }
-            }
-        }
-
         var items = page.Select(p =>
         {
             var freeCount = freeCountByBranch.GetValueOrDefault(p.Id);
-            var (minPrice, maxPrice) = branchPriceRanges.TryGetValue(p.Id, out var range)
-                ? range
-                : (p.MinPrice, p.MaxPrice);
 
             return new PublicBranchListItemDto(
                 p.Id,
@@ -246,10 +207,12 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
                 p.ReviewAverage,
                 p.DistanceKm.HasValue ? Math.Round(p.DistanceKm.Value, 1) : null,
                 AvailableCourtCount: isTimeSearch ? freeCount : null,
-                minPrice,
-                maxPrice,
+                p.MinPrice,
+                p.MaxPrice,
                 CourtTypes: p.CourtTypes,
-                Services: p.Services);
+                Services: p.Services,
+                Latitude: p.Latitude,
+                Longitude: p.Longitude);
         }).ToList();
 
         return Result.Success(new PagedList<PublicBranchListItemDto>(

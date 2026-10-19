@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { usePublicBranchesQuery } from '@/api/branches';
+import { usePublicBranchesQuery, type PublicBranchListItemDto } from '@/api/branches';
 import { useSportTypesQuery } from '@/api/sport-types';
 import { CourtsHeader } from '../components/courts/CourtsHeader';
 import {
@@ -12,56 +12,65 @@ import {
   type CourtsSearchFilters,
 } from '../components/courts/CourtsHorizontalFilterBar';
 import { CourtBranchCard } from '../components/courts/CourtBranchCard';
+import { BranchReviewsModal } from '../components/BranchReviewsModal';
 import { cn } from '@/lib/utils';
 
 const INITIAL_FILTERS: CourtsSearchFilters = {
   province: '',
   district: '',
-  sport: 'all',
+  sports: [],
   date: undefined,
   startTime: '',
   endTime: '',
-  courtTypeName: '',
   minPrice: '',
   maxPrice: '',
-  rating: 'all',
   search: '',
 };
 
 export function CourtsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Đọc query parameters ban đầu từ URL (đồng bộ mượt mà từ QuickSearchBar trang chủ)
+  // Đọc query parameters ban đầu từ URL (đồng bộ mượt mà từ QuickSearchBar và SportsCategory trang chủ)
   const initialProvince = searchParams.get('province') || '';
   const initialDistrict = searchParams.get('district') || '';
-  const initialSport = searchParams.get('sport') || 'all';
+  const initialSportsParam = searchParams.get('sports');
+  const initialSportParam = searchParams.get('sport');
+  const initialSports: string[] = React.useMemo(() => {
+    if (initialSportsParam) {
+      return initialSportsParam.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    if (initialSportParam && initialSportParam !== 'all') {
+      return [initialSportParam.trim()];
+    }
+    return [];
+  }, [initialSportsParam, initialSportParam]);
+
   const initialDateStr = searchParams.get('date');
   const initialDate = initialDateStr ? new Date(initialDateStr) : undefined;
   const initialStartTime = searchParams.get('startTime') || '';
   const initialEndTime = searchParams.get('endTime') || '';
   const initialSearch = searchParams.get('search') || '';
-  const initialCourtTypeName = searchParams.get('courtTypeName') || '';
   const initialMinPrice = searchParams.get('minPrice') || '';
   const initialMaxPrice = searchParams.get('maxPrice') || '';
-  const initialRating = searchParams.get('rating') || 'all';
+  const initialSort = searchParams.get('sort') || 'distance';
 
   const [filters, setFilters] = React.useState<CourtsSearchFilters>({
     province: initialProvince,
     district: initialDistrict,
-    sport: initialSport,
+    sports: initialSports,
     date: initialDate,
     startTime: initialStartTime,
     endTime: initialEndTime,
     search: initialSearch,
-    courtTypeName: initialCourtTypeName,
     minPrice: initialMinPrice,
     maxPrice: initialMaxPrice,
-    rating: initialRating,
   });
 
   const [appliedFilters, setAppliedFilters] = React.useState<CourtsSearchFilters>(filters);
-  const [sort, setSort] = React.useState<string>('relevance');
+  const [sort, setSort] = React.useState<string>(initialSort);
   const [page, setPage] = React.useState<number>(1);
+  const [selectedBranchForReviews, setSelectedBranchForReviews] =
+    React.useState<PublicBranchListItemDto | null>(null);
   // Số lượng sân trên một trang theo tiêu chuẩn: 10 sân / trang
   const pageSize = 10;
 
@@ -69,33 +78,40 @@ export function CourtsPage() {
   React.useEffect(() => {
     const province = searchParams.get('province') || '';
     const district = searchParams.get('district') || '';
-    const sport = searchParams.get('sport') || 'all';
+    const sportsParam = searchParams.get('sports');
+    const sportParam = searchParams.get('sport');
+    let sports: string[] = [];
+    if (sportsParam) {
+      sports = sportsParam.split(',').map((s) => s.trim()).filter(Boolean);
+    } else if (sportParam && sportParam !== 'all') {
+      sports = [sportParam.trim()];
+    }
     const dateStr = searchParams.get('date');
     const date = dateStr ? new Date(dateStr) : undefined;
     const startTime = searchParams.get('startTime') || '';
     const endTime = searchParams.get('endTime') || '';
     const search = searchParams.get('search') || '';
-    const courtTypeName = searchParams.get('courtTypeName') || '';
     const minPrice = searchParams.get('minPrice') || '';
     const maxPrice = searchParams.get('maxPrice') || '';
-    const rating = searchParams.get('rating') || 'all';
+    const urlSort = searchParams.get('sort');
 
     const syncedFilters: CourtsSearchFilters = {
       province,
       district,
-      sport,
+      sports,
       date,
       startTime,
       endTime,
       search,
-      courtTypeName,
       minPrice,
       maxPrice,
-      rating,
     };
 
     setFilters(syncedFilters);
     setAppliedFilters(syncedFilters);
+    if (urlSort) {
+      setSort(urlSort);
+    }
     setPage(1);
   }, [searchParams]);
 
@@ -104,17 +120,29 @@ export function CourtsPage() {
 
   const urlSportId = searchParams.get('sportId');
 
-  const matchedSportId = React.useMemo(() => {
-    if (!appliedFilters.sport || appliedFilters.sport === 'all') return undefined;
-    const found = sportTypes?.find(
-      (s) =>
-        s.name.toLowerCase().trim() === appliedFilters.sport.toLowerCase().trim() ||
-        s.id.toLowerCase() === appliedFilters.sport.toLowerCase()
-    );
-    if (found) return found.id;
-    if (urlSportId) return urlSportId;
-    return undefined;
-  }, [appliedFilters.sport, sportTypes, urlSportId]);
+  const matchedSportIds = React.useMemo(() => {
+    const sports = appliedFilters.sports || [];
+    const ids: string[] = [];
+
+    for (const item of sports) {
+      const found = sportTypes?.find(
+        (s) =>
+          s.name.toLowerCase().trim() === item.toLowerCase().trim() ||
+          s.id.toLowerCase() === item.toLowerCase()
+      );
+      if (found) {
+        ids.push(found.id);
+      } else if (item.length === 36 && item.includes('-')) {
+        ids.push(item);
+      }
+    }
+
+    if (ids.length === 0 && urlSportId) {
+      ids.push(urlSportId);
+    }
+
+    return ids.length > 0 ? ids : undefined;
+  }, [appliedFilters.sports, sportTypes, urlSportId]);
 
   // Tự động tính endTime nếu chỉ có startTime (+1 tiếng)
   const computedEndTime = React.useMemo(() => {
@@ -131,25 +159,17 @@ export function CourtsPage() {
       search: appliedFilters.search.trim() || undefined,
       province: appliedFilters.province.trim() || undefined,
       district: appliedFilters.district.trim() || undefined,
-      sportTypeIds: matchedSportId ? [matchedSportId] : undefined,
-      courtTypeName:
-        appliedFilters.courtTypeName && appliedFilters.courtTypeName !== 'all'
-          ? appliedFilters.courtTypeName
-          : undefined,
+      sportTypeIds: matchedSportIds,
       date: appliedFilters.date ? format(appliedFilters.date, 'yyyy-MM-dd') : undefined,
       startTime: appliedFilters.startTime || undefined,
       endTime: computedEndTime,
       minPrice: appliedFilters.minPrice ? Number(appliedFilters.minPrice) : undefined,
       maxPrice: appliedFilters.maxPrice ? Number(appliedFilters.maxPrice) : undefined,
-      rating:
-        appliedFilters.rating && appliedFilters.rating !== 'all'
-          ? Number(appliedFilters.rating)
-          : undefined,
-      sort: sort !== 'relevance' ? sort : undefined,
+      sort: sort || 'distance',
       page,
       pageSize,
     };
-  }, [appliedFilters, matchedSportId, computedEndTime, sort, page, pageSize]);
+  }, [appliedFilters, matchedSportIds, computedEndTime, sort, page, pageSize]);
 
   // Gọi API backend lấy danh sách chi nhánh thực tế
   const { data, isLoading } = usePublicBranchesQuery(queryParams);
@@ -184,31 +204,25 @@ export function CourtsPage() {
   };
 
   // Áp dụng bộ lọc
-  const handleApplyFilters = () => {
+  const handleApplyFilters = (overrideFilters?: CourtsSearchFilters) => {
+    const target = overrideFilters ?? filters;
     setPage(1);
-    setAppliedFilters(filters);
+    setAppliedFilters(target);
 
     // Cập nhật URL search params để tiện chia sẻ / bookmark
     const params = new URLSearchParams();
-    if (filters.province) params.set('province', filters.province);
-    if (filters.district) params.set('district', filters.district);
-    if (filters.sport && filters.sport !== 'all') {
-      params.set('sport', filters.sport);
-      const found = sportTypes?.find(
-        (s) =>
-          s.name.toLowerCase().trim() === filters.sport.toLowerCase().trim() ||
-          s.id.toLowerCase() === filters.sport.toLowerCase()
-      );
-      if (found) params.set('sportId', found.id);
+    if (target.province) params.set('province', target.province);
+    if (target.district) params.set('district', target.district);
+    if (target.sports && target.sports.length > 0) {
+      params.set('sports', target.sports.join(','));
     }
-    if (filters.date) params.set('date', format(filters.date, 'yyyy-MM-dd'));
-    if (filters.startTime) params.set('startTime', filters.startTime);
-    if (filters.endTime) params.set('endTime', filters.endTime);
-    if (filters.search) params.set('search', filters.search);
-    if (filters.courtTypeName) params.set('courtTypeName', filters.courtTypeName);
-    if (filters.minPrice) params.set('minPrice', filters.minPrice);
-    if (filters.maxPrice) params.set('maxPrice', filters.maxPrice);
-    if (filters.rating && filters.rating !== 'all') params.set('rating', filters.rating);
+    if (target.date) params.set('date', format(target.date, 'yyyy-MM-dd'));
+    if (target.startTime) params.set('startTime', target.startTime);
+    if (target.endTime) params.set('endTime', target.endTime);
+    if (target.search) params.set('search', target.search);
+    if (target.minPrice) params.set('minPrice', target.minPrice);
+    if (target.maxPrice) params.set('maxPrice', target.maxPrice);
+    if (sort && sort !== 'distance') params.set('sort', sort);
     setSearchParams(params, { replace: true });
   };
 
@@ -216,6 +230,7 @@ export function CourtsPage() {
   const handleResetFilters = () => {
     setFilters(INITIAL_FILTERS);
     setAppliedFilters(INITIAL_FILTERS);
+    setSort('distance');
     setPage(1);
     setSearchParams(new URLSearchParams(), { replace: true });
   };
@@ -238,36 +253,35 @@ export function CourtsPage() {
           onSortChange={setSort}
         />
 
-        {/* 3. Danh Sách Các Thẻ Sân Rộng Rãi Toàn Màn Hình (Đã bỏ cột Sidebar) */}
-        <div className="space-y-4 pt-2">
+        {/* 3. Danh Sách Các Thẻ Sân Dạng Grid 3 Cột Đồng Bộ Với Trang Chủ */}
+        <div className="space-y-6 pt-2">
           {isLoading ? (
-            /* Loading Skeletons */
-            Array.from({ length: 3 }).map((_, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs flex flex-col md:flex-row"
-              >
-                <Skeleton className="md:w-80 h-56 rounded-none" />
-                <div className="p-5 flex-1 space-y-4 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-12" />
+            /* Loading Skeletons dạng thẻ dọc */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs flex flex-col"
+                >
+                  <Skeleton className="aspect-[16/10] w-full rounded-none" />
+                  <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-3.5 w-20" />
+                        <Skeleton className="h-3.5 w-12" />
+                      </div>
+                      <Skeleton className="h-6 w-4/5" />
+                      <Skeleton className="h-3.5 w-1/2" />
+                      <Skeleton className="h-3.5 w-28" />
                     </div>
-                    <Skeleton className="h-7 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <div className="flex gap-2 pt-2">
-                      <Skeleton className="h-6 w-20 rounded-md" />
-                      <Skeleton className="h-6 w-20 rounded-md" />
+                    <div className="pt-4 border-t border-border/50 flex items-center justify-between">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-4 w-16" />
                     </div>
-                  </div>
-                  <div className="flex justify-between items-center pt-4 border-t border-border/50">
-                    <Skeleton className="h-6 w-36" />
-                    <Skeleton className="h-10 w-28 rounded-xl" />
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           ) : branches.length === 0 ? (
             /* Trạng thái không có kết quả */
             <div className="rounded-2xl border border-dashed border-border/80 bg-card/60 p-12 text-center space-y-4">
@@ -291,10 +305,16 @@ export function CourtsPage() {
               </Button>
             </div>
           ) : (
-            /* Render danh sách thẻ sân full-width */
-            branches.map((branch) => (
-              <CourtBranchCard key={branch.id} branch={branch} />
-            ))
+            /* Render danh sách thẻ sân dạng grid 3 cột */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {branches.map((branch) => (
+                <CourtBranchCard
+                  key={branch.id}
+                  branch={branch}
+                  onOpenReviews={setSelectedBranchForReviews}
+                />
+              ))}
+            </div>
           )}
 
           {/* Phân trang: hiển thị gọn gàng 3 cục số + nút nhảy trang đầu / cuối */}
@@ -411,6 +431,17 @@ export function CourtsPage() {
           )}
         </div>
       </div>
+
+      {/* Modal Xem Đánh Giá Chi Nhánh */}
+      {selectedBranchForReviews && (
+        <BranchReviewsModal
+          isOpen={Boolean(selectedBranchForReviews)}
+          onClose={() => setSelectedBranchForReviews(null)}
+          branchId={selectedBranchForReviews.id}
+          branchName={selectedBranchForReviews.name}
+          reviewAverage={selectedBranchForReviews.reviewAverage}
+        />
+      )}
     </div>
   );
 }

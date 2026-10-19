@@ -5,6 +5,8 @@ import {
   RotateCcw,
   X,
   SlidersHorizontal,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -29,21 +31,22 @@ import { cn } from '@/lib/utils';
 export interface CourtsSearchFilters {
   province: string;
   district: string;
-  sport: string; // Tên môn hoặc sportTypeId
+  sports: string[]; // Danh sách các môn thể thao được chọn
+  sport?: string; // Dành cho backward-compatibility
   date: Date | undefined;
   startTime: string;
   endTime: string;
-  courtTypeName: string;
+  courtTypeName?: string;
   minPrice: string;
   maxPrice: string;
-  rating: string;
+  rating?: string;
   search: string;
 }
 
 interface CourtsHorizontalFilterBarProps {
   filters: CourtsSearchFilters;
   onChange: (filters: CourtsSearchFilters) => void;
-  onApply: () => void;
+  onApply: (overrideFilters?: CourtsSearchFilters) => void;
   onReset: () => void;
   totalCount: number;
   isLoading?: boolean;
@@ -64,6 +67,7 @@ export function CourtsHorizontalFilterBar({
   onSortChange,
 }: CourtsHorizontalFilterBarProps) {
   const { data: sportTypes, isLoading: isLoadingSports } = useSportTypesQuery();
+  const [isSportsPopoverOpen, setIsSportsPopoverOpen] = React.useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const [isPricePopoverOpen, setIsPricePopoverOpen] = React.useState(false);
 
@@ -130,23 +134,36 @@ export function CourtsHorizontalFilterBar({
 
   // Kiểm tra có đang áp dụng bộ lọc nâng cao nào không
   const hasExtraFilters = Boolean(
-    filters.courtTypeName ||
-      filters.minPrice ||
+    filters.minPrice ||
       filters.maxPrice ||
-      (filters.rating && filters.rating !== 'all') ||
       filters.search
   );
 
-  // Đồng bộ giá trị hiển thị của môn thể thao trong Select
-  const selectedSportValue = React.useMemo(() => {
-    if (!filters.sport || filters.sport === 'all') return 'all';
-    const found = sportTypes?.find(
-      (st) =>
-        st.name.toLowerCase().trim() === filters.sport.toLowerCase().trim() ||
-        st.id.toLowerCase() === filters.sport.toLowerCase()
+  const sportsLabel = React.useMemo(() => {
+    const list = filters.sports || [];
+    if (list.length === 0) return 'Tất cả môn thể thao';
+    if (list.length === 1) {
+      const single = list[0];
+      const found = sportTypes?.find(
+        (st) =>
+          st.name.toLowerCase().trim() === single.toLowerCase().trim() ||
+          st.id.toLowerCase() === single.toLowerCase()
+      );
+      return found ? found.name : single;
+    }
+    return `${list.length} môn đã chọn`;
+  }, [filters.sports, sportTypes]);
+
+  const handleToggleSport = (sportName: string) => {
+    const current = filters.sports || [];
+    const exists = current.some(
+      (s) => s.toLowerCase().trim() === sportName.toLowerCase().trim()
     );
-    return found ? found.name : filters.sport;
-  }, [filters.sport, sportTypes]);
+    const updated = exists
+      ? current.filter((s) => s.toLowerCase().trim() !== sportName.toLowerCase().trim())
+      : [...current, sportName];
+    updateField('sports', updated);
+  };
 
   return (
     <div className="space-y-4">
@@ -178,7 +195,7 @@ export function CourtsHorizontalFilterBar({
             />
           </div>
 
-          {/* Ô 3: MÔN THỂ THAO */}
+          {/* Ô 3: MÔN THỂ THAO (Chọn nhiều môn) */}
           <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center">
             <label className="font-heading font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
               MÔN THỂ THAO
@@ -188,24 +205,96 @@ export function CourtsHorizontalFilterBar({
                 <Skeleton className="h-4 w-28" />
               </div>
             ) : (
-              <Select
-                value={selectedSportValue}
-                onValueChange={(val) => updateField('sport', val)}
-              >
-                <SelectTrigger className="w-full h-9 border-0 bg-transparent px-0 font-semibold text-sm focus:ring-0 focus:ring-offset-0 shadow-none">
-                  <SelectValue placeholder="Tất cả môn thể thao" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">Tất cả môn thể thao</SelectItem>
-                    {sportTypes?.map((st) => (
-                      <SelectItem key={st.id} value={st.name}>
-                        {st.name} {st.branchCount ? `(${st.branchCount} sân)` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <Popover open={isSportsPopoverOpen} onOpenChange={setIsSportsPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full h-9 flex items-center justify-between font-semibold text-sm bg-transparent cursor-pointer text-left focus:outline-none"
+                  >
+                    <span
+                      className={cn(
+                        'truncate mr-1',
+                        filters.sports?.length > 0 ? 'text-foreground' : 'text-foreground/90 font-medium'
+                      )}
+                    >
+                      {sportsLabel}
+                    </span>
+                    <ChevronDown className="size-4 text-muted-foreground opacity-70 shrink-0" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2 space-y-1" align="start">
+                  <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/50 mb-1">
+                    <span className="font-heading font-bold text-xs uppercase tracking-wide text-foreground">
+                      Chọn môn thể thao
+                    </span>
+                    {filters.sports?.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => updateField('sports', [])}
+                        className="text-[11px] text-[#397B48] hover:underline font-semibold cursor-pointer"
+                      >
+                        Bỏ chọn tất cả
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-60 overflow-y-auto space-y-0.5">
+                    <button
+                      type="button"
+                      onClick={() => updateField('sports', [])}
+                      className={cn(
+                        'w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors text-left',
+                        (!filters.sports || filters.sports.length === 0)
+                          ? 'bg-[#397B48]/10 text-[#397B48]'
+                          : 'hover:bg-muted/70 text-foreground'
+                      )}
+                    >
+                      <span>Tất cả môn thể thao</span>
+                      {(!filters.sports || filters.sports.length === 0) && (
+                        <Check className="size-3.5 text-[#397B48]" />
+                      )}
+                    </button>
+                    {sportTypes?.map((st) => {
+                      const isSelected = filters.sports?.some(
+                        (s) =>
+                          s.toLowerCase().trim() === st.name.toLowerCase().trim() ||
+                          s.toLowerCase() === st.id.toLowerCase()
+                      );
+                      return (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={() => handleToggleSport(st.name)}
+                          className={cn(
+                            'w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left',
+                            isSelected
+                              ? 'bg-[#397B48]/10 text-[#397B48] font-semibold'
+                              : 'hover:bg-muted/70 text-foreground'
+                          )}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className={cn(
+                                'size-4 rounded border flex items-center justify-center transition-colors shrink-0',
+                                isSelected
+                                  ? 'bg-[#397B48] border-[#397B48] text-white'
+                                  : 'border-border bg-background'
+                              )}
+                            >
+                              {isSelected && <Check className="size-3 stroke-[3]" />}
+                            </div>
+                            <span className="truncate">{st.name}</span>
+                          </div>
+                          {st.branchCount ? (
+                            <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                              ({st.branchCount} sân)
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
 
@@ -351,46 +440,45 @@ export function CourtsHorizontalFilterBar({
       {/* 2. THANH BỘ LỌC PHỤ (SUB-FILTER TOOLBAR) + SẮP XẾP */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         {/* Nhóm các filter phụ bên trái */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Lọc theo Tên sân / Từ khóa */}
-          <div className="relative w-44 sm:w-56">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Lọc theo Tên sân / Từ khóa: Kéo dài hơn + nhấn Enter để tìm kiếm */}
+          <div className="relative w-64 sm:w-80 md:w-96 lg:w-[400px]">
+            <button
+              type="button"
+              onClick={() => onApply()}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-[#397B48] transition-colors cursor-pointer"
+              title="Tìm kiếm theo tên sân"
+            >
+              <Search className="size-3.5" />
+            </button>
             <Input
               type="text"
-              placeholder="Tìm theo tên sân..."
+              placeholder="Tìm theo tên sân (nhấn Enter)..."
               value={filters.search}
               onChange={(e) => updateField('search', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onApply();
+                }
+              }}
               className="pl-8 text-xs h-9 rounded-xl bg-card border-border/70"
             />
             {filters.search && (
               <button
                 type="button"
-                onClick={() => updateField('search', '')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  const updated = { ...filters, search: '' };
+                  onChange(updated);
+                  onApply(updated);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                title="Xóa tìm kiếm"
               >
                 <X className="size-3" />
               </button>
             )}
           </div>
-
-          {/* Lọc Loại Sân */}
-          <Select
-            value={filters.courtTypeName || 'all'}
-            onValueChange={(val) => updateField('courtTypeName', val === 'all' ? '' : val)}
-          >
-            <SelectTrigger className="h-9 w-[140px] sm:w-[150px] rounded-xl bg-card border-border/70 text-xs font-semibold">
-              <SelectValue placeholder="Loại sân" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả loại sân</SelectItem>
-              <SelectItem value="Sân 5 người">Sân 5 người</SelectItem>
-              <SelectItem value="Sân 7 người">Sân 7 người</SelectItem>
-              <SelectItem value="Sân đơn">Sân đơn</SelectItem>
-              <SelectItem value="Sân đôi">Sân đôi</SelectItem>
-              <SelectItem value="Sân ngoài trời">Sân ngoài trời</SelectItem>
-              <SelectItem value="Sân trong nhà">Sân trong nhà</SelectItem>
-            </SelectContent>
-          </Select>
 
           {/* Lọc Khoảng Giá (Popover) */}
           <Popover open={isPricePopoverOpen} onOpenChange={setIsPricePopoverOpen}>
@@ -398,7 +486,7 @@ export function CourtsHorizontalFilterBar({
               <Button
                 variant="outline"
                 className={cn(
-                  'h-9 rounded-xl bg-card border-border/70 text-xs font-semibold px-3 gap-1.5',
+                  'h-9 rounded-xl bg-card border-border/70 text-xs font-semibold px-3 gap-1.5 cursor-pointer',
                   (filters.minPrice || filters.maxPrice) &&
                     'border-[#397B48] text-[#397B48] bg-[#397B48]/5'
                 )}
@@ -461,7 +549,7 @@ export function CourtsHorizontalFilterBar({
                     setIsPricePopoverOpen(false);
                     onApply();
                   }}
-                  className="bg-[#397B48] text-white hover:bg-[#2D633A] text-xs h-7 px-3 rounded-lg font-bold"
+                  className="bg-[#397B48] text-white hover:bg-[#2D633A] text-xs h-7 px-3 rounded-lg font-bold cursor-pointer"
                 >
                   Áp dụng
                 </Button>
@@ -469,27 +557,11 @@ export function CourtsHorizontalFilterBar({
             </PopoverContent>
           </Popover>
 
-          {/* Lọc Đánh giá */}
-          <Select
-            value={filters.rating || 'all'}
-            onValueChange={(val) => updateField('rating', val === 'all' ? '' : val)}
-          >
-            <SelectTrigger className="h-9 w-[125px] rounded-xl bg-card border-border/70 text-xs font-semibold">
-              <SelectValue placeholder="Đánh giá" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả sao</SelectItem>
-              <SelectItem value="4.5">Từ 4.5 ★</SelectItem>
-              <SelectItem value="4.0">Từ 4.0 ★</SelectItem>
-              <SelectItem value="3.5">Từ 3.5 ★</SelectItem>
-            </SelectContent>
-          </Select>
-
           {/* Nút đặt lại */}
           {(hasExtraFilters ||
             filters.province ||
             filters.district ||
-            (filters.sport && filters.sport !== 'all') ||
+            (filters.sports && filters.sports.length > 0) ||
             filters.date) && (
             <button
               type="button"
@@ -520,10 +592,9 @@ export function CourtsHorizontalFilterBar({
             </span>
             <Select value={sort} onValueChange={onSortChange}>
               <SelectTrigger className="w-[165px] h-9 rounded-xl bg-card border-border/70 text-xs font-semibold">
-                <SelectValue placeholder="Phù hợp nhất" />
+                <SelectValue placeholder="Gần nhất" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="relevance">Phù hợp nhất</SelectItem>
                 <SelectItem value="distance">Gần nhất</SelectItem>
                 <SelectItem value="rating_desc">Đánh giá cao nhất</SelectItem>
                 <SelectItem value="price_asc">Giá thấp đến cao</SelectItem>
