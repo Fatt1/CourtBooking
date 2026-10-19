@@ -49,6 +49,7 @@ export function useBranchReviewsQuery(branchId?: string, page = 1, pageSize = 10
       try {
         const response = await apiClient.get<any>('/reviews', {
           params: { branchId, page, pageSize },
+        });
         const res = response as any;
         const paged = res?.reviews || res;
         const items = paged?.items || [];
