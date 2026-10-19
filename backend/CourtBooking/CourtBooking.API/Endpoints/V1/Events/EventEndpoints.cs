@@ -1,6 +1,7 @@
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Events.Commands.BookEventTicket;
+using CourtBooking.Application.Features.V1.Events.Commands.CancelPendingTicket;
 using CourtBooking.Application.Features.V1.Events.Dtos;
 using CourtBooking.Application.Features.V1.Events.Queries.GetPublicEventById;
 using CourtBooking.Application.Features.V1.Events.Queries.GetPublicEvents;
@@ -13,6 +14,7 @@ using CourtBooking.Application.Features.V1.OwnerEvents.Dtos;
 using CourtBooking.Application.Features.V1.OwnerEvents.Queries.GetEventParticipants;
 using CourtBooking.Application.Features.V1.OwnerEvents.Queries.GetOwnerEventById;
 using CourtBooking.Application.Features.V1.OwnerEvents.Queries.GetOwnerEventsByBranch;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
@@ -33,7 +35,7 @@ public sealed class EventEndpoints : IEndpointGroup
 
 
         var groupOwner = app.MapApiV1Group("owner/events")
-            .RequireAuthorization();
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
 
         MapToOwner(groupOwner);
 
@@ -113,6 +115,32 @@ public sealed class EventEndpoints : IEndpointGroup
             .WithDescription("Dành cho Người chơi (Player) đặt mua vé. Áp dụng Pessimistic Locking chống bán vượt số lượng vé (overselling). Yêu cầu đã đăng nhập.")
             .WithTags(EventTag)
             .Produces<BookEventTicketResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // 4. POST /api/v1/events/{id:guid}/tickets/{ticketId:guid}/cancel — Hủy đơn vé đang chờ thanh toán
+        group.MapPost("/{id:guid}/tickets/{ticketId:guid}/cancel", async (
+                [FromRoute] Guid id,
+                [FromRoute] Guid ticketId,
+                ISender sender,
+                CancellationToken ct = default) =>
+        {
+            var command = new CancelPendingTicketCommand(id, ticketId);
+            var result = await sender.Send(command, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(new { success = true, message = "Đã hủy đơn giữ vé thành công." })
+                : result.ToProblemDetails();
+        })
+            .RequireAuthorization()
+            .WithName("CancelPendingTicket")
+            .WithSummary("Hủy đơn vé sự kiện đang chờ thanh toán")
+            .WithDescription("Hủy vé và hoàn lại số lượng khả dụng cho sự kiện khi người dùng tắt modal thanh toán hoặc hủy.")
+            .WithTags(EventTag)
+            .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)

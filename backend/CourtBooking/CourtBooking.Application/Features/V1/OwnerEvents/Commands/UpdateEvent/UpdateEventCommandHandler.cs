@@ -47,8 +47,6 @@ internal sealed class UpdateEventCommandHandler(
         // 4. Cập nhật thông tin sự kiện
         sportEvent.Title = request.Title.Trim();
         sportEvent.SportTypeId = request.SportTypeId;
-        sportEvent.StartDate = DateTime.SpecifyKind(request.StartDate, DateTimeKind.Utc);
-        sportEvent.EndDate = DateTime.SpecifyKind(request.EndDate, DateTimeKind.Utc);
         sportEvent.TicketPrice = request.TicketPrice;
         sportEvent.Slots = request.Slots;
         sportEvent.AvailableSlot = request.Slots - soldTickets;
@@ -64,7 +62,7 @@ internal sealed class UpdateEventCommandHandler(
         }
 
         // 6. Cập nhật thông tin Order liên kết
-        sportEvent.Order.OrderDate = DateOnly.FromDateTime(request.StartDate);
+        sportEvent.Order.OrderDate = request.Date;
         if (!string.IsNullOrWhiteSpace(request.CustomerName))
             sportEvent.Order.CustomerName = request.CustomerName.Trim();
         if (!string.IsNullOrWhiteSpace(request.CustomerPhone))

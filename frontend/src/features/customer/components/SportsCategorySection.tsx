@@ -7,6 +7,7 @@ import { getImageUrl } from '@/api/storage';
 // Dữ liệu hình ảnh mặc định theo từng môn thể thao
 const DEFAULT_SPORT_IMAGES: Record<string, string> = {
   'Bóng đá': 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
+  'Bóng đá mini': 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
   'Cầu lông': 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
   'Pickleball': 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?auto=format&fit=crop&w=800&q=80',
   'Tennis': 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=800&q=80',
@@ -63,7 +64,7 @@ export function SportsCategorySection() {
 
           <Link
             to="/courts"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors group"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors group cursor-pointer"
           >
             <span>Xem tất cả sân</span>
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
@@ -98,20 +99,25 @@ export function SportsCategorySection() {
               return (
                 <Link
                   key={sport.id}
-                  to={`/courts?sportId=${sport.id}`}
-                  className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-xs border border-border/60 bg-muted transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                  to={`/courts?sport=${encodeURIComponent(sport.name)}&sportId=${sport.id}`}
+                  className="group relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xs border border-border/60 bg-muted transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[#397B48]/50 cursor-pointer block"
                 >
                   <img
                     src={imageUrl}
                     alt={sport.name}
                     className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src =
+                        DEFAULT_SPORT_IMAGES[sport.name] || DEFAULT_SPORT_IMAGES['Bóng đá'];
+                    }}
                   />
                   {/* Gradient Dark Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
                   {/* Title & Sân count */}
-                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                  <div className="absolute bottom-4 left-4 right-4 text-white z-10">
                     <h3 className="font-heading font-black text-xl sm:text-2xl uppercase tracking-normal leading-tight group-hover:text-emerald-300 transition-colors">
                       {sport.name}
                     </h3>
@@ -128,4 +134,5 @@ export function SportsCategorySection() {
     </section>
   );
 }
+
 

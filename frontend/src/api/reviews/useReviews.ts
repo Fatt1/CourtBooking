@@ -47,21 +47,21 @@ export function useBranchReviewsQuery(branchId?: string, page = 1, pageSize = 10
         return { items: [], totalCount: 0, page, pageSize, averageRating: 5.0 };
       }
       try {
-        const response = await apiClient.get<BranchReviewsResponse>('/reviews', {
+        const response = await apiClient.get<any>('/reviews', {
           params: { branchId, page, pageSize },
-        });
-        const data = response as unknown as BranchReviewsResponse;
-        const items = data?.reviews?.items ?? data?.items ?? [];
-        const totalCount = data?.reviews?.totalCount ?? data?.totalCount ?? items.length;
-        const averageRating = data?.averageRating ?? data?.reviewAverage ?? 5.0;
+        const res = response as any;
+        const paged = res?.reviews || res;
+        const items = paged?.items || [];
+        const totalCount = paged?.totalCount ?? items.length;
+        const averageRating = res?.averageRating ?? res?.reviewAverage ?? 5.0;
 
         return {
-          ...data,
+          branchId: res?.branchId || branchId,
+          averageRating,
           items,
           totalCount,
-          averageRating,
-          page: data?.reviews?.page ?? page,
-          pageSize: data?.reviews?.pageSize ?? pageSize,
+          page: paged?.page || page,
+          pageSize: paged?.pageSize || pageSize,
         };
       } catch (err) {
         console.warn('Lỗi lấy danh sách đánh giá chi nhánh:', err);

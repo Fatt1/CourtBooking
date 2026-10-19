@@ -263,7 +263,7 @@ export function AddServiceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[86vh] max-h-[740px] bg-[#070D1A] border border-border/70 text-slate-100 p-0 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
+      <DialogContent className="max-w-5xl w-[95vw] h-[86vh] max-h-[740px] bg-background border border-border/70 text-foreground p-0 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
         <DialogTitle className="sr-only">
           {isUpdateMode ? 'Cập nhật dịch vụ đơn hàng' : 'Chọn dịch vụ & Bán lẻ POS'}
         </DialogTitle>
@@ -271,24 +271,24 @@ export function AddServiceModal({
         {/* ================================================================= */}
         {/* CỘT TRÁI: TÌM KIẾM, DANH MỤC & GRID SẢN PHẨM */}
         {/* ================================================================= */}
-        <div className="flex-1 flex flex-col min-w-0 border-b md:border-b-0 md:border-r border-border/60 bg-[#070D1A]">
+        <div className="flex-1 flex flex-col min-w-0 border-b md:border-b-0 md:border-r border-border/60 bg-background">
           {/* 1. Thanh tìm kiếm nhanh */}
           <div className="p-4 pb-3">
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm kiếm sản phẩm nhanh (F3)..."
-                className="w-full h-10 rounded-xl bg-[#0e172a] border border-border/60 pl-10 pr-9 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-[#a3e635]/60 transition-all"
+                className="w-full h-10 rounded-xl bg-muted/30 border border-border/60 pl-10 pr-9 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[#a3e635]/60 transition-all"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   <X className="size-3.5" />
                 </button>
@@ -306,8 +306,8 @@ export function AddServiceModal({
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${isActive
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'bg-[#131d31] hover:bg-[#1a2742] text-slate-300 border border-border/50'
+                    ? 'bg-foreground text-background shadow-sm'
+                    : 'bg-card hover:bg-muted text-muted-foreground border border-border/50'
                     }`}
                 >
                   {cat}
@@ -319,12 +319,12 @@ export function AddServiceModal({
           {/* 3. Grid sản phẩm */}
           <div className="p-4 pt-1 flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 content-start">
             {isServicesLoading ? (
-              <div className="col-span-full py-16 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
+              <div className="col-span-full py-16 text-center text-muted-foreground text-xs flex flex-col items-center justify-center gap-2">
                 <div className="size-6 border-2 border-[#a3e635] border-t-transparent rounded-full animate-spin" />
                 <span>Đang tải danh sách dịch vụ...</span>
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="col-span-full py-16 text-center text-slate-500 text-xs flex flex-col items-center justify-center gap-2">
+              <div className="col-span-full py-16 text-center text-muted-foreground text-xs flex flex-col items-center justify-center gap-2">
                 <Package className="size-8 stroke-1 text-slate-600" />
                 <span>Chi nhánh chưa có dịch vụ nào hoặc không tìm thấy sản phẩm</span>
               </div>
@@ -336,7 +336,7 @@ export function AddServiceModal({
                     key={product.id}
                     type="button"
                     onClick={() => handleSelectProduct(product)}
-                    className="relative rounded-2xl bg-[#0e172a] hover:bg-[#131d31] border border-border/50 hover:border-[#a3e635]/60 p-3 flex flex-col items-center justify-between text-center transition-all cursor-pointer group shadow-xs hover:shadow-md active:scale-[0.98]"
+                    className="relative rounded-2xl bg-muted/30 hover:bg-card border border-border/50 hover:border-[#a3e635]/60 p-3 flex flex-col items-center justify-between text-center transition-all cursor-pointer group shadow-xs hover:shadow-md active:scale-[0.98]"
                   >
                     {/* Badge số lượng nếu đã chọn trong giỏ */}
                     {inCart && (
@@ -346,7 +346,7 @@ export function AddServiceModal({
                     )}
 
                     {/* Khung ảnh sản phẩm */}
-                    <div className="size-20 sm:size-24 rounded-xl bg-[#131d31] group-hover:bg-[#1a2742] flex items-center justify-center mb-2 overflow-hidden border border-border/40 transition-colors">
+                    <div className="size-20 sm:size-24 rounded-xl bg-card group-hover:bg-muted flex items-center justify-center mb-2 overflow-hidden border border-border/40 transition-colors">
                       {product.imageUrl ? (
                         <img
                           src={product.imageUrl}
@@ -354,17 +354,17 @@ export function AddServiceModal({
                           className="size-full object-cover"
                         />
                       ) : (
-                        <ShoppingBag className="size-7 text-slate-500 group-hover:text-slate-300 transition-colors" />
+                        <ShoppingBag className="size-7 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
                       )}
                     </div>
 
                     {/* Tên sản phẩm */}
-                    <div className="font-semibold text-xs text-slate-200 group-hover:text-white line-clamp-2 min-h-[32px] flex items-center justify-center">
+                    <div className="font-semibold text-xs text-foreground group-hover:text-foreground line-clamp-2 min-h-[32px] flex items-center justify-center">
                       {product.name}
                     </div>
 
                     {/* Giá tiền nổi bật màu lime */}
-                    <div className="font-bold text-xs sm:text-sm text-[#a3e635] mt-1">
+                    <div className="font-bold text-xs sm:text-sm text-emerald-700 dark:text-[#a3e635] mt-1">
                       {product.price.toLocaleString('vi-VN')}đ
                     </div>
                   </button>
@@ -377,7 +377,7 @@ export function AddServiceModal({
         {/* ================================================================= */}
         {/* CỘT PHẢI: HÓA ĐƠN & DỊCH VỤ ĐÃ CHỌN */}
         {/* ================================================================= */}
-        <div className="w-full md:w-[360px] lg:w-[400px] shrink-0 flex flex-col bg-[#0B1324] border-t md:border-t-0 border-border/60">
+        <div className="w-full md:w-[360px] lg:w-[400px] shrink-0 flex flex-col bg-card border-t md:border-t-0 border-border/60">
           {/* Header Hóa đơn & Nút Hủy */}
           <div className="p-4 pb-6 flex items-center justify-between border-b border-border/60">
 
@@ -388,7 +388,7 @@ export function AddServiceModal({
           {/* Danh sách các món đã chọn */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {items.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center py-12 gap-2">
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-xs text-center py-12 gap-2">
                 <ShoppingBag className="size-8 stroke-1 text-slate-600" />
                 <span>Chưa có món nào được chọn.</span>
                 <span className="text-[11px] text-slate-600">
@@ -403,10 +403,10 @@ export function AddServiceModal({
                 >
                   {/* Tên & đơn giá */}
                   <div className="min-w-0 flex-1 space-y-0.5">
-                    <div className="font-semibold text-xs text-white truncate">
+                    <div className="font-semibold text-xs text-foreground truncate">
                       {item.name}
                     </div>
-                    <div className="text-[11px] text-slate-400">
+                    <div className="text-[11px] text-muted-foreground">
                       {item.unitPrice.toLocaleString('vi-VN')}đ
                     </div>
                   </div>
@@ -416,24 +416,24 @@ export function AddServiceModal({
                     <button
                       type="button"
                       onClick={() => handleDecrement(item.serviceId)}
-                      className="size-6 rounded-lg bg-[#131d31] hover:bg-[#1a2742] border border-border/60 text-slate-300 hover:text-white flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                      className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Minus className="size-3" />
                     </button>
-                    <span className="w-5 text-center font-bold text-xs text-white">
+                    <span className="w-5 text-center font-bold text-xs text-foreground">
                       {item.quantity}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleIncrement(item.serviceId)}
-                      className="size-6 rounded-lg bg-[#131d31] hover:bg-[#1a2742] border border-border/60 text-slate-300 hover:text-white flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                      className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Plus className="size-3" />
                     </button>
                   </div>
 
                   {/* Thành tiền */}
-                  <div className="text-right min-w-[70px] shrink-0 font-bold text-xs sm:text-sm text-white">
+                  <div className="text-right min-w-[70px] shrink-0 font-bold text-xs sm:text-sm text-foreground">
                     {(item.quantity * item.unitPrice).toLocaleString('vi-VN')}đ
                   </div>
                 </div>
@@ -442,21 +442,21 @@ export function AddServiceModal({
           </div>
 
           {/* Tổng kết & Nút hành động */}
-          <div className="p-4 border-t border-border/60 bg-[#070D1A]/60 space-y-3">
+          <div className="p-4 border-t border-border/60 bg-background/60 space-y-3">
             {/* Tạm tính (Không có giảm giá) */}
-            <div className="flex items-center justify-between text-xs text-slate-300">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Tạm tính ({totalQuantity} món)</span>
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-foreground">
                 {totalPrice.toLocaleString('vi-VN')}đ
               </span>
             </div>
 
             {/* Tổng thu */}
             <div className="flex items-center justify-between pt-1">
-              <span className="text-sm sm:text-base font-bold text-white">
+              <span className="text-sm sm:text-base font-bold text-foreground">
                 Tổng thu
               </span>
-              <span className="text-xl sm:text-2xl font-black text-[#a3e635]">
+              <span className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-[#a3e635]">
                 {totalPrice.toLocaleString('vi-VN')}đ
               </span>
             </div>

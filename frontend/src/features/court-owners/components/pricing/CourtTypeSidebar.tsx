@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import { useAppThemeStore } from '@/stores/useAppThemeStore';
 import { CourtTypeOption } from './types';
 
 interface CourtTypeSidebarProps {
@@ -13,8 +12,6 @@ export function CourtTypeSidebar({
   selectedId,
   onSelect,
 }: CourtTypeSidebarProps) {
-  const theme = useAppThemeStore((s) => s.theme);
-  const isDark = theme === 'dark';
 
   return (
     <div className="w-full lg:w-72 shrink-0 space-y-3">
@@ -34,12 +31,8 @@ export function CourtTypeSidebar({
               className={cn(
                 'w-full text-left p-4.5 rounded-2xl font-bold text-sm transition-all duration-200 cursor-pointer border',
                 isSelected
-                  ? isDark
-                    ? 'bg-white text-slate-950 border-white shadow-md'
-                    : 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                  : isDark
-                    ? 'bg-[#0E1B2E] text-white border-[#1C2B42] hover:bg-[#152740]'
-                    : 'bg-card text-foreground border-border/80 hover:bg-accent/60'
+                  ? 'bg-foreground text-background border-foreground shadow-sm'
+                  : 'bg-card text-foreground border-border/80 hover:bg-accent/60'
               )}
             >
               <div className="leading-snug">{type.name}</div>

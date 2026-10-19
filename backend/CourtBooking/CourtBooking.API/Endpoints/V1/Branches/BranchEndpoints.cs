@@ -11,6 +11,8 @@ using CourtBooking.Application.Features.V1.Branches.Queries.GetPublicBranchById;
 using CourtBooking.Application.Features.V1.Branches.Queries.SearchPublicBranches;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetOneTimeBooking;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetFromTimeBooking;
+using CourtBooking.Domain.Constants;
+using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +25,7 @@ public sealed class BranchEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         var group = app.MapApiV1Group("owner/branches")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner))
             .WithTags(BranchTag);
 
         MapToOwner(group);
@@ -79,6 +81,7 @@ public sealed class BranchEndpoints : IEndpointGroup
             [FromQuery] string? province,
             [FromQuery] string? district,
             [FromQuery] Guid[]? sportTypeIds,
+            [FromQuery] string? courtTypeName,
             [FromQuery] DateOnly? date,
             [FromQuery] TimeOnly? startTime,
             [FromQuery] TimeOnly? endTime,
@@ -98,6 +101,7 @@ public sealed class BranchEndpoints : IEndpointGroup
                 province,
                 district,
                 sportTypeIds,
+                courtTypeName,
                 date,
                 startTime,
                 endTime,
@@ -122,10 +126,12 @@ public sealed class BranchEndpoints : IEndpointGroup
         // 2. Xem chi tiết chi nhánh công khai
         group.MapGet("/{id:guid}", async (
             Guid id,
+            [FromQuery] decimal? latitude,
+            [FromQuery] decimal? longitude,
             ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new GetPublicBranchByIdQuery(id), ct);
+            var result = await sender.Send(new GetPublicBranchByIdQuery(id, latitude, longitude), ct);
             return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
         })
         .WithName("GetPublicBranchById")
@@ -239,7 +245,7 @@ public sealed class BranchEndpoints : IEndpointGroup
                 body.Name, body.Hotline, body.Province, body.District, body.Street,
                 body.GgMapUrl, body.OpenTime, body.CloseTime, body.QrImageId,
                 body.AccountNumber, body.AccountName, body.SportTypeIds,
-                body.Policy, body.Latitude, body.Longitude, body.ImageIds), ct);
+                body.Policy, body.Latitude, body.Longitude, body.ImageIds, body.Description), ct);
             return result.IsSuccess
                 ? Results.Created($"/api/v1/owner/branches/{result.Value}", result.Value)
                 : result.ToProblemDetails();
@@ -258,7 +264,7 @@ public sealed class BranchEndpoints : IEndpointGroup
                 id, body.Name, body.Hotline, body.Province, body.District, body.Street,
                 body.GgMapUrl, body.OpenTime, body.CloseTime, body.QrImageId,
                 body.AccountNumber, body.AccountName, body.SportTypeIds,
-                body.Policy, body.Latitude, body.Longitude, body.ImageIds), ct);
+                body.Policy, body.Latitude, body.Longitude, body.ImageIds, body.Description), ct);
             return result.IsSuccess ? Results.NoContent() : result.ToProblemDetails();
         })
         .WithName("UpdateOwnerBranch")

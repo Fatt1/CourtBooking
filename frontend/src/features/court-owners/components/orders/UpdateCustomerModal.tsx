@@ -60,7 +60,7 @@ export function UpdateCustomerModal({
       onOpenChange={onOpenChange}
       title="Chỉnh sửa thông tin khách"
       description="Cập nhật tên và số điện thoại liên hệ của khách cho đơn đặt này."
-      icon={<User className="size-5 text-[#a3e635]" />}
+      icon={<User className="size-5 text-emerald-700 dark:text-[#a3e635]" />}
       maxWidth="max-w-md"
       onSubmit={handleSubmit}
       submitText={isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
@@ -69,23 +69,23 @@ export function UpdateCustomerModal({
     >
       <div className="space-y-4 py-2">
         <div className="space-y-1.5">
-          <label htmlFor="cust-name" className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-            <User className="size-3.5 text-[#a3e635]" />
-            Tên khách hàng <span className="text-rose-400">*</span>
+          <label htmlFor="cust-name" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+            <User className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
+            Tên khách hàng <span className="text-rose-600 dark:text-rose-400">*</span>
           </label>
           <Input
             id="cust-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ví dụ: Nguyễn Văn A hoặc Khách vãng lai"
-            className="bg-[#131d31] border-border/60 text-white placeholder:text-slate-500 focus-visible:ring-[#a3e635]/50"
+            className="bg-card border-border/60 text-foreground placeholder:text-muted-foreground focus-visible:ring-[#a3e635]/50"
             required
           />
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="cust-phone" className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-            <Phone className="size-3.5 text-[#a3e635]" />
+          <label htmlFor="cust-phone" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+            <Phone className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
             Số điện thoại
           </label>
           <Input
@@ -93,7 +93,7 @@ export function UpdateCustomerModal({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="0901234567..."
-            className="bg-[#131d31] border-border/60 text-white placeholder:text-slate-500 focus-visible:ring-[#a3e635]/50"
+            className="bg-card border-border/60 text-foreground placeholder:text-muted-foreground focus-visible:ring-[#a3e635]/50"
           />
         </div>
       </div>

@@ -35,6 +35,7 @@ export interface OwnerBranchDetail {
   openTime: string;
   closeTime: string;
   policy?: string | null;
+  description?: string | null;
   isActive: boolean;
   qrImage?: { key: string; id: string };
   accountNumber?: string;
@@ -53,7 +54,7 @@ export interface CreateBranchPayload {
   province: string;
   district: string;
   street: string;
-  ggMapUrl: string;
+  ggMapUrl?: string;
   openTime: string;
   closeTime: string;
   qrImageId: string;
@@ -61,6 +62,7 @@ export interface CreateBranchPayload {
   accountName: string;
   sportTypeIds: string[];
   policy?: string | null;
+  description?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   imageIds: string[];
@@ -95,14 +97,16 @@ export interface BranchSportDto {
 export interface PublicBranchListItemDto {
   id: string;
   name: string;
-  province: string;
-  district: string;
-  street: string;
+  fullAddress?: string;
+  province?: string;
+  district?: string;
+  street?: string;
   latitude?: number | null;
   longitude?: number | null;
   coverImage?: {
-    id: string;
-    url: string;
+    id?: string;
+    url?: string;
+    key?: string;
   } | null;
   sports: BranchSportDto[];
   openTime: string;
@@ -112,6 +116,31 @@ export interface PublicBranchListItemDto {
   availableCourtCount?: number | null;
   minPrice: number;
   maxPrice: number;
+  courtTypes?: string[];
+  services?: string[];
+}
+
+/**
+ * Chi tiết chi nhánh công khai (Public)
+ */
+export interface PublicBranchDetailDto {
+  id: string;
+  name: string;
+  hotline: string;
+  province: string;
+  district: string;
+  street: string;
+  ggMapUrl?: string | null;
+  distanceKm?: number | null;
+  openTime: string;
+  closeTime: string;
+  policy?: string | null;
+  description?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  reviewAverage: number;
+  images: Array<{ key: string; id: string }>;
+  sports: BranchSportDto[];
 }
 
 /**
@@ -122,6 +151,7 @@ export interface SearchBranchesParams {
   province?: string;
   district?: string;
   sportTypeIds?: string[];
+  courtTypeName?: string;
   date?: string;
   startTime?: string;
   endTime?: string;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Download, Plus } from 'lucide-react';
+import { Download, Plus, ReceiptText } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { OwnerPageHeader, OwnerPagination } from '../components/shared';
@@ -75,13 +75,16 @@ export function RetailOrdersPage() {
 
   if (!branchId) return <div className="space-y-5"><OwnerPageHeader title="Lịch sử hóa đơn" /><p className="rounded-xl border border-border bg-card p-6 text-muted-foreground">Vui lòng chọn chi nhánh để xem lịch sử bán lẻ.</p></div>;
 
-  return <div className="space-y-5">
-    <OwnerPageHeader category="Bán hàng tại quầy" title="Lịch sử hóa đơn" actions={<>
-      <Button variant="outline" className="gap-2" disabled={exporting || !validRange || list.isPending || list.isError} onClick={() => void exportFile()}><Download className="size-4" />{exporting ? 'Đang xuất...' : 'Xuất CSV'}</Button>
-      <Button asChild className="gap-2 bg-brand-green text-white hover:bg-brand-green-hover"><Link to="/owner/pos"><Plus className="size-4" />Bán hàng tại quầy</Link></Button>
-    </>} />
+  return <div className="-m-4 min-h-full space-y-5 bg-gradient-to-b from-emerald-50/70 via-background to-background p-4 dark:from-emerald-950/20 sm:-m-6 sm:p-6">
+    <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-emerald-50 via-green-50 to-lime-50 px-5 py-6 dark:from-emerald-950 dark:via-emerald-950/80 dark:to-lime-950/40 sm:px-7">
+      <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-24 size-64 rounded-full bg-lime-300/35 blur-3xl dark:bg-lime-700/20" />
+      <OwnerPageHeader className="relative" icon={<ReceiptText className="size-8" />} title="Lịch sử hóa đơn" description="Theo dõi và tra cứu toàn bộ hóa đơn bán hàng tại quầy." actions={<>
+        <Button variant="outline" className="h-10 gap-2 rounded-xl border-border/70 bg-card/90 shadow-sm" disabled={exporting || !validRange || list.isPending || list.isError} onClick={() => void exportFile()}><Download className="size-4" />{exporting ? 'Đang xuất...' : 'Xuất CSV'}</Button>
+        <Button asChild className="h-10 gap-2 rounded-xl bg-[#a3e635] font-bold text-black hover:bg-[#8ece28]"><Link to="/owner/pos"><Plus className="size-4" />Bán hàng tại quầy</Link></Button>
+      </>} />
+    </div>
     <div className={selectedId && large ? 'grid items-start gap-5 min-[1600px]:grid-cols-[minmax(0,1fr)_440px]' : ''}>
-      <section className="min-w-0 space-y-5" aria-label="Danh sách hóa đơn">
+      <section className="min-w-0 space-y-4" aria-label="Danh sách hóa đơn">
         <RetailOrderFilters from={from} to={to} preset={preset} search={search}
           onDates={(start, end, value) => {
             const changes: Record<string, string | null> = { preset: value, page: null, orderId: null };
@@ -91,11 +94,13 @@ export function RetailOrdersPage() {
           }}
           onSearch={(value) => changeParams({ q: value || null, page: null, orderId: null })} />
         {!validRange ? <p role="alert" className="text-sm text-destructive">Chọn khoảng ngày hợp lệ: ngày bắt đầu không được sau ngày kết thúc.</p> : <>
+          <div className="rounded-[24px] border border-border/60 bg-card/95 p-4 shadow-[0_14px_35px_rgba(32,73,48,0.06)] dark:shadow-none sm:p-5">
           {list.isError ? <div role="alert" className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4"><p>{getApiErrorMessage(list.error, 'Không thể tải lịch sử hóa đơn')}</p><Button variant="outline" disabled={list.isFetching} onClick={() => void list.refetch()}>Thử lại</Button></div>
             : <RetailOrderTable items={list.data?.items ?? []} loading={list.isPending || search.trim() !== debouncedSearch} selectedId={selectedId} onSelect={(id) => changeParams({ orderId: id }, false)} />}
           {list.data && !list.isError && <OwnerPagination currentPage={page} pageSize={pageSize} totalItems={list.data.totalCount} onPageChange={(next) => changeParams({ page: String(next) })}
             onPageSizeChange={(size) => changeParams({ size: String(size), page: null })} />}
-          <div className="space-y-3"><h2 className="text-sm font-semibold">Tổng quan {debouncedSearch ? 'kết quả tìm kiếm' : 'trong khoảng ngày đã chọn'}</h2>
+          </div>
+          <div className="space-y-3">
             {(debouncedSearch ? list.isError : summary.isError) ? <div className="space-y-2 text-sm text-muted-foreground"><p>Không thể tải tổng quan.</p><Button variant="outline" size="sm" onClick={() => { void summary.refetch(); void list.refetch(); }}>Thử lại tổng quan</Button></div>
               : <RetailOrderSummary data={debouncedSearch ? list.data?.summary : summary.data} loading={debouncedSearch ? list.isPending : summary.isPending} />}
           </div>

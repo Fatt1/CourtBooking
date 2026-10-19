@@ -67,7 +67,7 @@ export function PosCart(props: Props) {
       </div>
       <div className="flex items-center justify-between py-1 font-bold text-brand-green dark:text-emerald-400"><span>Tổng thu</span><span>{formatVND(Math.max(0, props.subtotal - props.discountAmount))}</span></div>
       {props.error && <p role="alert" className="text-xs leading-relaxed text-destructive">{props.error}</p>}
-      <Button className="h-11 w-full gap-2 rounded-lg bg-brand-green text-xs font-bold text-white hover:bg-brand-green-hover" disabled={!props.canPay || props.paying} onClick={props.onPay}>
+      <Button className="h-11 w-full gap-2 rounded-lg bg-[#a3e635] text-xs font-bold text-black hover:bg-[#8ece28]" disabled={!props.canPay || props.paying} onClick={props.onPay}>
         {props.paying && <Loader2 className="size-4 animate-spin" />}
         {props.paying ? 'Đang thanh toán...' : 'Thanh toán & Đóng Bill'}
       </Button>

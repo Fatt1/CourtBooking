@@ -331,7 +331,7 @@ export function OrdersPage() {
                   onMouseEnter={handleDropdownMouseEnter}
                   onMouseLeave={handleDropdownMouseLeave}
                 >
-                  <div className="w-56 bg-[#0B1324] border border-border/80 p-1.5 shadow-2xl rounded-xl">
+                  <div className="w-56 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-xl">
                     <div className="space-y-0.5">
                       {/* Lựa chọn 1: Lịch ngày */}
                       <button
@@ -340,13 +340,13 @@ export function OrdersPage() {
                           setIsDropdownOpen(false);
                           setIsQuickBookOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer group"
+                        className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
                       >
                         <div className="size-7 rounded-lg bg-[#a3e635]/15 flex items-center justify-center shrink-0">
-                          <CalendarDays className="size-4 text-[#a3e635]" />
+                          <CalendarDays className="size-4 text-emerald-700 dark:text-[#a3e635]" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold group-hover:text-[#a3e635] transition-colors">
+                          <span className="text-xs font-bold">
                             Lịch ngày
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -362,13 +362,13 @@ export function OrdersPage() {
                           setIsDropdownOpen(false);
                           setIsFixedOrderOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer group"
+                        className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
                       >
                         <div className="size-7 rounded-lg bg-sky-500/15 flex items-center justify-center shrink-0">
-                          <Repeat className="size-4 text-sky-400" />
+                          <Repeat className="size-4 text-sky-600 dark:text-sky-400" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold group-hover:text-sky-300 transition-colors">
+                          <span className="text-xs font-bold">
                             Lịch cố định
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -384,13 +384,13 @@ export function OrdersPage() {
                           setIsDropdownOpen(false);
                           setIsCreateEventOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer group"
+                        className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
                       >
                         <div className="size-7 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-                          <Trophy className="size-4 text-amber-400" />
+                          <Trophy className="size-4 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold group-hover:text-amber-300 transition-colors">
+                          <span className="text-xs font-bold">
                             Lịch sự kiện
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -460,16 +460,16 @@ export function OrdersPage() {
             </PopoverTrigger>
 
             <PopoverContent
-              className="w-auto p-0 bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl z-50 overflow-hidden"
+              className="z-50 w-auto overflow-hidden rounded-2xl border border-border bg-popover p-0 text-popover-foreground shadow-xl"
               align="start"
             >
               {/* Header Popover */}
-              <div className="px-4 py-2.5 border-b border-border/50 bg-[#0f172a] flex items-center justify-between">
+              <div className="flex items-center justify-between border-b border-border/50 bg-muted/40 px-4 py-2.5">
                 <div>
-                  <div className="text-[11px] font-bold text-[#a3e635] tracking-wider uppercase">
+                  <div className="text-[11px] font-bold tracking-wider text-emerald-700 uppercase dark:text-[#a3e635]">
                     Lọc theo khoảng ngày đặt
                   </div>
-                  <div className="text-xs text-slate-300 font-mono mt-0.5">
+                  <div className="mt-0.5 font-mono text-xs text-muted-foreground">
                     {dateRangeLabel}
                   </div>
                 </div>
@@ -481,7 +481,7 @@ export function OrdersPage() {
                       setDateRange(undefined);
                       setCurrentPage(1);
                     }}
-                    className="h-7 px-2 text-xs text-slate-400 hover:text-rose-400 cursor-pointer"
+                    className="h-7 cursor-pointer px-2 text-xs text-muted-foreground hover:text-rose-600"
                   >
                     <X className="size-3.5 mr-1" />
                     Xóa lọc
@@ -490,7 +490,7 @@ export function OrdersPage() {
               </div>
 
               {/* Quick Presets */}
-              <div className="p-2 border-b border-border/40 bg-[#070D1A]/60 flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 border-b border-border/40 bg-muted/20 p-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -498,7 +498,7 @@ export function OrdersPage() {
                     setDateRange({ from: today, to: today });
                     setCurrentPage(1);
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   Hôm nay
                 </button>
@@ -509,7 +509,7 @@ export function OrdersPage() {
                     setDateRange({ from: yesterday, to: yesterday });
                     setCurrentPage(1);
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   Hôm qua
                 </button>
@@ -520,7 +520,7 @@ export function OrdersPage() {
                     setDateRange({ from: subDays(today, 6), to: today });
                     setCurrentPage(1);
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   7 ngày qua
                 </button>
@@ -531,7 +531,7 @@ export function OrdersPage() {
                     setDateRange({ from: startOfMonth(today), to: today });
                     setCurrentPage(1);
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   Tháng này
                 </button>
@@ -552,8 +552,8 @@ export function OrdersPage() {
               </div>
 
               {/* Footer */}
-              <div className="p-2.5 border-t border-border/50 bg-[#0f172a] flex items-center justify-between">
-                <span className="text-[11px] text-slate-400">
+              <div className="flex items-center justify-between border-t border-border/50 bg-muted/40 p-2.5">
+                <span className="text-[11px] text-muted-foreground">
                   Chọn ngày bắt đầu & kết thúc
                 </span>
                 <Button

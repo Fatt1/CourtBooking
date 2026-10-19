@@ -47,16 +47,13 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("District")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("GgMapUrl")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("GGMapUrl");
 
                     b.Property<string>("Hotline")
                         .IsRequired()
@@ -93,8 +90,7 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasColumnType("time");
 
                     b.Property<string>("Policy")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Province")
                         .IsRequired()
@@ -451,9 +447,6 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
 
@@ -470,9 +463,6 @@ namespace CourtBooking.Infrastructure.Migrations
 
                     b.Property<Guid>("SportTypeId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<byte>("Status")
                         .ValueGeneratedOnAdd()

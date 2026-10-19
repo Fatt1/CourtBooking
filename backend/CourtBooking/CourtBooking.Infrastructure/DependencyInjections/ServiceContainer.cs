@@ -130,6 +130,7 @@ public static class ServiceContainer
                 sqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.GetName().Name);
             });
 
+            options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
         });
 

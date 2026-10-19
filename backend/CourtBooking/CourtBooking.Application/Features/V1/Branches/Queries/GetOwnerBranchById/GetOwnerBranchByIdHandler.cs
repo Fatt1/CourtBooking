@@ -17,33 +17,60 @@ internal sealed class GetOwnerBranchByIdHandler(IApplicationDbContext dbContext,
         var branch = await dbContext.Branches.AsNoTracking()
             .AsSplitQuery()
             .Where(b => b.Id == request.Id && b.CourtOwnerId == userContext.UserId)
-            .Select(b => new OwnerBranchDetailDto(
-                Id: b.Id,
-                Name: b.Name,
-                Hotline: b.Hotline,
-                Province: b.Province,
-                District: b.District,
-                Street: b.Street,
-                GgMapUrl: b.GgMapUrl,
-                Latitude: b.Latitude,
-                Longitude: b.Longitude,
-                OpenTime: b.OpenTime,
-                CloseTime: b.CloseTime,
-                Policy: b.Policy,
-                IsActive: b.IsActive,
-                QrImage: new ImageDto(b.QrImage.StorageKey, b.QrImageId),
-                AccountNumber: b.AccountNumber,
-                AccountName: b.AccountName,
-                Sports: b.BranchSportTypes.Select(x => new BranchSportDto(x.SportTypeId, x.SportType.Name)).ToList(),
-                Images: b.Images.OrderBy(x => x.DisplayOrder)
+            .Select(b => new
+            {
+                b.Id,
+                b.Name,
+                b.Hotline,
+                b.Province,
+                b.District,
+                b.Street,
+                b.Latitude,
+                b.Longitude,
+                b.OpenTime,
+                b.CloseTime,
+                b.Policy,
+                b.Description,
+                b.IsActive,
+                QrImage = new ImageDto(b.QrImage.StorageKey, b.QrImageId),
+                b.AccountNumber,
+                b.AccountName,
+                Sports = b.BranchSportTypes.Select(x => new BranchSportDto(x.SportTypeId, x.SportType.Name)).ToList(),
+                Images = b.Images.OrderBy(x => x.DisplayOrder)
                     .Select(x => new ImageDto(x.Image.StorageKey, x.ImageId)).ToList(),
-                AverageRating: b.ReviewAverage
-            ))
+                AverageRating = (double?)b.ReviewAverage
+            })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (branch is null)
             return Result.Failure<OwnerBranchDetailDto>(new NotFoundError("Branch", request.Id));
 
-        return Result.Success(branch);
+        var ggMapUrl = branch.Latitude.HasValue && branch.Longitude.HasValue
+            ? $"https://www.google.com/maps?q={branch.Latitude.Value},{branch.Longitude.Value}"
+            : null;
+
+        var dto = new OwnerBranchDetailDto(
+            Id: branch.Id,
+            Name: branch.Name,
+            Hotline: branch.Hotline,
+            Province: branch.Province,
+            District: branch.District,
+            Street: branch.Street,
+            GgMapUrl: ggMapUrl,
+            Latitude: branch.Latitude,
+            Longitude: branch.Longitude,
+            OpenTime: branch.OpenTime,
+            CloseTime: branch.CloseTime,
+            Policy: branch.Policy,
+            Description: branch.Description,
+            IsActive: branch.IsActive,
+            QrImage: branch.QrImage,
+            AccountNumber: branch.AccountNumber,
+            AccountName: branch.AccountName,
+            Sports: branch.Sports,
+            Images: branch.Images,
+            AverageRating: branch.AverageRating);
+
+        return Result.Success(dto);
     }
 }

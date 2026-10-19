@@ -66,7 +66,7 @@ function BranchProducts({ branchId, branchName }: { branchId: string; branchName
   return (
     <div className="min-w-0 space-y-6">
       <OwnerPageHeader category="Quản lý dịch vụ" title="Sản phẩm đi kèm" actions={
-        <Button className="gap-1.5 rounded-xl bg-brand-green font-bold text-white hover:bg-brand-green-hover"
+        <Button className="h-9.5 gap-1.5 rounded-xl bg-[#a3e635] font-bold text-black hover:bg-[#8ece28]"
           onClick={() => { setProductId(null); setOpen(true); }}>
           <Plus className="size-4" /> Thêm sản phẩm
         </Button>
