@@ -12,5 +12,10 @@ public sealed record GetPublicEventsQuery(
     Guid? SportTypeId = null,
     Guid? BranchId = null,
     DateOnly? Date = null,
+    string? Province = null,
+    string? District = null,
+    string? Sport = null,
+    TimeOnly? StartTime = null,
+    TimeOnly? EndTime = null,
     int Page = 1,
     int PageSize = 10) : PaginationQuery(Page, PageSize), IQuery<PagedList<EventCardDto>>;

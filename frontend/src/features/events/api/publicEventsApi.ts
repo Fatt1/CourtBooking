@@ -24,6 +24,11 @@ export function usePublicEventsQuery(params: GetPublicEventsParams = { page: 1, 
       if (params.sportTypeId) cleanParams.sportTypeId = params.sportTypeId;
       if (params.branchId) cleanParams.branchId = params.branchId;
       if (params.date) cleanParams.date = params.date;
+      if (params.province?.trim()) cleanParams.province = params.province.trim();
+      if (params.district?.trim()) cleanParams.district = params.district.trim();
+      if (params.sport?.trim() && params.sport !== 'all') cleanParams.sport = params.sport.trim();
+      if (params.startTime?.trim()) cleanParams.startTime = params.startTime.trim();
+      if (params.endTime?.trim()) cleanParams.endTime = params.endTime.trim();
       cleanParams.page = params.page || 1;
       cleanParams.pageSize = params.pageSize || 12;
 
