@@ -6,7 +6,7 @@ import type { CourtOwnerRevenueDto, CourtOwnerRevenueParams } from './types';
 
 /**
  * Hook Query lấy dữ liệu thống kê doanh thu và vận hành của Chủ Sân
- * Endpoint: GET /api/v1/analytics/court-owner/revenue
+ * Endpoint: GET /api/v1/owner/analytics/revenue
  */
 export function useCourtOwnerRevenueQuery(params: CourtOwnerRevenueParams = {}) {
   const { isAuthenticated, user } = useAuthStore();
@@ -15,7 +15,7 @@ export function useCourtOwnerRevenueQuery(params: CourtOwnerRevenueParams = {}) 
   const { fromDate, toDate, branchId, groupBy = 'Day' } = params;
 
   return useQuery<CourtOwnerRevenueDto>({
-    queryKey: ['analytics', 'court-owner', 'revenue', { fromDate, toDate, branchId, groupBy }],
+    queryKey: ['owner', 'analytics', 'revenue', { fromDate, toDate, branchId, groupBy }],
     queryFn: async (): Promise<CourtOwnerRevenueDto> => {
       const response = await apiClient.get<CourtOwnerRevenueDto>(
         API_ENDPOINTS.ANALYTICS.COURT_OWNER_REVENUE,

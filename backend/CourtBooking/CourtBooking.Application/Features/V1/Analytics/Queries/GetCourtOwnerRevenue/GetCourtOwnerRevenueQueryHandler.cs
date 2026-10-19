@@ -34,6 +34,14 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
         decimal TotalAmount,
         decimal DiscountAmount);
 
+    private sealed record TransactionRevenueRecord(
+        Guid Id,
+        Guid? OrderId,
+        Guid BranchId,
+        DateTime CreatedAt,
+        DateOnly Date,
+        decimal NetAmount);
+
     public async Task<Result<CourtOwnerRevenueDto>> Handle(
         GetCourtOwnerRevenueQuery request,
         CancellationToken cancellationToken)
@@ -131,7 +139,7 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
                 new BadError("Ngày bắt đầu (FromDate) phải nhỏ hơn hoặc bằng ngày kết thúc (ToDate)."));
         }
 
-        // 4. Truy vấn Orders (Đơn đặt sân)
+        // 4. Truy vấn Orders (Đơn đặt sân) cho các chỉ số vận hành
         var orders = await dbContext.Orders
             .AsNoTracking()
             .Where(o => branchIds.Contains(o.BranchId)
@@ -149,16 +157,46 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
                 o.TotalCourtAmount + o.TotalServiceAmount - o.DiscountAmount))
             .ToListAsync(cancellationToken);
 
-        var validOrders = orders
-            .Where(o => o.Status == OrderStatus.Confirmed
-                     || o.Status == OrderStatus.Completed)
-            .ToList();
-
         var cancelledOrders = orders
             .Where(o => o.Status == OrderStatus.Cancelled)
             .ToList();
 
-        // 5. Truy vấn RetailOrders (Bán lẻ dịch vụ POS)
+        // 5. Truy vấn PaymentTransactions (Giao dịch thanh toán thực thu từ các đơn đặt sân)
+        var fromDateTime = fromDate.ToDateTime(TimeOnly.MinValue);
+        var toDateTime = toDate.ToDateTime(TimeOnly.MaxValue);
+
+        var rawTransactions = await dbContext.PaymentTransactions
+            .AsNoTracking()
+            .Where(t => t.OrderId != null
+                     && branchIds.Contains(t.Order!.BranchId)
+                     && t.CreatedAt >= fromDateTime
+                     && t.CreatedAt <= toDateTime)
+            .Select(t => new
+            {
+                t.Id,
+                t.OrderId,
+                BranchId = t.Order!.BranchId,
+                t.Amount,
+                t.Type,
+                t.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        var transactionRecords = rawTransactions.Select(t =>
+        {
+            var sign = t.Type == PaymentTransactionType.Refund ? -1m : 1m;
+            var netAmount = t.Amount * sign;
+
+            return new TransactionRevenueRecord(
+                t.Id,
+                t.OrderId,
+                t.BranchId,
+                t.CreatedAt,
+                DateOnly.FromDateTime(t.CreatedAt),
+                netAmount);
+        }).ToList();
+
+        // 6. Truy vấn RetailOrders (Bán lẻ dịch vụ POS tại quầy)
         var retailOrders = await dbContext.RetailOrders
             .AsNoTracking()
             .Where(ro => branchIds.Contains(ro.BranchId)
@@ -172,7 +210,7 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
                 ro.DiscountAmount))
             .ToListAsync(cancellationToken);
 
-        // 6. Truy vấn EventTickets (Vé sự kiện)
+        // 7. Truy vấn EventTickets (Vé sự kiện)
         var eventTickets = await dbContext.EventTickets
             .AsNoTracking()
             .Where(t => branchIds.Contains(t.Event.Order.BranchId)
@@ -186,16 +224,14 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
             })
             .ToListAsync(cancellationToken);
 
-        // 7. Bóc tách doanh thu (BR2 - Revenue Breakdown)
-        var courtRevenue = validOrders.Sum(o => o.TotalCourtAmount);
-        var orderServicesRevenue = validOrders.Sum(o => o.TotalServiceAmount);
-        var posRetailRevenue = retailOrders.Sum(ro => ro.TotalAmount);
-        var serviceRevenue = orderServicesRevenue + posRetailRevenue;
+        // 8. Bóc tách doanh thu thực thu: Toàn bộ thanh toán đơn đặt sân là CourtRevenue, ServiceRevenue chỉ tính từ bán lẻ tại quầy
+        var courtRevenue = transactionRecords.Sum(t => t.NetAmount);
+        var serviceRevenue = retailOrders.Sum(ro => ro.TotalAmount);
         var eventRevenue = eventTickets.Sum(t => t.Price * t.Quantity);
-        var totalDiscount = validOrders.Sum(o => o.DiscountAmount) + retailOrders.Sum(ro => ro.DiscountAmount);
-        var totalNetRevenue = courtRevenue + serviceRevenue + eventRevenue - totalDiscount;
+        var totalDiscount = orders.Where(o => o.Status != OrderStatus.Cancelled).Sum(o => o.DiscountAmount) + retailOrders.Sum(ro => ro.DiscountAmount);
+        var totalNetRevenue = courtRevenue + serviceRevenue + eventRevenue;
 
-        // 8. Chỉ số vận hành (Operational Metrics)
+        // 9. Chỉ số vận hành (Operational Metrics)
         var totalBookings = orders.Count;
         var onlineBookings = orders.Count(o => o.Channel == OrderChannel.Online);
         var posBookings = orders.Count(o => o.Channel == OrderChannel.Pos);
@@ -205,15 +241,15 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
             : 0m;
         var totalCancelledAmount = cancelledOrders.Sum(o => o.TotalAmount);
 
-        // 9. Phân bổ theo chi nhánh (ByBranch)
+        // 10. Phân bổ theo chi nhánh (ByBranch)
         var byBranch = ownerBranches.Select(b =>
         {
-            var bValidOrders = validOrders.Where(o => o.BranchId == b.Id).ToList();
+            var bTx = transactionRecords.Where(t => t.BranchId == b.Id).ToList();
             var bRetailOrders = retailOrders.Where(ro => ro.BranchId == b.Id).ToList();
             var bAllOrders = orders.Where(o => o.BranchId == b.Id).ToList();
 
-            var bCourtRevenue = bValidOrders.Sum(o => o.TotalCourtAmount);
-            var bServiceRevenue = bValidOrders.Sum(o => o.TotalServiceAmount) + bRetailOrders.Sum(ro => ro.TotalAmount);
+            var bCourtRevenue = bTx.Sum(t => t.NetAmount);
+            var bServiceRevenue = bRetailOrders.Sum(ro => ro.TotalAmount);
             var bTotalRevenue = bCourtRevenue + bServiceRevenue;
             var bTotalBookings = bAllOrders.Count;
 
@@ -226,8 +262,8 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
                 bTotalBookings);
         }).OrderByDescending(b => b.TotalRevenue).ToList();
 
-        // 10. Chuỗi thời gian biểu đồ (Timeline)
-        var timeline = GenerateTimeline(validOrders, retailOrders, orders, fromDate, toDate, request.GroupBy);
+        // 11. Chuỗi thời gian biểu đồ (Timeline)
+        var timeline = GenerateTimeline(transactionRecords, retailOrders, orders, fromDate, toDate, request.GroupBy);
 
         return Result.Success(new CourtOwnerRevenueDto(
             totalNetRevenue,
@@ -246,7 +282,7 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
     }
 
     private static List<CourtOwnerTimelineItemDto> GenerateTimeline(
-        IReadOnlyList<OrderRecord> validOrders,
+        IReadOnlyList<TransactionRevenueRecord> transactions,
         IReadOnlyList<RetailOrderRecord> retailOrders,
         IReadOnlyList<OrderRecord> allOrders,
         DateOnly fromDate,
@@ -262,12 +298,12 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
                 for (var day = fromDate; day <= toDate; day = day.AddDays(1))
                 {
                     var period = day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                    var dayValidOrders = validOrders.Where(o => o.OrderDate == day).ToList();
+                    var dayTx = transactions.Where(t => t.Date == day).ToList();
                     var dayRetailOrders = retailOrders.Where(ro => ro.OrderDate == day).ToList();
                     var dayOrders = allOrders.Where(o => o.OrderDate == day).ToList();
 
-                    var courtRevenue = dayValidOrders.Sum(o => o.TotalCourtAmount);
-                    var serviceRevenue = dayValidOrders.Sum(o => o.TotalServiceAmount) + dayRetailOrders.Sum(ro => ro.TotalAmount);
+                    var courtRevenue = dayTx.Sum(t => t.NetAmount);
+                    var serviceRevenue = dayRetailOrders.Sum(ro => ro.TotalAmount);
                     var totalRevenue = courtRevenue + serviceRevenue;
                     var bookingsCount = dayOrders.Count;
 
@@ -293,12 +329,12 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
                     var y = currentMonth.Year;
                     var m = currentMonth.Month;
 
-                    var monthValidOrders = validOrders.Where(o => o.OrderDate.Year == y && o.OrderDate.Month == m).ToList();
+                    var monthTx = transactions.Where(t => t.Date.Year == y && t.Date.Month == m).ToList();
                     var monthRetailOrders = retailOrders.Where(ro => ro.OrderDate.Year == y && ro.OrderDate.Month == m).ToList();
                     var monthOrders = allOrders.Where(o => o.OrderDate.Year == y && o.OrderDate.Month == m).ToList();
 
-                    var courtRevenue = monthValidOrders.Sum(o => o.TotalCourtAmount);
-                    var serviceRevenue = monthValidOrders.Sum(o => o.TotalServiceAmount) + monthRetailOrders.Sum(ro => ro.TotalAmount);
+                    var courtRevenue = monthTx.Sum(t => t.NetAmount);
+                    var serviceRevenue = monthRetailOrders.Sum(ro => ro.TotalAmount);
                     var totalRevenue = courtRevenue + serviceRevenue;
                     var bookingsCount = monthOrders.Count;
 
@@ -320,12 +356,12 @@ internal sealed class GetCourtOwnerRevenueQueryHandler(
                 for (var year = fromDate.Year; year <= toDate.Year; year++)
                 {
                     var period = year.ToString(CultureInfo.InvariantCulture);
-                    var yearValidOrders = validOrders.Where(o => o.OrderDate.Year == year).ToList();
+                    var yearTx = transactions.Where(t => t.Date.Year == year).ToList();
                     var yearRetailOrders = retailOrders.Where(ro => ro.OrderDate.Year == year).ToList();
                     var yearOrders = allOrders.Where(o => o.OrderDate.Year == year).ToList();
 
-                    var courtRevenue = yearValidOrders.Sum(o => o.TotalCourtAmount);
-                    var serviceRevenue = yearValidOrders.Sum(o => o.TotalServiceAmount) + yearRetailOrders.Sum(ro => ro.TotalAmount);
+                    var courtRevenue = yearTx.Sum(t => t.NetAmount);
+                    var serviceRevenue = yearRetailOrders.Sum(ro => ro.TotalAmount);
                     var totalRevenue = courtRevenue + serviceRevenue;
                     var bookingsCount = yearOrders.Count;
 
