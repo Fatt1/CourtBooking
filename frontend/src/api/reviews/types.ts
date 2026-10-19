@@ -12,9 +12,9 @@ export interface CreateReviewPayload {
  */
 export interface ReviewDto {
   id: string;
-  orderId: string;
-  branchId: string;
-  playerId: string;
+  orderId?: string;
+  branchId?: string;
+  playerId?: string;
   playerName?: string;
   playerAvatarUrl?: string;
   rating: number;
@@ -23,12 +23,24 @@ export interface ReviewDto {
 }
 
 /**
- * Phản hồi danh sách đánh giá của chi nhánh
+ * Phản hồi danh sách đánh giá của chi nhánh từ Backend (GetReviewByBranchQuery)
  */
 export interface BranchReviewsResponse {
-  items: ReviewDto[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
+  branchId?: string;
   averageRating?: number;
+  reviews?: {
+    items: ReviewDto[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages?: number;
+    hasPrevious?: boolean;
+    hasNext?: boolean;
+  };
+  // Hỗ trợ trường hợp phẳng
+  items?: ReviewDto[];
+  totalCount?: number;
+  page?: number;
+  pageSize?: number;
+  reviewAverage?: number;
 }
