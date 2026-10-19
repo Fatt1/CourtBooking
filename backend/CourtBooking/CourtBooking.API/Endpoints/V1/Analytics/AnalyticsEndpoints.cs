@@ -3,6 +3,7 @@ using CourtBooking.Application.Features.V1.Analytics.Dtos;
 using CourtBooking.Application.Features.V1.Analytics.Queries.GetCourtOwnerRevenue;
 using CourtBooking.Application.Features.V1.Analytics.Queries.GetSaaSSubscriptionRevenue;
 using CourtBooking.Application.Features.V1.Analytics.Queries.GetSystemUtilizationStatistics;
+using CourtBooking.Domain.Constants;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +35,7 @@ public sealed class AnalyticsEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-            .RequireAuthorization()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Admin))
             .WithName("GetSaaSSubscriptionRevenue")
             .WithSummary("Thống kê doanh thu bán gói cước SaaS")
             .WithDescription("Thống kê tổng doanh thu từ việc bán gói cước SaaS cho các chủ sân theo ngày/tháng/năm hoặc theo khoảng thời gian tùy chọn. Bao gồm KPI tổng, phân tích theo gói cước, biểu đồ chuỗi thời gian và % tăng trưởng so với kỳ trước.")
@@ -59,7 +60,7 @@ public sealed class AnalyticsEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-            .RequireAuthorization()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Admin))
             .WithName("GetSystemUtilizationStatistics")
             .WithSummary("Thống kê cơ sở sân, người chơi hoạt động và tỷ lệ sử dụng hệ thống")
             .WithDescription("Thống kê tổng số lượng cơ sở sân (chi nhánh, sân con, trạng thái, môn thể thao), số lượng người chơi hoạt động trong kỳ và tính toán công suất, tỷ lệ sử dụng hệ thống (Overall Utilization Rate) kèm biểu đồ phân bổ giờ và top khung giờ cao điểm.")
@@ -84,6 +85,7 @@ public sealed class AnalyticsEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner))
             .WithName("GetCourtOwnerRevenueStatistics")
             .WithSummary("Thống kê doanh thu và vận hành cho Chủ Sân")
             .WithDescription("Thống kê tổng hợp doanh thu (tiền sân, dịch vụ, vé sự kiện, giảm giá, doanh thu ròng), chỉ số vận hành (lượt đặt online/POS, tỷ lệ hủy, tiền đơn hủy), phân bổ theo chi nhánh và chuỗi thời gian biểu đồ.")

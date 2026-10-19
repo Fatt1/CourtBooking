@@ -14,6 +14,7 @@ using CourtBooking.Application.Features.V1.OwnerEvents.Dtos;
 using CourtBooking.Application.Features.V1.OwnerEvents.Queries.GetEventParticipants;
 using CourtBooking.Application.Features.V1.OwnerEvents.Queries.GetOwnerEventById;
 using CourtBooking.Application.Features.V1.OwnerEvents.Queries.GetOwnerEventsByBranch;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
@@ -34,7 +35,7 @@ public sealed class EventEndpoints : IEndpointGroup
 
 
         var groupOwner = app.MapApiV1Group("owner/events")
-            .RequireAuthorization();
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
 
         MapToOwner(groupOwner);
 
