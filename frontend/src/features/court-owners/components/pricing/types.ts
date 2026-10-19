@@ -37,6 +37,8 @@ export interface PriceTableGroup {
   id: string;
   name: string;           // ví dụ: "Bảng giá", "Đặc quyền HSSV"
   isHSSV?: boolean;       // nếu true -> hiển thị cột "GIÁ" duy nhất thay vì 2 cột cố định/vãng lai
+  defaultPrice?: number;
+  defaultWalkInPrice?: number;
   groups: PriceRuleGroup[];
 }
 

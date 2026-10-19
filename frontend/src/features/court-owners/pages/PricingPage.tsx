@@ -324,27 +324,6 @@ export function PricingPage() {
           isActive: values.isActive,
         });
 
-        // Tự động tạo 1 quy tắc giá bao quát ban đầu (05:00 - 23:00, T2 - CN) có cả 2 cột Giá cố định & Giá vãng lai
-        const newTableId = (newTable as unknown as { id: string })?.id;
-        if (newTableId && isGuid(newTableId)) {
-          try {
-            await createPriceRuleMutation.mutateAsync({
-              branchId: selectedBranchId,
-              priceTableId: newTableId,
-              dayOfWeekFrom: 1, // Thứ 2
-              dayOfWeekTo: 0,   // Chủ nhật (Cả tuần)
-              startTime: '05:00:00',
-              endTime: '23:00:00',
-              fixedCustomerPrice: values.defaultPrice,
-              walkInCustomerPrice: values.walkInPrice || values.defaultPrice,
-              startDate: null,
-              endDate: null,
-            });
-          } catch (ruleErr) {
-            console.warn('Không thể tự động tạo quy tắc mặc định cho bảng giá mới:', ruleErr);
-          }
-        }
-
         toast.success(`Tạo mới loại bảng giá "${values.name}" thành công!`);
       }
 
