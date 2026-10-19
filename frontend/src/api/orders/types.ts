@@ -513,5 +513,74 @@ export interface MyOrderDto {
   canCreateMatch: boolean;
 }
 
+/**
+ * Slot sân trong yêu cầu đặt sân online
+ */
+export interface CourtSlotItemDto {
+  courtId: string;
+  date: string;       // YYYY-MM-DD
+  startTime: string;  // HH:mm:ss
+  endTime: string;    // HH:mm:ss
+}
+
+/**
+ * Nhóm slot theo Loại sân & Bảng giá
+ */
+export interface CourtBookingSlotDto {
+  courtTypeId: string;
+  priceTableId?: string | null;
+  slots: CourtSlotItemDto[];
+}
+
+/**
+ * Dịch vụ đính kèm khi đặt sân online
+ */
+export interface OrderServiceItemDto {
+  serviceId: string;
+  quantity: number;
+}
+
+/**
+ * Payload tạo đơn đặt sân online (POST /api/v1/orders)
+ */
+export interface CreateOrderOnlinePayload {
+  branchId: string;
+  customerName: string;
+  customerPhone: string;
+  note?: string;
+  courtSlots: CourtBookingSlotDto[];
+  services?: OrderServiceItemDto[];
+  playerId?: string | null;
+}
+
+/**
+ * Kết quả trả về sau khi tạo đơn online
+ */
+export interface CreateOrderOnlineResponse {
+  qrCodeImageKey: string;
+  orderId: string;
+  orderCode: string;
+  totalAmount: number;
+  holdExpiresAt: string; // ISO 8601 string
+  accountNumber?: string | null;
+  accountName?: string | null;
+}
+
+/**
+ * Payload nộp ảnh chứng nhận thanh toán (PUT /api/v1/orders/{id}/payment-proof)
+ */
+export interface SubmitPaymentProofPayload {
+  orderId: string;
+  imageId: string;
+}
+
+/**
+ * Payload hủy đơn online đang chờ thanh toán (PUT /api/v1/orders/{id}/cancel)
+ */
+export interface CancelOrderOnlinePayload {
+  orderId: string;
+  reason?: string;
+}
+
 
 

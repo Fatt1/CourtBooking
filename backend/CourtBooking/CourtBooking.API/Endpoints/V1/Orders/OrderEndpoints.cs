@@ -4,6 +4,7 @@ using CourtBooking.Application.Features.V1.Orders.Commands.AddFixedOrderCycle;
 using CourtBooking.Application.Features.V1.Orders.Commands.AddOrderSlots;
 using CourtBooking.Application.Features.V1.Orders.Commands.AddPaymentTransaction;
 using CourtBooking.Application.Features.V1.Orders.Commands.CancelOrderByOwner;
+using CourtBooking.Application.Features.V1.Orders.Commands.CancelOrderOnline;
 using CourtBooking.Application.Features.V1.Orders.Commands.CancelOrderSlot;
 using CourtBooking.Application.Features.V1.Orders.Commands.CompleteOrder;
 using CourtBooking.Application.Features.V1.Orders.Commands.ConfirmOrder;
@@ -504,8 +505,7 @@ public class OrderEndpoints : IEndpointGroup
             [FromBody] SubmitPaymentProofCommand command,
             ISender sender) =>
         {
-
-            var result = await sender.Send(command);
+            var result = await sender.Send(command with { OrderId = id });
             return result.IsSuccess
             ? Results.Ok()
             : result.ToProblemDetails();
@@ -513,6 +513,26 @@ public class OrderEndpoints : IEndpointGroup
             .WithName("SubmitPaymentProof")
             .WithSummary("Nộp chứng nhận thanh toán")
             .WithDescription("Nộp chứng nhận thanh toán cho đơn hàng")
+            .WithTags(OrderTag)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        // PUT /api/v1/orders/{id:guid}/cancel — Khách hàng hủy đơn hàng online đang chờ thanh toán
+        group.MapPut("/{id:guid}/cancel", async (
+            [FromRoute] Guid id,
+            [FromBody] CancelOrderOnlineCommand? command,
+            ISender sender,
+            CancellationToken ct = default) =>
+        {
+            var cmd = (command ?? new CancelOrderOnlineCommand(id)) with { OrderId = id };
+            var result = await sender.Send(cmd, ct);
+            return result.IsSuccess
+                ? Results.Ok()
+                : result.ToProblemDetails();
+        })
+            .WithName("CancelOrderOnline")
+            .WithSummary("Khách hàng hủy đơn hàng online đang chờ thanh toán")
             .WithTags(OrderTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)

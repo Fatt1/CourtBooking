@@ -126,6 +126,9 @@ export const API_ENDPOINTS = {
     CONFIRM_TRANSFER: (id: string) => `/orders/${id}/confirm-transfer`,
     MY_ORDERS: '/orders/my-orders',
     REQUEST_CANCEL: (id: string) => `/orders/${id}/request-cancel`,
+    CREATE_ONLINE: '/orders',
+    SUBMIT_PAYMENT_PROOF: (id: string) => `/orders/${id}/payment-proof`,
+    CANCEL_ONLINE: (id: string) => `/orders/${id}/cancel`,
   },
 
   // 7. Sự kiện Giao lưu & Giải đấu (Events)

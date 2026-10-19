@@ -11,6 +11,7 @@ import { ProtectedRoute, OwnerProtectedRoute } from '@/components/layouts/Protec
 import { HomePage } from '@/features/customer/pages/HomePage';
 import { CourtsPage as CustomerCourtsPage } from '@/features/customer/pages/CourtsPage';
 import { BranchDetailPage } from '@/features/customer/pages/BranchDetailPage';
+import { BranchCheckoutPage } from '@/features/customer/pages/BranchCheckoutPage';
 import { CreateReviewPage } from '@/features/customer/pages/CreateReviewPage';
 import { EventsPage } from '@/features/events/pages/EventsPage';
 import { EventDetailPage } from '@/features/events/pages/EventDetailPage';
@@ -69,7 +70,9 @@ export const router = createBrowserRouter([
       { path: '/events/:id/success', element: <EventSuccessPage /> },
       { path: '/ai-assistant', element: <HomePage /> },
       { path: '/branches/:id', element: <BranchDetailPage /> },
+      { path: '/branches/:id/checkout', element: <BranchCheckoutPage /> },
       { path: '/courts/:id', element: <BranchDetailPage /> },
+      { path: '/courts/:id/checkout', element: <BranchCheckoutPage /> },
     ],
   },
 

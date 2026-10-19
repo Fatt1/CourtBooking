@@ -231,6 +231,12 @@ export function BranchDetailPage() {
               branchName={branch.name}
               openTime={branch.openTime}
               closeTime={branch.closeTime}
+              branchAddress={`${branch.street}, ${branch.district}, ${branch.province}`}
+              branchBanner={
+                branch.images && branch.images.length > 0
+                  ? branch.images[0].key || branch.images[0].url
+                  : undefined
+              }
             />
           )}
         </div>

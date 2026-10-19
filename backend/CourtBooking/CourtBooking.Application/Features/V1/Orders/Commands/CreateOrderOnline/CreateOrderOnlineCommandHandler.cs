@@ -94,7 +94,9 @@ public sealed class CreateOrderOnlineCommandHandler(
                 order.Id,
                 order.OrderCode,
                 order.TotalAmount,
-                order.HoldExpiresAt));
+                order.HoldExpiresAt,
+                bookingContext.Branch.AccountNumber,
+                bookingContext.Branch.AccountName));
         }
         finally
         {

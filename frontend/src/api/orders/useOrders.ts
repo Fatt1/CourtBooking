@@ -14,6 +14,10 @@ import {
   type CreateOrderByOwnerPayload,
   type CreateFixedOrderByOwnerPayload,
   type UpdateOrderItemsPayload,
+  type CreateOrderOnlinePayload,
+  type CreateOrderOnlineResponse,
+  type SubmitPaymentProofPayload,
+  type CancelOrderOnlinePayload,
 } from './types';
 
 // ============================================================================
@@ -498,6 +502,62 @@ export function useMyOrdersQuery(onlyAvailableForMatch?: boolean) {
   });
 }
 
+/**
+ * Hook tạo đơn đặt sân online (POST /api/v1/orders)
+ */
+export function useCreateOrderOnlineMutation() {
+  const queryClient = useQueryClient();
 
+  return useMutation({
+    mutationFn: async (payload: CreateOrderOnlinePayload): Promise<CreateOrderOnlineResponse> => {
+      const response = await apiClient.post<CreateOrderOnlineResponse>(
+        API_ENDPOINTS.ORDERS.CREATE_ONLINE,
+        payload
+      );
+      return response as unknown as CreateOrderOnlineResponse;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+    },
+  });
+}
 
+/**
+ * Hook nộp ảnh biên lai thanh toán (PUT /api/v1/orders/{id}/payment-proof)
+ */
+export function useSubmitPaymentProofMutation() {
+  const queryClient = useQueryClient();
 
+  return useMutation({
+    mutationFn: async ({ orderId, imageId }: SubmitPaymentProofPayload) => {
+      return await apiClient.put(
+        API_ENDPOINTS.ORDERS.SUBMIT_PAYMENT_PROOF(orderId),
+        { orderId, imageId }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+}
+
+/**
+ * Hook hủy đơn online đang chờ thanh toán (PUT /api/v1/orders/{id}/cancel)
+ */
+export function useCancelOrderOnlineMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ orderId, reason }: CancelOrderOnlinePayload) => {
+      return await apiClient.put(
+        API_ENDPOINTS.ORDERS.CANCEL_ONLINE(orderId),
+        { orderId, reason }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+    },
+  });
+}
