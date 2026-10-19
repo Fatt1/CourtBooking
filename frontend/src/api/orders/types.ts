@@ -489,5 +489,29 @@ export interface DeleteFixedOrderCyclePayload {
   cycleId: string;
 }
 
+/**
+ * DTO đơn đặt sân của người chơi (GET /api/v1/orders/my-orders)
+ */
+export interface MyOrderDto {
+  id: string;
+  orderCode: string;
+  branchId: string;
+  branchName: string;
+  branchAddress: string;
+  district: string;
+  province: string;
+  courtName: string;
+  sportTypeId?: string;
+  sportTypeName?: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  totalAmount: number;
+  status: OrderStatus;
+  hasSocialMatch: boolean;
+  socialMatchId?: string;
+  canCreateMatch: boolean;
+}
+
 
 
