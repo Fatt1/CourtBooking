@@ -180,6 +180,8 @@ export function mapBackendDtoToUiData(
         id: tbl.id,
         name: tbl.name,
         isHSSV,
+        defaultPrice: tbl.defaultPrice,
+        defaultWalkInPrice: tbl.defaultWalkInPrice,
         groups: Array.from(groupsMap.values()),
       };
     }

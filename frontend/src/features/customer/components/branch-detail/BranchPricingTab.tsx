@@ -247,6 +247,29 @@ export function BranchPricingTab({
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border/60">
+                                {/* HÀNG MẶC ĐỊNH LUÔN HIỂN THỊ TRÊN CÙNG */}
+                                <tr className="bg-muted/15 hover:bg-muted/30 transition-colors">
+                                  <td className="py-3.5 px-4 sm:px-6 font-semibold text-foreground align-middle border-r border-border/40">
+                                    Mặc định
+                                  </td>
+                                  <td className="py-3.5 px-4 sm:px-6 font-medium text-muted-foreground align-middle border-r border-border/40">
+                                    Tất cả các ngày
+                                  </td>
+                                  <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">
+                                    Tất cả khung giờ
+                                  </td>
+                                  <td className="py-3.5 px-4 sm:px-6 font-semibold text-muted-foreground">
+                                    {table.defaultPrice !== undefined
+                                      ? formatVND(table.defaultPrice)
+                                      : '—'}
+                                  </td>
+                                  <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">
+                                    {table.defaultWalkInPrice !== undefined
+                                      ? formatVND(table.defaultWalkInPrice)
+                                      : (table.defaultPrice !== undefined ? formatVND(table.defaultPrice) : '—')}
+                                  </td>
+                                </tr>
+
                                 {dateGroups.length > 0 ? (
                                   dateGroups.map((dGroup) => (
                                     <React.Fragment key={dGroup.dateRange}>

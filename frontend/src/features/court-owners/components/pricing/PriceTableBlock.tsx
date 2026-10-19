@@ -83,13 +83,63 @@ export function PriceTableBlock({
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
+              {/* 1. HÀNG MẶC ĐỊNH: Luôn hiển thị trên cùng, không coi là rule, không thể sửa/xóa như rule */}
+              <tr className="bg-muted/15 hover:bg-muted/30 transition-colors">
+                {/* Cột Khoảng ngày */}
+                <td className="py-3.5 px-4 font-semibold text-foreground align-middle border-r border-border/40">
+                  Mặc định
+                </td>
+
+                {/* Cột Thứ */}
+                <td className="py-3.5 px-4 font-medium text-muted-foreground align-middle border-r border-border/40">
+                  Tất cả các ngày
+                </td>
+
+                {/* Cột Khung giờ */}
+                <td className="py-3.5 px-4 font-bold text-foreground">
+                  Tất cả khung giờ
+                </td>
+
+                {/* Cột Giá */}
+                {isHSSV ? (
+                  <td className="py-3.5 px-4 font-bold text-foreground">
+                    {table.defaultPrice !== undefined
+                      ? formatVND(table.defaultPrice)
+                      : '0₫'}
+                  </td>
+                ) : (
+                  <>
+                    <td className="py-3.5 px-4 font-semibold text-muted-foreground">
+                      {table.defaultPrice !== undefined
+                        ? formatVND(table.defaultPrice)
+                        : '—'}
+                    </td>
+                    <td className="py-3.5 px-4 font-bold text-foreground">
+                      {table.defaultWalkInPrice !== undefined
+                        ? formatVND(table.defaultWalkInPrice)
+                        : (table.defaultPrice !== undefined ? formatVND(table.defaultPrice) : '—')}
+                    </td>
+                  </>
+                )}
+
+                {/* Cột Thao tác: Hiển thị nhãn Mặc định, không có nút Sửa/Xóa như rule */}
+                <td className="py-3.5 px-4 text-right pr-5">
+                  <div className="flex items-center justify-end">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-muted text-muted-foreground border border-border/60">
+                      Mặc định
+                    </span>
+                  </div>
+                </td>
+              </tr>
+
+              {/* 2. THÔNG BÁO KHI CHƯA CÓ RULE TÙY CHỈNH */}
               {table.groups.length === 0 ? (
                 <tr>
                   <td
                     colSpan={isHSSV ? 5 : 6}
-                    className="py-8 text-center text-muted-foreground text-xs font-medium"
+                    className="py-4 text-center text-muted-foreground text-xs italic"
                   >
-                    Bảng giá này chưa có khung giờ giá nào. Vui lòng bấm &quot;+ Thêm khung giờ giá&quot; để thiết lập.
+                    Bảng giá hiện chưa có khung giờ giá đặc biệt (cao điểm, cuối tuần...). Mọi thời gian đều đang áp dụng theo mức giá mặc định ở trên.
                   </td>
                 </tr>
               ) : (
