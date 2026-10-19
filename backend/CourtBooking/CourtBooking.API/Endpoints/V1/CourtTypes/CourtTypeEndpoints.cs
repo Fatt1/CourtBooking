@@ -4,6 +4,7 @@ using CourtBooking.Application.Features.V1.CourtTypes.Commands.DeleteCourtType;
 using CourtBooking.Application.Features.V1.CourtTypes.Commands.UpdateCourtType;
 using CourtBooking.Application.Features.V1.CourtTypes.Dtos;
 using CourtBooking.Application.Features.V1.CourtTypes.Queries.GetCourtTypesByBranch;
+using CourtBooking.Domain.Constants;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 
@@ -16,10 +17,9 @@ public sealed class CourtTypeEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         // ── 1. Thao tác theo chi nhánh (Danh sách & Thêm mới) ───────
-        var group = app.MapApiV1Group("owner/court-types");
-        // .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+        var group = app.MapApiV1Group("owner/court-types")
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
         MapToOwner(group);
-
     }
 
 
@@ -76,8 +76,6 @@ public sealed class CourtTypeEndpoints : IEndpointGroup
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status409Conflict);
-
-        // .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
 
         // PUT /api/v1/owner/court-types/{id}
         group.MapPut("/{id:guid}", async (
