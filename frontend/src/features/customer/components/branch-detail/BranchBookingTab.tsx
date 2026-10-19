@@ -13,7 +13,6 @@ import {
 import { useOneTimeBookingQuery } from '@/api/branches';
 import { useBranchPricingConfigQuery } from '@/api/pricing';
 import { formatCurrency, cn } from '@/lib/utils';
-import type { SelectedServiceItem } from './BranchServicesTab';
 import { toast } from 'sonner';
 
 interface BranchBookingTabProps {
@@ -21,7 +20,7 @@ interface BranchBookingTabProps {
   branchName: string;
   openTime?: string;
   closeTime?: string;
-  selectedServices: Record<string, SelectedServiceItem>;
+  selectedServices?: Record<string, { price?: number; quantity?: number }>;
 }
 
 // Kiểu dữ liệu một slot được người chơi click chọn
@@ -40,7 +39,7 @@ export function BranchBookingTab({
   branchName,
   openTime = '06:00',
   closeTime = '23:00',
-  selectedServices,
+  selectedServices = {},
 }: BranchBookingTabProps) {
   // 1. Ngày đặt sân (Mặc định hôm nay định dạng YYYY-MM-DD)
   const todayStr = useMemo(() => {
@@ -260,10 +259,11 @@ export function BranchBookingTab({
     return Object.values(selectedSlots).reduce((sum, s) => sum + s.price, 0);
   }, [selectedSlots]);
 
-  // Tổng tiền dịch vụ chọn từ Tab 4
+  // Tổng tiền dịch vụ chọn từ Tab 4 (nếu có)
   const totalServicesPrice = useMemo(() => {
+    if (!selectedServices) return 0;
     return Object.values(selectedServices).reduce(
-      (sum, item) => sum + item.price * item.quantity,
+      (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
       0
     );
   }, [selectedServices]);
@@ -653,11 +653,11 @@ export function BranchBookingTab({
             )}
           </div>
 
-          {/* Dịch vụ kèm theo (từ Tab 4) */}
-          {Object.keys(selectedServices).length > 0 && (
+          {/* Dịch vụ kèm theo (từ Tab 4 nếu có) */}
+          {selectedServices && Object.keys(selectedServices).length > 0 && (
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-1">
               <div className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
-                Dịch vụ bổ sung ({Object.values(selectedServices).reduce((s, i) => s + i.quantity, 0)} món):
+                Dịch vụ bổ sung ({Object.values(selectedServices).reduce((s, i) => s + (i.quantity || 0), 0)} món):
               </div>
               <div className="flex items-center justify-between text-xs font-semibold text-foreground">
                 <span className="truncate">Nước uống & đồ thuê tại sân</span>

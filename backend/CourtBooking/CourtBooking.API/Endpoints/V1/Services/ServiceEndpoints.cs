@@ -32,24 +32,22 @@ public sealed class ServiceEndpoints : IEndpointGroup
 
     private static void MapToPublic(RouteGroupBuilder group)
     {
-        // GET /api/v1/services — Danh sách dịch vụ công khai (có phân trang & lọc)
+        // GET /api/v1/services/{branchId} — Danh sách dịch vụ công khai theo chi nhánh (nhóm theo danh mục dịch vụ)
         group.MapGet("/{branchId:guid}", async (
                 Guid branchId,
-                [FromQuery] string? search,
-                [FromQuery] Guid? categoryId,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
         {
-            var query = new GetServicesByBranchQuery(branchId, search, categoryId, true);
+            var query = new GetServicesByBranchQuery(branchId, true);
             var result = await sender.Send(query, ct);
             return result.IsSuccess
                 ? TypedResults.Ok(result.Value)
                 : result.ToProblemDetails();
         })
             .WithName("GetPublicServices")
-            .WithSummary("Lấy danh sách dịch vụ công khai ")
+            .WithSummary("Lấy danh sách dịch vụ công khai theo chi nhánh (nhóm theo danh mục dịch vụ)")
             .WithTags(ServiceTag)
-            .Produces<List<ServiceByBranchDto>>(StatusCodes.Status200OK)
+            .Produces<List<BranchCategoryServicesDto>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 

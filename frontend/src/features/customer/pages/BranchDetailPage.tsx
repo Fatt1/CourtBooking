@@ -8,7 +8,7 @@ import { BranchTabsNav, type BranchDetailTab } from '../components/branch-detail
 import { BranchInfoTab } from '../components/branch-detail/BranchInfoTab';
 import { BranchReviewsTab } from '../components/branch-detail/BranchReviewsTab';
 import { BranchPricingTab } from '../components/branch-detail/BranchPricingTab';
-import { BranchServicesTab, type SelectedServiceItem } from '../components/branch-detail/BranchServicesTab';
+import { BranchServicesTab } from '../components/branch-detail/BranchServicesTab';
 import { BranchBookingTab } from '../components/branch-detail/BranchBookingTab';
 import { useBranchReviewsQuery } from '@/api/reviews';
 import { toast } from 'sonner';
@@ -93,34 +93,11 @@ export function BranchDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // 1. Quản lý tab đang hoạt động (5 tabs)
-  const [activeTab, setActiveTab] = useState<BranchDetailTab>('info');
+  // 1. Quản lý tab đang hoạt động (mặc định vào tab booking theo yêu cầu)
+  const [activeTab, setActiveTab] = useState<BranchDetailTab>('booking');
 
-  // 2. Quản lý giỏ dịch vụ đã chọn (mua / thuê)
-  const [selectedServices, setSelectedServices] = useState<Record<string, SelectedServiceItem>>({});
-
-  // 3. Fetch dữ liệu chi nhánh từ Backend API
+  // 2. Fetch dữ liệu chi nhánh từ Backend API
   const { data: apiBranch, isLoading, isError } = usePublicBranchDetailQuery(id);
-
-  // Cuộn lên đầu trang khi chuyển sân hoặc chuyển tab
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [id]);
-
-  // Cập nhật số lượng dịch vụ
-  const handleUpdateServiceQuantity = (item: SelectedServiceItem, delta: number) => {
-    setSelectedServices((prev) => {
-      const current = prev[item.id]?.quantity || 0;
-      const nextQty = Math.max(0, current + delta);
-      const next = { ...prev };
-      if (nextQty <= 0) {
-        delete next[item.id];
-      } else {
-        next[item.id] = { ...item, quantity: nextQty };
-      }
-      return next;
-    });
-  };
 
   // Xác định dữ liệu hiển thị (Ưu tiên API Backend, fallback nếu dùng ID demo)
   const branch: PublicBranchDetailDto | undefined =
@@ -245,12 +222,6 @@ export function BranchDetailPage() {
             <BranchServicesTab
               branchId={branch.id}
               branchName={branch.name}
-              selectedServices={selectedServices}
-              onUpdateQuantity={handleUpdateServiceQuantity}
-              onApplyServices={() => {
-                setActiveTab('booking');
-                toast.success('Đã áp dụng dịch vụ! Chuyển sang chọn giờ đặt sân.');
-              }}
             />
           )}
 
@@ -260,7 +231,6 @@ export function BranchDetailPage() {
               branchName={branch.name}
               openTime={branch.openTime}
               closeTime={branch.closeTime}
-              selectedServices={selectedServices}
             />
           )}
         </div>
