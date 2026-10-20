@@ -354,106 +354,11 @@ export function BranchPricingTab({
           })}
         </div>
       ) : (
-        /* Fallback bảng giá mẫu nếu chủ sân chưa phân loại sân phức tạp */
-        <div className="space-y-6">
-          <div className="rounded-2xl bg-card border border-border/60 overflow-hidden shadow-xs">
-            <div className="p-5 sm:p-6 bg-secondary/30 border-b border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="text-xs font-black uppercase tracking-wider text-[#397B48]">
-                  BẢNG GIÁ THAM KHẢO
-                </div>
-                <h3 className="font-heading font-black text-xl sm:text-2xl text-foreground tracking-tight mt-0.5">
-                  Khung giá theo giờ chơi tiêu chuẩn
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5 font-medium">
-                  Bảng giá theo khung giờ và nhóm khách do cơ sở thiết lập.
-                </p>
-              </div>
-
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[#397B48] text-xs font-black tracking-tight self-start sm:self-center">
-                Từ {formatCurrency(minPrice || 120000)}/giờ
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-border/70 bg-muted/40 text-muted-foreground text-xs uppercase font-bold tracking-wider">
-                    <th className="py-3 px-4 sm:px-6 w-[20%]">KHOẢNG NGÀY</th>
-                    <th className="py-3 px-4 sm:px-6 w-[20%]">THỨ</th>
-                    <th className="py-3 px-4 sm:px-6 w-[20%]">KHUNG GIỜ</th>
-                    <th className="py-3 px-4 sm:px-6 w-[20%]">GIÁ CỐ ĐỊNH</th>
-                    <th className="py-3 px-4 sm:px-6 w-[20%]">GIÁ VÃNG LAI</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  <tr className="hover:bg-muted/30 transition-colors">
-                    <td
-                      rowSpan={5}
-                      className="py-3.5 px-4 sm:px-6 font-medium text-foreground align-middle border-r border-border/40"
-                    >
-                      Mặc định
-                    </td>
-                    <td
-                      rowSpan={3}
-                      className="py-3.5 px-4 sm:px-6 font-medium text-muted-foreground align-middle border-r border-border/40"
-                    >
-                      T2 - T6
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">06:00 - 09:00</td>
-                    <td className="py-3.5 px-4 sm:px-6 font-semibold text-muted-foreground">
-                      {formatVND(Math.max((minPrice || 150000) - 30000, 80000))}
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">
-                      {formatVND(minPrice || 150000)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">09:00 - 17:00</td>
-                    <td className="py-3.5 px-4 sm:px-6 font-semibold text-muted-foreground">
-                      {formatVND(minPrice || 150000)}
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">
-                      {formatVND((minPrice || 150000) + 20000)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">17:00 - 23:00 (Giờ vàng)</td>
-                    <td className="py-3.5 px-4 sm:px-6 font-semibold text-muted-foreground">
-                      {formatVND((maxPrice || 250000) - 30000)}
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">
-                      {formatVND(maxPrice || 250000)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-muted/30 transition-colors">
-                    <td
-                      rowSpan={2}
-                      className="py-3.5 px-4 sm:px-6 font-medium text-muted-foreground align-middle border-r border-border/40"
-                    >
-                      T7 - CN
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">06:00 - 12:00</td>
-                    <td className="py-3.5 px-4 sm:px-6 font-semibold text-muted-foreground">
-                      {formatVND((maxPrice || 240000) - 30000)}
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">
-                      {formatVND(maxPrice || 240000)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">12:00 - 23:00</td>
-                    <td className="py-3.5 px-4 sm:px-6 font-semibold text-muted-foreground">
-                      {formatVND(maxPrice || 250000)}
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground">
-                      {formatVND((maxPrice || 260000) + 20000)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div className="rounded-2xl bg-card border border-border/60 p-12 text-center space-y-2">
+          <p className="font-bold text-foreground text-sm">Chưa có bảng giá chi tiết cho cơ sở này</p>
+          <p className="text-xs text-muted-foreground">
+            Vui lòng liên hệ trực tiếp với cơ sở qua số hotline để được tư vấn giá chính xác nhất.
+          </p>
         </div>
       )}
     </div>

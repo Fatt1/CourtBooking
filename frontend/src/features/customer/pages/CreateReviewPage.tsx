@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Star, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useCreateReviewMutation } from '@/api/reviews';
+import { useMyOrderDetailQuery } from '@/api/orders';
 import { createReviewSchema } from '../schemas/reviewSchema';
 import { cn } from '@/lib/utils';
 
@@ -23,9 +24,8 @@ export function CreateReviewPage() {
   const [searchParams] = useSearchParams();
   const queryOrderId = searchParams.get('orderId');
 
-  // Mã đơn hàng ưu tiên từ param URL hoặc fallback
-  const effectiveOrderId =
-    routeOrderId || queryOrderId || '01990c74-c363-7eb9-92c8-3610055ce8c0';
+  // Mã đơn hàng từ param URL
+  const effectiveOrderId = routeOrderId || queryOrderId || '';
 
   const { isAuthenticated } = useAuthStore();
   const [rating, setRating] = useState<number>(5);
@@ -33,20 +33,31 @@ export function CreateReviewPage() {
   const [comment, setComment] = useState<string>('');
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
+  // Lấy chi tiết đơn đặt sân từ API Backend
+  const {
+    data: orderDetail,
+    isLoading: isLoadingOrder,
+    isError,
+  } = useMyOrderDetailQuery(effectiveOrderId, !!effectiveOrderId);
+
   // Thông tin đơn hàng (Dữ liệu hiển thị thẻ tóm tắt)
   const orderSummary = useMemo(() => {
+    if (!orderDetail) return null;
+    const firstSlot = orderDetail.slots?.[0];
     return {
-      orderCode: 'MD-TN-0984',
-      sportType: 'TENNIS',
-      branchName: 'Tennis Phú Thọ',
-      branchInitials: 'TP',
-      courtName: 'Sân Tennis 1',
-      district: 'Quận 11',
-      playDate: '17/09/2026',
-      timeSlot: '17:00 - 18:00',
-      status: 'Đã hoàn thành',
+      orderCode: orderDetail.orderCode,
+      sportType: orderDetail.sportTypeName || 'THỂ THAO',
+      branchName: orderDetail.branchName,
+      branchInitials: orderDetail.branchName ? orderDetail.branchName.slice(0, 2).toUpperCase() : 'SB',
+      courtName: firstSlot?.courtName || 'Sân chính',
+      district: orderDetail.branchAddress || '',
+      playDate: firstSlot?.date || '—',
+      timeSlot: firstSlot
+        ? `${firstSlot.startTime.slice(0, 5)} - ${firstSlot.endTime.slice(0, 5)}`
+        : '—',
+      status: orderDetail.status === 2 ? 'Đã hoàn thành' : 'Đã xác nhận',
     };
-  }, []);
+  }, [orderDetail]);
 
   // Hook Mutation gọi API POST /api/v1/reviews
   const createReviewMutation = useCreateReviewMutation({
@@ -84,6 +95,57 @@ export function CreateReviewPage() {
   };
 
   const activeStarCount = hoverRating ?? rating;
+
+  if (isLoadingOrder) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F5] dark:bg-background py-20 flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="size-8 animate-spin text-[#2D5A27] dark:text-[#a3e635]" />
+        <p className="text-sm font-medium text-muted-foreground">Đang tải thông tin đơn đặt sân...</p>
+      </div>
+    );
+  }
+
+  if (!effectiveOrderId || !orderDetail || isError || !orderSummary) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F5] dark:bg-background py-16">
+        <div className="container mx-auto max-w-xl px-4 text-center space-y-4">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
+            <AlertCircle className="size-7" />
+          </div>
+          <h2 className="text-2xl font-black text-foreground">Không tìm thấy thông tin đơn đặt sân</h2>
+          <p className="text-sm text-muted-foreground">
+            Mã đơn hàng không hợp lệ hoặc bạn không có quyền xem thông tin đơn này.
+          </p>
+          <div className="pt-2">
+            <Button onClick={() => navigate('/account/bookings')} variant="outline" className="font-bold">
+              Xem danh sách đơn đặt sân
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (orderDetail.hasReviewed) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F5] dark:bg-background py-16">
+        <div className="container mx-auto max-w-xl px-4 text-center space-y-4">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+            <CheckCircle2 className="size-7" />
+          </div>
+          <h2 className="text-2xl font-black text-foreground">Bạn đã đánh giá đơn đặt sân này</h2>
+          <p className="text-sm text-muted-foreground">
+            Cảm ơn bạn! Ý kiến đóng góp của bạn đã được ghi nhận trên hệ thống.
+          </p>
+          <div className="pt-2">
+            <Button onClick={() => navigate('/account/bookings')} variant="outline" className="font-bold">
+              Quay lại danh sách đơn đặt sân
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] dark:bg-background py-8 sm:py-12 transition-colors">

@@ -4,6 +4,8 @@ import { API_ENDPOINTS } from '@/constants/api-endpoints';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { PagedList } from '@/types/api';
 import type {
+  BranchCategoryServicesDto,
+  BranchServiceItemDto,
   ServiceByBranchDto,
   OwnerServiceDto,
   GetServicesByBranchParams,
@@ -15,25 +17,20 @@ import type {
 /**
  * Hook lấy danh sách dịch vụ của một chi nhánh (Public / Booking / POS)
  * Endpoint: GET /api/v1/services/{branchId}
+ * Trả về danh sách loại dịch vụ kèm danh sách sản phẩm
  */
 export function useServicesByBranchQuery(params: GetServicesByBranchParams) {
-  const { branchId, search, categoryId } = params;
+  const { branchId } = params;
 
-  return useQuery<ServiceByBranchDto[]>({
-    queryKey: ['services', 'by-branch', branchId, { search, categoryId }],
-    queryFn: async (): Promise<ServiceByBranchDto[]> => {
+  return useQuery<BranchCategoryServicesDto[]>({
+    queryKey: ['services', 'by-branch', branchId],
+    queryFn: async (): Promise<BranchCategoryServicesDto[]> => {
       if (!branchId) return [];
       try {
-        const response = await apiClient.get<ServiceByBranchDto[]>(
-          API_ENDPOINTS.SERVICES.PUBLIC_BY_BRANCH(branchId),
-          {
-            params: {
-              search: search || undefined,
-              categoryId: categoryId || undefined,
-            },
-          }
+        const response = await apiClient.get<BranchCategoryServicesDto[]>(
+          API_ENDPOINTS.SERVICES.PUBLIC_BY_BRANCH(branchId)
         );
-        return (response as unknown as ServiceByBranchDto[]) || [];
+        return (response as unknown as BranchCategoryServicesDto[]) || [];
       } catch (err) {
         console.warn(`Lỗi lấy danh sách dịch vụ chi nhánh ${branchId}:`, err);
         return [];

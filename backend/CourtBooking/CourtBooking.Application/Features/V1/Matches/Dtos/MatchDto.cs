@@ -20,10 +20,11 @@ public sealed record MatchDto(
     int AvailableSlots,
     decimal FeePerPlayer,
     byte ApprovalMode,
-    SocialMatchStatus Status,
     string? Description,
     DateTime CreatedAt,
-    int ConfirmedParticipantsCount);
+    int ConfirmedParticipantsCount,
+    double? DistanceKm = null,
+    ParticipantStatus? MyParticipantStatus = null);
 
 public sealed record MatchDetailDto(
     Guid Id,
@@ -44,7 +45,6 @@ public sealed record MatchDetailDto(
     int AvailableSlots,
     decimal FeePerPlayer,
     byte ApprovalMode,
-    SocialMatchStatus Status,
     string? Description,
     DateTime CreatedAt,
     List<MatchParticipantDto> Participants);

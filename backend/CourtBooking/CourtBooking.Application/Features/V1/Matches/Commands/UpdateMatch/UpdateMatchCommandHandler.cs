@@ -30,13 +30,7 @@ public sealed class UpdateMatchCommandHandler(
             return Result.Failure(new ForbiddenError("Chỉ có người tạo kèo mới có quyền chỉnh sửa kèo này."));
         }
 
-        // 2. Kiểm tra trạng thái kèo
-        if (match.Status == SocialMatchStatus.Closed || match.Status == SocialMatchStatus.Cancelled)
-        {
-            return Result.Failure(new ConflictError("Không thể chỉnh sửa kèo đã kết thúc hoặc đã bị hủy."));
-        }
-
-        // 3. Số người đã được duyệt vào kèo (không tính host)
+        // 2. Số người đã được duyệt vào kèo (không tính host)
         var confirmedCount = match.Participants
             .Count(p => p.PlayerId != match.HostId && p.Status == ParticipantStatus.Confirmed);
 
@@ -45,7 +39,7 @@ public sealed class UpdateMatchCommandHandler(
             return Result.Failure(new ConflictError($"Số lượng người cần tuyển không thể nhỏ hơn số thành viên đã được duyệt tham gia ({confirmedCount} người)."));
         }
 
-        // 4. Cập nhật các thông tin
+        // 3. Cập nhật các thông tin
         match.SkillLevel = request.SkillLevel;
         match.MissingPlayers = request.MissingPlayers;
         match.FeePerPlayer = request.FeePerPlayer;
@@ -55,15 +49,6 @@ public sealed class UpdateMatchCommandHandler(
         // Tính lại số slot còn trống
         var newAvailableSlots = request.MissingPlayers - confirmedCount;
         match.AvailableSlots = newAvailableSlots;
-
-        if (newAvailableSlots == 0)
-        {
-            match.Status = SocialMatchStatus.Full;
-        }
-        else if (match.Status == SocialMatchStatus.Full && newAvailableSlots > 0)
-        {
-            match.Status = SocialMatchStatus.Open;
-        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

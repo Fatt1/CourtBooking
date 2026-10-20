@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Building2, Calendar, Clock, Check, AlertCircle } from 'lucide-react';
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { formatVND } from '@/lib/format';
-import { useMyOrdersQuery, type MyOrderDto } from '@/api/orders';
+import { useMyOrdersQuery, OrderStatus, type MyOrderDto } from '@/api/orders';
 
 interface SelectOrderModalProps {
   isOpen: boolean;
@@ -24,32 +24,10 @@ export function SelectOrderModal({
   selectedOrderId,
   onSelectOrder,
 }: SelectOrderModalProps) {
-  const { data: myOrders = [], isLoading } = useMyOrdersQuery(true);
+  const { data: rawOrders = [], isLoading } = useMyOrdersQuery(OrderStatus.Confirmed);
+  const myOrders = useMemo(() => rawOrders.filter((o) => o.canCreateMatch), [rawOrders]);
 
-  // Fallback demo order nếu người chơi mới chưa có đơn trong DB
-  const defaultOrders: MyOrderDto[] = [
-    {
-      id: 'a1b2c3d4-1111-2222-3333-444444444444',
-      orderCode: 'MD-PB-1042',
-      branchId: 'b1b2c3d4-1111-2222-3333-444444444444',
-      branchName: 'Victory Pickleball',
-      branchAddress: '123 Võ Văn Ngân, Thủ Đức, TP.HCM',
-      district: 'Thủ Đức',
-      province: 'TP.HCM',
-      courtName: 'Pickleball 1',
-      sportTypeId: 's1b2c3d4-1111-2222-3333-444444444444',
-      sportTypeName: 'Pickleball',
-      date: '24/09/2026',
-      startTime: '19:00:00',
-      endTime: '21:00:00',
-      totalAmount: 280000,
-      status: 2, // Confirmed
-      hasSocialMatch: false,
-      canCreateMatch: true,
-    },
-  ];
-
-  const displayOrders = myOrders.length > 0 ? myOrders : defaultOrders;
+  const displayOrders = myOrders;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

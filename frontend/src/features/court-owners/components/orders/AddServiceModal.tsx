@@ -135,14 +135,16 @@ export function AddServiceModal({
     if (!remoteServices || remoteServices.length === 0) {
       return [];
     }
-    return remoteServices.map((s: ServiceByBranchDto) => ({
-      id: s.id,
-      name: s.name,
-      price: s.price,
-      unit: s.unit,
-      category: s.categoryName || categoryMap.get(s.categoryId) || 'Khác',
-      imageUrl: s.image?.key ? getImageUrl(s.image.key) : null,
-    }));
+    return remoteServices.flatMap((cat) =>
+      cat.services.map((s) => ({
+        id: s.id,
+        name: s.name,
+        price: s.price,
+        unit: s.unit,
+        category: cat.categoryName || categoryMap.get(cat.categoryId) || 'Khác',
+        imageUrl: s.image?.key ? getImageUrl(s.image.key) : (s.image?.url || null),
+      }))
+    );
   }, [remoteServices, categoryMap]);
 
   // Lấy danh sách category duy nhất từ remoteCategories và productList

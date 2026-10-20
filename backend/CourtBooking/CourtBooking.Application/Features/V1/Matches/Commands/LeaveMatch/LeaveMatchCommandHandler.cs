@@ -24,12 +24,6 @@ public sealed class LeaveMatchCommandHandler(
             return Result.Failure(new NotFoundError("SocialMatch", request.MatchId));
         }
 
-        // 1. Kiểm tra trạng thái kèo
-        if (match.Status == SocialMatchStatus.Closed || match.Status == SocialMatchStatus.Cancelled)
-        {
-            return Result.Failure(new ConflictError("Kèo giao lưu đã kết thúc hoặc đã bị hủy."));
-        }
-
         var matchStartDateTime = match.Date.ToDateTime(match.StartTime);
         if (matchStartDateTime < DateTime.Now)
         {
@@ -39,7 +33,7 @@ public sealed class LeaveMatchCommandHandler(
         // 2. Không cho chủ phòng tự leave
         if (match.HostId == playerId)
         {
-            return Result.Failure(new ConflictError("Chủ phòng không thể rời kèo. Nếu không tiếp tục tổ chức, vui lòng chọn hủy kèo."));
+            return Result.Failure(new ConflictError("Chủ phòng không thể rời kèo. Nếu không tiếp tục tổ chức, vui lòng chọn xóa kèo."));
         }
 
         // 3. Tìm thành viên
@@ -56,10 +50,6 @@ public sealed class LeaveMatchCommandHandler(
         if (participant.Status == ParticipantStatus.Confirmed)
         {
             match.AvailableSlots += 1;
-            if (match.Status == SocialMatchStatus.Full && match.AvailableSlots > 0)
-            {
-                match.Status = SocialMatchStatus.Open;
-            }
         }
 
         participant.Status = ParticipantStatus.Cancelled;

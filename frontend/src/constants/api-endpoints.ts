@@ -125,7 +125,11 @@ export const API_ENDPOINTS = {
     CONFIRM_BOOKING: '/orders/confirm',
     CONFIRM_TRANSFER: (id: string) => `/orders/${id}/confirm-transfer`,
     MY_ORDERS: '/orders/my-orders',
+    MY_ORDER_DETAIL: (id: string) => `/orders/my-orders/${id}`,
     REQUEST_CANCEL: (id: string) => `/orders/${id}/request-cancel`,
+    CREATE_ONLINE: '/orders',
+    SUBMIT_PAYMENT_PROOF: (id: string) => `/orders/${id}/payment-proof`,
+    CANCEL_ONLINE: (id: string) => `/orders/${id}/cancel`,
   },
 
   // 7. Sự kiện Giao lưu & Giải đấu (Events)
@@ -173,6 +177,7 @@ export const API_ENDPOINTS = {
   // 9. Kèo giao lưu cộng đồng người chơi (Matches)
   MATCHES: {
     LIST: '/matches',
+    MY_JOINED: '/matches/my-joined',
     DETAIL: (id: string) => `/matches/${id}`,
     CREATE: '/matches',
     UPDATE: (id: string) => `/matches/${id}`,
@@ -183,6 +188,7 @@ export const API_ENDPOINTS = {
       `/matches/${matchId}/participants/${participantId}/reject`,
     LEAVE: (id: string) => `/matches/${id}/leave`,
     CANCEL: (id: string) => `/matches/${id}/cancel`,
+    DELETE: (id: string) => `/matches/${id}`,
   },
 
   // 10. Đánh giá & Nhận xét (Reviews)

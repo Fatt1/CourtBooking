@@ -109,6 +109,7 @@ export function useJoinMatchMutation() {
     onSuccess: (_, matchId) => {
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       queryClient.invalidateQueries({ queryKey: ['matches', 'detail', matchId] });
+      queryClient.invalidateQueries({ queryKey: ['matches', 'my-joined'] });
     },
   });
 }
@@ -126,6 +127,7 @@ export function useApproveParticipantMutation() {
     onSuccess: (_, { matchId }) => {
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       queryClient.invalidateQueries({ queryKey: ['matches', 'detail', matchId] });
+      queryClient.invalidateQueries({ queryKey: ['matches', 'my-joined'] });
     },
   });
 }
@@ -143,6 +145,7 @@ export function useRejectParticipantMutation() {
     onSuccess: (_, { matchId }) => {
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       queryClient.invalidateQueries({ queryKey: ['matches', 'detail', matchId] });
+      queryClient.invalidateQueries({ queryKey: ['matches', 'my-joined'] });
     },
   });
 }
@@ -160,23 +163,49 @@ export function useLeaveMatchMutation() {
     onSuccess: (_, matchId) => {
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       queryClient.invalidateQueries({ queryKey: ['matches', 'detail', matchId] });
+      queryClient.invalidateQueries({ queryKey: ['matches', 'my-joined'] });
     },
   });
 }
 
 /**
- * Hook chủ phòng hủy kèo (POST /api/v1/matches/:id/cancel)
+ * Hook chủ phòng xóa kèo (DELETE /api/v1/matches/:id)
  */
-export function useCancelMatchMutation() {
+export function useDeleteMatchMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (matchId: string): Promise<void> => {
-      await apiClient.post(API_ENDPOINTS.MATCHES.CANCEL(matchId));
+      await apiClient.delete(API_ENDPOINTS.MATCHES.DELETE(matchId));
     },
     onSuccess: (_, matchId) => {
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       queryClient.invalidateQueries({ queryKey: ['matches', 'detail', matchId] });
+      queryClient.invalidateQueries({ queryKey: ['matches', 'my-joined'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', 'my-orders'] });
+    },
+  });
+}
+
+/**
+ * Hook chủ phòng hủy / xóa kèo (alias sang useDeleteMatchMutation)
+ */
+export function useCancelMatchMutation() {
+  return useDeleteMatchMutation();
+}
+
+/**
+ * Hook lấy danh sách kèo mà người chơi đã tham gia (GET /api/v1/matches/my-joined)
+ */
+export function useMyJoinedMatchesQuery(params?: { latitude?: number; longitude?: number }) {
+  return useQuery<MatchDto[]>({
+    queryKey: ['matches', 'my-joined', params],
+    queryFn: async (): Promise<MatchDto[]> => {
+      const response = await apiClient.get<MatchDto[]>(
+        API_ENDPOINTS.MATCHES.MY_JOINED,
+        { params }
+      );
+      return (response as unknown as MatchDto[]) || [];
     },
   });
 }

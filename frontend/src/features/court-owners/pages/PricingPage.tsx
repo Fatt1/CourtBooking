@@ -24,8 +24,6 @@ import {
   AddPriceRuleModal,
   AddFixedTimeBlockModal,
   AddPriceTableModal,
-  mockCourtTypes,
-  mockPricingDataMap,
   FixedTimeBlock,
   PriceTableGroup,
   PriceRuleGroup,
@@ -61,7 +59,7 @@ export function PricingPage() {
   const { data: rawCourtTypes = [], isLoading: isLoadingCourtTypes } =
     useCourtTypesQuery(selectedBranchId);
 
-  // Map danh sách Loại sân sang định dạng UI (hoặc fallback sang mock data nếu chưa chọn chi nhánh)
+  // Map danh sách Loại sân sang định dạng UI từ API Backend
   const courtTypes: CourtTypeOption[] = useMemo(() => {
     if (rawCourtTypes && rawCourtTypes.length > 0) {
       return rawCourtTypes.map((ct) => ({
@@ -71,12 +69,8 @@ export function PricingPage() {
         totalCourts: ct.courtCount,
       }));
     }
-    // Chỉ fallback sang mock data khi chưa chọn chi nhánh
-    if (!selectedBranchId) {
-      return mockCourtTypes;
-    }
     return [];
-  }, [rawCourtTypes, selectedBranchId]);
+  }, [rawCourtTypes]);
 
   // Tự động chọn loại sân đầu tiên khi có danh sách loại sân
   useEffect(() => {
@@ -125,20 +119,17 @@ export function PricingPage() {
     );
   };
 
-  // Xác định dữ liệu hiển thị (Ưu tiên API thật từ Backend, fallback sang mock data nếu API chưa có dữ liệu)
+  // Xác định dữ liệu hiển thị từ API Backend
   const currentPricingData: CourtTypePricingData = useMemo(() => {
     if (backendPricingDto) {
       return mapBackendDtoToUiData(backendPricingDto);
     }
-    if (isGuid(selectedCourtTypeId)) {
-      return {
-        courtTypeId: selectedCourtTypeId,
-        tabName: 'Bảng giá tiêu chuẩn',
-        fixedBlocks: [],
-        priceTables: [],
-      };
-    }
-    return mockPricingDataMap[selectedCourtTypeId] || mockPricingDataMap['ct-pvc'];
+    return {
+      courtTypeId: selectedCourtTypeId || '',
+      tabName: 'Bảng giá tiêu chuẩn',
+      fixedBlocks: [],
+      priceTables: [],
+    };
   }, [backendPricingDto, selectedCourtTypeId]);
 
   // Xử lý chuyển đổi loại sân

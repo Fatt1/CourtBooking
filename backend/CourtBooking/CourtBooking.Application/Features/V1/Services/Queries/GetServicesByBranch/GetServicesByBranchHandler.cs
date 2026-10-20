@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 namespace CourtBooking.Application.Features.V1.Services.Queries.GetServicesByBranch;
 
 internal sealed class GetServicesByBranchHandler(
-    IApplicationDbContext dbContext) : IQueryHandler<GetServicesByBranchQuery, List<ServiceByBranchDto>>
+    IApplicationDbContext dbContext) : IQueryHandler<GetServicesByBranchQuery, List<BranchCategoryServicesDto>>
 {
-    public async Task<Result<List<ServiceByBranchDto>>> Handle(
+    public async Task<Result<List<BranchCategoryServicesDto>>> Handle(
         GetServicesByBranchQuery request,
         CancellationToken cancellationToken)
     {
@@ -19,7 +19,7 @@ internal sealed class GetServicesByBranchHandler(
 
         if (!branchExists)
         {
-            return Result.Failure<List<ServiceByBranchDto>>(new NotFoundError("Branch", request.BranchId));
+            return Result.Failure<List<BranchCategoryServicesDto>>(new NotFoundError("Branch", request.BranchId));
         }
 
         var query = dbContext.ServiceBranches
@@ -31,32 +31,37 @@ internal sealed class GetServicesByBranchHandler(
             query = query.Where(sb => sb.IsActive == request.IsActive.Value);
         }
 
-        if (request.CategoryId.HasValue)
-        {
-            query = query.Where(sb => sb.Service.CategoryId == request.CategoryId.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-        {
-            var search = request.SearchTerm.Trim().ToLower();
-            query = query.Where(sb => sb.Service.Name.ToLower().Contains(search));
-        }
-
-        var result = await query
-            .OrderBy(sb => sb.Service.Name)
-            .Select(sb => new ServiceByBranchDto(
-                sb.ServiceId,
-                sb.Service.Name,
-                sb.Service.Unit,
-                sb.Service.CategoryId,
-                sb.Service.Image != null ? new ImageDto(sb.Service.Image.StorageKey, sb.Service.Image.Id) : null,
-                sb.BranchId,
-                sb.Price,
-                sb.IsActive,
-                sb.Service.CreatedAt,
-                sb.Service.UpdatedAt
-            ))
+        var serviceItems = await query
+            .OrderBy(sb => sb.Service.Category.Name)
+            .ThenBy(sb => sb.Service.Name)
+            .Select(sb => new
+            {
+                CategoryId = sb.Service.CategoryId,
+                CategoryName = sb.Service.Category.Name,
+                ServiceId = sb.ServiceId,
+                ServiceName = sb.Service.Name,
+                Unit = sb.Service.Unit,
+                Price = sb.Price,
+                IsActive = sb.IsActive,
+                Image = sb.Service.Image != null ? new ImageDto(sb.Service.Image.StorageKey, sb.Service.Image.Id) : null
+            })
             .ToListAsync(cancellationToken);
+
+        var result = serviceItems
+            .GroupBy(s => new { s.CategoryId, s.CategoryName })
+            .Select(g => new BranchCategoryServicesDto(
+                g.Key.CategoryId,
+                g.Key.CategoryName,
+                g.Select(s => new BranchServiceItemDto(
+                    s.ServiceId,
+                    s.ServiceName,
+                    s.Unit,
+                    s.Price,
+                    s.Image,
+                    s.IsActive
+                )).ToList()
+            ))
+            .ToList();
 
         return Result.Success(result);
     }

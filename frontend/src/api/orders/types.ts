@@ -489,8 +489,15 @@ export interface DeleteFixedOrderCyclePayload {
   cycleId: string;
 }
 
+export interface GetMyOrdersParams {
+  status?: OrderStatus;
+  page?: number;
+  pageSize?: number;
+}
+
 /**
- * DTO đơn đặt sân của người chơi (GET /api/v1/orders/my-orders)
+ * DTO tóm tắt đơn đặt sân của người chơi trong danh sách (GET /api/v1/orders/my-orders)
+ * Handler chỉ trả về thông tin tổng quan và TotalAmount
  */
 export interface MyOrderDto {
   id: string;
@@ -498,8 +505,8 @@ export interface MyOrderDto {
   branchId: string;
   branchName: string;
   branchAddress: string;
-  district: string;
-  province: string;
+  district?: string;
+  province?: string;
   courtName: string;
   sportTypeId?: string;
   sportTypeName?: string;
@@ -511,6 +518,147 @@ export interface MyOrderDto {
   hasSocialMatch: boolean;
   socialMatchId?: string;
   canCreateMatch: boolean;
+  holdExpiresAt?: string;
+  canPay?: boolean;
+  accountNumber?: string | null;
+  accountName?: string | null;
+  qrCodeImageKey?: string | null;
+  hasReviewed?: boolean;
+  createdAt?: string;
+}
+
+/**
+ * Slot sân trong chi tiết đơn đặt sân của người chơi
+ */
+export interface MyOrderDetailSlotItemDto {
+  orderDetailId: string;
+  courtId: string;
+  courtName: string;
+  courtTypeId?: string | null;
+  courtTypeName?: string | null;
+  date: string;
+  startTime: string;
+  endTime: string;
+  price: number;
+}
+
+/**
+ * Dịch vụ trong chi tiết đơn đặt sân của người chơi
+ */
+export interface MyOrderDetailServiceItemDto {
+  serviceId: string;
+  serviceName: string;
+  unit?: string | null;
+  unitPrice: number;
+  quantity: number;
+  totalPrice: number;
+}
+
+/**
+ * Chi tiết toàn bộ đơn đặt sân của người chơi (GET /api/v1/orders/my-orders/{id})
+ */
+export interface MyOrderDetailResponse {
+  id: string;
+  orderCode: string;
+  branchId: string;
+  branchName: string;
+  branchAddress: string;
+  branchPhone?: string | null;
+  sportTypeName?: string | null;
+  status: OrderStatus;
+  orderType: OrderType;
+  channel: OrderChannel;
+  createdAt: string;
+  holdExpiresAt?: string | null;
+  note?: string | null;
+  cancelReason?: string | null;
+  customerName: string;
+  customerPhone: string;
+  totalCourtAmount: number;
+  totalServiceAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  canPay: boolean;
+  accountNumber?: string | null;
+  accountName?: string | null;
+  qrCodeImageKey?: string | null;
+  hasSocialMatch: boolean;
+  socialMatchId?: string | null;
+  canCreateMatch: boolean;
+  hasReviewed: boolean;
+  reviewRating?: number | null;
+  reviewComment?: string | null;
+  slots: MyOrderDetailSlotItemDto[];
+  services: MyOrderDetailServiceItemDto[];
+}
+
+/**
+ * Slot sân trong yêu cầu đặt sân online
+ */
+export interface CourtSlotItemDto {
+  courtId: string;
+  date: string;       // YYYY-MM-DD
+  startTime: string;  // HH:mm:ss
+  endTime: string;    // HH:mm:ss
+}
+
+/**
+ * Nhóm slot theo Loại sân & Bảng giá
+ */
+export interface CourtBookingSlotDto {
+  courtTypeId: string;
+  priceTableId?: string | null;
+  slots: CourtSlotItemDto[];
+}
+
+/**
+ * Dịch vụ đính kèm khi đặt sân online
+ */
+export interface OrderServiceItemDto {
+  serviceId: string;
+  quantity: number;
+}
+
+/**
+ * Payload tạo đơn đặt sân online (POST /api/v1/orders)
+ */
+export interface CreateOrderOnlinePayload {
+  branchId: string;
+  customerName: string;
+  customerPhone: string;
+  note?: string;
+  courtSlots: CourtBookingSlotDto[];
+  services?: OrderServiceItemDto[];
+  playerId?: string | null;
+}
+
+/**
+ * Kết quả trả về sau khi tạo đơn online
+ */
+export interface CreateOrderOnlineResponse {
+  qrCodeImageKey: string;
+  orderId: string;
+  orderCode: string;
+  totalAmount: number;
+  holdExpiresAt: string; // ISO 8601 string
+  accountNumber?: string | null;
+  accountName?: string | null;
+}
+
+/**
+ * Payload nộp ảnh chứng nhận thanh toán (PUT /api/v1/orders/{id}/payment-proof)
+ */
+export interface SubmitPaymentProofPayload {
+  orderId: string;
+  imageId: string;
+}
+
+/**
+ * Payload hủy đơn online đang chờ thanh toán (PUT /api/v1/orders/{id}/cancel)
+ */
+export interface CancelOrderOnlinePayload {
+  orderId: string;
+  reason?: string;
 }
 
 
