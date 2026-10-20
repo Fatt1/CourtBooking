@@ -39,7 +39,10 @@ public sealed record SubscriptionHistoryItemDto(
     DateOnly EndDate,
     string TransactionCode,
     string Status,
-    int DaysRemaining);
+    int DaysRemaining,
+    string ActionType = "Register",
+    string? ActionNote = null,
+    DateTime? CreatedAt = null);
 
 /// <summary>
 /// DTO phản hồi danh sách lịch sử đăng ký có phân trang kèm số lượng badge "Sắp hết hạn".

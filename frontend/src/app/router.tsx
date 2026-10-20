@@ -23,7 +23,10 @@ import { AccountBookingsPage } from '@/features/customer/pages/AccountBookingsPa
 
 
 // Admin Pages
+import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage';
 import { UsersPage } from '@/features/admin/pages/UsersPage';
+import { CourtOwnersPage } from '@/features/admin/pages/CourtOwnersPage';
+import { SubscriptionsPage } from '@/features/admin/pages/SubscriptionsPage';
 import { SportTypesPage } from '@/features/admin/pages/SportTypesPage';
 
 // Court Owners / Management Pages
@@ -136,11 +139,11 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/admin/users" replace /> },
-      { path: 'dashboard', element: <UsersPage /> },
+      { index: true, element: <AdminDashboardPage /> },
+      { path: 'dashboard', element: <AdminDashboardPage /> },
       { path: 'users', element: <UsersPage /> },
-      { path: 'owners', element: <UsersPage /> },
-      { path: 'subscriptions', element: <UsersPage /> },
+      { path: 'owners', element: <CourtOwnersPage /> },
+      { path: 'subscriptions', element: <SubscriptionsPage /> },
       { path: 'sport-types', element: <SportTypesPage /> },
     ],
   },

@@ -22,9 +22,9 @@ export function SportTypeCard({ sport, onEdit, onDelete }: SportTypeCardProps) {
   const isBlockedByBranches = sport.branchCount > 0;
 
   return (
-    <div className="group relative rounded-2xl border border-[#19261f] bg-[#101813] overflow-hidden transition-all duration-200 hover:border-[#253a2f] hover:shadow-xl hover:shadow-black/50 flex flex-col select-none">
+    <div className="group relative rounded-2xl border border-[#1a3828] bg-[#0f2218] overflow-hidden transition-all duration-200 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-black/50 flex flex-col select-none">
       {/* 1. Phần ảnh sân thể thao lấy trực tiếp từ Storage */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#0c1410] flex items-center justify-center">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#0c1a12] flex items-center justify-center">
         {actualUrl && !imageError ? (
           <img
             src={actualUrl}
@@ -34,8 +34,8 @@ export function SportTypeCard({ sport, onEdit, onDelete }: SportTypeCardProps) {
             loading="lazy"
           />
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 p-6 text-zinc-500 bg-[#0e1712] size-full">
-            <div className="size-12 rounded-2xl bg-[#14231b] border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center gap-2 p-6 text-zinc-500 bg-[#0c1a12] size-full">
+            <div className="size-12 rounded-2xl bg-[#132c20] border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
               <ImageIcon className="size-6" />
             </div>
             <span className="text-xs font-semibold text-zinc-400">
@@ -110,7 +110,7 @@ export function SportTypeCard({ sport, onEdit, onDelete }: SportTypeCardProps) {
         </div>
 
         {/* Hàng 3: Chú thích nguồn ảnh từ Storage & ID */}
-        <div className="mt-4 pt-3 border-t border-[#16241c] flex items-center justify-between text-[11px] text-zinc-500">
+        <div className="mt-4 pt-3 border-t border-[#162e21] flex items-center justify-between text-[11px] text-zinc-500">
           <span className="flex items-center gap-1.5 text-zinc-400">
             <Database className="size-3 text-emerald-400" />
             <span>{sport.image?.key ? 'Lưu trữ Storage' : 'Chưa có ảnh'}</span>

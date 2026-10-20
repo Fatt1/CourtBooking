@@ -65,22 +65,27 @@ internal sealed class GetCourtOwnersQueryHandler(IApplicationDbContext dbContext
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        var items = rawItems.Select(x => new CourtOwnerSummaryDto(
-            x.Id,
-            x.FullName,
-            x.Email,
-            x.PhoneNumber,
-            x.BusinessName,
-            x.Status,
-            x.MustChangePwd,
-            x.CreatedAt,
-            x.LatestSubscription?.PackageName,
-            x.LatestSubscription?.StartDate,
-            x.LatestSubscription?.EndDate,
-            x.LatestSubscription is not null
-                && today >= x.LatestSubscription.StartDate
-                && today <= x.LatestSubscription.EndDate
-        )).ToList();
+        var items = rawItems.Select(x =>
+        {
+            var createdDate = DateOnly.FromDateTime(x.CreatedAt);
+            var startDate = x.LatestSubscription?.StartDate ?? createdDate;
+            var endDate = x.LatestSubscription?.EndDate ?? createdDate.AddMonths(1);
+            var isSubActive = today >= startDate && today <= endDate;
+
+            return new CourtOwnerSummaryDto(
+                x.Id,
+                x.FullName,
+                x.Email,
+                x.PhoneNumber,
+                x.BusinessName,
+                x.Status,
+                x.MustChangePwd,
+                x.CreatedAt,
+                x.LatestSubscription?.PackageName,
+                startDate,
+                endDate,
+                isSubActive);
+        }).ToList();
 
         return Result.Success(new PagedList<CourtOwnerSummaryDto>(items, totalCount, request.Page, request.PageSize));
     }

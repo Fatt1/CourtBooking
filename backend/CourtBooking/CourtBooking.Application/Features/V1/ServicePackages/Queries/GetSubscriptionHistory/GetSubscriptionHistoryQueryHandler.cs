@@ -24,6 +24,8 @@ internal sealed class GetSubscriptionHistoryQueryHandler(IApplicationDbContext d
         var query = dbContext.CourtOwnerSubscriptions
             .Include(s => s.CourtOwner)
                 .ThenInclude(co => co.User)
+            .Include(s => s.CourtOwner)
+                .ThenInclude(co => co.Subscriptions)
             .Include(s => s.ServicePackage)
             .AsNoTracking();
 
@@ -82,6 +84,37 @@ internal sealed class GetSubscriptionHistoryQueryHandler(IApplicationDbContext d
                 status = "Active"; // Hoạt động bình thường
             }
 
+            string actionType;
+            string actionNote;
+            if (s.CourtOwner.User.Status != UserStatus.Active)
+            {
+                actionType = "Cancel"; // Hủy gói / Tạm dừng
+                actionNote = "Hủy gói / Tạm dừng dịch vụ cụm sân";
+            }
+            else
+            {
+                var previousSub = s.CourtOwner.Subscriptions?
+                    .Where(other => other.CreatedAt < s.CreatedAt)
+                    .OrderByDescending(other => other.CreatedAt)
+                    .FirstOrDefault();
+
+                if (previousSub is null)
+                {
+                    actionType = "Register";
+                    actionNote = $"Đăng ký gói {s.ServicePackage.Name}";
+                }
+                else if (previousSub.ServicePackageId != s.ServicePackageId)
+                {
+                    actionType = "ChangePackage";
+                    actionNote = $"Đổi sang gói {s.ServicePackage.Name}";
+                }
+                else
+                {
+                    actionType = "Extend";
+                    actionNote = $"Gia hạn thêm gói {s.ServicePackage.Name}";
+                }
+            }
+
             int daysRemaining = Math.Max(0, s.EndDate.DayNumber - today.DayNumber);
             string initials = GetAvatarInitials(s.CourtOwner.User.FullName);
             string transactionCode = $"PAY-{s.CreatedAt:yyMMdd}-{s.Id.ToString()[..3].ToUpperInvariant()}";
@@ -98,7 +131,10 @@ internal sealed class GetSubscriptionHistoryQueryHandler(IApplicationDbContext d
                 s.EndDate,
                 transactionCode,
                 status,
-                daysRemaining);
+                daysRemaining,
+                actionType,
+                actionNote,
+                s.CreatedAt);
         }).ToList();
 
         var pagedList = new PagedList<SubscriptionHistoryItemDto>(

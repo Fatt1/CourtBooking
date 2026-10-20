@@ -178,8 +178,8 @@ export function SportTypeFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] bg-[#0c1410] border border-[#1b2b22] text-zinc-100 p-6 rounded-2xl shadow-2xl">
-        <DialogHeader className="space-y-1.5 pb-2 border-b border-[#16241c]">
+      <DialogContent className="sm:max-w-[480px] bg-[#0f2218] border border-[#1a3828] text-zinc-100 p-6 rounded-2xl shadow-2xl">
+        <DialogHeader className="space-y-1.5 pb-2 border-b border-[#162e21]">
           <div className="text-[10px] font-mono font-extrabold tracking-widest text-emerald-400 uppercase">
             {isEditing ? 'UPDATE SPORT TYPE' : 'NEW SPORT TYPE'}
           </div>
@@ -210,7 +210,7 @@ export function SportTypeFormModal({
                   <FormControl>
                     <Input
                       placeholder="Ví dụ: Cầu lông, Bóng đá mini, Pickleball..."
-                      className="h-10 rounded-xl bg-[#111915] border border-[#1b2b22] text-xs text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500"
+                      className="h-10 rounded-xl bg-[#0c1a12] border border-[#1a3828] text-xs text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500"
                       {...field}
                     />
                   </FormControl>
@@ -245,7 +245,7 @@ export function SportTypeFormModal({
 
                       {imagePreviewUrl ? (
                         /* Đã có ảnh preview */
-                        <div className="relative group rounded-xl border border-[#1b2b22] bg-[#111915] p-3 flex items-center gap-4">
+                        <div className="relative group rounded-xl border border-[#1a3828] bg-[#0c1a12] p-3 flex items-center gap-4">
                           <div className="size-16 rounded-lg bg-[#16271e] border border-emerald-500/30 overflow-hidden flex items-center justify-center shrink-0 shadow-inner relative">
                             <img
                               src={imagePreviewUrl}
@@ -306,7 +306,7 @@ export function SportTypeFormModal({
                           className={`rounded-xl border-2 border-dashed p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
                             dragOver
                               ? 'border-emerald-500 bg-emerald-500/10'
-                              : 'border-[#1b2b22] bg-[#111915]/60 hover:border-emerald-500/40 hover:bg-[#111915]'
+                              : 'border-[#1a3828] bg-[#0c1a12]/80 hover:border-emerald-500/40 hover:bg-[#0c1a12]'
                           }`}
                         >
                           {isUploadingImage ? (
@@ -318,7 +318,7 @@ export function SportTypeFormModal({
                             </div>
                           ) : (
                             <>
-                              <div className="size-11 rounded-xl bg-[#16271e] text-emerald-400 flex items-center justify-center mb-2.5 border border-emerald-500/20">
+                              <div className="size-11 rounded-xl bg-[#132c20] text-emerald-400 flex items-center justify-center mb-2.5 border border-emerald-500/20">
                                 <UploadCloud className="size-5" />
                               </div>
                               <div className="text-xs font-bold text-zinc-200">
@@ -339,19 +339,19 @@ export function SportTypeFormModal({
             />
 
             {/* Gợi ý nhanh */}
-            <div className="p-3 rounded-xl bg-[#111915] border border-[#1b2b22] flex items-start gap-2.5 text-[11px] text-zinc-400">
+            <div className="p-3 rounded-xl bg-[#0c1a12] border border-[#1a3828] flex items-start gap-2.5 text-[11px] text-zinc-400">
               <AlertCircle className="size-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 Tên môn thể thao phải là duy nhất trên hệ thống. Sau khi tạo, chủ sân có thể liên kết môn thể thao này với chi nhánh và cụm sân của họ.
               </div>
             </div>
 
-            <DialogFooter className="pt-2 sm:justify-end gap-2 border-t border-[#16241c]">
+            <DialogFooter className="pt-2 sm:justify-end gap-2 border-t border-[#162e21]">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="h-10 px-4 rounded-xl border-[#1b2b22] bg-[#111915] text-zinc-300 hover:bg-[#16241c] hover:text-white text-xs cursor-pointer"
+                className="h-10 px-4 rounded-xl border-[#1a3828] bg-[#0c1a12] text-zinc-300 hover:bg-[#142e20] hover:text-white text-xs cursor-pointer"
               >
                 Hủy bỏ
               </Button>

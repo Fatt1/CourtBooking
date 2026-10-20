@@ -38,31 +38,23 @@ internal sealed class ChangeCourtOwnerPackageCommandHandler(
             .OrderByDescending(s => s.EndDate)
             .FirstOrDefaultAsync(ct);
 
-        CourtOwnerSubscription subscription;
+        // Quy tắc: Tạo bản ghi thuê bao mới trong lịch sử đăng ký của Chủ sân để lưu vết giao dịch đổi gói
+        var endDate = currentSub is not null && currentSub.EndDate > today
+            ? currentSub.EndDate
+            : today.AddMonths(newPackage.DurationMonths);
 
-        // Quy tắc: Gói hiện tại sẽ được thay bằng gói mới. Ngày hết hạn hiện tại được giữ nguyên.
-        if (currentSub is not null)
+        var subscription = new CourtOwnerSubscription
         {
-            currentSub.ServicePackageId = newPackage.Id;
-            currentSub.PricePaid = newPackage.Price;
-            // EndDate giữ nguyên theo yêu cầu
-            subscription = currentSub;
-        }
-        else
-        {
-            // Nếu chủ sân chưa từng có thuê bao, khởi tạo gói mới từ hôm nay
-            subscription = new CourtOwnerSubscription
-            {
-                Id = Guid.NewGuid(),
-                CourtOwnerId = request.CourtOwnerId,
-                ServicePackageId = newPackage.Id,
-                PricePaid = newPackage.Price,
-                StartDate = today,
-                EndDate = today.AddMonths(newPackage.DurationMonths),
-                CreatedAt = DateTime.UtcNow
-            };
-            dbContext.CourtOwnerSubscriptions.Add(subscription);
-        }
+            Id = Guid.NewGuid(),
+            CourtOwnerId = request.CourtOwnerId,
+            ServicePackageId = newPackage.Id,
+            PricePaid = newPackage.Price,
+            StartDate = today,
+            EndDate = endDate,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        dbContext.CourtOwnerSubscriptions.Add(subscription);
 
         await dbContext.SaveChangesAsync(ct);
 
