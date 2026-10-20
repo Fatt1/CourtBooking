@@ -133,7 +133,7 @@ export function SportTypesPage() {
       {/* 2. Chip đếm số lượng môn thể thao (ĐÃ BỎ TRẠNG THÁI HOẠT ĐỘNG THEO YÊU CẦU) */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#111c16] text-zinc-300 border border-[#1b2b22]">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0f2218] text-zinc-300 border border-[#1a3828]">
             {sportTypes.length} môn thể thao
           </span>
         </div>
@@ -146,7 +146,7 @@ export function SportTypesPage() {
             placeholder="Tìm kiếm môn thể thao..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-8.5 rounded-xl bg-[#111915] border border-[#1b2b22] pl-9 pr-3 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+            className="w-full h-8.5 rounded-xl bg-[#0f2218] border border-[#1a3828] pl-9 pr-3 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all"
           />
         </div>
       </div>
@@ -157,13 +157,13 @@ export function SportTypesPage() {
           {Array.from({ length: 4 }).map((_, idx) => (
             <div
               key={idx}
-              className="rounded-2xl border border-[#19261f] bg-[#101813] overflow-hidden p-0"
+              className="rounded-2xl border border-[#1a3828] bg-[#0f2218] overflow-hidden p-0"
             >
               <Skeleton className="aspect-[16/10] w-full bg-zinc-800/60 rounded-none" />
               <div className="p-5 space-y-3">
                 <Skeleton className="h-5 w-28 bg-zinc-800" />
                 <Skeleton className="h-4 w-20 bg-zinc-800/60" />
-                <div className="pt-3 border-t border-[#16241c] flex justify-between">
+                <div className="pt-3 border-t border-[#162e21] flex justify-between">
                   <Skeleton className="h-3 w-16 bg-zinc-800/40" />
                   <Skeleton className="h-3 w-12 bg-zinc-800/40" />
                 </div>
@@ -172,7 +172,7 @@ export function SportTypesPage() {
           ))}
         </div>
       ) : filteredSportTypes.length === 0 ? (
-        <div className="rounded-2xl border border-[#16241c] bg-[#0c1410] p-10">
+        <div className="rounded-2xl border border-[#1a3828] bg-[#0f2218] p-10">
           <EmptyState
             title="Không tìm thấy môn thể thao nào"
             description="Chưa có môn thể thao nào khớp với từ khóa tìm kiếm hoặc danh mục đang trống."

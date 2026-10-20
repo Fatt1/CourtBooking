@@ -1,0 +1,147 @@
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { CalendarCheck, Loader2, Clock, CheckCircle2 } from 'lucide-react';
+import type { SubscriptionHistoryItem } from '@/api/subscriptions';
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  subscription: SubscriptionHistoryItem | null;
+  onSubmit: (courtOwnerId: string, durationMonths: number) => Promise<void>;
+  isSubmitting?: boolean;
+}
+
+export function SubscriptionExtendDialog({
+  open,
+  onOpenChange,
+  subscription,
+  onSubmit,
+  isSubmitting,
+}: Props) {
+  const [durationMonths, setDurationMonths] = useState<number>(1);
+
+  if (!subscription) return null;
+
+  const handleConfirm = async () => {
+    await onSubmit(subscription.courtOwnerId, durationMonths);
+    onOpenChange(false);
+  };
+
+  const durationOptions = [
+    { value: 1, label: '1 tháng (Gia hạn ngắn hạn)' },
+    { value: 3, label: '3 tháng (1 quý)' },
+    { value: 6, label: '6 tháng (Nửa năm)' },
+    { value: 12, label: '12 tháng (1 năm - Tiết kiệm)' },
+  ];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[440px] border-[#1b2d22] bg-[#0c1410] text-zinc-100 p-6 rounded-2xl shadow-2xl">
+        <DialogHeader className="space-y-1.5 pb-2 border-b border-[#1b2d22]">
+          <div className="flex items-center gap-2">
+            <div className="size-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+              <CalendarCheck className="size-4 text-emerald-400" />
+            </div>
+            <DialogTitle className="text-base font-bold text-white">
+              Gia hạn gói dịch vụ chủ sân
+            </DialogTitle>
+          </div>
+          <DialogDescription className="text-xs text-zinc-400">
+            Kéo dài thời gian hiệu lực cho cụm sân của chủ sân {subscription.ownerName}.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {/* Card thông tin đăng ký hiện tại */}
+          <div className="rounded-xl bg-[#111915] border border-[#1b2d22] p-3 text-xs space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-400">Chủ sân / Cụm sân:</span>
+              <span className="font-bold text-white">{subscription.ownerName}</span>
+            </div>
+            <div className="flex items-center justify-between text-zinc-400">
+              <span>Cơ sở:</span>
+              <span className="text-zinc-300 font-medium">{subscription.businessName}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-400">Gói cước:</span>
+              <span className="font-semibold text-emerald-400">Gói {subscription.packageName}</span>
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-zinc-400">
+              <span>Hạn hiện tại:</span>
+              <span className="text-amber-400 font-medium">đến {subscription.endDate}</span>
+            </div>
+          </div>
+
+          {/* Chọn thời gian gia hạn */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-zinc-300">
+              Thời gian gia hạn thêm:
+            </label>
+            <Select
+              value={String(durationMonths)}
+              onValueChange={(val) => setDurationMonths(Number(val))}
+            >
+              <SelectTrigger className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white">
+                <SelectValue placeholder="Chọn số tháng gia hạn" />
+              </SelectTrigger>
+              <SelectContent className="border-[#1b2d22] bg-[#0c1410] text-zinc-200">
+                {durationOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={String(opt.value)} className="text-xs cursor-pointer">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Thông báo tự động nối tiếp */}
+          <div className="flex items-start gap-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-[11px] text-emerald-300">
+            <Clock className="size-4 shrink-0 text-emerald-400 mt-0.5" />
+            <span>
+              Hệ thống sẽ tự động cộng thêm <strong>{durationMonths} tháng</strong> nối tiếp sau ngày {subscription.endDate}.
+            </span>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 pt-3 border-t border-[#1b2d22]">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="h-9 rounded-xl border-[#1b2d22] bg-[#111915] text-zinc-300 hover:text-white hover:bg-[#16241c] text-xs cursor-pointer"
+          >
+            Hủy bỏ
+          </Button>
+          <Button
+            type="button"
+            disabled={isSubmitting}
+            onClick={handleConfirm}
+            className="h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer"
+          >
+            {isSubmitting ? (
+              <Loader2 className="size-3.5 animate-spin text-slate-950" />
+            ) : (
+              <CheckCircle2 className="size-3.5 text-slate-950" />
+            )}
+            <span>{isSubmitting ? 'Đang gia hạn...' : 'Xác nhận gia hạn'}</span>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

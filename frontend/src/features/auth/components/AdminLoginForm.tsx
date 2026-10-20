@@ -6,7 +6,7 @@ import { adminLoginSchema, type AdminLoginValues } from '../schemas/adminAuthSch
 import { useAdminLoginMutation } from '@/api/auth';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { Loader2, KeyRound, Eye, EyeOff, Mail, Lock, Sparkles } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Mail, Lock, Sparkles } from 'lucide-react';
 
 export function AdminLoginForm() {
   const navigate = useNavigate();
@@ -21,7 +21,6 @@ export function AdminLoginForm() {
     defaultValues: {
       usernameOrEmail: '',
       password: '',
-      twoFactorCode: '',
     },
   });
 
@@ -32,11 +31,10 @@ export function AdminLoginForm() {
         email: values.usernameOrEmail,
         usernameOrEmail: values.usernameOrEmail,
         password: values.password,
-        twoFactorCode: values.twoFactorCode,
       });
 
       const redirectPath =
-        (location.state as { from?: { pathname?: string } })?.from?.pathname || '/admin/users';
+        (location.state as { from?: { pathname?: string } })?.from?.pathname || '/admin/dashboard';
       navigate(redirectPath, { replace: true });
     } catch (err: unknown) {
       const errorObj = err as { detail?: string; title?: string; message?: string };
@@ -126,31 +124,7 @@ export function AdminLoginForm() {
             )}
           />
 
-          {/* 3. Mã xác thực 2FA (Tùy chọn) */}
-          <FormField
-            control={form.control}
-            name="twoFactorCode"
-            render={({ field }) => (
-              <FormItem className="space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <KeyRound className="size-3.5 text-emerald-400" />
-                  <FormLabel className="text-xs font-semibold text-zinc-300">
-                    Mã bảo mật 2FA / OTP (Tùy chọn)
-                  </FormLabel>
-                </div>
-                <FormControl>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    className="w-full h-11 rounded-xl bg-[#111915] border border-[#1d2c23] px-4 text-sm text-white placeholder:text-zinc-600 font-mono tracking-widest text-center focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-all"
-                    placeholder="123456"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage className="text-xs text-rose-400" />
-              </FormItem>
-            )}
-          />
+
 
           {/* Nút Đăng nhập Quản trị */}
           <Button

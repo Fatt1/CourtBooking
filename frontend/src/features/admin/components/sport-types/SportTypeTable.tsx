@@ -22,11 +22,11 @@ export function SportTypeTable({
 }: SportTypeTableProps) {
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-[#16241c] bg-[#0c1410] overflow-hidden shadow-xl p-5 space-y-4">
+      <div className="rounded-2xl border border-[#1a3828] bg-[#0f2218] overflow-hidden shadow-xl p-5 space-y-4">
         {Array.from({ length: 4 }).map((_, idx) => (
           <div
             key={idx}
-            className="flex items-center justify-between gap-4 py-3 border-b border-[#16241c]/50 last:border-b-0"
+            className="flex items-center justify-between gap-4 py-3 border-b border-[#162e21]/50 last:border-b-0"
           >
             <div className="flex items-center gap-3.5">
               <Skeleton className="size-12 rounded-xl bg-zinc-800/80" />
@@ -49,7 +49,7 @@ export function SportTypeTable({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-[#16241c] bg-[#0c1410] overflow-hidden shadow-xl p-8">
+      <div className="rounded-2xl border border-[#1a3828] bg-[#0f2218] overflow-hidden shadow-xl p-8">
         <EmptyState
           title="Không tìm thấy môn thể thao nào"
           description="Chưa có môn thể thao nào phù hợp với từ khóa tìm kiếm hoặc danh mục hệ thống đang trống."
@@ -61,9 +61,9 @@ export function SportTypeTable({
   }
 
   return (
-    <div className="rounded-2xl border border-[#16241c] bg-[#0c1410] overflow-hidden shadow-xl">
+    <div className="rounded-2xl border border-[#1a3828] bg-[#0f2218] overflow-hidden shadow-xl">
       {/* Table Header Card */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#16241c] bg-[#0b130e]">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#1a3828] bg-[#0c1a12]">
         <div className="flex items-center gap-2.5">
           <h3 className="text-sm font-bold text-white">Danh sách môn thể thao</h3>
           <span className="flex items-center justify-center h-5 px-2 rounded-md bg-[#16271e] text-[11px] font-bold text-emerald-400 border border-emerald-500/20">
@@ -78,7 +78,7 @@ export function SportTypeTable({
       {/* Table View */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-[#0e1712] text-zinc-400 font-bold uppercase tracking-wider text-[10px] border-b border-[#16241c]">
+          <thead className="bg-[#0c1a12] text-zinc-400 font-bold uppercase tracking-wider text-[10px] border-b border-[#1a3828]">
             <tr>
               <th className="px-5 py-3.5">Môn thể thao</th>
               <th className="px-5 py-3.5">Mã định danh (ID)</th>
@@ -87,7 +87,7 @@ export function SportTypeTable({
               <th className="px-5 py-3.5 text-right">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#16241c]/60">
+          <tbody className="divide-y divide-[#162e21]">
             {data.map((item) => {
               const imageUrl = getImageUrl(item.image?.key);
               const isUsed = item.branchCount > 0;
@@ -95,7 +95,7 @@ export function SportTypeTable({
               return (
                 <tr
                   key={item.id}
-                  className="hover:bg-[#111915]/80 transition-colors group"
+                  className="hover:bg-[#142e20]/60 transition-colors group"
                 >
                   {/* Cột 1: Biểu tượng + Tên môn thể thao */}
                   <td className="px-5 py-3.5">
@@ -198,7 +198,7 @@ export function SportTypeTable({
       </div>
 
       {/* Table Footer */}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-[#16241c] text-[11px] text-zinc-500 bg-[#0a110d]">
+      <div className="flex items-center justify-between px-5 py-3 border-t border-[#1a3828] text-[11px] text-zinc-500 bg-[#0c1a12]">
         <div>
           Hiển thị <span className="text-zinc-300 font-semibold">{data.length}</span> môn thể thao
         </div>

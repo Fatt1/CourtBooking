@@ -22,7 +22,7 @@ export function AdminLoginPage() {
 
     if (roles.has('Admin') || roles.has('SystemAdmin')) {
       const redirectPath =
-        (location.state as { from?: { pathname?: string } })?.from?.pathname || '/admin/users';
+        (location.state as { from?: { pathname?: string } })?.from?.pathname || '/admin/dashboard';
       return <Navigate to={redirectPath} replace />;
     }
   }

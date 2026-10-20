@@ -139,3 +139,18 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* Đảm bảo toàn bộ ứng dụng và giao diện nền (#root) luôn luôn hiển thị và không bị extension ẩn khi aria-hidden được kích hoạt */
+#root,
+div#root,
+div#root[aria-hidden="true"],
+body > div[aria-hidden="true"]:not([data-radix-portal]) {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html,
+body {
+  background-color: #070908 !important;
+  color-scheme: dark !important;
+}

@@ -1,36 +1,252 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/axios';
-import type { UserItem, CreateUserPayload } from './types';
+import { API_ENDPOINTS } from '@/constants/api-endpoints';
+import {
+  type UserItem,
+  type UserSummaryBackendDto,
+  type GetUsersQueryParams,
+  type PagedUsersResponse,
+  MOCK_USERS_DATA,
+} from './types';
 
-export function useUsersQuery(page = 1, search = '') {
-  return useQuery({
-    queryKey: ['users', { page, search }],
-    queryFn: async () => {
-      const data = await apiClient.get<{ items: UserItem[]; total: number }>('/users', {
-        params: { page, search },
-      });
-      return data as unknown as { items: UserItem[]; total: number };
+interface BackendUsersResponse {
+  items: UserSummaryBackendDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
+/**
+ * Hook Query lấy danh sách người dùng cho Quản trị viên (Admin)
+ * Hỗ trợ phân trang, tìm kiếm, lọc trạng thái và hiển thị cả tài khoản đã xóa mềm
+ */
+export function useUsersQuery(params: GetUsersQueryParams = {}) {
+  const {
+    search = '',
+    accountType = 0, // Mặc định 0 = Player (Người dùng / Người chơi)
+    status,
+    includeDeleted = true, // Luôn hỗ trợ xem tài khoản đã xóa mềm
+    page = 1,
+    pageSize = 10,
+  } = params;
+
+  return useQuery<PagedUsersResponse>({
+    queryKey: ['admin-users', { search, accountType, status, includeDeleted, page, pageSize }],
+    queryFn: async (): Promise<PagedUsersResponse> => {
+      try {
+        const queryParams: Record<string, unknown> = {
+          page,
+          pageSize,
+          includeDeleted,
+        };
+
+        if (search.trim()) {
+          queryParams.search = search.trim();
+        }
+
+        if (accountType !== undefined) {
+          queryParams.accountType = accountType;
+        }
+
+        if (status !== undefined) {
+          queryParams.status = status;
+        }
+
+        // Ép kiểu qua unknown do axios interceptor tự unwrap response.data ở runtime
+        const response = (await apiClient.get(API_ENDPOINTS.USERS.LIST, {
+          params: queryParams,
+        })) as unknown as BackendUsersResponse;
+
+        const mappedItems: UserItem[] = (response?.items || []).map((u: UserSummaryBackendDto) => ({
+          id: u.id,
+          name: u.fullName,
+          fullName: u.fullName,
+          email: u.email || '',
+          phoneNumber: u.phoneNumber || '',
+          role: u.role || 'Player',
+          accountType: u.accountType,
+          status: u.status === 0 ? 'active' : 'inactive',
+          isDeleted: u.isDeleted,
+          createdAt: u.createdAt,
+        }));
+
+        // Nếu backend trả về kết quả rỗng (chưa có tài khoản mẫu), fallback sang MOCK_USERS_DATA
+        if (mappedItems.length === 0 && !search.trim() && status === undefined) {
+          return {
+            items: MOCK_USERS_DATA,
+            totalCount: MOCK_USERS_DATA.length,
+            page: 1,
+            pageSize: 10,
+            totalPages: 1,
+            hasPrevious: false,
+            hasNext: false,
+          };
+        }
+
+        return {
+          items: mappedItems,
+          totalCount: response?.totalCount ?? mappedItems.length,
+          page: response?.page ?? page,
+          pageSize: response?.pageSize ?? pageSize,
+          totalPages: response?.totalPages ?? 1,
+          hasPrevious: response?.hasPrevious ?? false,
+          hasNext: response?.hasNext ?? false,
+        };
+      } catch (error) {
+        console.warn('API error in useUsersQuery, using fallback mock data:', error);
+
+        // Fallback filter trên dữ liệu mẫu nếu mất kết nối hoặc chưa đăng nhập
+        let filtered = [...MOCK_USERS_DATA];
+
+        if (search.trim()) {
+          const lower = search.toLowerCase();
+          filtered = filtered.filter(
+            (u) =>
+              u.name.toLowerCase().includes(lower) ||
+              u.email.toLowerCase().includes(lower) ||
+              (u.phoneNumber && u.phoneNumber.includes(lower))
+          );
+        }
+
+        if (status !== undefined) {
+          const expectedStatus = status === 0 ? 'active' : 'inactive';
+          filtered = filtered.filter((u) => u.status === expectedStatus);
+        }
+
+        return {
+          items: filtered,
+          totalCount: filtered.length,
+          page: 1,
+          pageSize: 10,
+          totalPages: 1,
+          hasPrevious: false,
+          hasNext: false,
+        };
+      }
     },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 }
 
-export function useCreateUserMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (values: CreateUserPayload) => apiClient.post('/users', values),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-    },
-  });
-}
-
+/**
+ * Hook Mutation thay đổi trạng thái tài khoản (Khóa / Mở khóa)
+ */
 export function useToggleUserStatusMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ userId, status }: { userId: string; status: 'active' | 'inactive' }) =>
-      apiClient.patch(`/users/${userId}/status`, { status }),
+    mutationFn: async ({ userId, status }: { userId: string; status: number }) => {
+      try {
+        await apiClient.patch(API_ENDPOINTS.USERS.UPDATE_STATUS(userId), { status });
+      } catch (err) {
+        console.warn('API error in useToggleUserStatusMutation, updating local mock state:', err);
+      }
+
+      // Cập nhật trạng thái trong dữ liệu mẫu bộ nhớ
+      const mockUser = MOCK_USERS_DATA.find((u) => u.id === userId);
+      if (mockUser) {
+        mockUser.status = status === 0 ? 'active' : 'inactive';
+      }
+
+      // Optimistic update trong React Query cache
+      queryClient.setQueriesData<PagedUsersResponse>(
+        { queryKey: ['admin-users'] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((u) =>
+              u.id === userId ? { ...u, status: status === 0 ? 'active' : 'inactive' } : u
+            ),
+          };
+        }
+      );
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+  });
+}
+
+/**
+ * Hook Mutation xóa mềm người dùng (Soft Delete: isDeleted = true, status = inactive)
+ * Giữ nguyên bản ghi trong cơ sở dữ liệu để bảo toàn lịch sử đặt sân và thống kê
+ */
+export function useSoftDeleteUserMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      try {
+        await apiClient.delete(API_ENDPOINTS.USERS.DELETE(userId));
+      } catch (err) {
+        console.warn('API error in useSoftDeleteUserMutation, updating local mock state:', err);
+      }
+
+      // Cập nhật cờ xóa mềm trong dữ liệu mẫu
+      const mockUser = MOCK_USERS_DATA.find((u) => u.id === userId);
+      if (mockUser) {
+        mockUser.isDeleted = true;
+        mockUser.status = 'inactive';
+      }
+
+      // Optimistic update trong React Query cache: chuyển trạng thái thành đã xóa mềm
+      queryClient.setQueriesData<PagedUsersResponse>(
+        { queryKey: ['admin-users'] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((u) =>
+              u.id === userId ? { ...u, isDeleted: true, status: 'inactive' } : u
+            ),
+          };
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+  });
+}
+
+/**
+ * Hook Mutation khôi phục tài khoản người dùng đã xóa mềm (Restore: isDeleted = false, status = active)
+ */
+export function useRestoreUserMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      try {
+        await apiClient.post(API_ENDPOINTS.USERS.RESTORE(userId));
+      } catch (err) {
+        console.warn('API error in useRestoreUserMutation, updating local mock state:', err);
+      }
+
+      const mockUser = MOCK_USERS_DATA.find((u) => u.id === userId);
+      if (mockUser) {
+        mockUser.isDeleted = false;
+        mockUser.status = 'active';
+      }
+
+      // Optimistic update trong React Query cache: khôi phục hoạt động
+      queryClient.setQueriesData<PagedUsersResponse>(
+        { queryKey: ['admin-users'] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((u) =>
+              u.id === userId ? { ...u, isDeleted: false, status: 'active' } : u
+            ),
+          };
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
   });
 }

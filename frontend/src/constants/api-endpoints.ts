@@ -33,11 +33,20 @@ export const API_ENDPOINTS = {
 
   // 2. Quản lý Người dùng & Phân quyền (System Admin)
   USERS: {
-    LIST: '/users',
-    DETAIL: (id: string) => `/users/${id}`,
-    CREATE_OWNER: '/users/court-owner',
-    UPDATE_STATUS: (id: string) => `/users/${id}/status`,
-    DELETE: (id: string) => `/users/${id}`,
+    LIST: '/admin/users',
+    UPDATE_STATUS: (id: string) => `/admin/users/${id}/status`,
+    DELETE: (id: string) => `/admin/users/${id}`,
+    RESTORE: (id: string) => `/admin/users/${id}/restore`,
+  },
+
+  // 2b. Quản lý Chủ sân (System Admin)
+  ADMIN_COURT_OWNERS: {
+    LIST: '/admin/court-owners',
+    CREATE: '/admin/court-owners',
+    UPDATE_STATUS: (id: string) => `/admin/court-owners/${id}/status`,
+    CHANGE_PACKAGE: (id: string) => `/admin/court-owners/${id}/package`,
+    EXTEND_SUBSCRIPTION: (id: string) => `/admin/court-owners/${id}/extend`,
+    DELETE: (id: string) => `/admin/users/${id}`,
   },
 
   // 3. Chi nhánh & Thông tin VietQR (Branches)
