@@ -24,6 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { OwnerStatusBadge } from '../shared/OwnerStatusBadge';
 import { getApiErrorMessage } from '@/types/api';
+import { formatVND } from '@/lib/format';
 import {
   useDailyOrderDetailQuery,
   useConfirmOrderMutation,
@@ -170,6 +171,13 @@ export function DailyOrderDetailModal({
     } else if (order.status === OrderStatus.Confirmed) {
       if (isBeforePlayDate) {
         toast.error('Chưa tới ngày chơi, không thể xác nhận hoàn thành!');
+        return;
+      }
+      if (displayOrder.remainingAmount > 0) {
+        toast.error(
+          `Đơn hàng còn thiếu ${formatVND(displayOrder.remainingAmount)} chưa thanh toán đủ! Vui lòng thu tiền trước khi hoàn thành đơn.`
+        );
+        setIsConfirmCompleteOpen(true);
         return;
       }
       setIsConfirmCompleteOpen(true);
@@ -335,6 +343,7 @@ export function DailyOrderDetailModal({
   else if (isCompleted) primaryButtonText = 'ĐÃ HOÀN THÀNH';
   else if (isCancelled) primaryButtonText = 'ĐÃ HỦY';
   else if (isConfirmed && isBeforePlayDate) primaryButtonText = 'CHƯA TỚI NGÀY';
+  else if (isConfirmed && displayOrder.remainingAmount > 0) primaryButtonText = 'CHƯA THU ĐỦ TIỀN';
 
   const isActionPending = isConfirming;
   const isTerminalState = isCompleted || isCancelled;
@@ -890,6 +899,8 @@ export function DailyOrderDetailModal({
         orderId={displayOrder.id}
         orderCode={displayOrder.orderCode}
         customerName={displayOrder.customerName}
+        remainingAmount={displayOrder.remainingAmount}
+        totalAmount={displayOrder.totalAmount}
         onSuccess={() => {
           refetch();
           onOrderUpdated?.();

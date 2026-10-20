@@ -14,6 +14,7 @@ public sealed class CompleteOrderCommandHandler(
     public async Task<Result> Handle(CompleteOrderCommand request, CancellationToken cancellationToken)
     {
         var order = await dbContext.Orders
+            .Include(o => o.PaymentTransactions)
             .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
 
         if (order == null)
@@ -35,6 +36,12 @@ public sealed class CompleteOrderCommandHandler(
         if (order.Status != OrderStatus.Confirmed)
         {
             return Result.Failure(new BadError("Chỉ có thể hoàn thành đơn hàng ở trạng thái đã xác nhận."));
+        }
+
+        var remainingAmount = order.CalculateRemainingAmount();
+        if (remainingAmount > 0)
+        {
+            return Result.Failure(new BadError($"Đơn hàng còn thiếu {remainingAmount:N0} VNĐ chưa thanh toán đủ, không thể hoàn thành."));
         }
 
         order.CompleteOrder();
