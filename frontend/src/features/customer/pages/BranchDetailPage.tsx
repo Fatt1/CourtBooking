@@ -13,82 +13,6 @@ import { BranchBookingTab } from '../components/branch-detail/BranchBookingTab';
 import { useBranchReviewsQuery } from '@/api/reviews';
 import { toast } from 'sonner';
 
-// Fallback dữ liệu hoàn chỉnh khi người dùng click vào các thẻ sân mẫu ở trang chủ (b1, b2, b3)
-const MOCK_BRANCHES: Record<string, PublicBranchDetailDto> = {
-  b1: {
-    id: 'b1',
-    name: 'Sân Cầu lông Lan Anh',
-    hotline: '0903 123 456',
-    street: '291 Cách Mạng Tháng 8',
-    district: 'Quận 10',
-    province: 'Hồ Chí Minh',
-    ggMapUrl: 'https://maps.google.com',
-    distanceKm: 1.2,
-    openTime: '06:00:00',
-    closeTime: '23:00:00',
-    policy: 'Hủy sân trước 6 tiếng hoàn 100% cọc. Vui lòng mang giày đế kếp chuyên dụng khi vào sân thi đấu.',
-    description: `<h3>Hệ thống sân cầu lông tiêu chuẩn thi đấu quốc tế</h3><p>Sân Cầu lông Lan Anh sở hữu 8 thảm đấu đạt tiêu chuẩn BWF với độ nảy đồng đều, hệ thống đèn LED chống lóa cao cấp giúp người chơi quan sát đường cầu rõ nét nhất.</p><p>Tại đây có đầy đủ phòng thay đồ, tắm nóng lạnh miễn phí, căng-tin phục vụ nước giải khát và dịch vụ căng vợt chuyên nghiệp.</p>`,
-    minPrice: 100000,
-    maxPrice: 180000,
-    reviewAverage: 4.8,
-    sports: [{ id: 's1', name: 'Cầu lông' }],
-    images: [
-      { id: 'img1', key: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=80' },
-      { id: 'img2', key: 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?auto=format&fit=crop&w=800&q=80' },
-      { id: 'img3', key: 'https://images.unsplash.com/photo-1521537634581-0dced2fee2ef?auto=format&fit=crop&w=800&q=80' },
-      { id: 'img4', key: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80' },
-    ],
-  },
-  b2: {
-    id: 'b2',
-    name: 'Victory Pickleball Arena',
-    hotline: '0988 765 432',
-    street: '15 Đường Số 9, P. Linh Chiểu',
-    district: 'TP. Thủ Đức',
-    province: 'Hồ Chí Minh',
-    ggMapUrl: 'https://maps.google.com',
-    distanceKm: 2.4,
-    openTime: '06:00:00',
-    closeTime: '22:30:00',
-    policy: 'Chấp nhận đổi giờ chơi trước 4 tiếng. Không mang thức ăn có mùi vào khu vực sân đấu.',
-    description: `<h3>Tổ hợp Pickleball ngoài trời có mái che hiện đại</h3><p>Mặt sân Acrylic 8 lớp cao cấp chống trơn trượt, giảm chấn động bảo vệ khớp gối người chơi tối đa. Đầy đủ khu nghỉ ngơi cà phê máy lạnh mát mẻ.</p>`,
-    minPrice: 140000,
-    maxPrice: 220000,
-    reviewAverage: 4.7,
-    sports: [{ id: 's2', name: 'Pickleball' }],
-    images: [
-      { id: 'img1', key: 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?auto=format&fit=crop&w=1200&q=80' },
-      { id: 'img2', key: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80' },
-      { id: 'img3', key: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80' },
-    ],
-  },
-  b3: {
-    id: 'b3',
-    name: 'GREEN FIELD ARENA',
-    hotline: '0912 345 678',
-    street: '18 Nguyễn Thị Thập',
-    district: 'Quận 7',
-    province: 'Hồ Chí Minh',
-    ggMapUrl: 'https://maps.google.com',
-    distanceKm: 5.8,
-    openTime: '06:00:00',
-    closeTime: '24:00:00',
-    policy: 'Vui lòng có mặt trước giờ chơi 10 phút. Yêu cầu hủy được chủ sân duyệt theo chính sách chi nhánh. Không mang thức ăn có mùi vào khu vực thi đấu.',
-    description: `<h3>Trung tâm thể thao bóng đá & đa năng Green Field</h3><p>Cụm sân cỏ nhân tạo đạt chuẩn FIFA 2 sao, sợi cỏ mềm mại chống trầy xước, dàn đèn LED công suất lớn không bóng đổ. Bãi giữ xe ô tô sức chứa lớn và hệ thống camera an ninh 24/7.</p>`,
-    minPrice: 170000,
-    maxPrice: 300000,
-    reviewAverage: 4.8,
-    sports: [{ id: 's3', name: 'Bóng đá' }, { id: 's4', name: 'Cầu lông' }],
-    images: [
-      { id: 'img1', key: 'https://images.unsplash.com/photo-1529900245534-47fbf82a6f6d?auto=format&fit=crop&w=1200&q=80' },
-      { id: 'img2', key: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80' },
-      { id: 'img3', key: 'https://images.unsplash.com/photo-1577223625816-7546f13df25d?auto=format&fit=crop&w=800&q=80' },
-      { id: 'img4', key: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=80' },
-      { id: 'img5', key: 'https://images.unsplash.com/photo-1518604666864-74230560e945?auto=format&fit=crop&w=800&q=80' },
-    ],
-  },
-};
-
 export function BranchDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -99,9 +23,8 @@ export function BranchDetailPage() {
   // 2. Fetch dữ liệu chi nhánh từ Backend API
   const { data: apiBranch, isLoading, isError } = usePublicBranchDetailQuery(id);
 
-  // Xác định dữ liệu hiển thị (Ưu tiên API Backend, fallback nếu dùng ID demo)
-  const branch: PublicBranchDetailDto | undefined =
-    apiBranch || (id && MOCK_BRANCHES[id]) || MOCK_BRANCHES['b3'];
+  // Dữ liệu chi nhánh thực tế từ Backend API
+  const branch: PublicBranchDetailDto | undefined = apiBranch;
 
   // 4. Fetch dữ liệu đánh giá thực tế từ Backend API
   const { data: reviewsData } = useBranchReviewsQuery(branch?.id, 1, 10);

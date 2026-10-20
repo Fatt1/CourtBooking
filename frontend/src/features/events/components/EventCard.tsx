@@ -40,8 +40,8 @@ export function EventCard({ event }: EventCardProps) {
   // Hiển thị trình độ của sự kiện thay thế cho chữ "GIẢI PHONG TRÀO" theo yêu cầu người dùng
   const skillLevelText = formatSkillLevel(event.skillLevelFrom, event.skillLevelTo);
 
-  const dayNumber = getDayNumber(event.date, '25');
-  const monthText = getMonthText(event.date, 'THÁNG 10');
+  const dayNumber = getDayNumber(event.date);
+  const monthText = getMonthText(event.date);
   // Hiển thị đủ cả giờ bắt đầu và giờ kết thúc trận đấu cùng ngày diễn ra
   const timeText = getCardTimeText(event.date, event.startTime, event.endTime);
 

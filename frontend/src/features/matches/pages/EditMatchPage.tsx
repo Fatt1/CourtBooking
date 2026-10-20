@@ -29,34 +29,6 @@ export function EditMatchPage() {
 
   const { data: serverMatch, isLoading } = useMatchDetailQuery(id);
 
-  // Fallback demo match nếu id mẫu
-  const fallbackMatch: MatchDetailDto = {
-    id: id || 'pk-match-001',
-    orderId: 'a1b2c3d4-1111-2222-3333-444444444444',
-    orderCode: 'MD-PB-1042',
-    branchId: 'b1b2c3d4-1111-2222-3333-444444444444',
-    branchName: 'Victory Pickleball',
-    branchAddress: '123 Võ Văn Ngân, Thủ Đức',
-    sportTypeId: 's-pickleball',
-    sportTypeName: 'Pickleball',
-    date: '24/09/2026',
-    startTime: '19:00:00',
-    endTime: '21:00:00',
-    hostId: user?.id || 'host-user-01',
-    hostName: user?.name || 'Vua Bá Khí',
-    skillLevel: 'Trung bình',
-    missingPlayers: 2,
-    availableSlots: 2,
-    feePerPlayer: 70000,
-    approvalMode: 1, // Chủ phòng duyệt
-    status: 0,
-    description: 'Trận giao lưu nhẹ nhàng sau giờ làm. Ưu tiên vui vẻ, đúng giờ và tôn trọng mọi người.',
-    createdAt: '2026-09-20T10:00:00Z',
-    participants: [],
-  };
-
-  const match = serverMatch || fallbackMatch;
-
   const {
     register,
     handleSubmit,
@@ -67,33 +39,34 @@ export function EditMatchPage() {
   } = useForm<UpdateMatchFormValues>({
     resolver: zodResolver(updateMatchSchema),
     defaultValues: {
-      missingPlayers: match.missingPlayers || 2,
-      skillLevel: match.skillLevel || 'Trung bình',
-      feePerPlayer: match.feePerPlayer || 70000,
-      description: match.description || '',
-      approvalMode: match.approvalMode ?? 1,
+      missingPlayers: 2,
+      skillLevel: 'Trung bình',
+      feePerPlayer: 70000,
+      description: '',
+      approvalMode: 1,
     },
   });
 
   useEffect(() => {
-    if (match) {
+    if (serverMatch) {
       reset({
-        missingPlayers: match.missingPlayers,
-        skillLevel: match.skillLevel || 'Trung bình',
-        feePerPlayer: match.feePerPlayer,
-        description: match.description || '',
-        approvalMode: match.approvalMode,
+        missingPlayers: serverMatch.missingPlayers,
+        skillLevel: serverMatch.skillLevel || 'Trung bình',
+        feePerPlayer: serverMatch.feePerPlayer,
+        description: serverMatch.description || '',
+        approvalMode: serverMatch.approvalMode,
       });
     }
-  }, [match, reset]);
+  }, [serverMatch, reset]);
 
   const selectedApprovalMode = watch('approvalMode');
   const updateMatchMutation = useUpdateMatchMutation();
 
   const onSubmit = async (values: UpdateMatchFormValues) => {
+    if (!serverMatch) return;
     try {
       await updateMatchMutation.mutateAsync({
-        id: match.id,
+        id: serverMatch.id,
         skillLevel: values.skillLevel,
         missingPlayers: values.missingPlayers,
         feePerPlayer: values.feePerPlayer,
@@ -102,7 +75,7 @@ export function EditMatchPage() {
       });
 
       toast.success('Cập nhật kèo giao lưu thành công!');
-      navigate(`/matches/${match.id}`);
+      navigate(`/matches/${serverMatch.id}`);
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || 'Không thể cập nhật kèo lúc này');
     }
@@ -116,6 +89,20 @@ export function EditMatchPage() {
       </div>
     );
   }
+
+  if (!serverMatch) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF7] dark:bg-background py-20 flex flex-col items-center justify-center space-y-4">
+        <h2 className="text-xl font-bold text-foreground">Không tìm thấy thông tin kèo giao lưu</h2>
+        <p className="text-sm text-muted-foreground">Kèo này có thể không tồn tại hoặc đã bị xóa.</p>
+        <Button onClick={() => navigate('/events')} variant="outline" className="font-semibold mt-2">
+          Quay lại danh sách kèo
+        </Button>
+      </div>
+    );
+  }
+
+  const match = serverMatch;
 
   return (
     <div className="min-h-screen bg-[#FAFAF7] dark:bg-background py-8 sm:py-12">

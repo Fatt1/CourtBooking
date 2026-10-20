@@ -125,8 +125,8 @@ export function ManageOrderMatchModal({
       };
       toast.error(
         error.response?.data?.detail ||
-          error.message ||
-          'Không thể mở kèo giao lưu.'
+        error.message ||
+        'Không thể mở kèo giao lưu.'
       );
     }
   };
@@ -160,8 +160,8 @@ export function ManageOrderMatchModal({
       };
       toast.error(
         error.response?.data?.detail ||
-          error.message ||
-          'Không thể cập nhật kèo giao lưu.'
+        error.message ||
+        'Không thể cập nhật kèo giao lưu.'
       );
     }
   };
@@ -183,8 +183,8 @@ export function ManageOrderMatchModal({
       };
       toast.error(
         error.response?.data?.detail ||
-          error.message ||
-          'Không thể xóa kèo giao lưu.'
+        error.message ||
+        'Không thể xóa kèo giao lưu.'
       );
     }
   };

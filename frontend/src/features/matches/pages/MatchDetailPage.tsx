@@ -23,58 +23,6 @@ export function MatchDetailPage() {
 
   const { data: serverMatch, isLoading } = useMatchDetailQuery(id);
 
-  // Fallback demo match khớp 100% mockup nếu id khớp hoặc chưa có trong DB
-  const fallbackMatch: MatchDetailDto = {
-    id: id || 'pk-match-001',
-    orderId: 'a1b2c3d4-1111-2222-3333-444444444444',
-    orderCode: 'PK-2409',
-    branchId: 'b1b2c3d4-1111-2222-3333-444444444444',
-    branchName: 'Victory Pickleball',
-    branchAddress: '123 Võ Văn Ngân, Thủ Đức',
-    sportTypeId: 's-pickleball',
-    sportTypeName: 'Pickleball',
-    date: '24/09/2026',
-    startTime: '19:00:00',
-    endTime: '21:00:00',
-    hostId: user?.id || 'host-user-01',
-    hostName: user?.name || 'Vua Bá Khí',
-    skillLevel: 'Trung bình',
-    missingPlayers: 2,
-    availableSlots: 2,
-    feePerPlayer: 70000,
-    approvalMode: 1, // Chủ phòng duyệt
-    description: 'Trận giao lưu nhẹ nhàng, ưu tiên vui vẻ và đúng giờ. Đã có sân, mọi người tự chia phí tại sân sau buổi chơi.',
-    createdAt: '2026-09-20T10:00:00Z',
-    participants: [
-      {
-        id: 'p-1',
-        playerId: user?.id || 'host-user-01',
-        playerName: user?.name || 'Vua Bá Khí',
-        status: ParticipantStatus.Confirmed,
-        joinedAt: '2026-09-20T10:00:00Z',
-        isHost: true,
-      },
-      {
-        id: 'p-2',
-        playerId: 'p-user-lananh',
-        playerName: 'Lan Anh',
-        status: ParticipantStatus.Confirmed,
-        joinedAt: '2026-09-21T11:00:00Z',
-        isHost: false,
-      },
-      {
-        id: 'p-3',
-        playerId: 'p-user-hoangnam',
-        playerName: 'Hoàng Nam',
-        status: ParticipantStatus.PendingApproval,
-        joinedAt: '2026-09-22T08:00:00Z',
-        isHost: false,
-      },
-    ],
-  };
-
-  const match = serverMatch || fallbackMatch;
-
   // Mutations
   const joinMutation = useJoinMatchMutation();
   const approveMutation = useApproveParticipantMutation();
@@ -83,6 +31,32 @@ export function MatchDetailPage() {
   const deleteMutation = useDeleteMatchMutation();
 
   const [guestNote, setGuestNote] = useState('');
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF7] dark:bg-background py-20 flex flex-col items-center justify-center space-y-4">
+        <div className="size-10 rounded-full border-4 border-[#235338] border-t-transparent animate-spin" />
+        <p className="text-sm font-medium text-muted-foreground">Đang tải thông tin kèo giao lưu...</p>
+      </div>
+    );
+  }
+
+  if (!serverMatch) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF7] dark:bg-background py-20 flex flex-col items-center justify-center space-y-4">
+        <div className="p-4 rounded-full bg-muted text-muted-foreground">
+          <AlertCircle className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground">Không tìm thấy thông tin kèo giao lưu</h2>
+        <p className="text-sm text-muted-foreground">Kèo này có thể không tồn tại hoặc đã bị xóa.</p>
+        <Button onClick={() => navigate('/events')} variant="outline" className="font-semibold mt-2">
+          Quay lại danh sách kèo
+        </Button>
+      </div>
+    );
+  }
+
+  const match = serverMatch;
 
   // Xác định vai trò của user hiện tại trong kèo
   const currentUserId = user?.id;

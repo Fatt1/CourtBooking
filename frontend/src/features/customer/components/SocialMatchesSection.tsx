@@ -1,32 +1,16 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-
-interface MatchItem {
-  id: string;
-  sport: string;
-  title: string;
-  timeAndPlace: string;
-  spotsLeft: number;
-}
-
-const mockMatches: MatchItem[] = [
-  {
-    id: 'm1',
-    sport: 'Bóng đá',
-    title: 'Kèo 7 người · Trình độ trung bình',
-    timeAndPlace: 'Tối nay, 19:30 · Thủ Đức',
-    spotsLeft: 2,
-  },
-  {
-    id: 'm2',
-    sport: 'Cầu lông',
-    title: 'Đánh đôi vui vẻ · Trình độ khá',
-    timeAndPlace: 'Thứ bảy, 08:00 · Bình Thạnh',
-    spotsLeft: 1,
-  },
-];
+import { useMatchesQuery } from '@/api/matches';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function SocialMatchesSection() {
+  const { data: pagedMatches, isLoading } = useMatchesQuery({
+    page: 1,
+    pageSize: 3,
+  });
+
+  const matches = pagedMatches?.items || [];
+
   return (
     <section className="py-8 sm:py-12">
       <div className="container mx-auto px-4 sm:px-8 max-w-7xl">
@@ -62,41 +46,66 @@ export function SocialMatchesSection() {
 
             {/* Right Column: List of Matches */}
             <div className="lg:col-span-6 bg-black/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/10 space-y-4">
-              {mockMatches.map((match, idx) => (
-                <div key={match.id}>
-                  <div className="flex items-center justify-between gap-4 py-2">
-                    <div className="space-y-1">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                        {match.sport}
-                      </span>
-                      <h4 className="font-bold text-white text-sm sm:text-base leading-snug">
-                        {match.title}
-                      </h4>
-                      <p className="text-xs text-slate-400">
-                        {match.timeAndPlace}
-                      </p>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <span className="inline-block text-xs font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 rounded-full">
-                        Còn {match.spotsLeft} chỗ
-                      </span>
-                      <div className="mt-2">
-                        <Link
-                          to="/events"
-                          className="text-xs font-semibold text-white/90 hover:text-white underline underline-offset-4 transition-colors cursor-pointer"
-                        >
-                          Xem chi tiết
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-
-                  {idx < mockMatches.length - 1 && (
-                    <div className="border-t border-white/10 my-3" />
-                  )}
+              {isLoading ? (
+                <div className="space-y-3 py-2">
+                  <Skeleton className="h-14 w-full bg-white/10 rounded-xl" />
+                  <Skeleton className="h-14 w-full bg-white/10 rounded-xl" />
                 </div>
-              ))}
+              ) : matches.length === 0 ? (
+                <div className="py-8 text-center space-y-2">
+                  <p className="text-sm font-semibold text-white/90">
+                    Hiện chưa có kèo giao lưu nào đang mở.
+                  </p>
+                  <p className="text-xs text-slate-300">
+                    Hãy đặt sân và là người đầu tiên mở kèo để rủ thêm bạn bè cùng tham gia!
+                  </p>
+                </div>
+              ) : (
+                matches.map((match, idx) => {
+                  const title =
+                    match.description?.trim().split('\n')[0] ||
+                    `Kèo ${match.sportTypeName || 'Giao lưu'} tại ${match.branchName}`;
+                  const timeAndPlace = `${match.startTime.slice(0, 5)} - ${match.endTime.slice(0, 5)} · ${match.date} · ${match.branchName}`;
+
+                  return (
+                    <div key={match.id}>
+                      <div className="flex items-center justify-between gap-4 py-2">
+                        <div className="space-y-1">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                            {match.sportTypeName || 'Thể thao'}
+                          </span>
+                          <h4 className="font-bold text-white text-sm sm:text-base leading-snug line-clamp-1">
+                            {title}
+                          </h4>
+                          <p className="text-xs text-slate-400 line-clamp-1">
+                            {timeAndPlace}
+                          </p>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="inline-block text-xs font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+                            {match.availableSlots > 0
+                              ? `Còn ${match.availableSlots} chỗ`
+                              : 'Đã đủ người'}
+                          </span>
+                          <div className="mt-2">
+                            <Link
+                              to="/events"
+                              className="text-xs font-semibold text-white/90 hover:text-white underline underline-offset-4 transition-colors cursor-pointer"
+                            >
+                              Xem chi tiết
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+
+                      {idx < matches.length - 1 && (
+                        <div className="border-t border-white/10 my-3" />
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

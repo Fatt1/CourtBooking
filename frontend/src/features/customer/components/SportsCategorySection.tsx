@@ -14,39 +14,11 @@ const DEFAULT_SPORT_IMAGES: Record<string, string> = {
   'Bóng rổ': 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
 };
 
-// Mock data fallback khi backend chưa có dữ liệu hoặc offline
-const FALLBACK_SPORTS: SportTypeItem[] = [
-  {
-    id: '1',
-    name: 'Bóng đá',
-    branchCount: 128,
-    image: { id: 'img1', url: DEFAULT_SPORT_IMAGES['Bóng đá'] },
-  },
-  {
-    id: '2',
-    name: 'Cầu lông',
-    branchCount: 96,
-    image: { id: 'img2', url: DEFAULT_SPORT_IMAGES['Cầu lông'] },
-  },
-  {
-    id: '3',
-    name: 'Pickleball',
-    branchCount: 42,
-    image: { id: 'img3', url: DEFAULT_SPORT_IMAGES['Pickleball'] },
-  },
-  {
-    id: '4',
-    name: 'Tennis',
-    branchCount: 37,
-    image: { id: 'img4', url: DEFAULT_SPORT_IMAGES['Tennis'] },
-  },
-];
-
 export function SportsCategorySection() {
   const { data: apiSports, isLoading } = useSportTypesQuery();
 
-  // Ưu tiên dữ liệu thật từ API GET /api/v1/sport-types
-  const displaySports = apiSports && apiSports.length > 0 ? apiSports : FALLBACK_SPORTS;
+  // Dữ liệu thật từ Backend API
+  const displaySports = apiSports || [];
 
   return (
     <section className="py-10 sm:py-14">
@@ -86,6 +58,10 @@ export function SportsCategorySection() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : displaySports.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground bg-card rounded-2xl border border-border/60">
+            Hiện chưa có danh mục môn thể thao nào.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
