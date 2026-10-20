@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ChevronLeft,
   Calendar,
@@ -30,6 +30,9 @@ import { AddServiceModal, type SelectedServiceItem } from './AddServiceModal';
 import { type SelectedCourtSlot, timeToMinutes, mergeAdjacentSlots } from './timeline';
 import { createDailyOrderSchema } from './schemas';
 import { getApiErrorMessage } from '@/types/api';
+
+const DEFAULT_CUSTOMER_NAME = 'Khách vãng lai';
+const DEFAULT_CUSTOMER_PHONE = '0900000000';
 
 interface CreateDailyOrderModalProps {
   open: boolean;
@@ -64,9 +67,9 @@ export function CreateDailyOrderModal({
   const activeBranchId = propBranchId || activeBranch?.id || selectedBranchId || '';
   const activeBranchName = propBranchName || activeBranch?.name || '';
 
-  // Form states (Đã xóa Đối tượng và Đặt cọc theo yêu cầu)
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  // Form states (Mặc định khách vãng lai & SĐT theo yêu cầu)
+  const [customerName, setCustomerName] = useState(DEFAULT_CUSTOMER_NAME);
+  const [customerPhone, setCustomerPhone] = useState(DEFAULT_CUSTOMER_PHONE);
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.Cash);
 
@@ -84,11 +87,23 @@ export function CreateDailyOrderModal({
 
   const { mutateAsync: createOrder, isPending } = useCreateOrderByOwnerMutation();
 
+  // Khởi tạo lại giá trị mặc định mỗi khi mở modal
+  useEffect(() => {
+    if (open) {
+      setCustomerName(DEFAULT_CUSTOMER_NAME);
+      setCustomerPhone(DEFAULT_CUSTOMER_PHONE);
+      setNote('');
+      setSelectedSlots([]);
+      setSelectedServices([]);
+      setPaymentMethod(PaymentMethod.Cash);
+    }
+  }, [open]);
+
   // Reset form khi modal mở/đóng
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      setCustomerName('');
-      setCustomerPhone('');
+      setCustomerName(DEFAULT_CUSTOMER_NAME);
+      setCustomerPhone(DEFAULT_CUSTOMER_PHONE);
       setNote('');
       setSelectedSlots([]);
       setSelectedServices([]);
@@ -253,7 +268,7 @@ export function CreateDailyOrderModal({
                 <Input
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Ví dụ: A. Hậu, Chị Lan..."
+                  placeholder="Khách vãng lai"
                   className="h-10 rounded-xl bg-card border-border/60 text-foreground placeholder:text-muted-foreground text-sm focus:border-[#a3e635]"
                 />
               </div>
@@ -265,7 +280,7 @@ export function CreateDailyOrderModal({
                 <Input
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="Ví dụ: 0901234567"
+                  placeholder="0900000000"
                   className="h-10 rounded-xl bg-card border-border/60 text-foreground placeholder:text-muted-foreground text-sm focus:border-[#a3e635]"
                 />
               </div>
