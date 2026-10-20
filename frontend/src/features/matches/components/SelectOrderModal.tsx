@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Building2, Calendar, Clock, Check, AlertCircle } from 'lucide-react';
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { formatVND } from '@/lib/format';
-import { useMyOrdersQuery, type MyOrderDto } from '@/api/orders';
+import { useMyOrdersQuery, OrderStatus, type MyOrderDto } from '@/api/orders';
 
 interface SelectOrderModalProps {
   isOpen: boolean;
@@ -24,7 +24,8 @@ export function SelectOrderModal({
   selectedOrderId,
   onSelectOrder,
 }: SelectOrderModalProps) {
-  const { data: myOrders = [], isLoading } = useMyOrdersQuery(true);
+  const { data: rawOrders = [], isLoading } = useMyOrdersQuery(OrderStatus.Confirmed);
+  const myOrders = useMemo(() => rawOrders.filter((o) => o.canCreateMatch), [rawOrders]);
 
   // Fallback demo order nếu người chơi mới chưa có đơn trong DB
   const defaultOrders: MyOrderDto[] = [

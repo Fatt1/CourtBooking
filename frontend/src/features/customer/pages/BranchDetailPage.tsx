@@ -114,10 +114,10 @@ export function BranchDetailPage() {
     reviewsData?.averageRating && reviewsData.averageRating > 0
       ? reviewsData.averageRating
       : calculatedAvg > 0
-      ? calculatedAvg
-      : branch?.reviewAverage && branch.reviewAverage > 0
-      ? branch.reviewAverage
-      : 0;
+        ? calculatedAvg
+        : branch?.reviewAverage && branch.reviewAverage > 0
+          ? branch.reviewAverage
+          : 0;
 
   // Cập nhật thẻ title trình duyệt
   useEffect(() => {
@@ -234,7 +234,7 @@ export function BranchDetailPage() {
               branchAddress={`${branch.street}, ${branch.district}, ${branch.province}`}
               branchBanner={
                 branch.images && branch.images.length > 0
-                  ? branch.images[0].key || branch.images[0].url
+                  ? branch.images[0].key
                   : undefined
               }
             />

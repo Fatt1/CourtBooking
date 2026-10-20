@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +6,7 @@ import { ArrowLeft, Check, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatVND } from '@/lib/format';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useMyOrdersQuery, type MyOrderDto } from '@/api/orders';
+import { useMyOrdersQuery, OrderStatus, type MyOrderDto } from '@/api/orders';
 import { useCreateMatchMutation } from '@/api/matches';
 import { createMatchSchema, type CreateMatchFormValues } from '../schemas/matchSchema';
 import { SelectOrderModal } from '../components/SelectOrderModal';
@@ -27,8 +27,9 @@ export function CreateMatchPage() {
   const [isSelectOrderOpen, setIsSelectOrderOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<MyOrderDto | null>(null);
 
-  // Lấy danh sách đơn đặt sân đã thanh toán của người dùng
-  const { data: myOrders = [] } = useMyOrdersQuery(true);
+  // Lấy danh sách đơn đặt sân đã xác nhận đủ điều kiện mở kèo
+  const { data: rawOrders = [] } = useMyOrdersQuery(OrderStatus.Confirmed);
+  const myOrders = useMemo(() => rawOrders.filter((o) => o.canCreateMatch), [rawOrders]);
 
   // Đơn fallback mẫu theo đúng thiết kế nếu người dùng chưa có đơn trong DB
   const defaultFallbackOrder: MyOrderDto = {

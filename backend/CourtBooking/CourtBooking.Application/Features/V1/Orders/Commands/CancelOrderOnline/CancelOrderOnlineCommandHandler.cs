@@ -24,13 +24,24 @@ public sealed class CancelOrderOnlineCommandHandler(
             return Result.Success();
         }
 
-        // Chỉ cho phép khách hàng hủy khi đang chờ thanh toán
-        if (order.Status != OrderStatus.AwaitingPayment)
+        if (order.Status == OrderStatus.AwaitingPayment)
         {
-            return Result.Failure(new BadError("Chỉ có thể hủy đơn hàng khi đang trong trạng thái chờ thanh toán."));
+            order.CancelOrder(request.CancelReason ?? "Khách hàng hủy thanh toán trực tuyến.");
+        }
+        else if (order.Status == OrderStatus.PendingConfirmation || order.Status == OrderStatus.Confirmed)
+        {
+            order.Status = OrderStatus.RequestCancellation;
+            order.CancelReason = request.CancelReason ?? "Khách hàng yêu cầu hủy đơn đặt sân.";
+        }
+        else if (order.Status == OrderStatus.RequestCancellation)
+        {
+            return Result.Failure(new BadError("Đơn hàng đã gửi yêu cầu hủy trước đó và đang chờ chủ sân duyệt."));
+        }
+        else
+        {
+            return Result.Failure(new BadError("Không thể hủy đơn hàng ở trạng thái hiện tại."));
         }
 
-        order.CancelOrder(request.CancelReason ?? "Khách hàng hủy thanh toán trực tuyến.");
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

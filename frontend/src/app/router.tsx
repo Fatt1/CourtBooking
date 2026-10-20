@@ -21,6 +21,7 @@ import { MatchesPage } from '@/features/matches/pages/MatchesPage';
 import { MatchDetailPage } from '@/features/matches/pages/MatchDetailPage';
 import { CreateMatchPage } from '@/features/matches/pages/CreateMatchPage';
 import { EditMatchPage } from '@/features/matches/pages/EditMatchPage';
+import { AccountBookingsPage } from '@/features/customer/pages/AccountBookingsPage';
 
 
 // Admin Pages
@@ -73,6 +74,10 @@ export const router = createBrowserRouter([
       { path: '/branches/:id/checkout', element: <BranchCheckoutPage /> },
       { path: '/courts/:id', element: <BranchDetailPage /> },
       { path: '/courts/:id/checkout', element: <BranchCheckoutPage /> },
+      // Tài khoản & Lịch đặt sân của người chơi
+      { path: '/account', element: <AccountBookingsPage /> },
+      { path: '/account/orders', element: <AccountBookingsPage /> },
+      { path: '/my-bookings', element: <AccountBookingsPage /> },
     ],
   },
 

@@ -125,6 +125,7 @@ export const API_ENDPOINTS = {
     CONFIRM_BOOKING: '/orders/confirm',
     CONFIRM_TRANSFER: (id: string) => `/orders/${id}/confirm-transfer`,
     MY_ORDERS: '/orders/my-orders',
+    MY_ORDER_DETAIL: (id: string) => `/orders/my-orders/${id}`,
     REQUEST_CANCEL: (id: string) => `/orders/${id}/request-cancel`,
     CREATE_ONLINE: '/orders',
     SUBMIT_PAYMENT_PROOF: (id: string) => `/orders/${id}/payment-proof`,
