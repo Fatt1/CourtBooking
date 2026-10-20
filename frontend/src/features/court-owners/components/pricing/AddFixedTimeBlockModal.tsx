@@ -70,7 +70,7 @@ export function AddFixedTimeBlockModal({
             endHour={24}
             required
             className="space-y-1.5"
-            triggerClassName="h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
+            triggerClassName="h-11 rounded-xl bg-background border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
           />
 
           <TimeSelect
@@ -82,7 +82,7 @@ export function AddFixedTimeBlockModal({
             endHour={24}
             required
             className="space-y-1.5"
-            triggerClassName="h-11 rounded-xl bg-[#080E1C] dark:bg-[#080E1C] border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
+            triggerClassName="h-11 rounded-xl bg-background border-border/80 text-foreground font-mono text-sm focus:ring-[#a3e635]"
           />
         </div>
 
@@ -99,13 +99,13 @@ export function AddFixedTimeBlockModal({
                 return (
                   <label
                     key={opt.value}
-                    className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold select-none text-foreground hover:text-white transition-colors"
+                    className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold select-none text-foreground hover:text-foreground transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleDay(opt.value)}
-                      className="size-4 rounded border-border/80 accent-[#a3e635] bg-[#080E1C] cursor-pointer"
+                      className="size-4 rounded border-border/80 accent-[#a3e635] bg-background cursor-pointer"
                     />
                     <span>{opt.label}</span>
                   </label>
@@ -120,13 +120,13 @@ export function AddFixedTimeBlockModal({
                 return (
                   <label
                     key={opt.value}
-                    className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold select-none text-foreground hover:text-white transition-colors"
+                    className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold select-none text-foreground hover:text-foreground transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleDay(opt.value)}
-                      className="size-4 rounded border-border/80 accent-[#a3e635] bg-[#080E1C] cursor-pointer"
+                      className="size-4 rounded border-border/80 accent-[#a3e635] bg-background cursor-pointer"
                     />
                     <span>{opt.label}</span>
                   </label>

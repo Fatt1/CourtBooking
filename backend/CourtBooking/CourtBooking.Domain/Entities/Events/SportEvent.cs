@@ -12,9 +12,6 @@ public class SportEvent : EntityBase<Guid>
 
     public Guid OrderId { get; set; }
     public Guid SportTypeId { get; set; }
-    public DateOnly Date { get; set; }
-    public TimeOnly StartTime { get; set; }
-    public TimeOnly EndTime { get; set; }
     public string Title { get; set; } = null!;
     public string? SkillLevelFrom { get; set; }
     public string? SkillLevelTo { get; set; }

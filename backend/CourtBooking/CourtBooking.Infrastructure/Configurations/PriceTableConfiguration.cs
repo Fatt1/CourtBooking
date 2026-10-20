@@ -25,6 +25,10 @@ public class PriceTableConfiguration : IEntityTypeConfiguration<PriceTable>
             .HasPrecision(18, 2)
             .HasDefaultValue(0m);
 
+        builder.Property(p => p.DefaultWalkInPrice)
+            .HasPrecision(18, 2)
+            .HasDefaultValue(0m);
+
         builder.Property(p => p.CreatedAt).IsRequired();
         builder.Property(p => p.UpdatedAt).IsRequired();
 

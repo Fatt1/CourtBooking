@@ -5,6 +5,7 @@ using CourtBooking.Application.Features.V1.ServicePackages.Dtos;
 using CourtBooking.Application.Features.V1.ServicePackages.Queries.GetCurrentSubscription;
 using CourtBooking.Application.Features.V1.ServicePackages.Queries.GetServicePackages;
 using CourtBooking.Application.Features.V1.ServicePackages.Queries.GetSubscriptionHistory;
+using CourtBooking.Domain.Constants;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -52,7 +53,7 @@ public sealed class ServicePackageEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-            .RequireAuthorization()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner))
             .WithName("GetMySubscription")
             .WithSummary("Xem thông tin gói cước hiện tại của Chủ sân")
             .WithDescription("Yêu cầu đăng nhập tài khoản Chủ sân. Trả về thông tin gói đang sử dụng, ngày bắt đầu, ngày hết hạn và trạng thái còn hạn (IsActive).")
@@ -73,7 +74,7 @@ public sealed class ServicePackageEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-            .RequireAuthorization()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner))
             .WithName("SubscribeServicePackage")
             .WithSummary("Chủ sân đăng ký mua hoặc gia hạn gói cước SaaS")
             .WithDescription("Tự động tính ngày hiệu lực nối tiếp sau ngày hết hạn cũ nếu gói hiện tại vẫn còn hạn theo SRS mục 1.2.")
@@ -101,7 +102,7 @@ public sealed class ServicePackageEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-            .RequireAuthorization()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Admin))
             .WithName("CreateServicePackage")
             .WithSummary("Quản trị viên tạo gói dịch vụ SaaS mới")
             .WithDescription("Thêm gói cước mới vào hệ thống (ví dụ: Gói Basic, Pro, VIP).")
@@ -126,7 +127,7 @@ public sealed class ServicePackageEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-            .RequireAuthorization()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Admin))
             .WithName("GetSubscriptionHistory")
             .WithSummary("Lấy lịch sử đăng ký gói cước của các chủ sân")
             .WithDescription("Trả về bảng danh sách thuê bao có phân trang, lọc theo trạng thái (Hoạt động, Sắp hết hạn, Hết hạn, Tạm dừng) kèm số lượng badge sắp hết hạn trong 7 ngày.")

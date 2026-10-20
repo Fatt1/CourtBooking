@@ -39,40 +39,26 @@ internal sealed class RejectEventTicketCommandHandler(
             return Result.Failure(new ConflictError("Vé tham gia sự kiện này đã bị hủy hoặc từ chối trước đó."));
         }
 
-        // 4. Mở Transaction cập nhật vé và hoàn lại số lượng slot cho sự kiện
-        var strategy = dbContext.Database.CreateExecutionStrategy();
-        return await strategy.ExecuteAsync(async () =>
+        // 4. Cập nhật vé và hoàn lại số lượng slot cho sự kiện
+        ticket.Status = EventTicketStatus.Cancelled;
+        ticket.RefundNote = request.Reason.Trim();
+        ticket.ReviewedAt = DateTime.UtcNow;
+
+        // 4.1. Hoàn lại số slot khả dụng cho sự kiện
+        ticket.Event.AvailableSlot += ticket.Quantity;
+        if (ticket.Event.AvailableSlot > ticket.Event.Slots)
         {
-            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-            try
-            {
-                ticket.Status = EventTicketStatus.Cancelled;
-                ticket.RefundNote = request.Reason.Trim();
-                ticket.ReviewedAt = DateTime.UtcNow;
+            ticket.Event.AvailableSlot = ticket.Event.Slots;
+        }
 
-                // 4.1. Hoàn lại số slot khả dụng cho sự kiện
-                ticket.Event.AvailableSlot += ticket.Quantity;
-                if (ticket.Event.AvailableSlot > ticket.Event.Slots)
-                {
-                    ticket.Event.AvailableSlot = ticket.Event.Slots;
-                }
+        // 4.2. Nếu sự kiện trước đó đang Full mà có slot hoàn lại thì mở lại thành Open
+        if (ticket.Event.Status == EventStatus.Full && ticket.Event.AvailableSlot > 0)
+        {
+            ticket.Event.Status = EventStatus.Open;
+        }
 
-                // 4.2. Nếu sự kiện trước đó đang Full mà có slot hoàn lại thì mở lại thành Open
-                if (ticket.Event.Status == EventStatus.Full && ticket.Event.AvailableSlot > 0)
-                {
-                    ticket.Event.Status = EventStatus.Open;
-                }
+        await dbContext.SaveChangesAsync(cancellationToken);
 
-                await dbContext.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-
-                return Result.Success();
-            }
-            catch
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
-        });
+        return Result.Success();
     }
 }

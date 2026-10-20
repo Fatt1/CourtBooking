@@ -15,7 +15,7 @@ internal sealed class UpdateEventCommandHandler(
         UpdateEventCommand request,
         CancellationToken cancellationToken)
     {
-        // 1. Lấy thông tin sự kiện kèm danh sách vé
+        // 1. Lấy thông tin sự kiện kèm Order và danh sách vé
         var sportEvent = await dbContext.SportEvents
             .Include(e => e.Order)
             .Include(e => e.Tickets)
@@ -33,13 +33,7 @@ internal sealed class UpdateEventCommandHandler(
             return Result.Failure(authResult.Error!);
         }
 
-        // 3. Không cho phép sửa nếu sự kiện đã bị hủy hoặc đã kết thúc
-        if (sportEvent.Status == EventStatus.Cancelled || sportEvent.Status == EventStatus.Closed)
-        {
-            return Result.Failure(new ConflictError("Không thể chỉnh sửa sự kiện đã kết thúc hoặc đã bị hủy."));
-        }
-
-        // 4. Kiểm tra số lượng vé mới không được nhỏ hơn số vé khách đã đặt
+        // 3. Kiểm tra số lượng vé mới không được nhỏ hơn số vé khách đã đặt
         var soldTickets = sportEvent.Tickets
             .Where(t => t.Status != EventTicketStatus.Cancelled)
             .Sum(t => t.Quantity);
@@ -50,8 +44,9 @@ internal sealed class UpdateEventCommandHandler(
                 $"Số lượng vé tối đa ({request.Slots}) không thể nhỏ hơn số vé đã được đăng ký ({soldTickets} vé)."));
         }
 
-        // 5. Cập nhật thông tin
+        // 4. Cập nhật thông tin sự kiện
         sportEvent.Title = request.Title.Trim();
+        sportEvent.SportTypeId = request.SportTypeId;
         sportEvent.TicketPrice = request.TicketPrice;
         sportEvent.Slots = request.Slots;
         sportEvent.AvailableSlot = request.Slots - soldTickets;
@@ -59,17 +54,22 @@ internal sealed class UpdateEventCommandHandler(
         sportEvent.SkillLevelTo = string.IsNullOrWhiteSpace(request.SkillLevelTo) ? null : request.SkillLevelTo.Trim();
         sportEvent.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
 
-        // 6. Cập nhật trạng thái sự kiện tương ứng
-        if (sportEvent.AvailableSlot == 0)
+        // 5. Cập nhật trạng thái sự kiện
+        sportEvent.Status = request.Status;
+        if (sportEvent.Status == EventStatus.Open && sportEvent.AvailableSlot <= 0)
         {
             sportEvent.Status = EventStatus.Full;
         }
-        else if (sportEvent.Status == EventStatus.Full && sportEvent.AvailableSlot > 0)
-        {
-            sportEvent.Status = EventStatus.Open;
-        }
 
-        sportEvent.Order.Note = $"Tổ chức sự kiện: {sportEvent.Title}";
+        // 6. Cập nhật thông tin Order liên kết
+        sportEvent.Order.OrderDate = request.Date;
+        if (!string.IsNullOrWhiteSpace(request.CustomerName))
+            sportEvent.Order.CustomerName = request.CustomerName.Trim();
+        if (!string.IsNullOrWhiteSpace(request.CustomerPhone))
+            sportEvent.Order.CustomerPhone = request.CustomerPhone.Trim();
+        if (request.Note != null)
+            sportEvent.Order.Note = request.Note.Trim();
+
         sportEvent.Order.UpdatedAt = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);

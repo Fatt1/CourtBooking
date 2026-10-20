@@ -35,13 +35,13 @@ internal sealed class CreateBranchHandler(IApplicationDbContext dbContext, IUser
             Province = request.Province.Trim(),
             District = request.District.Trim(),
             Street = request.Street.Trim(),
-            GgMapUrl = request.GgMapUrl.Trim(),
             OpenTime = request.OpenTime,
             CloseTime = request.CloseTime,
             QrImageId = request.QrImageId,
             AccountNumber = request.AccountNumber.Trim(),
             AccountName = request.AccountName.Trim(),
             Policy = request.Policy?.Trim(),
+            Description = request.Description?.Trim(),
             Latitude = request.Latitude,
             Longitude = request.Longitude
         };

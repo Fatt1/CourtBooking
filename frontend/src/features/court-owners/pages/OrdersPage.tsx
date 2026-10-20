@@ -57,6 +57,10 @@ import {
   CancelOrderModal,
   CreateDailyOrderModal,
   CreateFixedOrderModal,
+  OwnerEventTable,
+  CreateEventModal,
+  EventDetailModal,
+  EventParticipantsModal,
 } from '@/features/court-owners/components/orders';
 import { useBranchStore } from '@/stores/useBranchStore';
 import {
@@ -67,6 +71,13 @@ import {
   type GetFixedOrdersParams,
   OrderStatus,
 } from '@/api/orders';
+import {
+  useOwnerEventsQuery,
+  EventStatus,
+  type OwnerEventItemDto,
+  type OwnerEventDetailDto,
+  type GetOwnerEventsParams,
+} from '@/api/events';
 
 export function OrdersPage() {
   // 1. Lấy chi nhánh được chọn từ Zustand Store (quản lý bởi Header)
@@ -105,6 +116,13 @@ export function OrdersPage() {
   const [orderToCancel, setOrderToCancel] = useState<DailyOrderDto | null>(null);
   const [isQuickBookOpen, setIsQuickBookOpen] = useState(false);
   const [isFixedOrderOpen, setIsFixedOrderOpen] = useState(false);
+  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
+  const [eventForParticipants, setEventForParticipants] = useState<
+    OwnerEventItemDto | OwnerEventDetailDto | null
+  >(null);
+  const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
 
   // Hover & click state cho dropdown Đặt sân
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -214,6 +232,40 @@ export function OrdersPage() {
   const fixedOrders = fixedPagedData?.items || [];
   const fixedTotalCount = fixedPagedData?.totalCount || fixedOrders.length;
 
+  // 7. Query lấy danh sách sự kiện thể thao tại chi nhánh
+  const eventQueryParams = useMemo(() => {
+    const params: GetOwnerEventsParams = {
+      branchId: selectedBranchId || '',
+      page: currentPage,
+      pageSize: pageSize,
+    };
+
+    if (debouncedSearch.trim()) {
+      params.search = debouncedSearch.trim();
+    }
+
+    if (statusFilter !== 'ALL') {
+      params.status = Number(statusFilter) as EventStatus;
+    }
+
+    if (dateRange?.from) {
+      params.fromDate = format(dateRange.from, 'yyyy-MM-dd');
+      params.toDate = dateRange.to
+        ? format(dateRange.to, 'yyyy-MM-dd')
+        : format(dateRange.from, 'yyyy-MM-dd');
+    }
+
+    return params;
+  }, [selectedBranchId, currentPage, pageSize, debouncedSearch, statusFilter, dateRange]);
+
+  const {
+    data: eventPagedData,
+    isLoading: isEventLoading,
+    refetch: refetchEvents,
+  } = useOwnerEventsQuery(eventQueryParams);
+  const events = eventPagedData?.items || [];
+  const eventTotalCount = eventPagedData?.totalCount || events.length;
+
   // Xử lý xem chi tiết đơn ngày
   const handleViewDetail = (order: DailyOrderDto) => {
     setSelectedOrderId(order.id);
@@ -279,7 +331,7 @@ export function OrdersPage() {
                   onMouseEnter={handleDropdownMouseEnter}
                   onMouseLeave={handleDropdownMouseLeave}
                 >
-                  <div className="w-56 bg-[#0B1324] border border-border/80 p-1.5 shadow-2xl rounded-xl">
+                  <div className="w-56 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-xl">
                     <div className="space-y-0.5">
                       {/* Lựa chọn 1: Lịch ngày */}
                       <button
@@ -288,13 +340,13 @@ export function OrdersPage() {
                           setIsDropdownOpen(false);
                           setIsQuickBookOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer group"
+                        className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
                       >
                         <div className="size-7 rounded-lg bg-[#a3e635]/15 flex items-center justify-center shrink-0">
-                          <CalendarDays className="size-4 text-[#a3e635]" />
+                          <CalendarDays className="size-4 text-emerald-700 dark:text-[#a3e635]" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold group-hover:text-[#a3e635] transition-colors">
+                          <span className="text-xs font-bold">
                             Lịch ngày
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -310,13 +362,13 @@ export function OrdersPage() {
                           setIsDropdownOpen(false);
                           setIsFixedOrderOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer group"
+                        className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
                       >
                         <div className="size-7 rounded-lg bg-sky-500/15 flex items-center justify-center shrink-0">
-                          <Repeat className="size-4 text-sky-400" />
+                          <Repeat className="size-4 text-sky-600 dark:text-sky-400" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold group-hover:text-sky-300 transition-colors">
+                          <span className="text-xs font-bold">
                             Lịch cố định
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -330,15 +382,15 @@ export function OrdersPage() {
                         type="button"
                         onClick={() => {
                           setIsDropdownOpen(false);
-                          toast.info('Tính năng đặt lịch sự kiện đang được phát triển');
+                          setIsCreateEventOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer group"
+                        className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
                       >
                         <div className="size-7 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-                          <Trophy className="size-4 text-amber-400" />
+                          <Trophy className="size-4 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold group-hover:text-amber-300 transition-colors">
+                          <span className="text-xs font-bold">
                             Lịch sự kiện
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -375,6 +427,7 @@ export function OrdersPage() {
         activeTab={activeTab}
         onTabChange={(id) => {
           setActiveTab(id as 'daily' | 'recurring' | 'event');
+          setStatusFilter('ALL');
           setCurrentPage(1);
         }}
         searchPlaceholder="Mã đơn, Tên, SĐT..."
@@ -407,16 +460,16 @@ export function OrdersPage() {
             </PopoverTrigger>
 
             <PopoverContent
-              className="w-auto p-0 bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl z-50 overflow-hidden"
+              className="z-50 w-auto overflow-hidden rounded-2xl border border-border bg-popover p-0 text-popover-foreground shadow-xl"
               align="start"
             >
               {/* Header Popover */}
-              <div className="px-4 py-2.5 border-b border-border/50 bg-[#0f172a] flex items-center justify-between">
+              <div className="flex items-center justify-between border-b border-border/50 bg-muted/40 px-4 py-2.5">
                 <div>
-                  <div className="text-[11px] font-bold text-[#a3e635] tracking-wider uppercase">
+                  <div className="text-[11px] font-bold tracking-wider text-emerald-700 uppercase dark:text-[#a3e635]">
                     Lọc theo khoảng ngày đặt
                   </div>
-                  <div className="text-xs text-slate-300 font-mono mt-0.5">
+                  <div className="mt-0.5 font-mono text-xs text-muted-foreground">
                     {dateRangeLabel}
                   </div>
                 </div>
@@ -428,7 +481,7 @@ export function OrdersPage() {
                       setDateRange(undefined);
                       setCurrentPage(1);
                     }}
-                    className="h-7 px-2 text-xs text-slate-400 hover:text-rose-400 cursor-pointer"
+                    className="h-7 cursor-pointer px-2 text-xs text-muted-foreground hover:text-rose-600"
                   >
                     <X className="size-3.5 mr-1" />
                     Xóa lọc
@@ -437,7 +490,7 @@ export function OrdersPage() {
               </div>
 
               {/* Quick Presets */}
-              <div className="p-2 border-b border-border/40 bg-[#070D1A]/60 flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 border-b border-border/40 bg-muted/20 p-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -445,7 +498,7 @@ export function OrdersPage() {
                     setDateRange({ from: today, to: today });
                     setCurrentPage(1);
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   Hôm nay
                 </button>
@@ -456,7 +509,7 @@ export function OrdersPage() {
                     setDateRange({ from: yesterday, to: yesterday });
                     setCurrentPage(1);
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   Hôm qua
                 </button>
@@ -467,7 +520,7 @@ export function OrdersPage() {
                     setDateRange({ from: subDays(today, 6), to: today });
                     setCurrentPage(1);
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   7 ngày qua
                 </button>
@@ -478,7 +531,7 @@ export function OrdersPage() {
                     setDateRange({ from: startOfMonth(today), to: today });
                     setCurrentPage(1);
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card/80 hover:bg-[#a3e635]/20 hover:text-[#a3e635] border border-border/50 text-slate-200 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   Tháng này
                 </button>
@@ -499,8 +552,8 @@ export function OrdersPage() {
               </div>
 
               {/* Footer */}
-              <div className="p-2.5 border-t border-border/50 bg-[#0f172a] flex items-center justify-between">
-                <span className="text-[11px] text-slate-400">
+              <div className="flex items-center justify-between border-t border-border/50 bg-muted/40 p-2.5">
+                <span className="text-[11px] text-muted-foreground">
                   Chọn ngày bắt đầu & kết thúc
                 </span>
                 <Button
@@ -546,24 +599,43 @@ export function OrdersPage() {
             <SelectItem value="ALL" className="text-xs">
               Tất cả trạng thái
             </SelectItem>
-            <SelectItem value={String(OrderStatus.Confirmed)} className="text-xs">
-              Đã xác nhận
-            </SelectItem>
-            <SelectItem value={String(OrderStatus.PendingConfirmation)} className="text-xs">
-              Chờ xác nhận
-            </SelectItem>
-            <SelectItem value={String(OrderStatus.RequestCancellation)} className="text-xs">
-              Chờ duyệt hủy
-            </SelectItem>
-            <SelectItem value={String(OrderStatus.Completed)} className="text-xs">
-              Hoàn thành
-            </SelectItem>
-            <SelectItem value={String(OrderStatus.AwaitingPayment)} className="text-xs">
-              Chờ thanh toán
-            </SelectItem>
-            <SelectItem value={String(OrderStatus.Cancelled)} className="text-xs">
-              Đã hủy
-            </SelectItem>
+            {activeTab === 'event' ? (
+              <>
+                <SelectItem value={String(EventStatus.Open)} className="text-xs">
+                  Đang mở đăng ký
+                </SelectItem>
+                <SelectItem value={String(EventStatus.Full)} className="text-xs">
+                  Đóng đăng ký / Đã đầy
+                </SelectItem>
+                <SelectItem value={String(EventStatus.Closed)} className="text-xs">
+                  Đã kết thúc
+                </SelectItem>
+                <SelectItem value={String(EventStatus.Cancelled)} className="text-xs">
+                  Đã hủy
+                </SelectItem>
+              </>
+            ) : (
+              <>
+                <SelectItem value={String(OrderStatus.Confirmed)} className="text-xs">
+                  Đã xác nhận
+                </SelectItem>
+                <SelectItem value={String(OrderStatus.PendingConfirmation)} className="text-xs">
+                  Chờ xác nhận
+                </SelectItem>
+                <SelectItem value={String(OrderStatus.RequestCancellation)} className="text-xs">
+                  Chờ duyệt hủy
+                </SelectItem>
+                <SelectItem value={String(OrderStatus.Completed)} className="text-xs">
+                  Hoàn thành
+                </SelectItem>
+                <SelectItem value={String(OrderStatus.AwaitingPayment)} className="text-xs">
+                  Chờ thanh toán
+                </SelectItem>
+                <SelectItem value={String(OrderStatus.Cancelled)} className="text-xs">
+                  Đã hủy
+                </SelectItem>
+              </>
+            )}
           </SelectContent>
         </Select>
       </OwnerFilterBar>
@@ -620,26 +692,34 @@ export function OrdersPage() {
         </div>
       )}
 
-      {/* Tab Sự kiện - Placeholder theo ghi chú của user */}
+      {/* Tab Sự kiện - Bảng danh sách sự kiện & phân trang */}
       {activeTab === 'event' && (
-        <div className="rounded-2xl border border-border/60 bg-card/40 p-12 text-center space-y-3">
-          <div className="size-12 rounded-2xl bg-amber-400/10 text-amber-400 flex items-center justify-center mx-auto">
-            <Sparkles className="size-6" />
-          </div>
-          <h3 className="text-base font-bold text-foreground">
-            Quản lý Đơn hàng Sự kiện & Giải đấu
-          </h3>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            Giao diện bán vé và phân luồng sự kiện thể thao sẽ được áp dụng bảng dữ liệu chuyên biệt.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setActiveTab('daily')}
-            className="rounded-xl text-xs font-semibold mt-2"
-          >
-            Quay lại Đơn ngày
-          </Button>
+        <div className="space-y-4">
+          <OwnerEventTable
+            data={events}
+            isLoading={isEventLoading}
+            onViewDetail={(item) => {
+              setSelectedEventId(item.id);
+              setIsEventDetailOpen(true);
+            }}
+            onViewParticipants={(item) => {
+              setEventForParticipants(item);
+              setIsParticipantsOpen(true);
+            }}
+          />
+
+          {/* Thanh phân trang cho sự kiện */}
+          <OwnerPagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            pageSizeOptions={[25, 50, 100]}
+            totalItems={eventTotalCount}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setCurrentPage(1);
+            }}
+          />
         </div>
       )}
 
@@ -697,6 +777,37 @@ export function OrdersPage() {
         onOpenChange={setIsFixedDetailOpen}
         orderId={selectedFixedOrderId}
         onOrderUpdated={() => refetchFixed()}
+      />
+
+      {/* 6. Modal Tạo sự kiện thể thao */}
+      <CreateEventModal
+        open={isCreateEventOpen}
+        onOpenChange={setIsCreateEventOpen}
+        branchId={selectedBranchId || undefined}
+        branchName={selectedBranch?.name}
+        onSuccess={() => {
+          refetchEvents();
+          if (activeTab !== 'event') setActiveTab('event');
+        }}
+      />
+
+      {/* 7. Modal Chi tiết & Cập nhật sự kiện */}
+      <EventDetailModal
+        open={isEventDetailOpen}
+        onOpenChange={setIsEventDetailOpen}
+        eventId={selectedEventId}
+        onEventUpdated={() => refetchEvents()}
+        onViewParticipants={(detail) => {
+          setEventForParticipants(detail);
+          setIsParticipantsOpen(true);
+        }}
+      />
+
+      {/* 8. Modal Danh sách người tham gia */}
+      <EventParticipantsModal
+        open={isParticipantsOpen}
+        onOpenChange={setIsParticipantsOpen}
+        event={eventForParticipants}
       />
     </div>
   );

@@ -98,18 +98,18 @@ export function SportTypeMultiSelect({
       <div className={cn('space-y-2', className)}>
         {label && (
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-slate-200">
+            <label className="text-xs font-semibold text-foreground">
               {label} {required && <span className="text-rose-500">*</span>}
             </label>
             <span className="text-[11px] text-muted-foreground">
-              Đã chọn: <strong className="text-[#a3e635]">{selectedIds.length}</strong> môn
+              Đã chọn: <strong className="text-emerald-700 dark:text-[#a3e635]">{selectedIds.length}</strong> môn
             </span>
           </div>
         )}
 
         {isLoading ? (
           <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
-            <Loader2 className="size-4 animate-spin text-[#a3e635]" />
+            <Loader2 className="size-4 animate-spin text-emerald-700 dark:text-[#a3e635]" />
             <span>Đang tải danh sách môn thể thao...</span>
           </div>
         ) : (
@@ -126,7 +126,7 @@ export function SportTypeMultiSelect({
                     'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border select-none disabled:opacity-50',
                     isSelected
                       ? 'bg-[#a3e635] text-black border-[#a3e635] shadow-xs'
-                      : 'bg-[#111c33] text-slate-300 border-border/60 hover:bg-[#182747]'
+                      : 'bg-background text-muted-foreground border-border/60 hover:bg-accent'
                   )}
                 >
                   {sport.name}
@@ -144,14 +144,14 @@ export function SportTypeMultiSelect({
     <div className={cn('space-y-1.5 w-full', className)}>
       {label && (
         <div className="flex items-center justify-between">
-          <label className="text-xs font-semibold text-slate-200">
+          <label className="text-xs font-semibold text-foreground">
             {label} {required && <span className="text-rose-500">*</span>}
           </label>
           {selectedIds.length > 0 && (
             <button
               type="button"
               onClick={handleClearAll}
-              className="text-[11px] text-muted-foreground hover:text-rose-400 cursor-pointer transition-colors"
+              className="text-[11px] text-muted-foreground hover:text-rose-600 dark:text-rose-400 cursor-pointer transition-colors"
             >
               Xóa tất cả ({selectedIds.length})
             </button>
@@ -163,7 +163,7 @@ export function SportTypeMultiSelect({
         <PopoverTrigger asChild disabled={disabled}>
           <button
             type="button"
-            className="flex min-h-[44px] w-full items-center justify-between rounded-xl border border-border/60 bg-[#111c33] px-3.5 py-2 text-sm text-white transition-all select-none hover:bg-[#142342] focus:outline-hidden focus:ring-2 focus:ring-[#a3e635] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            className="flex min-h-[44px] w-full items-center justify-between rounded-xl border border-border/60 bg-background px-3.5 py-2 text-sm text-foreground transition-all select-none hover:bg-accent focus:outline-hidden focus:ring-2 focus:ring-[#a3e635] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             {selectedSports.length === 0 ? (
               <span className="text-muted-foreground/60 text-xs">{placeholder}</span>
@@ -172,14 +172,14 @@ export function SportTypeMultiSelect({
                 {selectedSports.map((sport) => (
                   <span
                     key={sport.id}
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#a3e635]/20 border border-[#a3e635]/40 px-2 py-0.5 text-[11px] font-semibold text-[#a3e635]"
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#a3e635]/20 border border-[#a3e635]/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-[#a3e635]"
                   >
                     <span>{sport.name}</span>
                     <span
                       role="button"
                       tabIndex={0}
                       onClick={(e) => handleRemove(e, sport.id)}
-                      className="hover:text-white transition-colors cursor-pointer"
+                      className="hover:text-foreground transition-colors cursor-pointer"
                     >
                       <X className="size-3" />
                     </span>
@@ -200,10 +200,10 @@ export function SportTypeMultiSelect({
         <PopoverContent
           align="start"
           sideOffset={6}
-          className="w-(--radix-popover-trigger-width) min-w-[240px] max-w-[420px] p-0 rounded-xl border border-border/70 bg-[#0F172A] text-slate-100 shadow-2xl backdrop-blur-md overflow-hidden z-50"
+          className="w-(--radix-popover-trigger-width) min-w-[240px] max-w-[420px] p-0 rounded-xl border border-border/70 bg-popover text-foreground shadow-2xl backdrop-blur-md overflow-hidden z-50"
         >
           {/* Ô tìm kiếm */}
-          <div className="flex items-center border-b border-border/50 px-3 py-2 bg-slate-900/60">
+          <div className="flex items-center border-b border-border/50 px-3 py-2 bg-muted/40">
             <Search className="size-4 shrink-0 text-muted-foreground mr-2" />
             <input
               ref={searchInputRef}
@@ -211,13 +211,13 @@ export function SportTypeMultiSelect({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm kiếm môn thể thao..."
-              className="w-full bg-transparent text-xs text-white placeholder:text-muted-foreground focus:outline-hidden"
+              className="w-full bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="text-muted-foreground hover:text-white p-0.5"
+                className="text-muted-foreground hover:text-foreground p-0.5"
               >
                 <X className="size-3.5" />
               </button>
@@ -225,15 +225,15 @@ export function SportTypeMultiSelect({
           </div>
 
           {/* Cụm nút Chọn tất cả / Bỏ chọn */}
-          <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40 text-[11px] text-muted-foreground bg-slate-950/40">
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40 text-[11px] text-muted-foreground bg-muted/30">
             <span>
-              Đã chọn: <strong className="text-white">{selectedIds.length}</strong>/{sports.length}
+              Đã chọn: <strong className="text-foreground">{selectedIds.length}</strong>/{sports.length}
             </span>
             <div className="flex items-center gap-2 font-medium">
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="text-[#a3e635] hover:underline cursor-pointer"
+                className="text-emerald-700 dark:text-[#a3e635] hover:underline cursor-pointer"
               >
                 Chọn tất cả
               </button>
@@ -241,7 +241,7 @@ export function SportTypeMultiSelect({
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="text-slate-400 hover:text-rose-400 cursor-pointer"
+                className="text-muted-foreground hover:text-rose-600 dark:text-rose-400 cursor-pointer"
               >
                 Bỏ chọn
               </button>
@@ -252,7 +252,7 @@ export function SportTypeMultiSelect({
           <div className="max-h-60 overflow-y-auto p-1.5 space-y-0.5 scrollbar-thin scrollbar-thumb-slate-700">
             {isLoading ? (
               <div className="py-6 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-                <Loader2 className="size-4 animate-spin text-[#a3e635]" />
+                <Loader2 className="size-4 animate-spin text-emerald-700 dark:text-[#a3e635]" />
                 <span>Đang tải danh sách...</span>
               </div>
             ) : filteredSports.length === 0 ? (
@@ -270,8 +270,8 @@ export function SportTypeMultiSelect({
                     className={cn(
                       'flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium text-left transition-colors cursor-pointer',
                       isSelected
-                        ? 'bg-[#a3e635]/15 text-[#a3e635] font-semibold'
-                        : 'text-slate-200 hover:bg-slate-800/80 hover:text-white'
+                        ? 'bg-[#a3e635]/15 text-emerald-700 dark:text-[#a3e635] font-semibold'
+                        : 'text-foreground hover:bg-accent hover:text-foreground'
                     )}
                   >
                     <span className="truncate">{sport.name}</span>
@@ -280,7 +280,7 @@ export function SportTypeMultiSelect({
                         'size-4 rounded-md border flex items-center justify-center transition-colors shrink-0 ml-2',
                         isSelected
                           ? 'bg-[#a3e635] border-[#a3e635] text-black'
-                          : 'border-slate-600 bg-slate-800/60'
+                          : 'border-border bg-muted'
                       )}
                     >
                       {isSelected && <Check className="size-3 stroke-[3]" />}

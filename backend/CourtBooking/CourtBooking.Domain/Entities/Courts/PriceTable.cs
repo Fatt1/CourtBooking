@@ -13,6 +13,7 @@ public class PriceTable : EntityBase<Guid>, IAuditable
     public string Name { get; set; } = null!;
     public bool IsActive { get; set; }
     public decimal DefaultPrice { get; set; }
+    public decimal DefaultWalkInPrice { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

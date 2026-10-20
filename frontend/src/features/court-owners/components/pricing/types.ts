@@ -18,6 +18,12 @@ export interface PriceRuleItem {
   fixedPrice?: number;    // Giá cố định (₫)
   walkInPrice?: number;   // Giá vãng lai (₫)
   singlePrice?: number;   // Giá đơn (áp dụng cho bảng HSSV hoặc đơn giá chung)
+  dayOfWeekFrom?: number; // Thứ bắt đầu (0 = CN, 1 = T2, ..., 6 = T7)
+  dayOfWeekTo?: number;   // Thứ kết thúc (0 = CN, 1 = T2, ..., 6 = T7)
+  startDate?: string | null;
+  endDate?: string | null;
+  rawStartTime?: string;
+  rawEndTime?: string;
 }
 
 export interface PriceRuleGroup {
@@ -31,6 +37,8 @@ export interface PriceTableGroup {
   id: string;
   name: string;           // ví dụ: "Bảng giá", "Đặc quyền HSSV"
   isHSSV?: boolean;       // nếu true -> hiển thị cột "GIÁ" duy nhất thay vì 2 cột cố định/vãng lai
+  defaultPrice?: number;
+  defaultWalkInPrice?: number;
   groups: PriceRuleGroup[];
 }
 

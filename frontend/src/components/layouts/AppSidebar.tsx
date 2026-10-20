@@ -10,7 +10,6 @@ import {
   Package,
   Coffee,
   ShoppingCart,
-  CreditCard,
   LineChart,
   Gem,
   Users,
@@ -46,7 +45,7 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
     { label: 'Danh mục dịch vụ', href: '/owner/service-categories', icon: Package },
     { label: 'Sản phẩm', href: '/owner/products', icon: Coffee },
     { label: 'Bán hàng tại quầy', href: '/owner/pos', icon: ShoppingCart },
-    { label: 'Ví và giao dịch', href: '/owner/wallet', icon: CreditCard },
+    // Tạm ẩn Ví và giao dịch cho đến khi có trang chức năng riêng.
     { label: 'Thống kê', href: '/owner/reports', icon: LineChart },
     { label: 'Gói dịch vụ', href: '/owner/packages', icon: Gem },
   ];

@@ -37,6 +37,12 @@ public sealed class CreateReviewCommandHandler(
             return Result.Failure<Guid>(new ConflictError("Bạn chỉ có thể đánh giá sau khi đã hoàn thành ca chơi."));
         }
 
+        // 4. Chỉ các đơn hàng được đặt online bởi khách hàng mới có thể đánh giá (không cho phép đơn tạo tại quầy / chủ sân tạo)
+        if (order.Channel != OrderChannel.Online)
+        {
+            return Result.Failure<Guid>(new ConflictError("Chỉ các đơn hàng được khách hàng đặt online mới có thể đánh giá sân."));
+        }
+
         // 4. Kiểm tra xem đã đánh giá chưa
         var hasReviewed = await dbContext.Reviews
             .AnyAsync(r => r.OrderId == request.OrderId, cancellationToken);
@@ -59,6 +65,18 @@ public sealed class CreateReviewCommandHandler(
         };
 
         dbContext.Reviews.Add(review);
+
+        var branch = await dbContext.Branches.FirstOrDefaultAsync(b => b.Id == order.BranchId, cancellationToken);
+        if (branch != null)
+        {
+            var existingRatings = await dbContext.Reviews
+                .Where(r => r.BranchId == order.BranchId)
+                .Select(r => (double)r.Rating)
+                .ToListAsync(cancellationToken);
+            existingRatings.Add(request.Rating);
+            branch.ReviewAverage = Math.Round(existingRatings.Average(), 1);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result<Guid>.Success(review.Id);

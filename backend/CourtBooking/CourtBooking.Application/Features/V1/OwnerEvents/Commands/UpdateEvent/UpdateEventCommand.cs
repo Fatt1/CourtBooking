@@ -1,4 +1,5 @@
 using CourtBooking.Application.Messaging;
+using CourtBooking.Domain.Enums;
 
 namespace CourtBooking.Application.Features.V1.OwnerEvents.Commands.UpdateEvent;
 
@@ -8,8 +9,16 @@ namespace CourtBooking.Application.Features.V1.OwnerEvents.Commands.UpdateEvent;
 public sealed record UpdateEventCommand(
     Guid EventId,
     string Title,
+    Guid SportTypeId,
+    DateOnly Date,
+    TimeOnly StartTime,
+    TimeOnly EndTime,
     decimal TicketPrice,
     int Slots,
-    string? SkillLevelFrom,
-    string? SkillLevelTo,
-    string? Description) : ICommand;
+    EventStatus Status,
+    string? SkillLevelFrom = null,
+    string? SkillLevelTo = null,
+    string? Description = null,
+    string? CustomerName = null,
+    string? CustomerPhone = null,
+    string? Note = null) : ICommand;

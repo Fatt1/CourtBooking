@@ -6,6 +6,7 @@ using CourtBooking.Application.Features.V1.Courts.Commands.UpdateCourtStatus;
 using CourtBooking.Application.Features.V1.Courts.Dtos;
 using CourtBooking.Application.Features.V1.Courts.Queries.GetCourtById;
 using CourtBooking.Application.Features.V1.Courts.Queries.GetCourtsByBranch;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
@@ -22,7 +23,7 @@ public sealed class CourtEndpoints : IEndpointGroup
         // 1. Danh sách sân theo chi nhánh
         var group = app
             .MapApiV1Group("owner/courts")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
 
         MapToOwner(group);
 

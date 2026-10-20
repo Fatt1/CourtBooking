@@ -246,6 +246,7 @@ export function useUpdateOrderItemsMutation() {
         queryKey: ['owner', 'orders', 'daily-detail', variables.orderId],
       });
       queryClient.invalidateQueries({ queryKey: ['branches', 'one-time-booking'] });
+      queryClient.invalidateQueries({ queryKey: ['owner', 'events'] });
     },
   });
 }
@@ -475,6 +476,25 @@ export function useDeleteFixedOrderCycleMutation() {
       });
       queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
     },
+  });
+}
+
+/**
+ * Hook lấy danh sách đơn đặt sân của người chơi (GET /api/v1/orders/my-orders)
+ */
+export function useMyOrdersQuery(onlyAvailableForMatch?: boolean) {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery<import('./types').MyOrderDto[]>({
+    queryKey: ['orders', 'my-orders', { onlyAvailableForMatch }],
+    queryFn: async (): Promise<import('./types').MyOrderDto[]> => {
+      const response = await apiClient.get<import('./types').MyOrderDto[]>(
+        API_ENDPOINTS.ORDERS.MY_ORDERS,
+        { params: { onlyAvailableForMatch } }
+      );
+      return (response as unknown as import('./types').MyOrderDto[]) || [];
+    },
+    enabled: isAuthenticated,
   });
 }
 

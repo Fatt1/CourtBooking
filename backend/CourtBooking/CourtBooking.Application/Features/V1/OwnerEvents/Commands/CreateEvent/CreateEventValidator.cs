@@ -1,3 +1,4 @@
+using CourtBooking.Application.Features.V1.Orders.SharedInputs;
 using FluentValidation;
 
 namespace CourtBooking.Application.Features.V1.OwnerEvents.Commands.CreateEvent;
@@ -20,13 +21,12 @@ public sealed class CreateEventValidator : AbstractValidator<CreateEventCommand>
             .NotEmpty()
             .WithMessage("Môn thể thao không được để trống.");
 
-        RuleFor(x => x.Date)
-            .GreaterThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
-            .WithMessage("Ngày tổ chức sự kiện không thể ở quá khứ.");
-
-        RuleFor(x => x.EndTime)
-            .GreaterThan(x => x.StartTime)
-            .WithMessage("Giờ kết thúc phải sau giờ bắt đầu.");
+        When(x => x.StartTime.HasValue && x.EndTime.HasValue, () =>
+        {
+            RuleFor(x => x.EndTime!.Value)
+                .GreaterThan(x => x.StartTime!.Value)
+                .WithMessage("Giờ kết thúc phải sau giờ bắt đầu.");
+        });
 
         RuleFor(x => x.TicketPrice)
             .GreaterThanOrEqualTo(0)
@@ -36,10 +36,57 @@ public sealed class CreateEventValidator : AbstractValidator<CreateEventCommand>
             .GreaterThan(0)
             .WithMessage("Số lượng vé tối đa (Slots) phải lớn hơn 0.");
 
-        RuleFor(x => x.CourtIds)
+        RuleFor(x => x.CourtSlots)
             .NotEmpty()
-            .WithMessage("Phải chọn ít nhất 1 sân con để tổ chức sự kiện.")
-            .Must(courts => courts != null && courts.Count > 0 && courts.Distinct().Count() == courts.Count)
-            .WithMessage("Danh sách sân con không được trùng lặp.");
+            .WithMessage("Sự kiện phải có ít nhất một nhóm đặt sân.")
+            .Must(groups =>
+            {
+                if (groups == null || groups.Count == 0) return true;
+                var allSlots = groups.Where(g => g.Slots != null).SelectMany(g => g.Slots).ToList();
+                if (allSlots.Count <= 1) return true;
+
+                var first = allSlots[0];
+                return allSlots.All(s => s.Date == first.Date && s.StartTime == first.StartTime && s.EndTime == first.EndTime);
+            })
+            .WithMessage("Tất cả các ca sân trong sự kiện phải diễn ra cùng ngày và có cùng khung giờ (giờ bắt đầu và kết thúc) giống nhau.");
+
+
+        RuleForEach(x => x.CourtSlots).ChildRules(group =>
+        {
+            group.RuleFor(g => g.CourtTypeId)
+                .NotEmpty().WithMessage("Loại sân (CourtTypeId) không được để trống.");
+
+            group.RuleFor(g => g.PriceTableId)
+                .NotEmpty().WithMessage("Bảng giá (PriceTableId) không được để trống.");
+
+            group.RuleFor(g => g.Slots)
+                .NotEmpty().WithMessage("Mỗi loại sân phải có ít nhất một khung giờ đặt.");
+
+            group.RuleForEach(g => g.Slots).ChildRules(slot =>
+            {
+                slot.RuleFor(s => s.CourtId)
+                    .NotEmpty().WithMessage("CourtId không được để trống.");
+
+                slot.RuleFor(s => s.Date)
+                    .GreaterThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow.Date))
+                    .WithMessage("Ngày đặt sân không thể ở trong quá khứ.");
+
+                slot.RuleFor(s => s.EndTime)
+                    .GreaterThan(s => s.StartTime)
+                    .WithMessage("Giờ kết thúc phải sau giờ bắt đầu.");
+            });
+        });
+
+        When(x => !string.IsNullOrWhiteSpace(x.CustomerPhone), () =>
+        {
+            RuleFor(x => x.CustomerPhone)
+                .Matches(@"^(0|\+84)[0-9]{9,10}$").WithMessage("Số điện thoại không đúng định dạng hợp lệ.");
+        });
+
+        When(x => !string.IsNullOrWhiteSpace(x.Note), () =>
+        {
+            RuleFor(x => x.Note)
+                .MaximumLength(500).WithMessage("Ghi chú không được vượt quá 500 ký tự.");
+        });
     }
 }

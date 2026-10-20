@@ -225,18 +225,18 @@ export function CreateDailyOrderModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="w-[95vw] max-w-2xl p-0 overflow-hidden bg-[#070D1A] border border-border/70 text-slate-100 shadow-2xl rounded-2xl flex flex-col max-h-[90vh]">
+        <DialogContent className="w-[95vw] max-w-2xl p-0 overflow-hidden bg-background border border-border/70 text-foreground shadow-2xl rounded-2xl flex flex-col max-h-[90vh]">
           {/* Header Modal */}
-          <DialogHeader className="px-5 py-3.5 bg-[#0f172a] border-b border-border/60 flex flex-row items-center justify-between shrink-0">
+          <DialogHeader className="px-5 py-3.5 bg-muted/40 border-b border-border/60 flex flex-row items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => handleOpenChange(false)}
-                className="size-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="size-8 rounded-lg hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <ChevronLeft className="size-5 stroke-[2.5]" />
               </button>
-              <DialogTitle className="text-base sm:text-lg font-bold text-white tracking-wide">
+              <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-wide">
                 Đặt lịch ngày trực quan
               </DialogTitle>
             </div>
@@ -247,47 +247,47 @@ export function CreateDailyOrderModal({
             {/* 1. THÔNG TIN KHÁCH HÀNG (ĐÃ BỎ ĐỐI TƯỢNG) */}
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-200">
-                  TÊN KHÁCH HÀNG <span className="text-rose-400">*</span>
+                <label className="text-xs font-bold text-foreground">
+                  TÊN KHÁCH HÀNG <span className="text-rose-600 dark:text-rose-400">*</span>
                 </label>
                 <Input
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Ví dụ: A. Hậu, Chị Lan..."
-                  className="h-10 rounded-xl bg-[#131d31] border-border/60 text-white placeholder:text-slate-500 text-sm focus:border-[#a3e635]"
+                  className="h-10 rounded-xl bg-card border-border/60 text-foreground placeholder:text-muted-foreground text-sm focus:border-[#a3e635]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-200">
-                  SỐ ĐIỆN THOẠI <span className="text-rose-400">*</span>
+                <label className="text-xs font-bold text-foreground">
+                  SỐ ĐIỆN THOẠI <span className="text-rose-600 dark:text-rose-400">*</span>
                 </label>
                 <Input
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="Ví dụ: 0901234567"
-                  className="h-10 rounded-xl bg-[#131d31] border-border/60 text-white placeholder:text-slate-500 text-sm focus:border-[#a3e635]"
+                  className="h-10 rounded-xl bg-card border-border/60 text-foreground placeholder:text-muted-foreground text-sm focus:border-[#a3e635]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-200">GHI CHÚ</label>
+                <label className="text-xs font-bold text-foreground">GHI CHÚ</label>
                 <textarea
                   rows={2}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Nhập ghi chú đặt sân..."
-                  className="w-full rounded-xl bg-[#131d31] border border-border/60 p-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[#a3e635]"
+                  className="w-full rounded-xl bg-card border border-border/60 p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#a3e635]"
                 />
               </div>
             </div>
 
             {/* 2. THÔNG TIN LỊCH ĐẶT */}
-            <div className="rounded-2xl bg-[#131d31] border border-border/60 p-4 space-y-3 shadow-xs">
+            <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between pb-2 border-b border-border/50">
                 <div className="flex items-center gap-2">
-                  <Calendar className="size-4 text-[#a3e635]" />
-                  <span className="font-bold text-sm text-white">Thông tin lịch đặt</span>
+                  <Calendar className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                  <span className="font-bold text-sm text-foreground">Thông tin lịch đặt</span>
                 </div>
 
                 {/* ICON / NÚT MỞ POPUP TRỰC QUAN TOÀN MÀN HÌNH */}
@@ -308,17 +308,17 @@ export function CreateDailyOrderModal({
               </div>
 
               {/* Chi nhánh đang chọn */}
-              <div className="text-xs flex items-center justify-between text-slate-300">
+              <div className="text-xs flex items-center justify-between text-muted-foreground">
                 <span>Chi nhánh:</span>
-                <span className="font-bold text-white flex items-center gap-1.5">
-                  <Store className="size-3.5 text-[#a3e635]" />
+                <span className="font-bold text-foreground flex items-center gap-1.5">
+                  <Store className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
                   {activeBranchName || 'Chưa chọn chi nhánh'}
                 </span>
               </div>
 
               {/* Danh sách ca sân đã chọn */}
               <div className="space-y-2 pt-1">
-                <div className="text-xs font-semibold text-slate-300">Sân & Thời gian:</div>
+                <div className="text-xs font-semibold text-muted-foreground">Sân & Thời gian:</div>
 
                 {selectedSlots.length > 0 ? (
                   <div className="space-y-3">
@@ -332,20 +332,20 @@ export function CreateDailyOrderModal({
                       return (
                         <div
                           key={dateKey}
-                          className="rounded-xl bg-[#0e172a] border border-border/50 p-3 space-y-1.5"
+                          className="rounded-xl bg-muted/30 border border-border/50 p-3 space-y-1.5"
                         >
-                          <div className="text-xs font-bold text-[#a3e635]">{displayDate}</div>
+                          <div className="text-xs font-bold text-emerald-700 dark:text-[#a3e635]">{displayDate}</div>
                           <div className="space-y-1 text-xs">
                             {slots.map((s, idx) => (
                               <div
                                 key={idx}
-                                className="flex items-center justify-between text-slate-200"
+                                className="flex items-center justify-between text-foreground"
                               >
                                 <span>
                                   • {s.courtName}: {s.startTime.substring(0, 5)} -{' '}
                                   {s.endTime.substring(0, 5)}
                                 </span>
-                                <span className="font-mono font-semibold text-[#a3e635]">
+                                <span className="font-mono font-semibold text-emerald-700 dark:text-[#a3e635]">
                                   {s.price.toLocaleString('vi-VN')} đ
                                 </span>
                               </div>
@@ -357,13 +357,13 @@ export function CreateDailyOrderModal({
 
                     {/* Cụm tổng giờ & tiền */}
                     <div className="pt-2 border-t border-border/40 space-y-1 text-xs">
-                      <div className="flex justify-between text-slate-300">
+                      <div className="flex justify-between text-muted-foreground">
                         <span>Tổng giờ:</span>
-                        <span className="font-bold text-white font-mono">{totalHoursFormatted}</span>
+                        <span className="font-bold text-foreground font-mono">{totalHoursFormatted}</span>
                       </div>
-                      <div className="flex justify-between text-slate-300">
+                      <div className="flex justify-between text-muted-foreground">
                         <span>Tổng tiền sân:</span>
-                        <span className="font-bold text-[#a3e635] text-sm">
+                        <span className="font-bold text-emerald-700 dark:text-[#a3e635] text-sm">
                           {totalCourtAmount.toLocaleString('vi-VN')} đ
                         </span>
                       </div>
@@ -372,7 +372,7 @@ export function CreateDailyOrderModal({
                 ) : (
                   <div
                     onClick={() => setIsVisualBookingOpen(true)}
-                    className="p-4 rounded-xl border border-dashed border-border/60 text-center text-xs text-slate-400 hover:border-[#a3e635]/60 hover:text-slate-300 cursor-pointer transition-colors"
+                    className="p-4 rounded-xl border border-dashed border-border/60 text-center text-xs text-muted-foreground hover:border-[#a3e635]/60 hover:text-muted-foreground cursor-pointer transition-colors"
                   >
                     Bấm vào đây hoặc nút trên để mở bảng lịch trực quan chọn sân và khung giờ.
                   </div>
@@ -381,17 +381,17 @@ export function CreateDailyOrderModal({
             </div>
 
             {/* 3. DỊCH VỤ ĐI KÈM */}
-            <div className="rounded-2xl bg-[#131d31] border border-border/60 p-4 space-y-3 shadow-xs">
+            <div className="rounded-2xl bg-card border border-border/60 p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between pb-2 border-b border-border/50">
                 <div className="flex items-center gap-2">
-                  <ShoppingBag className="size-4 text-[#a3e635]" />
-                  <span className="font-bold text-sm text-white">Dịch vụ đi kèm</span>
+                  <ShoppingBag className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                  <span className="font-bold text-sm text-foreground">Dịch vụ đi kèm</span>
                 </div>
 
                 <Button
                   size="sm"
                   onClick={() => setIsAddServiceOpen(true)}
-                  className="h-8 rounded-xl bg-[#1a2742] hover:bg-[#223354] border border-border/60 text-white text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
+                  className="h-8 rounded-xl bg-muted hover:bg-accent border border-border/60 text-foreground text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
                 >
                   <Plus className="size-3.5" />
                   <span>Thêm dịch vụ</span>
@@ -403,22 +403,22 @@ export function CreateDailyOrderModal({
                   {selectedServices.map((srv) => (
                     <div
                       key={srv.serviceId}
-                      className="flex items-center justify-between rounded-xl bg-[#0e172a] border border-border/50 px-3 py-2 text-xs text-white"
+                      className="flex items-center justify-between rounded-xl bg-muted/30 border border-border/50 px-3 py-2 text-xs text-foreground"
                     >
                       <div>
-                        <div className="font-semibold text-slate-200">{srv.name}</div>
-                        <div className="text-[11px] text-slate-400">
+                        <div className="font-semibold text-foreground">{srv.name}</div>
+                        <div className="text-[11px] text-muted-foreground">
                           {srv.quantity} {srv.unit || 'phần'} x {srv.unitPrice.toLocaleString('vi-VN')}đ
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="font-bold text-[#a3e635]">
+                        <span className="font-bold text-emerald-700 dark:text-[#a3e635]">
                           {(srv.unitPrice * srv.quantity).toLocaleString('vi-VN')}đ
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveService(srv.serviceId)}
-                          className="text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                          className="text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -426,15 +426,15 @@ export function CreateDailyOrderModal({
                     </div>
                   ))}
 
-                  <div className="pt-2 border-t border-border/40 flex justify-between text-xs text-slate-300">
+                  <div className="pt-2 border-t border-border/40 flex justify-between text-xs text-muted-foreground">
                     <span>Tổng dịch vụ:</span>
-                    <span className="font-bold text-white">
+                    <span className="font-bold text-foreground">
                       {totalServiceAmount.toLocaleString('vi-VN')} đ
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-2 text-xs text-slate-500 italic">
+                <div className="text-center py-2 text-xs text-muted-foreground italic">
                   Chưa chọn dịch vụ nào (tùy chọn)
                 </div>
               )}
@@ -442,7 +442,7 @@ export function CreateDailyOrderModal({
 
             {/* 4. PHƯƠNG THỨC THANH TOÁN (TIỀN MẶT / CHUYỂN KHOẢN) */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-200">PHƯƠNG THỨC THANH TOÁN</label>
+              <label className="text-xs font-bold text-foreground">PHƯƠNG THỨC THANH TOÁN</label>
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
@@ -450,7 +450,7 @@ export function CreateDailyOrderModal({
                   className={`p-3 rounded-xl border flex items-center gap-2.5 text-xs font-semibold cursor-pointer transition-all ${
                     paymentMethod === PaymentMethod.Cash
                       ? 'bg-emerald-700/80 border-emerald-500 text-white'
-                      : 'bg-[#131d31] border-border/60 text-slate-300 hover:bg-[#1a2742]'
+                      : 'bg-card border-border/60 text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <Banknote className="size-4" />
@@ -463,7 +463,7 @@ export function CreateDailyOrderModal({
                   className={`p-3 rounded-xl border flex items-center gap-2.5 text-xs font-semibold cursor-pointer transition-all ${
                     paymentMethod === PaymentMethod.QrTransfer
                       ? 'bg-emerald-700/80 border-emerald-500 text-white'
-                      : 'bg-[#131d31] border-border/60 text-slate-300 hover:bg-[#1a2742]'
+                      : 'bg-card border-border/60 text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <QrCode className="size-4" />
@@ -473,21 +473,21 @@ export function CreateDailyOrderModal({
             </div>
 
             {/* 5. TỔNG CỘNG ĐƠN HÀNG */}
-            <div className="p-3.5 rounded-xl bg-[#0f172a] border border-border/60 flex items-center justify-between text-sm">
-              <span className="font-bold text-slate-300">TỔNG CỘNG ĐƠN HÀNG:</span>
-              <span className="font-extrabold text-base text-[#a3e635]">
+            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/60 flex items-center justify-between text-sm">
+              <span className="font-bold text-muted-foreground">TỔNG CỘNG ĐƠN HÀNG:</span>
+              <span className="font-extrabold text-base text-emerald-700 dark:text-[#a3e635]">
                 {grandTotal.toLocaleString('vi-VN')} đ
               </span>
             </div>
           </div>
 
           {/* Footer Nút Xác Nhận */}
-          <div className="p-4 bg-[#0f172a] border-t border-border/60 flex items-center justify-end gap-3 shrink-0">
+          <div className="p-4 bg-muted/40 border-t border-border/60 flex items-center justify-end gap-3 shrink-0">
             <Button
               variant="outline"
               disabled={isPending}
               onClick={() => handleOpenChange(false)}
-              className="h-10 rounded-xl border-border/60 bg-[#131d31] hover:bg-[#1a2742] text-xs font-bold text-slate-200"
+              className="h-10 rounded-xl border-border/60 bg-card hover:bg-muted text-xs font-bold text-foreground"
             >
               Hủy
             </Button>

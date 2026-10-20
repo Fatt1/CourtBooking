@@ -6,6 +6,7 @@ using CourtBooking.Application.Features.V1.SportTypes.Dtos;
 using CourtBooking.Application.Features.V1.SportTypes.Queries.GetAdminSportTypes;
 using CourtBooking.Application.Features.V1.SportTypes.Queries.GetSportTypeById;
 using CourtBooking.Application.Features.V1.SportTypes.Queries.GetSportTypes;
+using CourtBooking.Domain.Constants;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 
@@ -18,17 +19,11 @@ public sealed class SportTypeEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         var publicGroup = app.MapApiV1Group("sport-types");
-
         MapToPublic(publicGroup);
 
-
-
-
-
-
-        var group = app.MapApiV1Group("admin/sport-types");
+        var group = app.MapApiV1Group("admin/sport-types")
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Admin));
         MapToAdmin(group);
-
     }
 
     public void MapToPublic(RouteGroupBuilder group)
@@ -82,7 +77,6 @@ public sealed class SportTypeEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-       // .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" })
        .WithName("GetAdminSportTypes")
        .WithSummary("Lấy danh sách tất cả môn thể thao cho quản trị viên")
        .WithDescription("Trả về danh sách tất cả môn thể thao trong hệ thống kèm số lượng chi nhánh liên kết.")
@@ -100,7 +94,6 @@ public sealed class SportTypeEndpoints : IEndpointGroup
                 ? Results.NoContent()
                 : result.ToProblemDetails();
         })
-        // .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" })
         .WithName("DeleteSportType")
         .WithSummary("Xóa môn thể thao")
         .WithDescription("Xóa môn thể thao nếu chưa có sân nào sử dụng. Nếu đang có sân sử dụng sẽ báo lỗi xung đột.")
@@ -126,7 +119,6 @@ public sealed class SportTypeEndpoints : IEndpointGroup
                 ? Results.NoContent()
                 : result.ToProblemDetails();
         })
-        // .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" })
         .WithName("UpdateSportType")
         .WithSummary("Cập nhật thông tin, hình ảnh môn thể thao")
         .WithDescription("Cập nhật tên và hình ảnh đại diện của môn thể thao.")
@@ -153,7 +145,6 @@ public sealed class SportTypeEndpoints : IEndpointGroup
                     result.Value)
                 : result.ToProblemDetails();
         })
-        // .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" })
         .WithName("CreateSportType")
         .WithSummary("Tạo mới môn thể thao")
         .WithDescription("Tạo một môn thể thao mới kèm hình ảnh đại diện nếu có.")

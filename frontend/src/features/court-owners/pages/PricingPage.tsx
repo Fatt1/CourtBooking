@@ -38,6 +38,9 @@ import {
   PriceTableFormValues,
   PriceTableToEdit,
   mapBackendDtoToUiData,
+  convertSelectedDaysToRange,
+  convertRangeToSelectedDays,
+  formatTimeDisplay,
 } from '@/features/court-owners/components/pricing';
 
 export function PricingPage() {
@@ -233,10 +236,7 @@ export function PricingPage() {
       const startTimeFormatted = `${values.startTime}:00`;
       const endTimeFormatted = `${values.endTime}:00`;
 
-      const dayOfWeekFrom =
-        values.selectedDays.length > 0 ? Math.min(...values.selectedDays) : 1;
-      const dayOfWeekTo =
-        values.selectedDays.length > 0 ? Math.max(...values.selectedDays) : 5;
+      const { from: dayOfWeekFrom, to: dayOfWeekTo } = convertSelectedDaysToRange(values.selectedDays);
 
       if (ruleId) {
         // Mode cập nhật quy tắc tính giá
@@ -309,18 +309,21 @@ export function PricingPage() {
           priceTableId: tableId,
           name: values.name,
           defaultPrice: values.defaultPrice,
+          defaultWalkInPrice: values.walkInPrice,
           isActive: values.isActive,
         });
         toast.success(`Cập nhật bảng giá "${values.name}" thành công!`);
       } else {
         // Chế độ tạo mới bảng giá
-        await createPriceTableMutation.mutateAsync({
+        const newTable = await createPriceTableMutation.mutateAsync({
           branchId: selectedBranchId,
           courtTypeId: selectedCourtTypeId,
           name: values.name,
           defaultPrice: values.defaultPrice,
+          defaultWalkInPrice: values.walkInPrice,
           isActive: values.isActive,
         });
+
         toast.success(`Tạo mới loại bảng giá "${values.name}" thành công!`);
       }
 
@@ -344,6 +347,12 @@ export function PricingPage() {
       return;
     }
 
+    // Ràng buộc: Mỗi loại sân phải có ít nhất 1 bảng giá
+    if (currentPricingData.priceTables.length <= 1) {
+      toast.warning('Mỗi loại sân phải có ít nhất một bảng giá, không thể xóa bảng giá cuối cùng.');
+      return;
+    }
+
     try {
       await deletePriceTableMutation.mutateAsync({
         branchId: selectedBranchId,
@@ -357,6 +366,29 @@ export function PricingPage() {
     }
   };
 
+  // Xóa quy tắc khung giờ giá trên từng dòng bảng
+  const handleDeleteRule = async (table: PriceTableGroup, rule: PriceRuleItem) => {
+    if (!selectedBranchId) return;
+
+    if (!isGuid(rule.id) || !isGuid(table.id)) {
+      toast.warning('Khung giờ giá mẫu không thể xóa qua máy chủ.');
+      return;
+    }
+
+    try {
+      await deletePriceRuleMutation.mutateAsync({
+        branchId: selectedBranchId,
+        priceTableId: table.id,
+        ruleId: rule.id,
+      });
+      toast.success(`Đã xóa khung giờ giá ${rule.timeRange}`);
+      refetchPricing();
+    } catch (err) {
+      const msg = getErrorMessage(err, 'Không thể xóa khung giờ giá');
+      toast.error(msg);
+    }
+  };
+
   // Mở modal sửa quy tắc trên từng dòng bảng
   const handleEditRule = (
     table: PriceTableGroup,
@@ -364,15 +396,26 @@ export function PricingPage() {
     rule: PriceRuleItem
   ) => {
     const parts = (rule.timeRange || '').split(' - ');
-    const startTime = parts[0]?.trim() || '06:00';
-    const endTime = parts[1]?.trim() || '12:00';
+    const startTime = rule.rawStartTime
+      ? formatTimeDisplay(rule.rawStartTime)
+      : parts[0]?.trim() || '06:00';
+    const endTime = rule.rawEndTime
+      ? formatTimeDisplay(rule.rawEndTime)
+      : parts[1]?.trim() || '12:00';
+
+    const selectedDays = convertRangeToSelectedDays(
+      rule.dayOfWeekFrom ?? 1,
+      rule.dayOfWeekTo ?? 5
+    );
 
     setRuleToEdit({
       ruleId: rule.id,
       priceTableId: table.id,
       startTime,
       endTime,
-      selectedDays: [1, 2, 3, 4, 5],
+      selectedDays,
+      startDate: rule.startDate || '',
+      endDate: rule.endDate || '',
       fixedPrice: rule.fixedPrice ?? 0,
       walkInPrice: rule.walkInPrice ?? 0,
       unitMinutes: 60,
@@ -389,10 +432,12 @@ export function PricingPage() {
       return;
     }
     const backendTable = backendPricingDto?.priceTables?.find((t) => t.id === table.id);
+    const firstRule = table.groups.flatMap((g) => g.items)[0];
     setPriceTableToEdit({
       id: table.id,
       name: table.name,
-      defaultPrice: backendTable?.defaultPrice ?? 80000,
+      defaultPrice: backendTable?.defaultPrice ?? firstRule?.fixedPrice ?? 80000,
+      walkInPrice: backendTable?.defaultWalkInPrice ?? firstRule?.walkInPrice ?? Math.round((backendTable?.defaultPrice ?? 80000) * 1.25),
       isActive: backendTable?.isActive ?? true,
     });
     setIsPriceTableModalOpen(true);
@@ -503,6 +548,8 @@ export function PricingPage() {
                       onEditTable={handleEditTable}
                       onDeleteTable={handleDeleteTable}
                       onEditRule={handleEditRule}
+                      onDeleteRule={handleDeleteRule}
+                      disableDeleteTable={currentPricingData.priceTables.length <= 1}
                     />
                   ))
                 )}

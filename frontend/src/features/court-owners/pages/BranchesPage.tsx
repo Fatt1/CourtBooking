@@ -254,14 +254,14 @@ export function BranchesPage() {
 
       {/* KHỐI 5: Modal xác nhận xóa chi nhánh chuẩn ServiceCategoriesPage */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="max-w-md bg-[#0B1324] border-border/70 rounded-2xl p-6 text-foreground">
+        <DialogContent className="max-w-md bg-card border-border/70 rounded-2xl p-6 text-foreground">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-rose-500 text-lg font-bold">
               <Trash2 className="size-5" /> Xác nhận xóa chi nhánh
             </DialogTitle>
             <DialogDescription className="text-muted-foreground pt-1 text-sm">
               Bạn có chắc chắn muốn xóa chi nhánh{' '}
-              <span className="font-bold text-white">"{branchToDelete?.name}"</span>? Thao tác này không thể hoàn tác.
+              <span className="font-bold text-foreground">"{branchToDelete?.name}"</span>? Thao tác này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
 
@@ -269,7 +269,7 @@ export function BranchesPage() {
             <Button
               variant="outline"
               onClick={() => setIsDeleteOpen(false)}
-              className="h-10 rounded-xl bg-[#131d31] border-border/60 text-white hover:bg-[#1a2742] cursor-pointer"
+              className="h-10 rounded-xl bg-card border-border/60 text-foreground hover:bg-accent cursor-pointer"
             >
               Không, giữ lại
             </Button>

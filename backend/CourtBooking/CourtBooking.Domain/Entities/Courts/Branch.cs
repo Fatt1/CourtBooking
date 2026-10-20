@@ -12,12 +12,16 @@ public class Branch : EntityBase<Guid>, IAuditable
     public Guid CourtOwnerId { get; set; }
     public string Name { get; set; } = null!;
     public string Hotline { get; set; } = null!;
-    public string GgMapUrl { get; set; } = null!;
     public string Province { get; set; } = null!;
     public string District { get; set; } = null!;
     public string Street { get; set; } = null!;
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? GgMapUrl => Latitude.HasValue && Longitude.HasValue
+        ? $"https://www.google.com/maps?q={Latitude.Value},{Longitude.Value}"
+        : null;
     public bool IsActive { get; set; }
     public double ReviewAverage { get; set; }
     public decimal MinPrice { get; set; }
@@ -25,6 +29,7 @@ public class Branch : EntityBase<Guid>, IAuditable
     public TimeOnly OpenTime { get; set; }
     public TimeOnly CloseTime { get; set; }
     public string? Policy { get; set; }
+    public string? Description { get; set; }
     public Guid QrImageId { get; set; }
     public string AccountNumber { get; set; } = null!;
     public string AccountName { get; set; } = null!;

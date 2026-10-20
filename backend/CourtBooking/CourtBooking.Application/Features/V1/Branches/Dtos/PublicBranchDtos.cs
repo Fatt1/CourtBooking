@@ -14,7 +14,11 @@ public sealed record PublicBranchListItemDto(
     double? DistanceKm,
     int? AvailableCourtCount,
     decimal MinPrice,
-    decimal MaxPrice);
+    decimal MaxPrice,
+    IReadOnlyList<string>? CourtTypes = null,
+    IReadOnlyList<string>? Services = null,
+    decimal? Latitude = null,
+    decimal? Longitude = null);
 
 public sealed record PublicBranchDetailDto(
     Guid Id,
@@ -23,10 +27,12 @@ public sealed record PublicBranchDetailDto(
     string Province,
     string District,
     string Street,
-    string GgMapUrl,
+    string? GgMapUrl,
+    double? DistanceKm,
     TimeOnly OpenTime,
     TimeOnly CloseTime,
     string? Policy,
+    string? Description,
     decimal? MinPrice,
     decimal? MaxPrice,
     double ReviewAverage,

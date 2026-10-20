@@ -44,23 +44,29 @@ export function useBranchReviewsQuery(branchId?: string, page = 1, pageSize = 10
     queryKey: ['reviews', 'branch', branchId, page, pageSize],
     queryFn: async (): Promise<BranchReviewsResponse> => {
       if (!branchId) {
-        return { items: [], totalCount: 0, page, pageSize };
+        return { items: [], totalCount: 0, page, pageSize, averageRating: 5.0 };
       }
       try {
-        const response = await apiClient.get<BranchReviewsResponse>('/reviews', {
+        const response = await apiClient.get<any>('/reviews', {
           params: { branchId, page, pageSize },
         });
-        return (
-          (response as unknown as BranchReviewsResponse) || {
-            items: [],
-            totalCount: 0,
-            page,
-            pageSize,
-          }
-        );
+        const res = response as any;
+        const paged = res?.reviews || res;
+        const items = paged?.items || [];
+        const totalCount = paged?.totalCount ?? items.length;
+        const averageRating = res?.averageRating ?? res?.reviewAverage ?? 5.0;
+
+        return {
+          branchId: res?.branchId || branchId,
+          averageRating,
+          items,
+          totalCount,
+          page: paged?.page || page,
+          pageSize: paged?.pageSize || pageSize,
+        };
       } catch (err) {
         console.warn('Lỗi lấy danh sách đánh giá chi nhánh:', err);
-        return { items: [], totalCount: 0, page, pageSize };
+        return { items: [], totalCount: 0, page, pageSize, averageRating: 5.0 };
       }
     },
     enabled: Boolean(branchId),

@@ -33,8 +33,10 @@ interface VisualBookingModalProps {
   initialDate?: string;
   initialSlots?: SelectedCourtSlot[];
   excludeOrderCode?: string;
+  excludeTitle?: string;
   title?: string;
   confirmText?: string;
+  lockSameTimeSlots?: boolean;
   onConfirm: (slots: SelectedCourtSlot[]) => void;
 }
 
@@ -56,8 +58,10 @@ export function VisualBookingModal({
   initialDate,
   initialSlots = EMPTY_INITIAL_SLOTS,
   excludeOrderCode,
+  excludeTitle,
   title = 'Đặt lịch ngày trực quan',
   confirmText = 'Xác nhận lịch chọn',
+  lockSameTimeSlots = false,
   onConfirm,
 }: VisualBookingModalProps) {
   const todayStr = useMemo(() => getTodayString(), []);
@@ -346,6 +350,32 @@ export function VisualBookingModal({
       return;
     }
 
+    // Kiểm tra tính đồng bộ khung giờ nếu lockSameTimeSlots = true (chế độ tạo sự kiện)
+    if (lockSameTimeSlots && singleDateMergedSlots.length > 0) {
+      // 1. Kiểm tra mỗi sân chỉ có 1 ca liền kề duy nhất (không bị đứt đoạn)
+      const courtCounts: Record<string, number> = {};
+      singleDateMergedSlots.forEach((s) => {
+        courtCounts[s.courtId] = (courtCounts[s.courtId] || 0) + 1;
+      });
+      const hasGaps = Object.values(courtCounts).some((cnt) => cnt > 1);
+      if (hasGaps) {
+        toast.error('Khung giờ sự kiện phải là một khoảng thời gian liên tục, không được ngắt quãng.');
+        return;
+      }
+
+      // 2. Kiểm tra tất cả các sân phải có cùng startTime và endTime
+      const firstSlot = singleDateMergedSlots[0];
+      const mismatched = singleDateMergedSlots.find(
+        (s) => s.startTime !== firstSlot.startTime || s.endTime !== firstSlot.endTime
+      );
+      if (mismatched) {
+        toast.error(
+          `Tất cả các sân trong sự kiện phải có cùng khung giờ (${firstSlot.startTime.substring(0, 5)} - ${firstSlot.endTime.substring(0, 5)}). Sân "${mismatched.courtName}" đang có khung giờ khác (${mismatched.startTime.substring(0, 5)} - ${mismatched.endTime.substring(0, 5)})!`
+        );
+        return;
+      }
+    }
+
     // Đảm bảo courtTypeId luôn được resolve chính xác từ cấu hình chi nhánh
     const validatedSlots = singleDateMergedSlots.map((slot) => {
       const ct = pricingConfig.find(
@@ -369,32 +399,32 @@ export function VisualBookingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-screen max-w-none h-screen max-h-none p-0 m-0 rounded-none border-none bg-[#070D1A] text-slate-100 shadow-2xl flex flex-col overflow-hidden z-[70]">
+      <DialogContent className="w-screen max-w-none h-screen max-h-none p-0 m-0 rounded-none border-none bg-background text-foreground shadow-2xl flex flex-col overflow-hidden z-[70]">
         {/* =================================================================== */}
         {/* 1. HEADER MODAL: Tiêu đề + Bộ chọn ngày chơi */}
         {/* =================================================================== */}
-        <DialogHeader className="px-6 py-3.5 pr-14 sm:pr-16 bg-[#0f172a] border-b border-border/60 flex flex-row items-center justify-between shrink-0">
+        <DialogHeader className="px-6 py-3.5 pr-14 sm:pr-16 bg-muted/40 border-b border-border/60 flex flex-row items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="size-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="size-8 rounded-lg hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               title="Đóng"
             >
               <ChevronLeft className="size-5 stroke-[2.5]" />
             </button>
             <div>
               <div className="flex items-center gap-2.5">
-                <DialogTitle className="text-base sm:text-lg font-bold text-white tracking-wide">
+                <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-wide">
                   {title}
                 </DialogTitle>
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-400 border border-sky-500/30">
                   Toàn màn hình
                 </span>
               </div>
               {branchName && (
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Chi nhánh: <span className="font-semibold text-white">{branchName}</span>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Chi nhánh: <span className="font-semibold text-foreground">{branchName}</span>
                 </p>
               )}
             </div>
@@ -403,12 +433,12 @@ export function VisualBookingModal({
           {/* Bộ chọn Ngày chơi nằm ngay Header (được đẩy sang trái nhờ pr-14 để không trùng nút đóng) */}
           <div className="flex items-center gap-2">
 
-            <div className="flex items-center bg-[#131d31] border border-border/60 rounded-xl p-0.5 shadow-xs">
+            <div className="flex items-center bg-card border border-border/60 rounded-xl p-0.5 shadow-xs">
               <button
                 type="button"
                 onClick={() => handleStepDate('prev')}
                 disabled={isPastOrToday}
-                className="size-7 rounded-lg hover:bg-[#1a2742] flex items-center justify-center text-slate-300 hover:text-white cursor-pointer transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                className="size-7 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
                 title={isPastOrToday ? 'Không thể lùi về ngày quá khứ' : 'Ngày trước'}
               >
                 <ChevronLeft className="size-4" />
@@ -419,18 +449,18 @@ export function VisualBookingModal({
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-white font-mono hover:text-[#a3e635] cursor-pointer transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-foreground font-mono hover:text-emerald-700 dark:hover:text-[#a3e635] cursor-pointer transition-colors"
                     title="Bấm để mở lịch chọn ngày"
                   >
-                    <CalendarIcon className="size-3.5 text-[#a3e635]" />
+                    <CalendarIcon className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
                     <span>{formattedDisplayDate}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-auto p-0 bg-[#0B1324] border border-border/70 text-slate-100 shadow-2xl rounded-2xl z-[80] overflow-hidden"
+                  className="w-auto p-0 bg-card border border-border/70 text-foreground shadow-2xl rounded-2xl z-[80] overflow-hidden"
                   align="center"
                 >
-                  <div className="px-3 py-2 border-b border-border/50 text-[11px] font-bold text-[#a3e635] text-center bg-[#0f172a]">
+                  <div className="px-3 py-2 border-b border-border/50 text-[11px] font-bold text-emerald-700 dark:text-[#a3e635] text-center bg-muted/40">
                     CHỌN NGÀY CHƠI (TỪ HÔM NAY)
                   </div>
                   <Calendar
@@ -467,7 +497,7 @@ export function VisualBookingModal({
               <button
                 type="button"
                 onClick={() => handleStepDate('next')}
-                className="size-7 rounded-lg hover:bg-[#1a2742] flex items-center justify-center text-slate-300 hover:text-white cursor-pointer transition-colors"
+                className="size-7 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                 title="Ngày sau"
               >
                 <ChevronRight className="size-4" />
@@ -497,18 +527,27 @@ export function VisualBookingModal({
             <div className="space-y-2 pt-2 border-t border-border/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#a3e635]">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-[#a3e635]">
                     LỊCH SÂN THEO KHUNG GIỜ
                   </span>
-                  <h4 className="text-base font-extrabold text-white tracking-tight">
+                  <h4 className="text-base font-extrabold text-foreground tracking-tight">
                     Chọn khung giờ đặt sân
                   </h4>
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-muted-foreground">
                   Ngày:{' '}
-                  <span className="font-semibold text-white">{formattedDisplayDate}</span>
+                  <span className="font-semibold text-foreground">{formattedDisplayDate}</span>
                 </div>
               </div>
+
+              {lockSameTimeSlots && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300 flex items-center gap-2.5">
+                  <Clock className="size-4 shrink-0 text-amber-400" />
+                  <span>
+                    <strong>Chế độ sự kiện:</strong> Khung giờ chọn ở sân đầu tiên sẽ được cố định và đồng bộ cho tất cả các sân tiếp theo. Các khung giờ khác sẽ tự động bị khóa để đảm bảo cùng giờ thi đấu.
+                  </span>
+                </div>
+              )}
 
               <BookingTimelineGrid
                 branchOpenTime={scheduleData?.openTime || '06:00:00'}
@@ -522,20 +561,22 @@ export function VisualBookingModal({
                 onToggleSlot={handleToggleSlot}
                 isLoading={isScheduleLoading || isPricingLoading}
                 excludeOrderCode={excludeOrderCode}
+                excludeTitle={excludeTitle}
+                lockSameTimeSlots={lockSameTimeSlots}
               />
             </div>
           </div>
 
           {/* CỘT PHẢI: DRAWER TÓM TẮT CÁC CA ĐÃ CHỌN & XÁC NHẬN */}
-          <div className="w-full lg:w-80 shrink-0 bg-[#0B1324] border-t lg:border-t-0 lg:border-l border-border/60 flex flex-col h-auto lg:h-full max-h-[40vh] lg:max-h-full">
+          <div className="w-full lg:w-80 shrink-0 bg-card border-t lg:border-t-0 lg:border-l border-border/60 flex flex-col h-auto lg:h-full max-h-[40vh] lg:max-h-full">
             {/* Header Drawer */}
-            <div className="p-3.5 sm:p-4 bg-[#0f172a] border-b border-border/60 flex items-center justify-between shrink-0">
+            <div className="p-3.5 sm:p-4 bg-muted/40 border-b border-border/60 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-[#a3e635]" />
-                <span className="text-sm font-bold text-white">
+                <CheckCircle2 className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                <span className="text-sm font-bold text-foreground">
                   Ca sân đã chọn
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a2742] text-[#a3e635] font-bold border border-border/50">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-emerald-700 dark:text-[#a3e635] font-bold border border-border/50">
                   {mergedSlots.length}
                 </span>
               </div>
@@ -544,7 +585,7 @@ export function VisualBookingModal({
                 <button
                   type="button"
                   onClick={handleClearAll}
-                  className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer font-medium"
+                  className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:text-rose-300 flex items-center gap-1 cursor-pointer font-medium"
                 >
                   <Trash2 className="size-3" />
                   <span>Xóa hết</span>
@@ -558,29 +599,29 @@ export function VisualBookingModal({
                 mergedSlots.map((slot, idx) => (
                   <div
                     key={idx}
-                    className="rounded-xl bg-[#131d31] border border-border/50 p-2.5 text-xs text-white flex items-start justify-between gap-2 shadow-xs"
+                    className="rounded-xl bg-card border border-border/50 p-2.5 text-xs text-foreground flex items-start justify-between gap-2 shadow-xs"
                   >
                     <div className="space-y-0.5">
-                      <div className="font-bold text-white">{slot.courtName}</div>
-                      <div className="text-[11px] text-[#a3e635] font-semibold flex items-center gap-1">
-                        <Clock className="size-3 text-[#a3e635]" />
+                      <div className="font-bold text-foreground">{slot.courtName}</div>
+                      <div className="text-[11px] text-emerald-700 dark:text-[#a3e635] font-semibold flex items-center gap-1">
+                        <Clock className="size-3 text-emerald-700 dark:text-[#a3e635]" />
                         <span>
                           {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
                         </span>
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-muted-foreground">
                         {slot.priceTableName}
                       </div>
                     </div>
 
                     <div className="text-right space-y-1">
-                      <div className="font-bold text-[#a3e635]">
+                      <div className="font-bold text-emerald-700 dark:text-[#a3e635]">
                         {slot.price.toLocaleString('vi-VN')}đ
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveMergedSlot(slot)}
-                        className="text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                        className="text-muted-foreground hover:text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
                         title="Xóa ca này"
                       >
                         <Trash2 className="size-3.5" />
@@ -589,9 +630,9 @@ export function VisualBookingModal({
                   </div>
                 ))
               ) : (
-                <div className="h-40 flex flex-col items-center justify-center text-center p-4 text-slate-400 space-y-1">
+                <div className="h-40 flex flex-col items-center justify-center text-center p-4 text-muted-foreground space-y-1">
                   <p className="text-xs font-medium">Chưa có ca sân nào được chọn</p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-muted-foreground">
                     Bấm vào các ô trống trên timeline để chọn giờ đặt sân.
                   </p>
                 </div>
@@ -599,15 +640,15 @@ export function VisualBookingModal({
             </div>
 
             {/* Footer Drawer: Tổng tiền & Nút xác nhận */}
-            <div className="p-3.5 bg-[#0f172a] border-t border-border/60 space-y-3 shrink-0">
+            <div className="p-3.5 bg-muted/40 border-t border-border/60 space-y-3 shrink-0">
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Tổng thời gian:</span>
-                  <span className="font-bold text-white font-mono">{totalHoursText}</span>
+                  <span className="font-bold text-foreground font-mono">{totalHoursText}</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Tạm tính tiền sân:</span>
-                  <span className="font-bold text-[#a3e635] text-sm">
+                  <span className="font-bold text-emerald-700 dark:text-[#a3e635] text-sm">
                     {totalAmount.toLocaleString('vi-VN')} đ
                   </span>
                 </div>

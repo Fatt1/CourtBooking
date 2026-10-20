@@ -29,7 +29,7 @@ internal sealed class GetOwnerEventsByBranchHandler(
             .AsNoTracking()
             .Where(e => e.Order.BranchId == request.BranchId);
 
-        // 3. Áp dụng các bộ lọc động
+
         if (request.SportTypeId.HasValue)
         {
             query = query.Where(e => e.SportTypeId == request.SportTypeId.Value);
@@ -42,18 +42,18 @@ internal sealed class GetOwnerEventsByBranchHandler(
 
         if (request.Date.HasValue)
         {
-            query = query.Where(e => e.Date == request.Date.Value);
+            query = query.Where(e => e.Order.Details.Any(d => d.Date == request.Date.Value));
         }
         else
         {
             if (request.FromDate.HasValue)
             {
-                query = query.Where(e => e.Date >= request.FromDate.Value);
+                query = query.Where(e => e.Order.Details.Any(d => d.Date >= request.FromDate.Value));
             }
 
             if (request.ToDate.HasValue)
             {
-                query = query.Where(e => e.Date <= request.ToDate.Value);
+                query = query.Where(e => e.Order.Details.Any(d => d.Date <= request.ToDate.Value));
             }
         }
 
@@ -68,8 +68,8 @@ internal sealed class GetOwnerEventsByBranchHandler(
 
         // 5. Phân trang và chiếu dữ liệu
         var rawItems = await query
-            .OrderByDescending(e => e.Date)
-            .ThenByDescending(e => e.StartTime)
+            .OrderByDescending(e => e.Order.Details.Min(d => d.Date))
+            .ThenByDescending(e => e.Order.Details.Min(d => d.StartTime))
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(e => new
@@ -77,12 +77,10 @@ internal sealed class GetOwnerEventsByBranchHandler(
                 e.Id,
                 e.Order.OrderCode,
                 e.Title,
-                e.SportTypeId,
-                SportTypeName = e.SportType.Name,
                 Courts = e.Order.Details.Select(d => new CourtSummaryDto(d.CourtId, d.Court.Name)).Distinct().ToList(),
-                e.Date,
-                e.StartTime,
-                e.EndTime,
+                Date = e.Order.Details.Min(d => d.Date),
+                StartTime = e.Order.Details.Min(d => d.StartTime),
+                EndTime = e.Order.Details.Max(d => d.EndTime),
                 e.Slots,
                 e.AvailableSlot,
                 e.TicketPrice,
@@ -101,10 +99,7 @@ internal sealed class GetOwnerEventsByBranchHandler(
             x.Id,
             x.OrderCode,
             x.Title,
-            x.SportTypeId,
-            x.SportTypeName,
             x.Courts,
-            string.Join(", ", x.Courts.Select(c => c.CourtName)),
             x.Date,
             x.StartTime,
             x.EndTime,
@@ -114,7 +109,6 @@ internal sealed class GetOwnerEventsByBranchHandler(
             x.TicketPrice,
             x.EstimatedRevenue,
             x.Status,
-            x.Description,
             x.SkillLevelFrom,
             x.SkillLevelTo
         )).ToList();

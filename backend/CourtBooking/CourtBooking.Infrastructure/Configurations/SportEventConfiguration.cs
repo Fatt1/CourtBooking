@@ -22,6 +22,7 @@ public class SportEventConfiguration : IEntityTypeConfiguration<SportEvent>
             .HasMaxLength(255)
             .IsRequired();
 
+
         builder.Property(e => e.SkillLevelFrom)
             .HasMaxLength(50);
 
@@ -37,8 +38,7 @@ public class SportEventConfiguration : IEntityTypeConfiguration<SportEvent>
             .HasDefaultValue(EventStatus.Open)
             .HasComment("0:Open, 1:Full, 2:Closed, 3:Cancelled");
 
-        builder.Property(e => e.Description)
-            .HasMaxLength(500);
+        builder.Property(e => e.Description);
 
         // Relationships
         builder.HasOne(e => e.Order)

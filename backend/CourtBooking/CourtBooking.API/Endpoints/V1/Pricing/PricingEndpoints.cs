@@ -10,6 +10,7 @@ using CourtBooking.Application.Features.V1.Pricing.Commands.PriceTables.UpdatePr
 using CourtBooking.Application.Features.V1.Pricing.Dtos;
 using CourtBooking.Application.Features.V1.Pricing.Queries.GetPricingConfigByBranchId;
 using CourtBooking.Application.Features.V1.Pricing.Queries.GetPricingConfigByCourtType;
+using CourtBooking.Domain.Constants;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +23,8 @@ public sealed class PricingEndpoints : IEndpointGroup
 
     public void Map(IEndpointRouteBuilder app)
     {
-        var group = app.MapApiV1Group("owner/pricing");
+        var group = app.MapApiV1Group("owner/pricing")
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
 
         // 1. Cấu hình giá & khung giờ theo Loại sân
         MapPricingConfig(group);
@@ -97,6 +99,7 @@ public sealed class PricingEndpoints : IEndpointGroup
                 request.CourtTypeId,
                 request.Name,
                 request.DefaultPrice,
+                request.DefaultWalkInPrice,
                 request.IsActive);
 
             var result = await sender.Send(command, ct);
@@ -128,6 +131,7 @@ public sealed class PricingEndpoints : IEndpointGroup
                 priceTableId,
                 request.Name,
                 request.DefaultPrice,
+                request.DefaultWalkInPrice,
                 request.IsActive);
 
             var result = await sender.Send(command, ct);

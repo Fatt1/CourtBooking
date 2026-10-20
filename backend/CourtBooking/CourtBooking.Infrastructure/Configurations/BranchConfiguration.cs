@@ -22,11 +22,6 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
             .HasMaxLength(20)
             .IsRequired();
 
-        builder.Property(b => b.GgMapUrl)
-            .HasColumnName("GGMapUrl")
-            .HasMaxLength(255)
-            .IsRequired();
-
         builder.Property(b => b.Province)
             .HasMaxLength(100)
             .IsRequired();
@@ -57,8 +52,9 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
         builder.Property(b => b.MaxPrice)
             .HasPrecision(18, 2);
 
-        builder.Property(b => b.Policy)
-            .HasMaxLength(255);
+        builder.Property(b => b.Policy);
+
+        builder.Property(b => b.Description);
 
         builder.Property(b => b.QrImageId)
             .IsRequired();

@@ -86,7 +86,9 @@ public static class CourtTypePricingMapper
     public static PriceTableDto ToDto(this PriceTable pt)
     {
         var rules = pt.Rules
-            .OrderBy(r => r.DayOfWeekFrom)
+            .OrderBy(r => r.StartDate.HasValue || r.EndDate.HasValue ? 0 : 1) // Rule có ngày cụ thể lên trước
+            .ThenBy(r => r.StartDate)
+            .ThenBy(r => r.DayOfWeekFrom)
             .ThenBy(r => r.StartTime)
             .Select(r => r.ToDto())
             .ToList();
@@ -97,6 +99,7 @@ public static class CourtTypePricingMapper
             pt.Name,
             pt.IsActive,
             pt.DefaultPrice,
+            pt.DefaultWalkInPrice,
             rules);
     }
 

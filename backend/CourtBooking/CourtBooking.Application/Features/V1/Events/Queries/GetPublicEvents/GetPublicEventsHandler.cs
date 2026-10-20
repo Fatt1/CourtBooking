@@ -21,10 +21,23 @@ internal sealed class GetPublicEventsHandler(
             .AsNoTracking()
             .Where(e => e.Status != EventStatus.Cancelled);
 
+        // Lọc chỉ hiển thị những event từ hiện tại tới tương lai, loại bỏ những event đã qua trong quá khứ
+        var vnNow = DateTime.UtcNow.AddHours(7);
+        var today = DateOnly.FromDateTime(vnNow);
+        var currentTime = TimeOnly.FromDateTime(vnNow);
+
+        query = query.Where(e => e.Order.Details.Any(d => d.Date > today || (d.Date == today && d.EndTime >= currentTime)));
+
         // 2. Áp dụng các bộ lọc động (Conditional Query Filtering)
         if (request.SportTypeId.HasValue)
         {
             query = query.Where(e => e.SportTypeId == request.SportTypeId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Sport) && !string.Equals(request.Sport.Trim(), "all", StringComparison.OrdinalIgnoreCase))
+        {
+            var sportName = request.Sport.Trim().ToLower();
+            query = query.Where(e => e.SportType.Name.ToLower().Contains(sportName));
         }
 
         if (request.BranchId.HasValue)
@@ -35,7 +48,29 @@ internal sealed class GetPublicEventsHandler(
 
         if (request.Date.HasValue)
         {
-            query = query.Where(e => e.Date == request.Date.Value);
+            query = query.Where(e => e.Order.Details.Any(d => d.Date == request.Date.Value));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Province))
+        {
+            var prov = request.Province.Trim().ToLower();
+            query = query.Where(e => e.Order.Branch.Province.ToLower().Contains(prov));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.District))
+        {
+            var dist = request.District.Trim().ToLower();
+            query = query.Where(e => e.Order.Branch.District.ToLower().Contains(dist));
+        }
+
+        if (request.StartTime.HasValue)
+        {
+            query = query.Where(e => e.Order.Details.Any(d => d.StartTime >= request.StartTime.Value));
+        }
+
+        if (request.EndTime.HasValue)
+        {
+            query = query.Where(e => e.Order.Details.Any(d => d.EndTime <= request.EndTime.Value));
         }
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -43,6 +78,7 @@ internal sealed class GetPublicEventsHandler(
             var term = request.SearchTerm.Trim().ToLower();
             query = query.Where(e =>
                 e.Title.ToLower().Contains(term) ||
+                e.SportType.Name.ToLower().Contains(term) ||
                 e.Order.Branch.Name.ToLower().Contains(term) ||
                 e.Order.Branch.Province.ToLower().Contains(term) ||
                 e.Order.Branch.District.ToLower().Contains(term));
@@ -53,8 +89,8 @@ internal sealed class GetPublicEventsHandler(
 
         // 4. Sắp xếp theo ngày diễn ra gần nhất và phân trang
         var items = await query
-            .OrderBy(e => e.Date)
-            .ThenBy(e => e.StartTime)
+            .OrderBy(e => e.Order.Details.Min(d => d.Date))
+            .ThenBy(e => e.Order.Details.Min(d => d.StartTime))
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(e => new EventCardDto(
@@ -65,9 +101,9 @@ internal sealed class GetPublicEventsHandler(
                 e.Order.BranchId,
                 e.Order.Branch.Name,
                 $"{e.Order.Branch.Street}, {e.Order.Branch.District}, {e.Order.Branch.Province}",
-                e.Date,
-                e.StartTime,
-                e.EndTime,
+                e.Order.Details.Min(d => d.Date),
+                e.Order.Details.Min(d => d.StartTime),
+                e.Order.Details.Max(d => d.EndTime),
                 e.SkillLevelFrom,
                 e.SkillLevelTo,
                 e.TicketPrice,

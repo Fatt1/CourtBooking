@@ -9,6 +9,7 @@ import type {
   CreateBranchPayload,
   UpdateBranchPayload,
   PublicBranchListItemDto,
+  PublicBranchDetailDto,
   PagedList,
   SearchBranchesParams,
   OneTimeBookingScheduleDto,
@@ -176,6 +177,33 @@ export function usePublicBranchesQuery(params: SearchBranchesParams = { page: 1,
       }
     },
     staleTime: 1000 * 60 * 5, // 5 phút cache
+  });
+}
+
+/**
+ * Hook lấy chi tiết chi nhánh công khai
+ * Endpoint: GET /api/v1/branches/{id}
+ */
+export async function getPublicBranchDetail(
+  branchId: string,
+  params?: { latitude?: number; longitude?: number }
+): Promise<PublicBranchDetailDto> {
+  const response = await apiClient.get<PublicBranchDetailDto>(
+    API_ENDPOINTS.BRANCHES.PUBLIC_DETAIL(branchId),
+    { params }
+  );
+  return response as unknown as PublicBranchDetailDto;
+}
+
+export function usePublicBranchDetailQuery(
+  branchId?: string,
+  params?: { latitude?: number; longitude?: number }
+) {
+  return useQuery<PublicBranchDetailDto>({
+    queryKey: ['public', 'branch-detail', branchId, params],
+    queryFn: () => getPublicBranchDetail(branchId!, params),
+    enabled: Boolean(branchId),
+    staleTime: 1000 * 60 * 3, // 3 phút cache
   });
 }
 

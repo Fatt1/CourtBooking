@@ -28,45 +28,31 @@ public sealed class BranchPriceChangedEventHandler(
             return;
         }
 
-        // 2. Quét toàn bộ quy tắc giá (PriceTableRule) thuộc các bảng giá đang Active của chi nhánh
-        var priceStats = await dbContext.PriceTableRules
-            .Where(r => r.PriceTable.CourtType.BranchId == notification.BranchId && r.PriceTable.IsActive)
-            .GroupBy(_ => 1)
-            .Select(g => new
+        // 2. Quét toàn bộ bảng giá và quy tắc giá đang Active của chi nhánh
+        var activePriceTables = await dbContext.PriceTables
+            .Where(pt => pt.CourtType.BranchId == notification.BranchId && pt.IsActive)
+            .Select(pt => new
             {
-                MinPrice = g.Min(r => r.WalkInCustomerPrice),
-                MaxPrice = g.Max(r => r.WalkInCustomerPrice)
+                pt.DefaultPrice,
+                pt.DefaultWalkInPrice,
+                Rules = pt.Rules.Select(r => new { r.FixedCustomerPrice, r.WalkInCustomerPrice }).ToList()
             })
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        decimal newMinPrice;
-        decimal newMaxPrice;
-
-        if (priceStats is not null)
+        var allValidPrices = new List<decimal>();
+        foreach (var pt in activePriceTables)
         {
-            newMinPrice = priceStats.MinPrice;
-            newMaxPrice = priceStats.MaxPrice;
-        }
-        else
-        {
-            // Trường hợp chi nhánh chưa có rule nào hoặc đã bị xóa hết rule trong bảng giá active:
-            // Fallback sang DefaultPrice của các bảng giá đang active (nếu có), hoặc 0
-            var defaultPrices = await dbContext.PriceTables
-                .Where(pt => pt.CourtType.BranchId == notification.BranchId && pt.IsActive)
-                .Select(pt => pt.DefaultPrice)
-                .ToListAsync(cancellationToken);
-
-            if (defaultPrices.Count > 0)
+            if (pt.DefaultPrice > 0) allValidPrices.Add(pt.DefaultPrice);
+            if (pt.DefaultWalkInPrice > 0) allValidPrices.Add(pt.DefaultWalkInPrice);
+            foreach (var rule in pt.Rules)
             {
-                newMinPrice = defaultPrices.Min();
-                newMaxPrice = defaultPrices.Max();
-            }
-            else
-            {
-                newMinPrice = 0m;
-                newMaxPrice = 0m;
+                if (rule.FixedCustomerPrice > 0) allValidPrices.Add(rule.FixedCustomerPrice);
+                if (rule.WalkInCustomerPrice > 0) allValidPrices.Add(rule.WalkInCustomerPrice);
             }
         }
+
+        var newMinPrice = allValidPrices.Count > 0 ? allValidPrices.Min() : 0m;
+        var newMaxPrice = allValidPrices.Count > 0 ? allValidPrices.Max() : 0m;
 
         // 3. Nếu khoảng giá không thay đổi thì không cần lưu
         if (branch.MinPrice == newMinPrice && branch.MaxPrice == newMaxPrice)

@@ -63,7 +63,7 @@ internal sealed class GetEventParticipantsHandler(
                 t.Price * t.Quantity,
                 t.PaymentMethod,
                 t.Status,
-                t.ProofImage != null ? new EventTicketProofImageDto(t.ProofImage.Id, t.ProofImage.StorageKey) : null,
+                t.ProofImage != null ? new Storages.Dtos.ImageDto(t.ProofImage.StorageKey, t.ProofImage.Id) : null,
                 t.RefundNote,
                 t.CreatedAt,
                 t.ReviewedAt

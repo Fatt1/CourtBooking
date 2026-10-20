@@ -382,10 +382,11 @@ public static class DatabaseSeeder
             CourtOwnerId = userOwner.Id,
             Name = "CLB Cầu Lông & Pickleball Sài Gòn Star - Chi Nhánh 1",
             Hotline = userOwner.PhoneNumber!,
-            GgMapUrl = "https://maps.google.com/search?q=saigon-star-branch-1",
             Province = "Hồ Chí Minh",
             District = "Quận 7",
             Street = "123 Nguyễn Thị Thập, Phường Tân Phú",
+            Latitude = 10.738241m,
+            Longitude = 106.721415m,
             OpenTime = new TimeOnly(5, 0),
             CloseTime = new TimeOnly(23, 0),
             QrImageId = ownerQrImage.Id,
@@ -403,10 +404,11 @@ public static class DatabaseSeeder
             CourtOwnerId = userOwner.Id,
             Name = "CLB Pickleball Phú Nhuận Arena - Chi Nhánh 2",
             Hotline = userOwner.PhoneNumber!,
-            GgMapUrl = "https://maps.google.com/search?q=phunhuan-arena-branch-2",
             Province = "Hồ Chí Minh",
             District = "Phú Nhuận",
             Street = "45 Phan Xích Long, Phường 2",
+            Latitude = 10.798425m,
+            Longitude = 106.689632m,
             OpenTime = new TimeOnly(6, 0),
             CloseTime = new TimeOnly(22, 0),
             QrImageId = ownerQrImage.Id,
@@ -487,6 +489,7 @@ public static class DatabaseSeeder
             CourtTypeId = courtType1.Id,
             Name = "Bảng Giá Cầu Lông Tiêu Chuẩn 2026",
             DefaultPrice = 80000m,
+            DefaultWalkInPrice = 100000m,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -498,6 +501,7 @@ public static class DatabaseSeeder
             CourtTypeId = courtType3.Id,
             Name = "Bảng Giá Pickleball 2026",
             DefaultPrice = 150000m,
+            DefaultWalkInPrice = 180000m,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -924,45 +928,6 @@ public static class DatabaseSeeder
             JoinedAt = DateTime.UtcNow
         };
         await context.MatchParticipants.AddAsync(participant, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
-
-        // ──────────────────────────────────────────────────────────────
-        // 17. SportEvents & EventTickets
-        // ──────────────────────────────────────────────────────────────
-        var sportEvent = new SportEvent
-        {
-            Id = Guid.NewGuid(),
-            OrderId = order3.Id,
-            SportTypeId = sportBadminton.Id,
-            Date = today.AddDays(14),
-            StartTime = new TimeOnly(8, 0),
-            EndTime = new TimeOnly(18, 0),
-            Title = "Giải Cầu Lông Mở Rộng Sài Gòn Star Cup 2026",
-            Slots = 32,
-            AvailableSlot = 32,
-            TicketPrice = 200000m,
-            SkillLevelFrom = "Tự do",
-            SkillLevelTo = "Tự do",
-            Description = "Giải đấu giao lưu tranh cúp mùa thu 2026, cơ cấu giải thưởng cờ, cúp và tiền thưởng hấp dẫn.",
-            Status = EventStatus.Open,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await context.SportEvents.AddAsync(sportEvent, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
-
-        var ticket = new EventTicket
-        {
-            Id = Guid.NewGuid(),
-            EventId = sportEvent.Id,
-            PlayerId = userPlayer2.Id,
-            Quantity = 1,
-            PaymentMethod = PaymentMethod.QrTransfer,
-            Price = 200000m,
-            Status = EventTicketStatus.PendingApproval,
-            CreatedAt = DateTime.UtcNow
-        };
-        await context.EventTickets.AddAsync(ticket, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Database seeded successfully with all entities!");

@@ -141,16 +141,20 @@ export const API_ENDPOINTS = {
   EVENTS: {
     PUBLIC_LIST: '/events',
     PUBLIC_DETAIL: (id: string) => `/events/${id}`,
-    BUY_TICKETS: (id: string) => `/events/${id}/buy-tickets`,
+    BUY_TICKETS: (id: string) => `/events/${id}/tickets`,
+    CANCEL_TICKET: (id: string, ticketId: string) => `/events/${id}/tickets/${ticketId}/cancel`,
     MY_TICKETS: '/events/my-tickets',
 
     // Owner
     OWNER_LIST: '/owner/events',
+    DETAIL: (id: string) => `/owner/events/${id}`,
     CREATE: '/owner/events',
     UPDATE: (id: string) => `/owner/events/${id}`,
+    CANCEL: (id: string) => `/owner/events/${id}/cancel`,
+    PARTICIPANTS: (id: string) => `/owner/events/${id}/participants`,
     TICKETS_LIST: (id: string) => `/owner/events/${id}/tickets`,
-    APPROVE_TICKET: (ticketId: string) => `/owner/events/tickets/${ticketId}/approve`,
-    REJECT_TICKET: (ticketId: string) => `/owner/events/tickets/${ticketId}/reject`,
+    APPROVE_TICKET: (id: string, ticketId: string) => `/owner/events/${id}/tickets/${ticketId}/approve`,
+    REJECT_TICKET: (id: string, ticketId: string) => `/owner/events/${id}/tickets/${ticketId}/reject`,
   },
 
   // 8. Dịch vụ & Loại dịch vụ (Services & ServiceCategories)
@@ -158,6 +162,9 @@ export const API_ENDPOINTS = {
     PUBLIC_BY_BRANCH: (branchId: string) => `/services/${branchId}`,
     OWNER_LIST: '/owner/services',
     OWNER_DETAIL: (id: string) => `/owner/services/${id}`,
+    CREATE: '/owner/services',
+    UPDATE: (id: string) => `/owner/services/${id}`,
+    UPDATE_STATUS: (id: string, branchId: string) => `/owner/services/${id}/branches/${branchId}/status`,
     CATEGORIES: '/owner/service-categories',
     CATEGORY_DETAIL: (id: string) => `/owner/service-categories/${id}`,
   },
@@ -169,6 +176,7 @@ export const API_ENDPOINTS = {
     CREATE_ORDER: '/owner/retail-orders',
     ORDER_LIST: '/owner/retail-orders',
     ORDER_DETAIL: (id: string) => `/owner/retail-orders/${id}`,
+    ORDER_SUMMARY: '/owner/retail-orders/summary',
   },
 
   // 9. Kèo giao lưu cộng đồng người chơi (Matches)
@@ -176,9 +184,14 @@ export const API_ENDPOINTS = {
     LIST: '/matches',
     DETAIL: (id: string) => `/matches/${id}`,
     CREATE: '/matches',
+    UPDATE: (id: string) => `/matches/${id}`,
     JOIN: (id: string) => `/matches/${id}/join`,
-    APPROVE_PARTICIPANT: (matchId: string, userId: string) =>
-      `/matches/${matchId}/participants/${userId}/approve`,
+    APPROVE_PARTICIPANT: (matchId: string, participantId: string) =>
+      `/matches/${matchId}/participants/${participantId}/approve`,
+    REJECT_PARTICIPANT: (matchId: string, participantId: string) =>
+      `/matches/${matchId}/participants/${participantId}/reject`,
+    LEAVE: (id: string) => `/matches/${id}/leave`,
+    CANCEL: (id: string) => `/matches/${id}/cancel`,
   },
 
   // 10. Đánh giá & Nhận xét (Reviews)
@@ -211,8 +224,8 @@ export const API_ENDPOINTS = {
     SYSTEM_REVENUE: '/system/analytics/revenue',
     OWNER_DASHBOARD: (branchId?: string) =>
       branchId ? `/owner/analytics/dashboard?branchId=${branchId}` : '/owner/analytics/dashboard',
-    COURT_OWNER_REVENUE: '/analytics/court-owner/revenue',
-    OWNER_REVENUE: '/analytics/court-owner/revenue',
+    COURT_OWNER_REVENUE: '/owner/analytics/revenue',
+    OWNER_REVENUE: '/owner/analytics/revenue',
     OWNER_OCCUPANCY_RATE: '/owner/analytics/occupancy',
   },
 

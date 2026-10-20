@@ -61,13 +61,13 @@ internal sealed class UpdateBranchHandler(
         branch.Province = request.Province.Trim();
         branch.District = request.District.Trim();
         branch.Street = request.Street.Trim();
-        branch.GgMapUrl = request.GgMapUrl.Trim();
         branch.OpenTime = request.OpenTime;
         branch.CloseTime = request.CloseTime;
         branch.QrImageId = request.QrImageId;
         branch.AccountNumber = request.AccountNumber.Trim();
         branch.AccountName = request.AccountName.Trim();
         branch.Policy = request.Policy?.Trim();
+        branch.Description = request.Description?.Trim();
         branch.Latitude = request.Latitude;
         branch.Longitude = request.Longitude;
 

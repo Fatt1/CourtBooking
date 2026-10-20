@@ -1,6 +1,7 @@
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Events.Commands.BookEventTicket;
+using CourtBooking.Application.Features.V1.Events.Commands.CancelPendingTicket;
 using CourtBooking.Application.Features.V1.Events.Dtos;
 using CourtBooking.Application.Features.V1.Events.Queries.GetPublicEventById;
 using CourtBooking.Application.Features.V1.Events.Queries.GetPublicEvents;
@@ -13,6 +14,7 @@ using CourtBooking.Application.Features.V1.OwnerEvents.Dtos;
 using CourtBooking.Application.Features.V1.OwnerEvents.Queries.GetEventParticipants;
 using CourtBooking.Application.Features.V1.OwnerEvents.Queries.GetOwnerEventById;
 using CourtBooking.Application.Features.V1.OwnerEvents.Queries.GetOwnerEventsByBranch;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
@@ -33,7 +35,7 @@ public sealed class EventEndpoints : IEndpointGroup
 
 
         var groupOwner = app.MapApiV1Group("owner/events")
-            .RequireAuthorization();
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
 
         MapToOwner(groupOwner);
 
@@ -47,6 +49,11 @@ public sealed class EventEndpoints : IEndpointGroup
                 [FromQuery] Guid? sportTypeId,
                 [FromQuery] Guid? branchId,
                 [FromQuery] DateOnly? date,
+                [FromQuery] string? province,
+                [FromQuery] string? district,
+                [FromQuery] string? sport,
+                [FromQuery] TimeOnly? startTime,
+                [FromQuery] TimeOnly? endTime,
                 [FromQuery] int page = 1,
                 [FromQuery] int pageSize = 10,
                 ISender sender = default!,
@@ -57,6 +64,11 @@ public sealed class EventEndpoints : IEndpointGroup
                 sportTypeId,
                 branchId,
                 date,
+                province,
+                district,
+                sport,
+                startTime,
+                endTime,
                 page,
                 pageSize);
 
@@ -97,17 +109,11 @@ public sealed class EventEndpoints : IEndpointGroup
         // 3. POST /api/v1/events/{id:guid}/tickets — Đặt mua vé sự kiện (Cần Auth & Pessimistic Lock)
         group.MapPost("/{id:guid}/tickets", async (
                 [FromRoute] Guid id,
-                [FromBody] BookEventTicketRequest request,
+                [FromBody] BookEventTicketCommand command,
                 ISender sender,
-                CancellationToken ct) =>
+                CancellationToken ct = default) =>
         {
-            var command = new BookEventTicketCommand(
-                id,
-                request.Quantity,
-                request.PaymentMethod,
-                request.ProofImageId);
-
-            var result = await sender.Send(command, ct);
+            var result = await sender.Send(command with { EventId = id }, ct);
 
             return result.IsSuccess
                 ? Results.Ok(result.Value)
@@ -119,6 +125,32 @@ public sealed class EventEndpoints : IEndpointGroup
             .WithDescription("Dành cho Người chơi (Player) đặt mua vé. Áp dụng Pessimistic Locking chống bán vượt số lượng vé (overselling). Yêu cầu đã đăng nhập.")
             .WithTags(EventTag)
             .Produces<BookEventTicketResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // 4. POST /api/v1/events/{id:guid}/tickets/{ticketId:guid}/cancel — Hủy đơn vé đang chờ thanh toán
+        group.MapPost("/{id:guid}/tickets/{ticketId:guid}/cancel", async (
+                [FromRoute] Guid id,
+                [FromRoute] Guid ticketId,
+                ISender sender,
+                CancellationToken ct = default) =>
+        {
+            var command = new CancelPendingTicketCommand(id, ticketId);
+            var result = await sender.Send(command, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(new { success = true, message = "Đã hủy đơn giữ vé thành công." })
+                : result.ToProblemDetails();
+        })
+            .RequireAuthorization()
+            .WithName("CancelPendingTicket")
+            .WithSummary("Hủy đơn vé sự kiện đang chờ thanh toán")
+            .WithDescription("Hủy vé và hoàn lại số lượng khả dụng cho sự kiện khi người dùng tắt modal thanh toán hoặc hủy.")
+            .WithTags(EventTag)
+            .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -192,24 +224,10 @@ public sealed class EventEndpoints : IEndpointGroup
 
         // 3. POST /api/v1/owner/events — Tạo sự kiện mới và khóa sân trên Time Grid
         group.MapPost("/", async (
-                [FromBody] CreateOwnerEventRequest request,
+                [FromBody] CreateEventCommand command,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
         {
-            var command = new CreateEventCommand(
-                request.BranchId,
-                request.Title,
-                request.SportTypeId,
-                request.Date,
-                request.StartTime,
-                request.EndTime,
-                request.TicketPrice,
-                request.Slots,
-                request.SkillLevelFrom,
-                request.SkillLevelTo,
-                request.Description,
-                request.CourtIds);
-
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
@@ -229,20 +247,11 @@ public sealed class EventEndpoints : IEndpointGroup
         // 4. PUT /api/v1/owner/events/{id:guid} — Cập nhật thông tin sự kiện
         group.MapPut("/{id:guid}", async (
                 [FromRoute] Guid id,
-                [FromBody] UpdateOwnerEventRequest request,
+                [FromBody] UpdateEventCommand command,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
         {
-            var command = new UpdateEventCommand(
-                id,
-                request.Title,
-                request.TicketPrice,
-                request.Slots,
-                request.SkillLevelFrom,
-                request.SkillLevelTo,
-                request.Description);
-
-            var result = await sender.Send(command, ct);
+            var result = await sender.Send(command with { EventId = id }, ct);
 
             return result.IsSuccess
                 ? Results.Ok()
@@ -262,12 +271,11 @@ public sealed class EventEndpoints : IEndpointGroup
         // 5. PUT /api/v1/owner/events/{id:guid}/cancel — Hủy sự kiện và giải phóng Time Grid
         group.MapPut("/{id:guid}/cancel", async (
                 [FromRoute] Guid id,
-                [FromBody] CancelOwnerEventRequest request,
+                [FromBody] CancelEventCommand command,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
         {
-            var command = new CancelEventCommand(id, request.Reason);
-            var result = await sender.Send(command, ct);
+            var result = await sender.Send(command with { EventId = id }, ct);
 
             return result.IsSuccess
                 ? Results.Ok()
@@ -337,12 +345,11 @@ public sealed class EventEndpoints : IEndpointGroup
         group.MapPut("/{id:guid}/tickets/{ticketId:guid}/reject", async (
                 [FromRoute] Guid id,
                 [FromRoute] Guid ticketId,
-                [FromBody] RejectOwnerEventTicketRequest request,
+                [FromBody] RejectEventTicketCommand command,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
         {
-            var command = new RejectEventTicketCommand(id, ticketId, request.Reason);
-            var result = await sender.Send(command, ct);
+            var result = await sender.Send(command with { EventId = id, TicketId = ticketId }, ct);
 
             return result.IsSuccess
                 ? Results.Ok()

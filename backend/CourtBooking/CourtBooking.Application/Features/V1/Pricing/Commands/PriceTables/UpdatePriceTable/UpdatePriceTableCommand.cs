@@ -10,4 +10,5 @@ public sealed record UpdatePriceTableCommand(
     Guid PriceTableId,
     string Name,
     decimal DefaultPrice,
+    decimal DefaultWalkInPrice,
     bool IsActive) : ICommand;

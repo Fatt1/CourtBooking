@@ -21,6 +21,7 @@ using CourtBooking.Application.Features.V1.Orders.Queries.GetDailyOrderById;
 using CourtBooking.Application.Features.V1.Orders.Queries.GetFixedOrderById;
 using CourtBooking.Application.Features.V1.Orders.Queries.GetFixedOrdersByBranch;
 using CourtBooking.Application.Features.V1.Orders.Queries.GetOrdersByBranch;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
@@ -36,11 +37,13 @@ public class OrderEndpoints : IEndpointGroup
 
     public void Map(IEndpointRouteBuilder app)
     {
-        var groupOwner = app.MapApiV1Group("owner/orders");
+        var groupOwner = app.MapApiV1Group("owner/orders")
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
         MapToOwner(groupOwner);
 
 
-        var groupFixedOrder = app.MapApiV1Group("owner/orders/fixed");
+        var groupFixedOrder = app.MapApiV1Group("owner/orders/fixed")
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
         MapToFixedOrder(groupFixedOrder);
 
 
@@ -462,6 +465,22 @@ public class OrderEndpoints : IEndpointGroup
     // Dành cho public API
     private static void MapToPublic(RouteGroupBuilder group)
     {
+        // GET /api/v1/orders/my-orders — Danh sách đơn đặt sân của người dùng hiện tại (Yêu cầu đăng nhập)
+        group.MapGet("/my-orders", async (
+            [FromQuery] bool? onlyAvailableForMatch,
+            ISender sender = default!,
+            CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new CourtBooking.Application.Features.V1.Orders.Queries.GetMyOrders.GetMyOrdersQuery(onlyAvailableForMatch), ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+        .RequireAuthorization()
+        .WithName("GetMyOrders")
+        .WithSummary("Lấy danh sách các đơn đặt sân của người chơi đang đăng nhập")
+        .WithTags(OrderTag);
+
         // POST /api/v1/orders — Tạo đơn đặt sân online
         group.MapPost("/", async (
                 [FromBody] CreateOrderOnlineCommand command,

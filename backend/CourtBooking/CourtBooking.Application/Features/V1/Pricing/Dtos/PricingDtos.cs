@@ -45,6 +45,7 @@ public sealed record PriceTableDto(
     string Name,
     bool IsActive,
     decimal DefaultPrice,
+    decimal DefaultWalkInPrice,
     IReadOnlyList<PriceTableRuleDto> Rules);
 
 /// <summary>
