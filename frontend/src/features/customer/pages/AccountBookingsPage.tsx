@@ -35,9 +35,18 @@ import {
   type CreateOrderOnlineResponse,
   type MyOrderDetailResponse,
 } from '@/api/orders';
-import { formatCurrency, cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { BranchPaymentModal } from '../components/checkout/BranchPaymentModal';
 import { ReviewOrderModal } from '../components/ReviewOrderModal';
+import { ManageOrderMatchModal } from '../components/ManageOrderMatchModal';
+import { MatchDetailModal } from '@/features/matches/components/MatchDetailModal';
+import {
+  useMyJoinedMatchesQuery,
+  useLeaveMatchMutation,
+  ParticipantStatus,
+  type MatchDto,
+} from '@/api/matches';
+import { formatVND } from '@/lib/format';
 import {
   Dialog,
   DialogContent,
@@ -182,6 +191,7 @@ interface OrderCardItemProps {
   onOpenDetail: (orderId: string) => void;
   onOpenReview: (order: MyOrderDto) => void;
   onOpenCancel: (order: MyOrderDto) => void;
+  onOpenManageMatch: (order: MyOrderDto) => void;
 }
 
 function OrderCardItem({
@@ -190,6 +200,7 @@ function OrderCardItem({
   onOpenDetail,
   onOpenReview,
   onOpenCancel,
+  onOpenManageMatch,
 }: OrderCardItemProps) {
   const navigate = useNavigate();
 
@@ -341,17 +352,11 @@ function OrderCardItem({
           {order.status === OrderStatus.Confirmed && (
             <Button
               type="button"
-              onClick={() => {
-                if (order.hasSocialMatch) {
-                  navigate(`/matches/${order.socialMatchId}`);
-                } else {
-                  navigate(`/matches/create?orderId=${order.id}`);
-                }
-              }}
+              onClick={() => onOpenManageMatch(order)}
               className="bg-[#183424] hover:bg-[#132A1C] text-white rounded-xl text-xs font-bold shadow-xs px-4 py-2 gap-1.5 cursor-pointer"
             >
               <Users className="size-3.5" />
-              <span>{order.hasSocialMatch ? 'Xem kèo đã mở' : 'Mở kèo giao lưu'}</span>
+              <span>{order.hasSocialMatch ? 'Xem / Quản lý kèo' : 'Mở kèo giao lưu'}</span>
             </Button>
           )}
 
@@ -495,6 +500,40 @@ export function AccountBookingsPage() {
     setIsPaymentModalOpen(true);
   };
 
+  // State mở popup Quản lý / Mở kèo giao lưu
+  const [selectedMatchOrder, setSelectedMatchOrder] = useState<MyOrderDto | null>(null);
+  const [isMatchModalOpen, setIsMatchModalOpen] = useState(false);
+
+  const handleOpenManageMatch = (order: MyOrderDto) => {
+    setSelectedMatchOrder(order);
+    setIsMatchModalOpen(true);
+  };
+
+  // Query danh sách kèo đã tham gia
+  const {
+    data: joinedMatches,
+    isLoading: isLoadingJoinedMatches,
+    refetch: refetchJoinedMatches,
+  } = useMyJoinedMatchesQuery();
+
+  const leaveMatchMutation = useLeaveMatchMutation();
+  const [leaveMatchTarget, setLeaveMatchTarget] = useState<MatchDto | null>(null);
+  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
+  const [viewDetailMatchId, setViewDetailMatchId] = useState<string | null>(null);
+
+  const handleConfirmLeaveMatch = async () => {
+    if (!leaveMatchTarget) return;
+    try {
+      await leaveMatchMutation.mutateAsync(leaveMatchTarget.id);
+      toast.success('Đã rút lui khỏi kèo giao lưu thành công!');
+      setIsLeaveDialogOpen(false);
+      refetchJoinedMatches();
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } }; message?: string };
+      toast.error(error.response?.data?.detail || error.message || 'Không thể rút lui khỏi kèo.');
+    }
+  };
+
   // Mở dialog hủy đơn
   const handleOpenCancel = (order: MyOrderDto) => {
     setCancelOrderTarget(order);
@@ -551,12 +590,18 @@ export function AccountBookingsPage() {
           </div>
 
           <h1 className="font-heading font-black text-3xl sm:text-5xl text-foreground tracking-tight uppercase">
-            {activeTab === 'profile' ? 'HỒ SƠ CÁ NHÂN' : 'LỊCH ĐẶT SÂN'}
+            {activeTab === 'profile'
+              ? 'HỒ SƠ CÁ NHÂN'
+              : activeTab === 'joined_matches'
+              ? 'KÈO ĐÃ THAM GIA'
+              : 'LỊCH ĐẶT SÂN'}
           </h1>
 
           <p className="text-sm sm:text-base text-muted-foreground font-medium max-w-2xl leading-relaxed">
             {activeTab === 'profile'
               ? 'Xem và quản lý thông tin tài khoản người chơi của bạn trên hệ thống Matchday.'
+              : activeTab === 'joined_matches'
+              ? 'Theo dõi các kèo giao lưu thể thao bạn đã đăng ký tham gia cùng cộng đồng.'
               : 'Theo dõi các buổi chơi sắp tới, lịch sử đặt sân và trạng thái yêu cầu hủy của bạn.'}
           </p>
 
@@ -625,6 +670,27 @@ export function AccountBookingsPage() {
                   </div>
                   <ChevronRight className="size-4 opacity-50" />
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const p = new URLSearchParams(searchParams);
+                    p.set('tab', 'joined_matches');
+                    setSearchParams(p);
+                  }}
+                  className={cn(
+                    'w-full flex items-center justify-between px-4 py-3 rounded-xl font-heading font-bold text-sm transition-all text-left cursor-pointer',
+                    activeTab === 'joined_matches'
+                      ? 'bg-secondary text-foreground shadow-xs'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-mono text-xs opacity-60">03</span>
+                    <span>Kèo đã tham gia</span>
+                  </div>
+                  <ChevronRight className="size-4 opacity-50" />
+                </button>
               </nav>
 
               <div className="pt-2 border-t border-border/60">
@@ -677,6 +743,178 @@ export function AccountBookingsPage() {
                     </p>
                   </div>
                 </div>
+              </div>
+            ) : activeTab === 'joined_matches' ? (
+              /* TAB 03: KÈO ĐÃ THAM GIA */
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <h3 className="font-heading font-black text-xl text-foreground">
+                      Kèo giao lưu đã tham gia
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Các kèo bạn đã đăng ký làm thành viên cùng những người chơi khác.
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchJoinedMatches()}
+                    className="rounded-xl text-xs font-bold gap-1.5"
+                  >
+                    <RotateCcw className="size-3.5" />
+                    <span>Làm mới</span>
+                  </Button>
+                </div>
+
+                {isLoadingJoinedMatches ? (
+                  <div className="py-20 flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="size-8 animate-spin text-[#397B48]" />
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      Đang tải danh sách kèo đã tham gia...
+                    </span>
+                  </div>
+                ) : !joinedMatches || joinedMatches.length === 0 ? (
+                  <div className="p-12 text-center rounded-2xl border border-dashed border-border/80 bg-card space-y-4">
+                    <div className="size-16 rounded-full bg-muted/60 text-muted-foreground flex items-center justify-center mx-auto">
+                      <Users className="size-8 opacity-60" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-heading font-bold text-base text-foreground">
+                        Chưa tham gia kèo giao lưu nào
+                      </h4>
+                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                        Bạn chưa tham gia kèo thể thao nào. Hãy khám phá các trận đấu đang mở gần bạn để giao lưu kết nối đồng đội!
+                      </p>
+                    </div>
+                    <Button
+                      asChild
+                      className="bg-[#183424] hover:bg-[#132A1C] text-white rounded-xl text-xs font-bold px-5"
+                    >
+                      <Link to="/matches">Khám phá kèo giao lưu ngay</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {joinedMatches.map((match) => (
+                      <div
+                        key={match.id}
+                        className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4 transition-all hover:border-[#397B48]/40"
+                      >
+                        {/* Header thẻ: Môn thể thao, Cự ly, Trạng thái tham gia */}
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-black uppercase tracking-wider text-[#397B48] bg-[#397B48]/10 px-2.5 py-0.5 rounded-full border border-[#397B48]/20">
+                              {match.sportTypeName || 'GIAO LƯU'}
+                            </span>
+                            {match.distanceKm != null && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                <MapPin className="size-3" />
+                                ~{match.distanceKm} km
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Trạng thái duyệt của bạn */}
+                          <div>
+                            {match.myParticipantStatus === ParticipantStatus.Confirmed ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-[#a3e635] border border-emerald-500/30">
+                                <CheckCircle2 className="size-3.5" />
+                                <span>Đã xác nhận tham gia</span>
+                              </span>
+                            ) : match.myParticipantStatus === ParticipantStatus.PendingApproval ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                <Clock className="size-3.5 animate-pulse" />
+                                <span>Chờ chủ phòng duyệt</span>
+                              </span>
+                            ) : match.myParticipantStatus === ParticipantStatus.Rejected ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30">
+                                <XCircle className="size-3.5" />
+                                <span>Bị từ chối</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30">
+                                <CheckCircle2 className="size-3.5" />
+                                <span>Thành viên</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Chi tiết Chi nhánh & Lịch chơi */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center font-sans">
+                          <div className="sm:col-span-8 space-y-2">
+                            <h4 className="font-sans font-bold text-lg text-foreground">
+                              {match.branchName}
+                            </h4>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                              <MapPin className="size-3.5 text-[#397B48] shrink-0" />
+                              <span className="line-clamp-1">{match.branchAddress}</span>
+                            </p>
+                            <div className="flex items-center gap-3 text-xs font-semibold text-foreground pt-1 flex-wrap">
+                              <div className="flex items-center gap-1.5 bg-muted/60 px-2.5 py-1 rounded-lg">
+                                <Calendar className="size-3.5 text-[#397B48]" />
+                                <span>{match.date}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 bg-muted/60 px-2.5 py-1 rounded-lg">
+                                <Clock className="size-3.5 text-[#397B48]" />
+                                <span>
+                                  {match.startTime?.slice(0, 5)} - {match.endTime?.slice(0, 5)}
+                                </span>
+                              </div>
+                              <div className="bg-muted/60 px-2.5 py-1 rounded-lg">
+                                <span>Chủ kèo: <strong className="text-foreground">{match.hostName}</strong></span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="sm:col-span-4 flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-center border-t sm:border-t-0 sm:border-l border-border/50 pt-3 sm:pt-0 sm:pl-6">
+                            <span className="text-xs text-muted-foreground font-bold uppercase">
+                              Phí tham gia
+                            </span>
+                            <span className="font-sans font-bold text-lg text-foreground font-mono">
+                              {match.feePerPlayer > 0 ? formatVND(match.feePerPlayer) : 'Miễn phí'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Hàng nút hành động dưới cùng */}
+                        <div className="pt-3 border-t border-border/50 flex items-center justify-between flex-wrap gap-2">
+                          <span className="text-xs text-muted-foreground font-medium">
+                            Trình độ: <strong className="text-foreground">{match.skillLevel || 'Phong trào'}</strong>
+                          </span>
+
+                          <div className="flex items-center gap-2 ml-auto">
+                            {/* Nút rút lui */}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setLeaveMatchTarget(match);
+                                setIsLeaveDialogOpen(true);
+                              }}
+                              className="rounded-xl text-xs font-bold border-red-500/30 text-red-600 hover:bg-red-500/10 px-3 py-1.5 cursor-pointer"
+                            >
+                              Rút lui
+                            </Button>
+
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => setViewDetailMatchId(match.id)}
+                              className="bg-[#183424] hover:bg-[#132A1C] text-white rounded-xl text-xs font-bold px-4 py-1.5 cursor-pointer gap-1.5"
+                            >
+                              <Eye className="size-3.5" />
+                              <span>Xem chi tiết</span>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               /* TAB 02: LỊCH ĐẶT SÂN (FULL-WIDTH DANH SÁCH THEO YÊU CẦU) */
@@ -764,6 +1002,7 @@ export function AccountBookingsPage() {
                           setIsReviewModalOpen(true);
                         }}
                         onOpenCancel={handleOpenCancel}
+                        onOpenManageMatch={handleOpenManageMatch}
                       />
                     ))}
 
@@ -1125,6 +1364,68 @@ export function AccountBookingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* MODAL 3: QUẢN LÝ / MỞ KÈO GIAO LƯU CHO ĐƠN HÀNG */}
+      <ManageOrderMatchModal
+        isOpen={isMatchModalOpen}
+        onClose={() => {
+          setIsMatchModalOpen(false);
+          setSelectedMatchOrder(null);
+        }}
+        order={selectedMatchOrder}
+        onSuccess={() => refetch()}
+      />
+
+      {/* MODAL 4: XÁC NHẬN RÚT LUI KHỎI KÈO */}
+      <Dialog open={isLeaveDialogOpen} onOpenChange={setIsLeaveDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl p-6">
+          <DialogHeader className="space-y-2">
+            <div className="size-10 rounded-full bg-red-500/10 text-red-600 flex items-center justify-center">
+              <XCircle className="size-5" />
+            </div>
+            <DialogTitle className="font-heading font-black text-lg text-foreground">
+              Rút lui khỏi kèo giao lưu?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              Bạn có chắc chắn muốn rút lui khỏi kèo tại {leaveMatchTarget?.branchName}? Chỗ trống sẽ được mở lại cho người chơi khác.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="flex flex-row items-center justify-end gap-2 pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsLeaveDialogOpen(false)}
+              className="rounded-xl text-xs font-bold"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={leaveMatchMutation.isPending}
+              onClick={handleConfirmLeaveMatch}
+              className="bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold gap-1.5"
+            >
+              {leaveMatchMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <XCircle className="size-3.5" />
+              )}
+              <span>Xác nhận rút lui</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* POPUP XEM CHI TIẾT KÈO GIAO LƯU */}
+      <MatchDetailModal
+        isOpen={!!viewDetailMatchId}
+        onClose={() => setViewDetailMatchId(null)}
+        matchId={viewDetailMatchId}
+        onSuccess={() => refetchJoinedMatches()}
+      />
     </div>
   );
 }

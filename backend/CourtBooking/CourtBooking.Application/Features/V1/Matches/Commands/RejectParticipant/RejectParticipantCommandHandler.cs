@@ -36,13 +36,13 @@ public sealed class RejectParticipantCommandHandler(
             return Result.Failure(new NotFoundError("MatchParticipant", request.ParticipantId));
         }
 
-        if (participant.Status != ParticipantStatus.PendingApproval)
+        // 3. Xóa hoàn toàn người tham gia ra khỏi danh sách participants
+        if (participant.Status == ParticipantStatus.Confirmed)
         {
-            return Result.Failure(new ConflictError("Người tham gia không ở trạng thái chờ duyệt."));
+            match.AvailableSlots += 1;
         }
 
-        // 3. Cập nhật trạng thái từ chối
-        participant.Status = ParticipantStatus.Rejected;
+        dbContext.MatchParticipants.Remove(participant);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Sun, LogOut, User as UserIcon, Receipt } from 'lucide-react';
+import { Menu, Sun, LogOut, User as UserIcon, Receipt, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -139,6 +139,14 @@ export function PublicHeader() {
                   >
                     <Receipt className="size-4 text-[#397B48]" />
                     <span>Đơn Mua</span>
+                  </Link>
+
+                  <Link
+                    to="/account?tab=joined_matches"
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-foreground hover:bg-secondary/70 transition-colors font-semibold"
+                  >
+                    <Users className="size-4 text-[#397B48]" />
+                    <span>Kèo Đã Tham Gia</span>
                   </Link>
 
                   <div className="my-1 border-t border-border/60" />

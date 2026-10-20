@@ -83,7 +83,6 @@ public sealed class CreateMatchCommandHandler(
             FeePerPlayer = request.FeePerPlayer,
             ApprovalMode = request.ApprovalMode,
             AvailableSlots = request.MissingPlayers,
-            Status = SocialMatchStatus.Open,
             Description = request.Description,
             CreatedAt = DateTime.UtcNow
         };

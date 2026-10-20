@@ -1,4 +1,5 @@
 export * from './components/MatchCard';
+export * from './components/JoinMatchModal';
 export * from './components/SelectOrderModal';
 export * from './pages/MatchesPage';
 export * from './pages/MatchDetailPage';

@@ -19,8 +19,6 @@ import { EventCheckoutPage } from '@/features/events/pages/EventCheckoutPage';
 import { EventSuccessPage } from '@/features/events/pages/EventSuccessPage';
 import { MatchesPage } from '@/features/matches/pages/MatchesPage';
 import { MatchDetailPage } from '@/features/matches/pages/MatchDetailPage';
-import { CreateMatchPage } from '@/features/matches/pages/CreateMatchPage';
-import { EditMatchPage } from '@/features/matches/pages/EditMatchPage';
 import { AccountBookingsPage } from '@/features/customer/pages/AccountBookingsPage';
 
 
@@ -61,9 +59,9 @@ export const router = createBrowserRouter([
       { path: '/courts', element: <CustomerCourtsPage /> },
       // Kèo giao lưu thể thao (Matchday Social Matches)
       { path: '/matches', element: <MatchesPage /> },
-      { path: '/matches/create', element: <CreateMatchPage /> },
+      { path: '/matches/create', element: <Navigate to="/account?tab=orders" replace /> },
       { path: '/matches/:id', element: <MatchDetailPage /> },
-      { path: '/matches/:id/edit', element: <EditMatchPage /> },
+      { path: '/matches/:id/edit', element: <Navigate to="/account?tab=orders" replace /> },
       // Sự kiện thể thao (Matchday Events)
       { path: '/events', element: <EventsPage /> },
       { path: '/events/:id', element: <EventDetailPage /> },

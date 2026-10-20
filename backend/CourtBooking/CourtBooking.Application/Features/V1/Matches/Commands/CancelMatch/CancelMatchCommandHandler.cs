@@ -29,19 +29,8 @@ public sealed class CancelMatchCommandHandler(
             return Result.Failure(new ForbiddenError("Chỉ có chủ phòng mới có quyền hủy kèo giao lưu này."));
         }
 
-        // 2. Kiểm tra trạng thái kèo
-        if (match.Status == SocialMatchStatus.Cancelled)
-        {
-            return Result.Failure(new ConflictError("Kèo giao lưu này đã bị hủy trước đó."));
-        }
-
-        // 3. Cập nhật trạng thái hủy cho kèo và tất cả người tham gia
-        match.Status = SocialMatchStatus.Cancelled;
-        foreach (var p in match.Participants)
-        {
-            p.Status = ParticipantStatus.Cancelled;
-        }
-
+        // 2. Xóa hoàn toàn kèo giao lưu
+        dbContext.SocialMatches.Remove(match);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

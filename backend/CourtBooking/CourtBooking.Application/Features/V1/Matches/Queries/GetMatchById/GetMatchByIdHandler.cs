@@ -60,7 +60,6 @@ public sealed class GetMatchByIdHandler(IApplicationDbContext dbContext)
             match.AvailableSlots,
             match.FeePerPlayer,
             match.ApprovalMode,
-            match.Status,
             match.Description,
             match.CreatedAt,
             participantsDto);

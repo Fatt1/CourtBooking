@@ -177,6 +177,7 @@ export const API_ENDPOINTS = {
   // 9. Kèo giao lưu cộng đồng người chơi (Matches)
   MATCHES: {
     LIST: '/matches',
+    MY_JOINED: '/matches/my-joined',
     DETAIL: (id: string) => `/matches/${id}`,
     CREATE: '/matches',
     UPDATE: (id: string) => `/matches/${id}`,
@@ -187,6 +188,7 @@ export const API_ENDPOINTS = {
       `/matches/${matchId}/participants/${participantId}/reject`,
     LEAVE: (id: string) => `/matches/${id}/leave`,
     CANCEL: (id: string) => `/matches/${id}/cancel`,
+    DELETE: (id: string) => `/matches/${id}`,
   },
 
   // 10. Đánh giá & Nhận xét (Reviews)

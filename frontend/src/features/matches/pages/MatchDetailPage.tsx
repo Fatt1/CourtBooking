@@ -10,9 +10,8 @@ import {
   useApproveParticipantMutation,
   useRejectParticipantMutation,
   useLeaveMatchMutation,
-  useCancelMatchMutation,
+  useDeleteMatchMutation,
   ParticipantStatus,
-  SocialMatchStatus,
   type MatchDetailDto,
 } from '@/api/matches';
 import { toast } from 'sonner';
@@ -44,7 +43,6 @@ export function MatchDetailPage() {
     availableSlots: 2,
     feePerPlayer: 70000,
     approvalMode: 1, // Chủ phòng duyệt
-    status: SocialMatchStatus.Open,
     description: 'Trận giao lưu nhẹ nhàng, ưu tiên vui vẻ và đúng giờ. Đã có sân, mọi người tự chia phí tại sân sau buổi chơi.',
     createdAt: '2026-09-20T10:00:00Z',
     participants: [
@@ -72,14 +70,6 @@ export function MatchDetailPage() {
         joinedAt: '2026-09-22T08:00:00Z',
         isHost: false,
       },
-      {
-        id: 'p-4',
-        playerId: 'p-user-tuanminh',
-        playerName: 'Tuấn Minh',
-        status: ParticipantStatus.Rejected,
-        joinedAt: '2026-09-22T09:00:00Z',
-        isHost: false,
-      },
     ],
   };
 
@@ -90,7 +80,7 @@ export function MatchDetailPage() {
   const approveMutation = useApproveParticipantMutation();
   const rejectMutation = useRejectParticipantMutation();
   const leaveMutation = useLeaveMatchMutation();
-  const cancelMutation = useCancelMatchMutation();
+  const deleteMutation = useDeleteMatchMutation();
 
   const [guestNote, setGuestNote] = useState('');
 
@@ -100,10 +90,6 @@ export function MatchDetailPage() {
   const myParticipant = match.participants.find((p) => p.playerId === currentUserId);
   const isConfirmedMember = myParticipant?.status === ParticipantStatus.Confirmed;
   const isPendingMember = myParticipant?.status === ParticipantStatus.PendingApproval;
-
-  const isClosed =
-    match.status === SocialMatchStatus.Closed ||
-    match.status === SocialMatchStatus.Cancelled;
 
   // Đếm thành viên đã duyệt
   const confirmedCount = match.participants.filter(
@@ -140,11 +126,11 @@ export function MatchDetailPage() {
     }
   };
 
-  // Xử lý từ chối thành viên
+  // Xử lý từ chối thành viên (xóa khỏi danh sách)
   const handleReject = async (participantId: string, playerName: string) => {
     try {
       await rejectMutation.mutateAsync({ matchId: match.id, participantId });
-      toast.success(`Đã từ chối yêu cầu của ${playerName}`);
+      toast.success(`Đã từ chối và xóa thành viên ${playerName} khỏi danh sách`);
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || 'Không thể từ chối thành viên');
     }
@@ -161,15 +147,15 @@ export function MatchDetailPage() {
     }
   };
 
-  // Xử lý hủy kèo
-  const handleCancelMatch = async () => {
-    if (!confirm('Bạn có chắc chắn muốn hủy kèo giao lưu này? Hành động này không thể hoàn tác.')) return;
+  // Xử lý xóa kèo
+  const handleDeleteMatch = async () => {
+    if (!confirm('Bạn có chắc chắn muốn xóa kèo giao lưu này? Kèo sẽ bị xóa hoàn toàn khỏi hệ thống.')) return;
     try {
-      await cancelMutation.mutateAsync(match.id);
-      toast.success('Đã hủy kèo giao lưu thành công');
+      await deleteMutation.mutateAsync(match.id);
+      toast.success('Đã xóa kèo giao lưu thành công');
       navigate('/matches');
     } catch (err: any) {
-      toast.error(err?.response?.data?.detail || 'Không thể hủy kèo');
+      toast.error(err?.response?.data?.detail || 'Không thể xóa kèo');
     }
   };
 
@@ -199,9 +185,9 @@ export function MatchDetailPage() {
                 <span className="text-xs font-black uppercase tracking-wider text-[#235338] dark:text-emerald-400">
                   {match.sportTypeName || 'GIAO LƯU THỂ THAO'}
                 </span>
-                {isClosed ? (
-                  <span className="text-xs font-bold text-muted-foreground bg-muted px-3 py-1 rounded-full border border-border">
-                    Đã kết thúc
+                {match.availableSlots <= 0 ? (
+                  <span className="text-xs font-bold text-amber-700 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                    Đã đủ người
                   </span>
                 ) : (
                   <span className="text-xs font-bold text-[#235338] bg-[#235338]/10 dark:text-emerald-300 dark:bg-emerald-950/40 px-3 py-1 rounded-full border border-[#235338]/20">
@@ -212,7 +198,7 @@ export function MatchDetailPage() {
 
               {/* Tiêu đề lớn */}
               <div className="space-y-3">
-                <h1 className="font-heading font-black text-3xl sm:text-5xl text-foreground tracking-tight leading-tight uppercase">
+                <h1 className="font-sans font-bold text-3xl sm:text-5xl text-foreground tracking-tight leading-tight uppercase">
                   {match.description?.trim().split('\n')[0]?.slice(0, 50) ||
                     `GIAO LƯU ${match.sportTypeName} ${match.branchName}`}
                 </h1>
@@ -224,7 +210,7 @@ export function MatchDetailPage() {
 
               {/* Card nổi bật lịch sân đã đặt */}
               <div className="rounded-xl bg-muted/60 dark:bg-muted/30 border border-border/60 p-4 sm:p-5 space-y-1">
-                <h4 className="font-heading font-black text-lg text-foreground">
+                <h4 className="font-sans font-bold text-lg text-foreground">
                   {match.branchName}
                 </h4>
                 <p className="text-xs text-muted-foreground">
@@ -299,7 +285,7 @@ export function MatchDetailPage() {
                 <span className="text-[11px] font-black uppercase tracking-wider text-[#235338]">
                   {confirmedCount}/{totalCapacity} NGƯỜI
                 </span>
-                <h3 className="font-heading font-black text-2xl text-foreground tracking-tight">
+                <h3 className="font-sans font-bold text-2xl text-foreground tracking-tight">
                   Thành viên trong kèo
                 </h3>
               </div>
@@ -318,7 +304,7 @@ export function MatchDetailPage() {
                     >
                       <div className="flex items-center gap-3">
                         {/* Avatar chữ cái tròn */}
-                        <div className="size-10 rounded-full bg-muted flex items-center justify-center font-heading font-black text-base text-foreground shrink-0 border border-border/80">
+                        <div className="size-10 rounded-full bg-muted flex items-center justify-center font-sans font-bold text-base text-foreground shrink-0 border border-border/80">
                           {initial}
                         </div>
 
@@ -376,14 +362,8 @@ export function MatchDetailPage() {
                             )}
                           </div>
                         )}
-
-                        {participant.status === ParticipantStatus.Rejected && (
-                          <span className="text-xs font-bold text-red-600 dark:text-red-400">
-                            Từ chối
-                          </span>
-                        )}
+                        </div>
                       </div>
-                    </div>
                   );
                 })}
               </div>
@@ -399,52 +379,45 @@ export function MatchDetailPage() {
                   <span className="text-[11px] font-black uppercase tracking-wider text-[#235338]">
                     DÀNH CHO NGƯỜI TỔ CHỨC
                   </span>
-                  <h3 className="font-heading font-black text-2xl text-foreground tracking-tight">
-                    {isClosed ? 'Quản lý sau trận' : 'Quản lý kèo'}
+                  <h3 className="font-sans font-bold text-2xl text-foreground tracking-tight">
+                    Quản lý kèo
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-                    {isClosed
-                      ? 'Đối chiếu danh sách tham gia. Chức năng khả dụng sau khi thời gian chơi kết thúc.'
-                      : 'Cập nhật thông tin tuyển người và cách duyệt thành viên của kèo.'}
+                    Cập nhật thông tin tuyển người và cách duyệt thành viên của kèo.
                   </p>
                 </div>
 
-                {!isClosed ? (
-                  <div className="space-y-4">
+                <div className="space-y-4">
+                  <Button
+                    type="button"
+                    onClick={() => navigate(`/matches/${match.id}/edit`)}
+                    className="w-full bg-[#235338] hover:bg-[#1b432d] text-white font-bold text-sm py-5 rounded-xl shadow-xs gap-2 cursor-pointer transition-all"
+                  >
+                    <span>Sửa kèo</span>
+                    <ArrowRight className="size-4" />
+                  </Button>
+
+                  <div className="border-t border-border/60 pt-4 space-y-2">
+                    <h5 className="font-bold text-xs text-foreground">
+                      Lịch đặt sân được giữ nguyên
+                    </h5>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Bạn có thể sửa nội dung kèo; sân và giờ chơi lấy từ lịch đặt đã chọn.
+                    </p>
+                  </div>
+
+                  <div className="pt-2">
                     <Button
                       type="button"
-                      onClick={() => navigate(`/matches/${match.id}/edit`)}
-                      className="w-full bg-[#235338] hover:bg-[#1b432d] text-white font-bold text-sm py-5 rounded-xl shadow-xs gap-2 cursor-pointer transition-all"
+                      variant="outline"
+                      onClick={handleDeleteMatch}
+                      disabled={deleteMutation.isPending}
+                      className="w-full text-xs font-bold text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-950/20 rounded-xl cursor-pointer"
                     >
-                      <span>Sửa kèo</span>
-                      <ArrowRight className="size-4" />
+                      {deleteMutation.isPending ? 'Đang xóa...' : 'Xóa kèo giao lưu'}
                     </Button>
-
-                    <div className="border-t border-border/60 pt-4 space-y-2">
-                      <h5 className="font-bold text-xs text-foreground">
-                        Lịch đặt sân được giữ nguyên
-                      </h5>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Bạn có thể sửa nội dung kèo; sân và giờ chơi lấy từ lịch đặt đã chọn.
-                      </p>
-                    </div>
-
-                    <div className="pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCancelMatch}
-                        className="w-full text-xs font-bold text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-950/20 rounded-xl"
-                      >
-                        Hủy kèo giao lưu
-                      </Button>
-                    </div>
                   </div>
-                ) : (
-                  <div className="rounded-xl bg-muted/40 p-4 border border-border/60 text-xs text-muted-foreground">
-                    Trận đấu này đã kết thúc hoặc đã hủy.
-                  </div>
-                )}
+                </div>
               </div>
             ) : isConfirmedMember ? (
               /* ĐÃ THAM GIA KÈO */
@@ -453,7 +426,7 @@ export function MatchDetailPage() {
                   <span className="text-[11px] font-black uppercase tracking-wider text-[#235338]">
                     THÀNH VIÊN KÈO
                   </span>
-                  <h3 className="font-heading font-black text-2xl text-foreground tracking-tight">
+                  <h3 className="font-sans font-bold text-2xl text-foreground tracking-tight">
                     Bạn đã vào kèo
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed pt-1">
@@ -466,16 +439,14 @@ export function MatchDetailPage() {
                   <span>Bạn là thành viên chính thức của kèo này.</span>
                 </div>
 
-                {!isClosed && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleLeave}
-                    className="w-full text-xs font-bold text-red-600 border-red-200 hover:bg-red-50 rounded-xl"
-                  >
-                    Rút lui khỏi kèo
-                  </Button>
-                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleLeave}
+                  className="w-full text-xs font-bold text-red-600 border-red-200 hover:bg-red-50 rounded-xl"
+                >
+                  Rút lui khỏi kèo
+                </Button>
 
                 <div className="border-t border-border/60 pt-3">
                   <p className="text-[11px] text-muted-foreground text-center">
@@ -490,7 +461,7 @@ export function MatchDetailPage() {
                   <span className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">
                     THAM GIA CÙNG MỌI NGƯỜI
                   </span>
-                  <h3 className="font-heading font-black text-2xl text-foreground tracking-tight">
+                  <h3 className="font-sans font-bold text-2xl text-foreground tracking-tight">
                     Xin một vị trí
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed pt-1">
@@ -538,7 +509,7 @@ export function MatchDetailPage() {
                   <span className="text-[11px] font-black uppercase tracking-wider text-[#235338]">
                     THAM GIA CÙNG MỌI NGƯỜI
                   </span>
-                  <h3 className="font-heading font-black text-2xl text-foreground tracking-tight">
+                  <h3 className="font-sans font-bold text-2xl text-foreground tracking-tight">
                     Xin một vị trí
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed pt-1">
@@ -566,7 +537,7 @@ export function MatchDetailPage() {
                   <Button
                     type="button"
                     onClick={handleJoin}
-                    disabled={isClosed || match.availableSlots <= 0 || joinMutation.isPending}
+                    disabled={match.availableSlots <= 0 || joinMutation.isPending}
                     className="w-full bg-[#235338] hover:bg-[#1b432d] text-white font-bold text-sm py-5 rounded-xl shadow-xs cursor-pointer transition-all"
                   >
                     {joinMutation.isPending ? 'Đang gửi...' : 'Xin tham gia'}
