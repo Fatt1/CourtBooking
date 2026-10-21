@@ -9,7 +9,8 @@ import type {
   UserRegisterRequest,
   UserAuthResponse,
   AdminLoginRequest,
-  AdminAuthResponse,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
 } from './types';
 
 // ==========================================
@@ -67,6 +68,28 @@ export function useCourtOwnerLogoutMutation() {
   });
 }
 
+/**
+ * Hook Mutation gửi yêu cầu quên mật khẩu cho Chủ sân
+ */
+export function useOwnerForgotPasswordMutation() {
+  return useMutation({
+    mutationFn: async (payload: ForgotPasswordRequest) => {
+      return apiClient.post(API_ENDPOINTS.OWNER_AUTH.FORGOT_PASSWORD, payload);
+    },
+  });
+}
+
+/**
+ * Hook Mutation đặt lại mật khẩu bằng token cho Chủ sân
+ */
+export function useOwnerResetPasswordMutation() {
+  return useMutation({
+    mutationFn: async (payload: ResetPasswordRequest) => {
+      return apiClient.post(API_ENDPOINTS.OWNER_AUTH.RESET_PASSWORD, payload);
+    },
+  });
+}
+
 // ==========================================
 // 2. USER / PLAYER AUTH HOOKS
 // ==========================================
@@ -106,8 +129,36 @@ export function useUserLoginMutation() {
 export function useUserRegisterMutation() {
   return useMutation({
     mutationFn: async (payload: UserRegisterRequest) => {
-      const response = await apiClient.post('/auth/register', payload);
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.REGISTER, {
+        fullName: payload.fullName,
+        email: payload.email,
+        password: payload.password,
+        phoneNumber: payload.phoneNumber,
+        gender: payload.gender ?? 0,
+      });
       return response;
+    },
+  });
+}
+
+/**
+ * Hook Mutation gửi yêu cầu quên mật khẩu cho Người chơi
+ */
+export function useUserForgotPasswordMutation() {
+  return useMutation({
+    mutationFn: async (payload: ForgotPasswordRequest) => {
+      return apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, payload);
+    },
+  });
+}
+
+/**
+ * Hook Mutation đặt lại mật khẩu mới cho Người chơi
+ */
+export function useUserResetPasswordMutation() {
+  return useMutation({
+    mutationFn: async (payload: ResetPasswordRequest) => {
+      return apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, payload);
     },
   });
 }

@@ -284,8 +284,8 @@ export function UsersPage() {
                           Đã xóa
                         </span>
                       ) : item.status === 'inactive' ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-400 border border-amber-500/25">
-                          <span className="size-1.5 rounded-full bg-amber-400" />
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-red-400 border border-red-500/30">
+                          <span className="size-1.5 rounded-full bg-red-500" />
                           Đã khóa
                         </span>
                       ) : (
@@ -333,7 +333,7 @@ export function UsersPage() {
                               >
                                 {item.status === 'active' ? (
                                   <>
-                                    <Ban className="size-3.5 text-amber-400" />
+                                    <Ban className="size-3.5 text-red-400" />
                                     <span>Khóa tài khoản</span>
                                   </>
                                 ) : (

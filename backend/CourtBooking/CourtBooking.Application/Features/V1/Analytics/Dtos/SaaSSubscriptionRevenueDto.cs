@@ -19,6 +19,10 @@ public sealed record SaaSSubscriptionRevenueDto(
     decimal AverageRevenuePerSubscription,
     decimal PreviousPeriodRevenue,
     decimal GrowthPercentage,
+    int ActiveOwnersCount,
+    decimal ActiveOwnersGrowth,
+    decimal RenewalRate,
+    decimal RenewalRateGrowth,
     IReadOnlyList<RevenueByPackageItemDto> ByPackage,
     IReadOnlyList<RevenueTimelineItemDto> Timeline);
 

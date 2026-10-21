@@ -24,8 +24,6 @@ internal sealed class GetSubscriptionHistoryQueryHandler(IApplicationDbContext d
         var query = dbContext.CourtOwnerSubscriptions
             .Include(s => s.CourtOwner)
                 .ThenInclude(co => co.User)
-            .Include(s => s.CourtOwner)
-                .ThenInclude(co => co.Subscriptions)
             .Include(s => s.ServicePackage)
             .AsNoTracking();
 
@@ -63,6 +61,14 @@ internal sealed class GetSubscriptionHistoryQueryHandler(IApplicationDbContext d
             .Take(request.PageSize)
             .ToListAsync(ct);
 
+        var ownerIds = rawItems.Select(s => s.CourtOwnerId).Distinct().ToList();
+        var allOwnerSubs = await dbContext.CourtOwnerSubscriptions
+            .AsNoTracking()
+            .Where(s => ownerIds.Contains(s.CourtOwnerId))
+            .OrderBy(s => s.CreatedAt)
+            .ToListAsync(ct);
+        var ownerSubsLookup = allOwnerSubs.ToLookup(s => s.CourtOwnerId);
+
         // 6. Map sang DTO
         var mappedItems = rawItems.Select(s =>
         {
@@ -93,7 +99,7 @@ internal sealed class GetSubscriptionHistoryQueryHandler(IApplicationDbContext d
             }
             else
             {
-                var previousSub = s.CourtOwner.Subscriptions?
+                var previousSub = ownerSubsLookup[s.CourtOwnerId]
                     .Where(other => other.CreatedAt < s.CreatedAt)
                     .OrderByDescending(other => other.CreatedAt)
                     .FirstOrDefault();

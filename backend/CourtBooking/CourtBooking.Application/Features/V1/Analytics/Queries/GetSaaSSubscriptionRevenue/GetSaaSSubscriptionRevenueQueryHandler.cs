@@ -109,7 +109,41 @@ internal sealed class GetSaaSSubscriptionRevenueQueryHandler(IApplicationDbConte
             .OrderByDescending(p => p.Revenue)
             .ToList();
 
-        // 5. Chuỗi thời gian thống kê (Timeline) liên tục, không bị ngắt quãng
+        // 5. Thống kê số lượng Chủ sân hoạt động thực tế từ Database
+        var activeOwnersCount = await dbContext.CourtOwners
+            .CountAsync(co => !co.User.IsDeleted && co.User.Status == Domain.Enums.UserStatus.Active, ct);
+
+        var prevActiveOwnersCount = await dbContext.CourtOwners
+            .CountAsync(co => !co.User.IsDeleted && co.User.Status == Domain.Enums.UserStatus.Active && co.CreatedAt < fromUtc, ct);
+
+        decimal activeOwnersGrowth = 0m;
+        if (prevActiveOwnersCount > 0)
+        {
+            activeOwnersGrowth = Math.Round(((decimal)(activeOwnersCount - prevActiveOwnersCount) / prevActiveOwnersCount) * 100m, 1);
+        }
+        else if (activeOwnersCount > 0)
+        {
+            activeOwnersGrowth = 100m;
+        }
+
+        // 6. Tính toán tỷ lệ gia hạn thuê bao (Renewal Rate) thực tế từ Database
+        var totalOwnersWithSub = await dbContext.CourtOwnerSubscriptions
+            .Select(s => s.CourtOwnerId)
+            .Distinct()
+            .CountAsync(ct);
+
+        var renewedOwnersCount = await dbContext.CourtOwnerSubscriptions
+            .GroupBy(s => s.CourtOwnerId)
+            .Where(g => g.Count() > 1)
+            .CountAsync(ct);
+
+        decimal renewalRate = totalOwnersWithSub > 0
+            ? Math.Round(((decimal)renewedOwnersCount / totalOwnersWithSub) * 100m, 1)
+            : 0m;
+
+        decimal renewalRateGrowth = 0m;
+
+        // 7. Chuỗi thời gian thống kê (Timeline) liên tục, không bị ngắt quãng
         var timeline = GenerateTimeline(currentSubscriptions, fromDate, toDate, request.GroupBy);
 
         return Result.Success(new SaaSSubscriptionRevenueDto(
@@ -118,6 +152,10 @@ internal sealed class GetSaaSSubscriptionRevenueQueryHandler(IApplicationDbConte
             avgRevenue,
             previousPeriodRevenue,
             growthPercentage,
+            activeOwnersCount,
+            activeOwnersGrowth,
+            renewalRate,
+            renewalRateGrowth,
             byPackage,
             timeline));
     }

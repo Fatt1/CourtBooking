@@ -143,7 +143,7 @@ export interface SaaSSubscriptionQueryParams {
 
 /**
  * Hook Query lấy dữ liệu doanh thu gói SaaS Admin Console
- * Endpoint: GET /api/v1/analytics/saas-revenue
+ * Endpoint: GET /api/v1/admin/analytics/revenue hoặc GET /api/v1/analytics/saas-revenue
  */
 export function useSaaSSubscriptionRevenueQuery(params: SaaSSubscriptionQueryParams = {}) {
   const { fromDate, toDate, groupBy = 'Day', packageId } = params;
@@ -151,87 +151,40 @@ export function useSaaSSubscriptionRevenueQuery(params: SaaSSubscriptionQueryPar
   return useQuery<SaaSSubscriptionRevenueDto>({
     queryKey: ['analytics', 'admin', 'saas-revenue', { fromDate, toDate, groupBy, packageId }],
     queryFn: async (): Promise<SaaSSubscriptionRevenueDto> => {
-      try {
-        const queryParams: Record<string, string | undefined> = {
-          groupBy: groupBy || 'Day',
-        };
-        if (fromDate) queryParams.fromDate = fromDate;
-        if (toDate) queryParams.toDate = toDate;
-        if (packageId) queryParams.packageId = packageId;
+      const queryParams: Record<string, string | undefined> = {
+        groupBy: groupBy || 'Day',
+      };
+      if (fromDate) queryParams.fromDate = fromDate;
+      if (toDate) queryParams.toDate = toDate;
+      if (packageId) queryParams.packageId = packageId;
 
-        const response = await apiClient.get<SaaSSubscriptionRevenueDto>(
-          '/analytics/saas-revenue',
-          { params: queryParams }
-        );
-        const data = response as unknown as SaaSSubscriptionRevenueDto;
+      const response = await apiClient.get<SaaSSubscriptionRevenueDto>(
+        '/admin/analytics/revenue',
+        { params: queryParams }
+      );
+      const data = response as unknown as SaaSSubscriptionRevenueDto;
 
-        // Nếu là tháng 9/2026 mẫu từ thiết kế và database chưa có seed data thực tế cho tháng 9
-        const isSep2026 =
-          (!fromDate && !toDate && groupBy === 'Day') ||
-          (fromDate === '2026-09-01' && toDate === '2026-09-30');
-
-        if (isSep2026 && (!data || (data.totalRevenue === 0 && data.totalSubscriptionsSold === 0))) {
-          return MOCK_ADMIN_DASHBOARD_DATA;
-        }
-
-        if (data) {
-          // Tính toán các chỉ số bổ sung nếu backend chưa có
-          const activeOwners =
-            data.activeOwnersCount ??
-            Math.max(data.totalSubscriptionsSold * 2, data.totalSubscriptionsSold > 0 ? 1 : 0);
-          const renewalRate =
-            data.renewalRate ?? (data.totalSubscriptionsSold > 0 ? 86.4 : 0);
-
-          return {
-            ...data,
-            activeOwnersCount: activeOwners,
-            activeOwnersGrowth: data.activeOwnersGrowth ?? (data.growthPercentage > 0 ? 8.2 : 0),
-            renewalRate: renewalRate,
-            renewalRateGrowth: data.renewalRateGrowth ?? (data.growthPercentage > 0 ? 4.2 : 0),
-          };
-        }
-
-        return MOCK_ADMIN_DASHBOARD_DATA;
-      } catch (err) {
-        console.warn('API error in useSaaSSubscriptionRevenueQuery, fallback to period data:', err);
-        // Fallback tạo số liệu tương ứng kỳ nếu offline
-        if (
-          groupBy === 'Year' ||
-          (fromDate && fromDate.startsWith('2026-01') && toDate && toDate.endsWith('12-31'))
-        ) {
-          return {
-            ...MOCK_ADMIN_DASHBOARD_DATA,
-            totalRevenue: 1542000000,
-            totalSubscriptionsSold: 1680,
-            growthPercentage: 24.5,
-            activeOwnersCount: 380,
-            activeOwnersGrowth: 15.2,
-            renewalRate: 91.2,
-            renewalRateGrowth: 6.8,
-            timeline: [
-              { period: '2026-01', startDate: '2026-01-01', revenue: 98, subscriptionCount: 110 },
-              { period: '2026-02', startDate: '2026-02-01', revenue: 105, subscriptionCount: 115 },
-              { period: '2026-03', startDate: '2026-03-01', revenue: 112, subscriptionCount: 125 },
-              { period: '2026-04', startDate: '2026-04-01', revenue: 120, subscriptionCount: 130 },
-              { period: '2026-05', startDate: '2026-05-01', revenue: 118, subscriptionCount: 128 },
-              { period: '2026-06', startDate: '2026-06-01', revenue: 135, subscriptionCount: 145 },
-              { period: '2026-07', startDate: '2026-07-01', revenue: 142, subscriptionCount: 155 },
-              { period: '2026-08', startDate: '2026-08-01', revenue: 138, subscriptionCount: 150 },
-              { period: '2026-09', startDate: '2026-09-01', revenue: 128, subscriptionCount: 148 },
-              { period: '2026-10', startDate: '2026-10-01', revenue: 145, subscriptionCount: 160 },
-            ],
-          };
-        }
-        return MOCK_ADMIN_DASHBOARD_DATA;
-      }
+      return {
+        totalRevenue: data?.totalRevenue ?? 0,
+        totalSubscriptionsSold: data?.totalSubscriptionsSold ?? 0,
+        averageRevenuePerSubscription: data?.averageRevenuePerSubscription ?? 0,
+        previousPeriodRevenue: data?.previousPeriodRevenue ?? 0,
+        growthPercentage: data?.growthPercentage ?? 0,
+        activeOwnersCount: data?.activeOwnersCount ?? 0,
+        activeOwnersGrowth: data?.activeOwnersGrowth ?? 0,
+        renewalRate: data?.renewalRate ?? 0,
+        renewalRateGrowth: data?.renewalRateGrowth ?? 0,
+        byPackage: data?.byPackage ?? [],
+        timeline: data?.timeline ?? [],
+      };
     },
-    staleTime: 0,
-    refetchOnWindowFocus: false,
+    staleTime: 1000 * 30, // 30s cache
+    refetchOnWindowFocus: true,
   });
 }
 
 /**
- * Hook Query lấy các đăng ký thuê bao gần đây & số lượng sắp hết hạn
+ * Hook Query lấy các đăng ký thuê bao gần đây & số lượng sắp hết hạn thực tế từ Database
  * Endpoint: GET /api/v1/service-packages/subscriptions/history
  */
 export function useRecentSubscriptionsQuery() {
@@ -244,27 +197,23 @@ export function useRecentSubscriptionsQuery() {
       try {
         const response = await apiClient.get<any>(
           '/service-packages/subscriptions/history',
-          { params: { page: 1, pageSize: 3 } }
+          { params: { page: 1, pageSize: 5 } }
         );
         const data = response as any;
         const items = data?.subscriptions?.items || data?.subscriptions || [];
         return {
-          items: items.length > 0 ? items : MOCK_RECENT_SUBSCRIPTIONS,
-          expiringSoonCount: data?.expiringSoonCount ?? 2,
+          items: Array.isArray(items) ? items : [],
+          expiringSoonCount: data?.expiringSoonCount ?? 0,
         };
-      } catch {
+      } catch (err) {
+        console.error('Error fetching recent subscriptions:', err);
         return {
-          items: MOCK_RECENT_SUBSCRIPTIONS,
-          expiringSoonCount: 2,
+          items: [],
+          expiringSoonCount: 0,
         };
       }
     },
-    initialData: {
-      items: MOCK_RECENT_SUBSCRIPTIONS,
-      expiringSoonCount: 2,
-    },
-    enabled: true,
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
   });
 }
