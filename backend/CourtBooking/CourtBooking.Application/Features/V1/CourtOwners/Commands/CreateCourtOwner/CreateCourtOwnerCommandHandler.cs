@@ -22,7 +22,7 @@ internal sealed class CreateCourtOwnerCommandHandler(
 
         // 1. Kiểm tra Email đã tồn tại hay chưa
         var existingUser = await userManager.Users
-            .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted, ct);
+            .FirstOrDefaultAsync(u => u.Email == email && u.AccountType == AccountType.CourtOwner, ct);
 
         if (existingUser is not null)
         {
@@ -38,7 +38,7 @@ internal sealed class CreateCourtOwnerCommandHandler(
         var user = new ApplicationUser
         {
             Id = Guid.NewGuid(),
-            UserName = email,
+            UserName = email + $"-{AccountType.CourtOwner}",
             Email = email,
             FullName = request.FullName.Trim(),
             PhoneNumber = request.PhoneNumber.Trim(),
