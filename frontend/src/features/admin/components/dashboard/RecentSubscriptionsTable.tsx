@@ -1,57 +1,13 @@
 import { Link } from 'react-router-dom';
+import { CreditCard } from 'lucide-react';
 import type { SubscriptionHistoryItemDto } from '@/api/analytics';
 
 interface RecentSubscriptionsTableProps {
   items?: SubscriptionHistoryItemDto[];
 }
 
-const DEFAULT_RECENT: SubscriptionHistoryItemDto[] = [
-  {
-    id: 'sub-1',
-    courtOwnerId: 'owner-1',
-    ownerName: 'Nguyễn Minh Tuấn',
-    businessName: 'Sân cầu lông Út sinh Minh',
-    avatarInitial: 'MT',
-    packageName: 'Pro',
-    pricePaid: 599000,
-    startDate: '2026-09-28',
-    endDate: '2026-10-28',
-    transactionCode: 'TXN-98421',
-    status: 'Thành công',
-    daysRemaining: 30,
-  },
-  {
-    id: 'sub-2',
-    courtOwnerId: 'owner-2',
-    ownerName: 'Trần Hoàng Nam',
-    businessName: 'Thảo Điền Sports',
-    avatarInitial: 'HN',
-    packageName: 'VIP',
-    pricePaid: 999000,
-    startDate: '2026-09-27',
-    endDate: '2026-10-27',
-    transactionCode: 'TXN-98420',
-    status: 'Thành công',
-    daysRemaining: 29,
-  },
-  {
-    id: 'sub-3',
-    courtOwnerId: 'owner-3',
-    ownerName: 'Vũ Đức Huy',
-    businessName: 'D7 Pickleball Club',
-    avatarInitial: 'ĐH',
-    packageName: 'Pro',
-    pricePaid: 599000,
-    startDate: '2026-09-26',
-    endDate: '2026-10-26',
-    transactionCode: 'TXN-98419',
-    status: 'Thành công',
-    daysRemaining: 28,
-  },
-];
-
 export function RecentSubscriptionsTable({
-  items = DEFAULT_RECENT,
+  items = [],
 }: RecentSubscriptionsTableProps) {
   return (
     <div className="rounded-2xl border border-[#1a3828] bg-[#0f2218] p-5 md:p-6 flex flex-col justify-between shadow-md shadow-emerald-950/20">
@@ -87,7 +43,17 @@ export function RecentSubscriptionsTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#162e21]">
-            {items.map((item) => (
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="py-8 text-center text-xs text-zinc-500">
+                  <div className="flex flex-col items-center justify-center gap-1.5">
+                    <CreditCard className="size-5 text-zinc-600" />
+                    <span>Chưa có giao dịch thuê bao nào trong hệ thống</span>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              items.map((item) => (
               <tr
                 key={item.id}
                 className="hover:bg-[#142e20]/60 transition-colors group"
@@ -141,7 +107,7 @@ export function RecentSubscriptionsTable({
                   </div>
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>

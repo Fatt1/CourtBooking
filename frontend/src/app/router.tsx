@@ -47,6 +47,8 @@ import { OwnerDashboardPage } from '@/features/court-owners/pages/OwnerDashboard
 // Auth Pages
 import { UserLoginPage } from '@/features/auth/pages/UserLoginPage';
 import { UserRegisterPage } from '@/features/auth/pages/UserRegisterPage';
+import { UserForgotPasswordPage } from '@/features/auth/pages/UserForgotPasswordPage';
+import { UserResetPasswordPage } from '@/features/auth/pages/UserResetPasswordPage';
 import { AdminLoginPage } from '@/features/auth/pages/AdminLoginPage';
 
 export const router = createBrowserRouter([
@@ -82,6 +84,8 @@ export const router = createBrowserRouter([
     children: [
       { path: '/login', element: <UserLoginPage /> },
       { path: '/register', element: <UserRegisterPage /> },
+      { path: '/forgot-password', element: <UserForgotPasswordPage /> },
+      { path: '/reset-password', element: <UserResetPasswordPage /> },
     ],
   },
   // Cổng Đăng nhập Chủ sân & Quản trị

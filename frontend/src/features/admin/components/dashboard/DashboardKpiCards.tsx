@@ -14,11 +14,14 @@ export function DashboardKpiCards({
   isLoading = false,
   showComparison = true,
 }: DashboardKpiCardsProps) {
-  // Format doanh thu dạng 128.450.000 đ
+  // Format doanh thu thực tế
   const formattedRevenue = React.useMemo(() => {
-    if (!data.totalRevenue) return '128.450.000';
-    return Number(data.totalRevenue).toLocaleString('vi-VN');
-  }, [data.totalRevenue]);
+    return Number(data?.totalRevenue ?? 0).toLocaleString('vi-VN');
+  }, [data?.totalRevenue]);
+
+  const growth = Number(data?.growthPercentage ?? 0);
+  const ownersGrowth = Number(data?.activeOwnersGrowth ?? 0);
+  const renewalGrowth = Number(data?.renewalRateGrowth ?? 0);
 
   const cards = [
     {
@@ -26,39 +29,39 @@ export function DashboardKpiCards({
       title: 'Tổng doanh thu',
       value: formattedRevenue,
       suffix: 'đ',
-      change: `${data.growthPercentage ?? 18.6}%`,
+      change: `${growth >= 0 ? '+' : ''}${growth}%`,
       changeLabel: 'so với kỳ trước',
-      isPositive: true,
+      isPositive: growth >= 0,
       iconType: 'currency',
     },
     {
       id: 'subscriptions',
       title: 'Gói SaaS bán mới',
-      value: (data.totalSubscriptionsSold ?? 148).toLocaleString('vi-VN'),
+      value: Number(data?.totalSubscriptionsSold ?? 0).toLocaleString('vi-VN'),
       suffix: '',
-      change: '12,1%',
+      change: `${growth >= 0 ? '+' : ''}${growth}%`,
       changeLabel: 'so với kỳ trước',
-      isPositive: true,
+      isPositive: growth >= 0,
       iconType: 'package',
     },
     {
       id: 'active_owners',
       title: 'Chủ sân hoạt động',
-      value: (data.activeOwnersCount ?? 326).toLocaleString('vi-VN'),
+      value: Number(data?.activeOwnersCount ?? 0).toLocaleString('vi-VN'),
       suffix: '',
-      change: `${data.activeOwnersGrowth ?? 8.2}%`,
+      change: `${ownersGrowth >= 0 ? '+' : ''}${ownersGrowth}%`,
       changeLabel: 'so với kỳ trước',
-      isPositive: true,
+      isPositive: ownersGrowth >= 0,
       iconType: 'stadium',
     },
     {
       id: 'renewal_rate',
       title: 'Tỷ lệ gia hạn',
-      value: `${(data.renewalRate ?? 86.4).toString().replace('.', ',')}%`,
+      value: `${Number(data?.renewalRate ?? 0).toFixed(1).replace('.', ',')}%`,
       suffix: '',
-      change: `${data.renewalRateGrowth ?? 4.2}%`,
+      change: `${renewalGrowth >= 0 ? '+' : ''}${renewalGrowth}%`,
       changeLabel: 'so với kỳ trước',
-      isPositive: true,
+      isPositive: renewalGrowth >= 0,
       iconType: 'renewal',
     },
   ];

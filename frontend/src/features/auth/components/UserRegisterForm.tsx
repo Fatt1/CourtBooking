@@ -1,11 +1,19 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { userRegisterSchema, type UserRegisterValues } from '../schemas/userAuthSchema';
 import { useUserRegisterMutation } from '@/api/auth';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 
 export function UserRegisterForm() {
@@ -18,6 +26,7 @@ export function UserRegisterForm() {
       name: '',
       email: '',
       phoneNumber: '',
+      gender: 0,
       password: '',
       confirmPassword: '',
     },
@@ -25,10 +34,18 @@ export function UserRegisterForm() {
 
   const onSubmit = async (values: UserRegisterValues) => {
     try {
-      await register(values);
+      await register({
+        fullName: values.name,
+        email: values.email,
+        phoneNumber: values.phoneNumber,
+        password: values.password,
+        gender: Number(values.gender ?? 0),
+      });
+      toast.success('Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
       navigate('/login');
-    } catch {
-      // Handled
+    } catch (err: unknown) {
+      const error = err as { detail?: string; message?: string };
+      toast.error(error?.detail || error?.message || 'Đăng ký tài khoản thất bại. Vui lòng thử lại!');
     }
   };
 
@@ -63,19 +80,47 @@ export function UserRegisterForm() {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Số điện thoại</FormLabel>
-              <FormControl>
-                <Input placeholder="0912345678" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Số điện thoại</FormLabel>
+                <FormControl>
+                  <Input placeholder="0912345678" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Giới tính</FormLabel>
+                <Select
+                  value={String(field.value ?? 0)}
+                  onValueChange={(val) => field.onChange(Number(val))}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn giới tính" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="0">Nam</SelectItem>
+                    <SelectItem value="1">Nữ</SelectItem>
+                    <SelectItem value="2">Khác</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}

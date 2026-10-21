@@ -30,12 +30,22 @@ export interface UserLoginRequest {
 }
 
 export interface UserRegisterRequest {
-  name?: string;
-  fullName?: string;
+  fullName: string;
   email: string;
   password: string;
   phoneNumber?: string;
-  confirmPassword?: string;
+  gender?: number; // 0 = Male, 1 = Female, 2 = Other
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+  clientResetUrl?: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  newPassword: string;
 }
 
 export interface UserAuthResponse {
