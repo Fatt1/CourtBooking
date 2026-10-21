@@ -35,7 +35,7 @@ export function parseDateOnly(dateStr?: string | null): Date | null {
 /**
  * Lấy số ngày (2 chữ số, ví dụ "10", "25")
  */
-export function getDayNumber(dateStr?: string | null, fallback = '25'): string {
+export function getDayNumber(dateStr?: string | null, fallback = '--'): string {
   const d = parseDateOnly(dateStr);
   if (!d) return fallback;
   return d.getDate().toString().padStart(2, '0');
@@ -44,7 +44,7 @@ export function getDayNumber(dateStr?: string | null, fallback = '25'): string {
 /**
  * Lấy tháng (ví dụ "THÁNG 10")
  */
-export function getMonthText(dateStr?: string | null, fallback = 'THÁNG 10'): string {
+export function getMonthText(dateStr?: string | null, fallback = '--'): string {
   const d = parseDateOnly(dateStr);
   if (!d) return fallback;
   return `THÁNG ${d.getMonth() + 1}`;
@@ -53,7 +53,7 @@ export function getMonthText(dateStr?: string | null, fallback = 'THÁNG 10'): s
 /**
  * Lấy tên thứ và ngày tháng: ví dụ "Thứ Bảy, 25/10/2026"
  */
-export function getFullDateText(dateStr?: string | null, fallback = 'Thứ Bảy, 25/10/2026'): string {
+export function getFullDateText(dateStr?: string | null, fallback = '--'): string {
   const d = parseDateOnly(dateStr);
   if (!d) return fallback;
   const dayName = dayNamesVi[d.getDay()];
@@ -66,7 +66,7 @@ export function getFullDateText(dateStr?: string | null, fallback = 'Thứ Bảy
 /**
  * Rút gọn chuỗi giờ (08:00:00 -> 08:00)
  */
-export function formatTimeStr(timeStr?: string | null, fallback = '08:00'): string {
+export function formatTimeStr(timeStr?: string | null, fallback = '--:--'): string {
   if (!timeStr) return fallback;
   const parts = timeStr.trim().split(':');
   if (parts.length >= 2) {
@@ -81,11 +81,11 @@ export function formatTimeStr(timeStr?: string | null, fallback = '08:00'): stri
 export function getTimeRangeText(
   startStr?: string | null,
   endStr?: string | null,
-  fallback = '08:00 - 12:00'
+  fallback = '--:--'
 ): string {
   if (!startStr && !endStr) return fallback;
-  const s = formatTimeStr(startStr, '08:00');
-  const e = formatTimeStr(endStr, '12:00');
+  const s = formatTimeStr(startStr, '--:--');
+  const e = formatTimeStr(endStr, '--:--');
   return `${s} - ${e}`;
 }
 
@@ -97,10 +97,14 @@ export function getCardTimeText(
   dateStr?: string | null,
   startStr?: string | null,
   endStr?: string | null,
-  fallback = '08:00 - 12:00 · Thứ Bảy, 25/10/2026'
+  fallback = '--'
 ): string {
-  const timeRange = getTimeRangeText(startStr, endStr, '08:00 - 12:00');
-  const dateText = getFullDateText(dateStr, 'Thứ Bảy, 25/10/2026');
+  if (!dateStr && !startStr && !endStr) return fallback;
+  const timeRange = getTimeRangeText(startStr, endStr, '');
+  const dateText = getFullDateText(dateStr, '');
+  if (!timeRange && !dateText) return fallback;
+  if (!timeRange) return dateText;
+  if (!dateText) return timeRange;
   return `${timeRange} · ${dateText}`;
 }
 

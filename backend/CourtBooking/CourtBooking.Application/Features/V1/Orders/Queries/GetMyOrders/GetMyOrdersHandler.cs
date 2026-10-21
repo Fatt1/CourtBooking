@@ -1,5 +1,6 @@
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Data;
+using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Messaging;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
@@ -9,56 +10,70 @@ namespace CourtBooking.Application.Features.V1.Orders.Queries.GetMyOrders;
 
 public sealed class GetMyOrdersHandler(
     IApplicationDbContext dbContext,
-    IUserContext userContext) : IQueryHandler<GetMyOrdersQuery, List<MyOrderDto>>
+    IUserContext userContext) : IQueryHandler<GetMyOrdersQuery, PagedList<MyOrderDto>>
 {
-    public async Task<Result<List<MyOrderDto>>> Handle(
+    public async Task<Result<PagedList<MyOrderDto>>> Handle(
         GetMyOrdersQuery request,
         CancellationToken cancellationToken)
     {
         var currentUserId = userContext.UserId;
 
         var query = dbContext.Orders
+            .AsSplitQuery()
             .AsNoTracking()
             .Include(o => o.Branch)
                 .ThenInclude(b => b.BranchSportTypes)
                     .ThenInclude(bst => bst.SportType)
+            .Include(o => o.Branch)
+                .ThenInclude(b => b.QrImage)
             .Include(o => o.Details)
                 .ThenInclude(d => d.Court)
             .Include(o => o.SocialMatch)
+            .Include(o => o.Reviews)
             .Where(o => o.PlayerId == currentUserId);
+
+        // Lọc theo trạng thái đơn hàng nếu được cung cấp
+        if (request.Status.HasValue)
+        {
+            query = query.Where(o => o.Status == request.Status.Value);
+        }
+
+
+        var totalCount = await query.CountAsync(cancellationToken);
 
         var orders = await query
             .OrderByDescending(o => o.CreatedAt)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
             .ToListAsync(cancellationToken);
 
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
-        var result = orders.Select(o =>
+        var resultDtos = orders.Select(o =>
         {
             var firstDetail = o.Details
                 .OrderBy(d => d.Date)
                 .ThenBy(d => d.StartTime)
                 .FirstOrDefault();
 
-            var date = firstDetail?.Date ?? o.OrderDate;
-            var startTime = firstDetail?.StartTime ?? new TimeOnly(0, 0);
-            var endTime = firstDetail?.EndTime ?? new TimeOnly(23, 59);
-            var courtName = firstDetail?.Court?.Name ?? "Sân chính";
+            var date = firstDetail!.Date;
+            var startTime = firstDetail.StartTime;
+            var endTime = firstDetail.EndTime;
+            var courtName = firstDetail.Court.Name;
 
             var sportType = o.Branch.BranchSportTypes.FirstOrDefault()?.SportType;
 
             var matchStartTime = date.ToDateTime(startTime);
             var hasSocialMatch = o.SocialMatch != null;
-            var canCreateMatch = o.Status == OrderStatus.Confirmed && !hasSocialMatch && matchStartTime > now;
+            var canCreateMatch = o.Status == OrderStatus.Confirmed && !hasSocialMatch && matchStartTime > DateTime.Now;
+            var canPay = o.Status == OrderStatus.AwaitingPayment && o.HoldExpiresAt > now;
 
             return new MyOrderDto(
                 o.Id,
                 o.OrderCode,
                 o.BranchId,
                 o.Branch.Name,
-                $"{o.Branch.Street}, {o.Branch.District}, {o.Branch.Province}",
-                o.Branch.District,
-                o.Branch.Province,
+                o.Branch.GetFullAddress(),
                 courtName,
                 sportType?.Id,
                 sportType?.Name,
@@ -69,14 +84,20 @@ public sealed class GetMyOrdersHandler(
                 o.Status,
                 hasSocialMatch,
                 o.SocialMatch?.Id,
-                canCreateMatch);
-        });
+                canCreateMatch,
+                o.HoldExpiresAt,
+                canPay,
+                o.Branch.AccountNumber,
+                o.Branch.AccountName,
+                o.Branch.QrImage?.StorageKey,
+                o.Reviews.Any(),
+                o.CreatedAt);
+        }).ToList();
 
-        if (request.OnlyAvailableForMatch == true)
-        {
-            result = result.Where(x => x.CanCreateMatch);
-        }
-
-        return Result<List<MyOrderDto>>.Success(result.ToList());
+        return Result<PagedList<MyOrderDto>>.Success(new PagedList<MyOrderDto>(
+            resultDtos,
+            totalCount,
+            request.Page,
+            request.PageSize));
     }
 }

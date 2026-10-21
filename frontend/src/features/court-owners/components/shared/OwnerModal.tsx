@@ -20,6 +20,7 @@ export interface OwnerModalProps {
   submitText?: string;
   cancelText?: string;
   isSubmitting?: boolean;
+  submitDisabled?: boolean;
   maxWidth?: string;
   className?: string;
   bodyClassName?: string;
@@ -43,6 +44,7 @@ export function OwnerModal({
   submitText = 'Lưu danh mục',
   cancelText = 'Hủy',
   isSubmitting = false,
+  submitDisabled = false,
   maxWidth = 'max-w-md',
   className,
   bodyClassName,
@@ -104,8 +106,8 @@ export function OwnerModal({
               <button
                 type="button"
                 onClick={onSubmit}
-                disabled={isSubmitting}
-                className="h-11 rounded-xl bg-[#a3e635] px-6 text-sm font-bold text-black hover:bg-[#8ece28] shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                disabled={isSubmitting || submitDisabled}
+                className="h-11 rounded-xl bg-[#a3e635] px-6 text-sm font-bold text-black hover:bg-[#8ece28] shadow-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Đang lưu...' : submitText}
               </button>

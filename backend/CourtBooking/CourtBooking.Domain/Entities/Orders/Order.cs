@@ -185,6 +185,10 @@ public class Order : EntityBase<Guid>, IAuditable
         {
             throw new DomainException("Chỉ đơn hàng đã được xác nhận mới có thể hoàn thành.");
         }
+        if (CalculateRemainingAmount() > 0)
+        {
+            throw new DomainException("Đơn hàng còn thiếu tiền chưa thanh toán đủ, không thể hoàn thành.");
+        }
         Status = OrderStatus.Completed;
     }
 

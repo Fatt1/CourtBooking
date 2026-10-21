@@ -912,7 +912,6 @@ public static class DatabaseSeeder
             ApprovalMode = 0,
             SkillLevel = "Trình độ B-C",
             Description = "Giao lưu cầu lông phong trào tối thứ 4, vui vẻ rèn luyện sức khỏe, có nước uống miễn phí.",
-            Status = SocialMatchStatus.Open,
             CreatedAt = DateTime.UtcNow
         };
 

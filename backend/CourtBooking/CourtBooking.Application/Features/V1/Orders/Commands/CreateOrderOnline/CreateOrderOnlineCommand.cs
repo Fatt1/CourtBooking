@@ -24,4 +24,6 @@ public sealed record CreateOrderOnlineResponse(
     Guid OrderId,
     string OrderCode,
     decimal TotalAmount,
-    DateTime HoldExpiresAt);
+    DateTime HoldExpiresAt,
+    string? AccountNumber = null,
+    string? AccountName = null);

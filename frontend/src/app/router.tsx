@@ -11,6 +11,7 @@ import { ProtectedRoute, OwnerProtectedRoute } from '@/components/layouts/Protec
 import { HomePage } from '@/features/customer/pages/HomePage';
 import { CourtsPage as CustomerCourtsPage } from '@/features/customer/pages/CourtsPage';
 import { BranchDetailPage } from '@/features/customer/pages/BranchDetailPage';
+import { BranchCheckoutPage } from '@/features/customer/pages/BranchCheckoutPage';
 import { CreateReviewPage } from '@/features/customer/pages/CreateReviewPage';
 import { EventsPage } from '@/features/events/pages/EventsPage';
 import { EventDetailPage } from '@/features/events/pages/EventDetailPage';
@@ -18,8 +19,7 @@ import { EventCheckoutPage } from '@/features/events/pages/EventCheckoutPage';
 import { EventSuccessPage } from '@/features/events/pages/EventSuccessPage';
 import { MatchesPage } from '@/features/matches/pages/MatchesPage';
 import { MatchDetailPage } from '@/features/matches/pages/MatchDetailPage';
-import { CreateMatchPage } from '@/features/matches/pages/CreateMatchPage';
-import { EditMatchPage } from '@/features/matches/pages/EditMatchPage';
+import { AccountBookingsPage } from '@/features/customer/pages/AccountBookingsPage';
 
 
 // Admin Pages
@@ -64,9 +64,9 @@ export const router = createBrowserRouter([
       { path: '/courts', element: <CustomerCourtsPage /> },
       // Kèo giao lưu thể thao (Matchday Social Matches)
       { path: '/matches', element: <MatchesPage /> },
-      { path: '/matches/create', element: <CreateMatchPage /> },
+      { path: '/matches/create', element: <Navigate to="/account?tab=orders" replace /> },
       { path: '/matches/:id', element: <MatchDetailPage /> },
-      { path: '/matches/:id/edit', element: <EditMatchPage /> },
+      { path: '/matches/:id/edit', element: <Navigate to="/account?tab=orders" replace /> },
       // Sự kiện thể thao (Matchday Events)
       { path: '/events', element: <EventsPage /> },
       { path: '/events/:id', element: <EventDetailPage /> },
@@ -74,7 +74,13 @@ export const router = createBrowserRouter([
       { path: '/events/:id/success', element: <EventSuccessPage /> },
       { path: '/ai-assistant', element: <HomePage /> },
       { path: '/branches/:id', element: <BranchDetailPage /> },
+      { path: '/branches/:id/checkout', element: <BranchCheckoutPage /> },
       { path: '/courts/:id', element: <BranchDetailPage /> },
+      { path: '/courts/:id/checkout', element: <BranchCheckoutPage /> },
+      // Tài khoản & Lịch đặt sân của người chơi
+      { path: '/account', element: <AccountBookingsPage /> },
+      { path: '/account/orders', element: <AccountBookingsPage /> },
+      { path: '/my-bookings', element: <AccountBookingsPage /> },
     ],
   },
 

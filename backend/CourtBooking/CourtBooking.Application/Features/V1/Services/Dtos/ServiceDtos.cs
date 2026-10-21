@@ -14,6 +14,18 @@ public sealed record ServiceByBranchDto(
     DateTime CreatedAt,
     DateTime UpdatedAt);
 
+public sealed record BranchServiceItemDto(
+    Guid Id,
+    string Name,
+    string Unit,
+    decimal Price,
+    ImageDto? Image,
+    bool IsActive);
+
+public sealed record BranchCategoryServicesDto(
+    Guid CategoryId,
+    string CategoryName,
+    IReadOnlyList<BranchServiceItemDto> Services);
 
 public sealed record ServiceBranchItemDto(
     Guid BranchId,

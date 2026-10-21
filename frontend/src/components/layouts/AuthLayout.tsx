@@ -3,7 +3,7 @@ import { Dumbbell } from 'lucide-react';
 
 export function AuthLayout() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 p-4 sm:p-6 lg:p-8">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/30 p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2 font-black text-2xl text-primary">

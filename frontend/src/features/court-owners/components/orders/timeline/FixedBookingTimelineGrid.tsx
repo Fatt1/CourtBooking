@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import type { CourtTypePricingConfigDto, FixedTimeBlockDto } from '@/api/pricing';
 import type { DayOfWeekScheduleDto, OccupiedSlotDetailDto } from '@/api/branches';
 import { TimelineSlotStatus } from '@/api/branches';
-import { timeToMinutes, minutesToTimeString } from './pricingCalculator';
+import { timeToMinutes, minutesToTimeString, calculateSlotPrice, formatPrice } from './pricingCalculator';
 
 export interface CourtItem {
   courtId: string;
@@ -53,6 +53,7 @@ export interface FixedBookingTimelineGridProps {
   onConflictClick?: (conflict: OccupiedSlotDetailDto, courtName: string, dayLabel: string) => void;
   isLoading?: boolean;
   excludeOrderCode?: string;
+  selectedPriceTableId?: string;
 }
 
 const DAYS_OF_WEEK_MAP: { [key: number]: number } = {
@@ -82,7 +83,17 @@ export function FixedBookingTimelineGrid({
   onSelectSlot,
   onConflictClick,
   isLoading,
+  selectedPriceTableId,
 }: FixedBookingTimelineGridProps) {
+  // Lấy bảng giá đang áp dụng
+  const activePriceTable = useMemo(() => {
+    if (!courtTypeConfig?.priceTables || courtTypeConfig.priceTables.length === 0) return undefined;
+    if (selectedPriceTableId) {
+      return courtTypeConfig.priceTables.find((pt) => pt.id === selectedPriceTableId);
+    }
+    return courtTypeConfig.priceTables[0];
+  }, [courtTypeConfig, selectedPriceTableId]);
+
   // 1. Tính toán giờ mở - đóng cửa theo chi nhánh
   const openMinutes = useMemo(() => timeToMinutes(branchOpenTime) || 360, [branchOpenTime]);
   const closeMinutes = useMemo(() => {
@@ -186,10 +197,11 @@ export function FixedBookingTimelineGrid({
           {/* Khung giờ Block cố định */}
           {courtTypeConfig?.fixedTimeBlocks && courtTypeConfig.fixedTimeBlocks.length > 0 && (
             <div className="flex items-center gap-2">
-              <div className="px-1.5 py-0.5 rounded bg-card border border-border/60 text-emerald-700 dark:text-[#a3e635]/80 text-[10px] font-semibold">
-                block
+              <div className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-[#a3e635] text-[10px] font-semibold flex items-center gap-1">
+                <Sparkles className="size-2.5 text-emerald-500" />
+                <span>Khung cố định</span>
               </div>
-              <span className="text-muted-foreground">Khung giờ bắt buộc</span>
+              <span className="text-muted-foreground">Khung giờ bắt buộc (gộp ca)</span>
             </div>
           )}
 
@@ -315,165 +327,383 @@ export function FixedBookingTimelineGrid({
                       </td>
 
                       {/* Cột 3+: Các ô thời gian */}
-                      {timeColumns.map((col, colIdx) => {
-                        const startTimeStr = col.label;
-                        const endTimeStr = minutesToTimeString(col.endMin);
+                      {(() => {
+                        const courtFixedBlocks = (courtTypeConfig?.fixedTimeBlocks || []).filter((ftb) => {
+                          const appliesToCourt =
+                            !ftb.appliedCourts ||
+                            ftb.appliedCourts.length === 0 ||
+                            ftb.appliedCourts.some((ac) => ac.courtId === court.courtId);
+                          const appliesToDay =
+                            !ftb.daysOfWeek ||
+                            ftb.daysOfWeek.length === 0 ||
+                            ftb.daysOfWeek.includes(day.dayOfWeek);
 
-                        // 0. Kiểm tra xem ô này có thuộc chu kỳ đã tạo trước đó trong đơn này không
-                        let matchingExistingCycle: { cycle: DraftCycleInfo; cycleIndex: number } | undefined;
-                        if (existingCycles && existingCycles.length > 0) {
-                          const dayMask = DAYS_OF_WEEK_MAP[day.dayOfWeek] || 0;
-                          for (let cIdx = 0; cIdx < existingCycles.length; cIdx++) {
-                            const cyc = existingCycles[cIdx];
-                            if (!cyc.courtIds.includes(court.courtId)) continue;
-                            if ((cyc.daysOfWeekMask & dayMask) === 0) continue;
-
-                            const cStart = timeToMinutes(cyc.startTime);
-                            const cEnd = timeToMinutes(cyc.endTime);
-                            if (Math.max(col.startMin, cStart) < Math.min(col.endMin, cEnd)) {
-                              matchingExistingCycle = { cycle: cyc, cycleIndex: cIdx };
-                              break;
-                            }
-                          }
-                        }
-                        const isExistingCycle = !!matchingExistingCycle;
-
-                        // 1. Kiểm tra xem ô này có bị trùng với slot đã đặt/khóa/sự kiện nào không
-                        const conflicts = occupiedSlots.filter((occ) => {
-                          if (occ.courtId !== court.courtId) return false;
-                          if (excludeOrderCode) {
-                            const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
-                            const cleanCurrent = occ.orderCode?.replace(/^#/, '').trim().toLowerCase();
-                            if (cleanTarget === cleanCurrent) return false;
-                          }
-                          const occStart = timeToMinutes(occ.startTime);
-                          const occEnd = timeToMinutes(occ.endTime);
-                          return Math.max(col.startMin, occStart) < Math.min(col.endMin, occEnd);
+                          return appliesToCourt && appliesToDay;
                         });
 
-                        const isOccupied = conflicts.length > 0;
-                        const isEvent = conflicts.some(
-                          (c) => c.status === TimelineSlotStatus.Event
-                        );
-                        const isLocked = conflicts.some(
-                          (c) => c.status === TimelineSlotStatus.Locked
-                        );
-                        const isBooked = isOccupied && !isEvent && !isLocked;
+                        return timeColumns.map((col, colIdx) => {
+                          const startTimeStr = col.label;
+                          const endTimeStr = minutesToTimeString(col.endMin);
 
-                        // 2. Kiểm tra khung giờ blocktime bắt buộc (FixedTimeBlock) của ngày này
-                        let matchingBlock: FixedTimeBlockDto | undefined;
-                        if (courtTypeConfig?.fixedTimeBlocks && courtTypeConfig.fixedTimeBlocks.length > 0) {
-                          matchingBlock = courtTypeConfig.fixedTimeBlocks.find((ftb) => {
-                            const appliesToCourt =
-                              !ftb.appliedCourts ||
-                              ftb.appliedCourts.length === 0 ||
-                              ftb.appliedCourts.some((ac) => ac.courtId === court.courtId);
-                            const appliesToDay =
-                              !ftb.daysOfWeek ||
-                              ftb.daysOfWeek.length === 0 ||
-                              ftb.daysOfWeek.includes(day.dayOfWeek);
-
-                            if (!appliesToCourt || !appliesToDay) return false;
-
+                          // Kiểm tra xem ô này có thuộc FixedTimeBlock nào không
+                          const matchingBlock = courtFixedBlocks.find((ftb) => {
                             const bStart = timeToMinutes(ftb.startTime);
                             const bEnd = timeToMinutes(ftb.endTime);
                             return col.startMin >= bStart && col.endMin <= bEnd;
                           });
-                        }
 
-                        // 3. Kiểm tra xem ô này có nằm trong khoảng thời gian đang được chọn không
-                        const isSelected =
-                          isCourtSelected &&
-                          selectedStartMin >= 0 &&
-                          selectedEndMin > 0 &&
-                          col.startMin >= selectedStartMin &&
-                          col.endMin <= selectedEndMin;
+                          let blockColsCount = 1;
+                          let isBlockLeader = false;
+                          let isBlockFollower = false;
+                          let blockCols: typeof timeColumns = [];
 
-                        // Xử lý styling màu ô
-                        let cellBg = 'bg-muted/40 hover:bg-muted cursor-pointer';
-                        if (isSelected) {
-                          cellBg =
-                            'bg-emerald-700/80 border-emerald-500 text-white cursor-pointer shadow-inner';
-                        } else if (isExistingCycle) {
-                          cellBg =
-                            'bg-sky-950/70 border border-sky-500/50 text-sky-200 cursor-not-allowed';
-                        } else if (isEvent) {
-                          cellBg = 'bg-purple-900/60 cursor-not-allowed';
-                        } else if (isLocked) {
-                          cellBg = 'bg-muted/60 cursor-not-allowed';
-                        } else if (isBooked) {
-                          cellBg = 'bg-muted/80 cursor-not-allowed';
-                        } else if (matchingBlock) {
-                          cellBg = 'bg-card hover:bg-muted cursor-pointer';
-                        }
+                          if (matchingBlock) {
+                            const bStart = timeToMinutes(matchingBlock.startTime);
+                            const bEnd = timeToMinutes(matchingBlock.endTime);
+                            blockCols = timeColumns.filter(
+                              (c) => c.startMin >= bStart && c.endMin <= bEnd
+                            );
 
-                        return (
-                          <td
-                            key={colIdx}
-                            className="p-0 border-r border-border/25 last:border-r-0"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (isExistingCycle && matchingExistingCycle) {
-                                  toast.warning(
-                                    `Ô này đã được chọn ở Chu kỳ #${matchingExistingCycle.cycleIndex + 1}: ${
-                                      matchingExistingCycle.cycle.daysOfWeekLabels?.join(', ') || ''
-                                    } (${matchingExistingCycle.cycle.startTime.slice(0, 5)} - ${matchingExistingCycle.cycle.endTime.slice(0, 5)}). Không thể chọn trùng!`
-                                  );
-                                  return;
-                                }
-                                if (isOccupied && onConflictClick) {
-                                  onConflictClick(conflicts[0], court.courtName, day.label);
-                                  return;
-                                }
-                                onSelectSlot(court.courtId, startTimeStr, endTimeStr, matchingBlock);
-                              }}
-                              title={
-                                isSelected
-                                  ? `Đang chọn: ${startTimeStr} - ${endTimeStr}`
-                                  : isExistingCycle && matchingExistingCycle
-                                  ? `Đã chọn ở Chu kỳ #${matchingExistingCycle.cycleIndex + 1}: ${
-                                      matchingExistingCycle.cycle.daysOfWeekLabels?.join(', ') || ''
-                                    } (${matchingExistingCycle.cycle.startTime.slice(0, 5)} - ${matchingExistingCycle.cycle.endTime.slice(0, 5)})`
-                                  : isOccupied
-                                  ? `Đã có lịch trong tháng: ${conflicts
-                                      .map(
-                                        (c) => `${c.date} (${c.customerName || 'Khách đặt'})`
-                                      )
-                                      .join(', ')}`
-                                  : matchingBlock
-                                  ? `Khung giờ bắt buộc: ${matchingBlock.startTime.slice(
-                                      0,
-                                      5
-                                    )} - ${matchingBlock.endTime.slice(0, 5)}`
-                                  : `Trống: ${day.label} • ${court.courtName} (${col.fullLabel})`
+                            if (blockCols.length > 1) {
+                              if (col.startMin === blockCols[0].startMin) {
+                                isBlockLeader = true;
+                                blockColsCount = blockCols.length;
+                              } else {
+                                isBlockFollower = true;
                               }
-                              className={`w-full min-h-[44px] p-1 flex flex-col items-center justify-center transition-all cursor-pointer relative text-[10px] ${cellBg}`}
+                            }
+                          }
+
+                          if (isBlockFollower) {
+                            return null;
+                          }
+
+                          // ==========================================================
+                          // TRƯỜNG HỢP 1: GỘP KHUNG GIỜ CỐ ĐỊNH (FIXED TIME BLOCK)
+                          // ==========================================================
+                          if (matchingBlock && isBlockLeader) {
+                            const bStartMin = timeToMinutes(matchingBlock.startTime);
+                            const bEndMin = timeToMinutes(matchingBlock.endTime);
+                            const blockStartStr = matchingBlock.startTime.slice(0, 5);
+                            const blockEndStr = matchingBlock.endTime.slice(0, 5);
+
+                            // Kiểm tra chu kỳ trước
+                            let matchingExistingCycle: { cycle: DraftCycleInfo; cycleIndex: number } | undefined;
+                            if (existingCycles && existingCycles.length > 0) {
+                              const dayMask = DAYS_OF_WEEK_MAP[day.dayOfWeek] || 0;
+                              for (let cIdx = 0; cIdx < existingCycles.length; cIdx++) {
+                                const cyc = existingCycles[cIdx];
+                                if (!cyc.courtIds.includes(court.courtId)) continue;
+                                if ((cyc.daysOfWeekMask & dayMask) === 0) continue;
+
+                                const cStart = timeToMinutes(cyc.startTime);
+                                const cEnd = timeToMinutes(cyc.endTime);
+                                if (Math.max(bStartMin, cStart) < Math.min(bEndMin, cEnd)) {
+                                  matchingExistingCycle = { cycle: cyc, cycleIndex: cIdx };
+                                  break;
+                                }
+                              }
+                            }
+                            const isExistingCycle = !!matchingExistingCycle;
+
+                            // Kiểm tra xung đột với occupiedSlots
+                            const conflicts = occupiedSlots.filter((occ) => {
+                              if (occ.courtId !== court.courtId) return false;
+                              if (excludeOrderCode) {
+                                const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
+                                const cleanCurrent = occ.orderCode?.replace(/^#/, '').trim().toLowerCase();
+                                if (cleanTarget === cleanCurrent) return false;
+                              }
+                              const occStart = timeToMinutes(occ.startTime);
+                              const occEnd = timeToMinutes(occ.endTime);
+                              return Math.max(bStartMin, occStart) < Math.min(bEndMin, occEnd);
+                            });
+
+                            const isOccupied = conflicts.length > 0;
+                            const isEvent = conflicts.some(
+                              (c) => c.status === TimelineSlotStatus.Event
+                            );
+                            const isLocked = conflicts.some(
+                              (c) => c.status === TimelineSlotStatus.Locked
+                            );
+                            const isBooked = isOccupied && !isEvent && !isLocked;
+
+                            // Kiểm tra đang chọn
+                            const isBlockSelected =
+                              isCourtSelected &&
+                              selectedStartMin >= 0 &&
+                              selectedEndMin > 0 &&
+                              selectedStartMin <= bStartMin &&
+                              selectedEndMin >= bEndMin;
+
+                            // Tính tổng giá cho toàn bộ khung giờ cố định
+                            let totalBlockPrice = 0;
+                            for (const bc of blockCols) {
+                              totalBlockPrice += calculateSlotPrice(
+                                day.dayOfWeek,
+                                bc.label,
+                                minutesToTimeString(bc.endMin),
+                                activePriceTable,
+                                true
+                              );
+                            }
+
+                            let blockBg = 'bg-emerald-950/20 hover:bg-emerald-900/30 cursor-pointer';
+                            if (isBlockSelected) {
+                              blockBg =
+                                'bg-emerald-700/90 border-emerald-500 text-white cursor-pointer shadow-inner';
+                            } else if (isExistingCycle) {
+                              blockBg =
+                                'bg-sky-950/70 border border-sky-500/50 text-sky-200 cursor-not-allowed';
+                            } else if (isEvent) {
+                              blockBg = 'bg-purple-900/60 cursor-not-allowed';
+                            } else if (isLocked) {
+                              blockBg = 'bg-muted/60 cursor-not-allowed';
+                            } else if (isBooked) {
+                              blockBg = 'bg-muted/80 cursor-not-allowed';
+                            }
+
+                            return (
+                              <td
+                                key={`block-${matchingBlock.id}-${colIdx}`}
+                                colSpan={blockColsCount}
+                                className="p-0 border-r border-border/25 last:border-r-0 relative group"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (isExistingCycle && matchingExistingCycle) {
+                                      toast.warning(
+                                        `Khung giờ này đã được chọn ở Chu kỳ #${
+                                          matchingExistingCycle.cycleIndex + 1
+                                        }: ${
+                                          matchingExistingCycle.cycle.daysOfWeekLabels?.join(', ') || ''
+                                        } (${matchingExistingCycle.cycle.startTime.slice(
+                                          0,
+                                          5
+                                        )} - ${matchingExistingCycle.cycle.endTime.slice(
+                                          0,
+                                          5
+                                        )}). Không thể chọn trùng!`
+                                      );
+                                      return;
+                                    }
+                                    if (isOccupied && onConflictClick) {
+                                      onConflictClick(conflicts[0], court.courtName, day.label);
+                                      return;
+                                    }
+                                    onSelectSlot(court.courtId, blockStartStr, blockEndStr, matchingBlock);
+                                  }}
+                                  title={
+                                    isBlockSelected
+                                      ? `Đang chọn: ${blockStartStr} - ${blockEndStr} • Giá: ${formatPrice(
+                                          totalBlockPrice
+                                        )} (Nhấp để bỏ chọn)`
+                                      : isExistingCycle && matchingExistingCycle
+                                      ? `Đã chọn ở Chu kỳ #${matchingExistingCycle.cycleIndex + 1}: ${
+                                          matchingExistingCycle.cycle.daysOfWeekLabels?.join(', ') || ''
+                                        } (${matchingExistingCycle.cycle.startTime.slice(
+                                          0,
+                                          5
+                                        )} - ${matchingExistingCycle.cycle.endTime.slice(0, 5)})`
+                                      : isOccupied
+                                      ? `Đã có lịch trong tháng: ${conflicts
+                                          .map((c) => `${c.date} (${c.customerName || 'Khách đặt'})`)
+                                          .join(', ')}`
+                                      : `Khung giờ bắt buộc: ${blockStartStr} - ${blockEndStr} • Giá: ${formatPrice(
+                                          totalBlockPrice
+                                        )} (Nhấp để chọn cả ${blockColsCount} ô)`
+                                  }
+                                  className={`w-full min-h-[44px] p-1 flex flex-col items-center justify-center transition-all cursor-pointer relative text-[10px] ${blockBg}`}
+                                >
+                                  <div className="size-full flex items-center justify-center">
+                                    {isBlockSelected ? (
+                                      <div className="w-full h-8 px-2 rounded-lg bg-white/20 border border-white/40 flex items-center justify-between gap-1 text-[11px] text-white shadow-xs">
+                                        <span className="font-bold flex items-center gap-1.5 truncate">
+                                          <Check className="size-3.5 stroke-[3] text-white" />
+                                          <span>
+                                            {blockStartStr} - {blockEndStr}
+                                          </span>
+                                        </span>
+                                        <span className="font-mono font-bold text-[10px] bg-black/30 px-1.5 py-0.5 rounded text-white shrink-0">
+                                          {formatPrice(totalBlockPrice)}
+                                        </span>
+                                      </div>
+                                    ) : isExistingCycle && matchingExistingCycle ? (
+                                      <span className="text-[9px] font-extrabold text-sky-700 dark:text-sky-300 bg-sky-900/80 px-1 py-0.5 rounded border border-sky-400/60 select-none shadow-xs">
+                                        CK#{matchingExistingCycle.cycleIndex + 1}
+                                      </span>
+                                    ) : isEvent ? (
+                                      <div className="flex items-center gap-1 text-[10px] text-purple-300">
+                                        <Sparkles className="size-3" />
+                                        <span className="truncate">Sự kiện</span>
+                                      </div>
+                                    ) : isLocked ? (
+                                      <div className="flex items-center gap-1 text-[10px] text-amber-400">
+                                        <Lock className="size-3" />
+                                        <span>Khóa</span>
+                                      </div>
+                                    ) : isBooked ? (
+                                      <span className="text-[10px] text-muted-foreground font-semibold truncate">
+                                        Đã đặt • {blockStartStr} - {blockEndStr}
+                                      </span>
+                                    ) : (
+                                      <div className="w-full h-8 px-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/35 hover:border-emerald-500/60 flex items-center justify-between gap-1 text-[11px] text-emerald-700 dark:text-[#a3e635] transition-all shadow-xs">
+                                        <span className="font-semibold flex items-center gap-1.5 truncate text-[10px] sm:text-[11px]">
+                                          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                                          <span>Khung cố định</span>
+                                        </span>
+                                        <span className="font-mono font-bold text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-800 dark:text-[#a3e635] shrink-0">
+                                          {formatPrice(totalBlockPrice)}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </button>
+                              </td>
+                            );
+                          }
+
+                          // ==========================================================
+                          // TRƯỜNG HỢP 2: Ô ĐƠN LẺ TIÊU CHUẨN
+                          // ==========================================================
+
+                          // 0. Kiểm tra chu kỳ trước
+                          let matchingExistingCycle: { cycle: DraftCycleInfo; cycleIndex: number } | undefined;
+                          if (existingCycles && existingCycles.length > 0) {
+                            const dayMask = DAYS_OF_WEEK_MAP[day.dayOfWeek] || 0;
+                            for (let cIdx = 0; cIdx < existingCycles.length; cIdx++) {
+                              const cyc = existingCycles[cIdx];
+                              if (!cyc.courtIds.includes(court.courtId)) continue;
+                              if ((cyc.daysOfWeekMask & dayMask) === 0) continue;
+
+                              const cStart = timeToMinutes(cyc.startTime);
+                              const cEnd = timeToMinutes(cyc.endTime);
+                              if (Math.max(col.startMin, cStart) < Math.min(col.endMin, cEnd)) {
+                                matchingExistingCycle = { cycle: cyc, cycleIndex: cIdx };
+                                break;
+                              }
+                            }
+                          }
+                          const isExistingCycle = !!matchingExistingCycle;
+
+                          // 1. Kiểm tra xem ô này có bị trùng với slot đã đặt/khóa/sự kiện nào không
+                          const conflicts = occupiedSlots.filter((occ) => {
+                            if (occ.courtId !== court.courtId) return false;
+                            if (excludeOrderCode) {
+                              const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
+                              const cleanCurrent = occ.orderCode?.replace(/^#/, '').trim().toLowerCase();
+                              if (cleanTarget === cleanCurrent) return false;
+                            }
+                            const occStart = timeToMinutes(occ.startTime);
+                            const occEnd = timeToMinutes(occ.endTime);
+                            return Math.max(col.startMin, occStart) < Math.min(col.endMin, occEnd);
+                          });
+
+                          const isOccupied = conflicts.length > 0;
+                          const isEvent = conflicts.some(
+                            (c) => c.status === TimelineSlotStatus.Event
+                          );
+                          const isLocked = conflicts.some(
+                            (c) => c.status === TimelineSlotStatus.Locked
+                          );
+                          const isBooked = isOccupied && !isEvent && !isLocked;
+
+                          // 3. Kiểm tra xem ô này có nằm trong khoảng thời gian đang được chọn không
+                          const isSelected =
+                            isCourtSelected &&
+                            selectedStartMin >= 0 &&
+                            selectedEndMin > 0 &&
+                            col.startMin >= selectedStartMin &&
+                            col.endMin <= selectedEndMin;
+
+                          const cellPrice = calculateSlotPrice(
+                            day.dayOfWeek,
+                            startTimeStr,
+                            endTimeStr,
+                            activePriceTable,
+                            true
+                          );
+
+                          // Xử lý styling màu ô
+                          let cellBg = 'bg-muted/40 hover:bg-muted/80 cursor-pointer';
+                          if (isSelected) {
+                            cellBg =
+                              'bg-emerald-700/80 border-emerald-500 text-white cursor-pointer shadow-inner';
+                          } else if (isExistingCycle) {
+                            cellBg =
+                              'bg-sky-950/70 border border-sky-500/50 text-sky-200 cursor-not-allowed';
+                          } else if (isEvent) {
+                            cellBg = 'bg-purple-900/60 cursor-not-allowed';
+                          } else if (isLocked) {
+                            cellBg = 'bg-muted/60 cursor-not-allowed';
+                          } else if (isBooked) {
+                            cellBg = 'bg-muted/80 cursor-not-allowed';
+                          }
+
+                          return (
+                            <td
+                              key={colIdx}
+                              className="p-0 border-r border-border/25 last:border-r-0 relative group"
                             >
-                              <div className="size-full flex items-center justify-center">
-                                {isSelected ? (
-                                  <div className="size-2.5 rounded-full bg-white shadow-xs animate-in zoom-in-50" />
-                                ) : isExistingCycle && matchingExistingCycle ? (
-                                  <span className="text-[9px] font-extrabold text-sky-700 dark:text-sky-300 bg-sky-900/80 px-1 py-0.5 rounded border border-sky-400/60 select-none shadow-xs">
-                                    CK#{matchingExistingCycle.cycleIndex + 1}
-                                  </span>
-                                ) : isEvent ? (
-                                  <Sparkles className="size-3 text-purple-300" />
-                                ) : isLocked ? (
-                                  <Lock className="size-3 text-amber-700 dark:text-amber-400" />
-                                ) : isBooked ? (
-                                  <span className="text-[10px] text-muted-foreground font-bold">•</span>
-                                ) : matchingBlock ? (
-                                  <span className="text-[9px] text-emerald-700 dark:text-[#a3e635]/80 font-semibold select-none">
-                                    block
-                                  </span>
-                                ) : null}
-                              </div>
-                            </button>
-                          </td>
-                        );
-                      })}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (isExistingCycle && matchingExistingCycle) {
+                                    toast.warning(
+                                      `Ô này đã được chọn ở Chu kỳ #${matchingExistingCycle.cycleIndex + 1}: ${
+                                        matchingExistingCycle.cycle.daysOfWeekLabels?.join(', ') || ''
+                                      } (${matchingExistingCycle.cycle.startTime.slice(
+                                        0,
+                                        5
+                                      )} - ${matchingExistingCycle.cycle.endTime.slice(0, 5)}). Không thể chọn trùng!`
+                                    );
+                                    return;
+                                  }
+                                  if (isOccupied && onConflictClick) {
+                                    onConflictClick(conflicts[0], court.courtName, day.label);
+                                    return;
+                                  }
+                                  onSelectSlot(court.courtId, startTimeStr, endTimeStr, matchingBlock);
+                                }}
+                                title={
+                                  isSelected
+                                    ? `Đang chọn: ${startTimeStr} - ${endTimeStr} • Giá: ${formatPrice(cellPrice)}`
+                                    : isExistingCycle && matchingExistingCycle
+                                    ? `Đã chọn ở Chu kỳ #${matchingExistingCycle.cycleIndex + 1}: ${
+                                        matchingExistingCycle.cycle.daysOfWeekLabels?.join(', ') || ''
+                                      } (${matchingExistingCycle.cycle.startTime.slice(
+                                        0,
+                                        5
+                                      )} - ${matchingExistingCycle.cycle.endTime.slice(0, 5)})`
+                                    : isOccupied
+                                    ? `Đã có lịch trong tháng: ${conflicts
+                                        .map((c) => `${c.date} (${c.customerName || 'Khách đặt'})`)
+                                        .join(', ')}`
+                                    : `Trống: ${day.label} • ${court.courtName} (${col.fullLabel}) • Giá: ${formatPrice(cellPrice)}`
+                                }
+                                className={`w-full min-h-[44px] p-1 flex flex-col items-center justify-center transition-all cursor-pointer relative text-[10px] ${cellBg}`}
+                              >
+                                <div className="size-full flex items-center justify-center">
+                                  {isSelected ? (
+                                    <div className="size-2.5 rounded-full bg-white shadow-xs animate-in zoom-in-50" />
+                                  ) : isExistingCycle && matchingExistingCycle ? (
+                                    <span className="text-[9px] font-extrabold text-sky-700 dark:text-sky-300 bg-sky-900/80 px-1 py-0.5 rounded border border-sky-400/60 select-none shadow-xs">
+                                      CK#{matchingExistingCycle.cycleIndex + 1}
+                                    </span>
+                                  ) : isEvent ? (
+                                    <Sparkles className="size-3 text-purple-300" />
+                                  ) : isLocked ? (
+                                    <Lock className="size-3 text-amber-700 dark:text-amber-400" />
+                                  ) : isBooked ? (
+                                    <span className="text-[10px] text-muted-foreground font-bold">•</span>
+                                  ) : null}
+                                </div>
+                              </button>
+                            </td>
+                          );
+                        });
+                      })()}
                     </tr>
                   );
                 });

@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Check, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Check, CheckCircle2, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatVND } from '@/lib/format';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useMyOrdersQuery, type MyOrderDto } from '@/api/orders';
+import { useMyOrdersQuery, OrderStatus, type MyOrderDto } from '@/api/orders';
 import { useCreateMatchMutation } from '@/api/matches';
 import { createMatchSchema, type CreateMatchFormValues } from '../schemas/matchSchema';
 import { SelectOrderModal } from '../components/SelectOrderModal';
@@ -27,39 +27,15 @@ export function CreateMatchPage() {
   const [isSelectOrderOpen, setIsSelectOrderOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<MyOrderDto | null>(null);
 
-  // Lấy danh sách đơn đặt sân đã thanh toán của người dùng
-  const { data: myOrders = [] } = useMyOrdersQuery(true);
-
-  // Đơn fallback mẫu theo đúng thiết kế nếu người dùng chưa có đơn trong DB
-  const defaultFallbackOrder: MyOrderDto = {
-    id: 'a1b2c3d4-1111-2222-3333-444444444444',
-    orderCode: 'MD-PB-1042',
-    branchId: 'b1b2c3d4-1111-2222-3333-444444444444',
-    branchName: 'Victory Pickleball',
-    branchAddress: '123 Võ Văn Ngân, Thủ Đức',
-    district: 'Thủ Đức',
-    province: 'TP.HCM',
-    courtName: 'Pickleball 1',
-    sportTypeId: 's-pickleball',
-    sportTypeName: 'Pickleball',
-    date: '24/09/2026',
-    startTime: '19:00:00',
-    endTime: '21:00:00',
-    totalAmount: 280000,
-    status: 2,
-    hasSocialMatch: false,
-    canCreateMatch: true,
-  };
+  // Lấy danh sách đơn đặt sân đã xác nhận đủ điều kiện mở kèo
+  const { data: rawOrders = [], isLoading } = useMyOrdersQuery(OrderStatus.Confirmed);
+  const myOrders = useMemo(() => rawOrders.filter((o) => o.canCreateMatch), [rawOrders]);
 
   useEffect(() => {
-    if (!selectedOrder) {
-      if (myOrders.length > 0) {
-        setSelectedOrder(myOrders[0]);
-      } else {
-        setSelectedOrder(defaultFallbackOrder);
-      }
+    if (!selectedOrder && myOrders.length > 0) {
+      setSelectedOrder(myOrders[0]);
     }
-  }, [myOrders]);
+  }, [myOrders, selectedOrder]);
 
   const {
     register,
@@ -70,7 +46,7 @@ export function CreateMatchPage() {
   } = useForm<CreateMatchFormValues>({
     resolver: zodResolver(createMatchSchema),
     defaultValues: {
-      orderId: defaultFallbackOrder.id,
+      orderId: '',
       missingPlayers: 2,
       skillLevel: 'Trung bình',
       feePerPlayer: 70000,
@@ -120,7 +96,49 @@ export function CreateMatchPage() {
     }
   };
 
-  const currentOrder = selectedOrder || defaultFallbackOrder;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF7] dark:bg-background py-20 flex flex-col items-center justify-center space-y-4">
+        <div className="size-10 rounded-full border-4 border-[#235338] border-t-transparent animate-spin" />
+        <p className="text-sm font-medium text-muted-foreground">Đang kiểm tra lịch đặt sân của bạn...</p>
+      </div>
+    );
+  }
+
+  if (myOrders.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF7] dark:bg-background py-16">
+        <div className="mx-auto max-w-xl px-4 text-center space-y-6">
+          <div className="size-16 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center">
+            <Building2 className="size-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-foreground">Bạn chưa có đơn đặt sân hợp lệ để mở kèo</h2>
+            <p className="text-sm text-muted-foreground">
+              Để mở kèo giao lưu, bạn cần có ít nhất một ca đặt sân đã thanh toán thành công và chưa mở kèo.
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Button
+              onClick={() => navigate('/courts')}
+              className="bg-[#235338] hover:bg-[#1a3f2b] text-white font-bold"
+            >
+              Đặt sân ngay
+            </Button>
+            <Button
+              onClick={() => navigate('/account/bookings')}
+              variant="outline"
+              className="font-bold"
+            >
+              Lịch sử đặt sân
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentOrder = selectedOrder || myOrders[0];
 
   return (
     <div className="min-h-screen bg-[#FAFAF7] dark:bg-background py-8 sm:py-12">

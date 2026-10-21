@@ -8,8 +8,6 @@ public sealed record MyOrderDto(
     Guid BranchId,
     string BranchName,
     string BranchAddress,
-    string District,
-    string Province,
     string CourtName,
     Guid? SportTypeId,
     string? SportTypeName,
@@ -20,4 +18,11 @@ public sealed record MyOrderDto(
     OrderStatus Status,
     bool HasSocialMatch,
     Guid? SocialMatchId,
-    bool CanCreateMatch);
+    bool CanCreateMatch,
+    DateTime? HoldExpiresAt,
+    bool CanPay,
+    string? AccountNumber,
+    string? AccountName,
+    string? QrCodeImageKey,
+    bool HasReviewed,
+    DateTime CreatedAt);

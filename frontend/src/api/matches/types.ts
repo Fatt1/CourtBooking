@@ -3,13 +3,6 @@
  * Khớp chuẩn Domain backend và DTOs
  */
 
-export enum SocialMatchStatus {
-  Open = 0,       // Đang mở, nhận người
-  Full = 1,       // Đã đủ người
-  Closed = 2,     // Đã kết thúc
-  Cancelled = 3,  // Đã hủy kèo
-}
-
 export enum ParticipantStatus {
   PendingApproval = 0,  // Chờ chủ phòng duyệt
   Confirmed = 1,        // Đã tham gia (chính thức)
@@ -40,10 +33,11 @@ export interface MatchDto {
   availableSlots: number;
   feePerPlayer: number;
   approvalMode: number;
-  status: SocialMatchStatus;
   description?: string | null;
   createdAt: string;
   confirmedParticipantsCount: number;
+  distanceKm?: number | null;
+  myParticipantStatus?: ParticipantStatus | null;
 }
 
 export interface MatchParticipantDto {
@@ -74,19 +68,17 @@ export interface MatchDetailDto {
   availableSlots: number;
   feePerPlayer: number;
   approvalMode: number;
-  status: SocialMatchStatus;
   description?: string | null;
   createdAt: string;
   participants: MatchParticipantDto[];
+  distanceKm?: number | null;
 }
 
 export interface GetMatchesParams {
+  latitude?: number;
+  longitude?: number;
   sportTypeId?: string;
-  date?: string;
-  province?: string;
-  district?: string;
   skillLevel?: string;
-  status?: SocialMatchStatus;
   page?: number;
   pageSize?: number;
 }

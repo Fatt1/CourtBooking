@@ -6,70 +6,6 @@ import { usePublicBranchesQuery, type PublicBranchListItemDto } from '@/api/bran
 import { BranchReviewsModal } from './BranchReviewsModal';
 import { CourtBranchCard } from './courts/CourtBranchCard';
 
-const DEFAULT_BRANCH_FALLBACK =
-  'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80';
-
-// Fallback data khi backend chưa chạy hoặc chưa có data
-const FALLBACK_BRANCHES: PublicBranchListItemDto[] = [
-  {
-    id: 'b1',
-    name: 'Sân Cầu lông Lan Anh',
-    sports: [{ id: 's1', name: 'Cầu lông' }],
-    district: 'Bình Thạnh',
-    province: 'Hồ Chí Minh',
-    street: '291 Cách Mạng Tháng 8',
-    distanceKm: 1.2,
-    reviewAverage: 4.8,
-    minPrice: 100000,
-    maxPrice: 180000,
-    availableCourtCount: 4, // Có sân trống
-    coverImage: {
-      id: 'img1',
-      url: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
-    },
-    openTime: '06:00',
-    closeTime: '23:00',
-  },
-  {
-    id: 'b2',
-    name: 'Victory Pickleball',
-    sports: [{ id: 's2', name: 'Pickleball' }],
-    district: 'Thủ Đức',
-    province: 'Hồ Chí Minh',
-    street: '15 Đường Số 9',
-    distanceKm: 2.4,
-    reviewAverage: 4.7,
-    minPrice: 140000,
-    maxPrice: 220000,
-    availableCourtCount: 2, // Có sân trống
-    coverImage: {
-      id: 'img2',
-      url: 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?auto=format&fit=crop&w=800&q=80',
-    },
-    openTime: '06:00',
-    closeTime: '22:30',
-  },
-  {
-    id: 'b3',
-    name: 'Tennis Phú Thọ',
-    sports: [{ id: 's3', name: 'Tennis' }],
-    district: 'Quận 11',
-    province: 'Hồ Chí Minh',
-    street: '219 Lý Thường Kiệt',
-    distanceKm: 4.1,
-    reviewAverage: 4.9,
-    minPrice: 180000,
-    maxPrice: 300000,
-    availableCourtCount: 1, // Còn 1 sân
-    coverImage: {
-      id: 'img3',
-      url: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=800&q=80',
-    },
-    openTime: '05:30',
-    closeTime: '22:00',
-  },
-];
-
 export function FeaturedBranchesSection() {
   const [selectedBranchForReviews, setSelectedBranchForReviews] =
     useState<PublicBranchListItemDto | null>(null);
@@ -80,9 +16,8 @@ export function FeaturedBranchesSection() {
     pageSize: 6,
   });
 
-  // Ưu tiên dữ liệu thật từ Backend nếu có
-  const branches =
-    pagedResult?.items && pagedResult.items.length > 0 ? pagedResult.items : FALLBACK_BRANCHES;
+  // Dữ liệu thật từ Backend API
+  const branches = pagedResult?.items || [];
 
   return (
     <section className="py-10 sm:py-14">
@@ -140,6 +75,10 @@ export function FeaturedBranchesSection() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : branches.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground bg-card rounded-2xl border border-border/60">
+            Hiện chưa có thông tin sân nào quanh khu vực này.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

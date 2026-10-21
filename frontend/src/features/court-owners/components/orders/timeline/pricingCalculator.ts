@@ -35,13 +35,22 @@ export function minutesToTimeString(totalMinutes: number): string {
 }
 
 /**
+ * Định dạng số tiền VNĐ hiển thị gọn gàng (vd: 80.000đ)
+ */
+export function formatPrice(amount: number): string {
+  if (!amount || amount <= 0) return '0đ';
+  return `${amount.toLocaleString('vi-VN')}đ`;
+}
+
+/**
  * Tính giá tiền cho 1 slot sân dựa trên Bảng giá (PriceTable) và thời gian
  */
 export function calculateSlotPrice(
-  dateStr: string,
+  dateOrDayOfWeek: string | number,
   startTimeStr: string,
   endTimeStr: string,
-  priceTable?: PriceTableDto
+  priceTable?: PriceTableDto,
+  isFixedBooking = false
 ): number {
   if (!priceTable) return 0;
 
@@ -51,20 +60,28 @@ export function calculateSlotPrice(
 
   if (durationHours <= 0) return 0;
 
-  // Lấy thứ trong tuần từ Date (0 = Chủ nhật, 1 = Thứ 2, ..., 6 = Thứ 7)
-  const parts = dateStr.split('-').map(Number);
-  const dateObj = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
-  const dayOfWeek = dateObj.getDay();
+  // Lấy thứ trong tuần (0 = Chủ nhật, 1 = Thứ 2, ..., 6 = Thứ 7)
+  let dayOfWeek = 0;
+  let dateStr = '';
+  if (typeof dateOrDayOfWeek === 'number') {
+    dayOfWeek = dateOrDayOfWeek;
+  } else if (typeof dateOrDayOfWeek === 'string' && dateOrDayOfWeek) {
+    dateStr = dateOrDayOfWeek;
+    const parts = dateStr.split('-').map(Number);
+    if (parts.length >= 3) {
+      const dateObj = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
+      dayOfWeek = dateObj.getDay();
+    }
+  }
 
   // Tìm trong danh sách rules của bảng giá
   if (priceTable.rules && priceTable.rules.length > 0) {
     for (const rule of priceTable.rules) {
-      // 1. Kiểm tra ngày nếu rule có giới hạn startDate / endDate
-      if (rule.startDate && dateStr < rule.startDate) continue;
-      if (rule.endDate && dateStr > rule.endDate) continue;
+      // 1. Kiểm tra ngày nếu rule có giới hạn startDate / endDate và có dateStr
+      if (dateStr && rule.startDate && dateStr < rule.startDate) continue;
+      if (dateStr && rule.endDate && dateStr > rule.endDate) continue;
 
       // 2. Kiểm tra thứ trong tuần (DayOfWeekFrom <= dayOfWeek <= DayOfWeekTo)
-      // Lưu ý: nếu DayOfWeekFrom > DayOfWeekTo (ví dụ qua tuần), cần xử lý wrap
       let matchDay = false;
       if (rule.dayOfWeekFrom <= rule.dayOfWeekTo) {
         matchDay = dayOfWeek >= rule.dayOfWeekFrom && dayOfWeek <= rule.dayOfWeekTo;
@@ -79,14 +96,20 @@ export function calculateSlotPrice(
 
       // Nếu slot nằm trong khoảng giờ của rule
       if (startMin >= ruleStartMin && endMin <= ruleEndMin) {
-        const hourlyRate = rule.walkInCustomerPrice || rule.fixedCustomerPrice || priceTable.defaultPrice;
+        const hourlyRate = isFixedBooking
+          ? (rule.fixedCustomerPrice || rule.walkInCustomerPrice || priceTable.defaultPrice)
+          : (rule.walkInCustomerPrice || rule.fixedCustomerPrice || priceTable.defaultPrice);
         return Math.round(hourlyRate * durationHours);
       }
     }
   }
 
   // Fallback về defaultPrice của bảng giá
-  return Math.round((priceTable.defaultPrice || 0) * durationHours);
+  const defaultRate = isFixedBooking
+    ? (priceTable.defaultPrice || priceTable.defaultWalkInPrice || 0)
+    : (priceTable.defaultWalkInPrice || priceTable.defaultPrice || 0);
+
+  return Math.round(defaultRate * durationHours);
 }
 
 /**

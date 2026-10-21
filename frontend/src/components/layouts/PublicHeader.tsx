@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Sun, Moon, LogOut, User as UserIcon, ShieldCheck, Receipt } from 'lucide-react';
+import { Menu, Sun, LogOut, User as UserIcon, Receipt, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useAppThemeStore } from '@/stores/useAppThemeStore';
 import { cn } from '@/lib/utils';
-import { MyOrdersModal } from '@/features/customer/components/MyOrdersModal';
 
 const navLinks = [
   { label: 'Tìm sân', href: '/courts' },
@@ -17,13 +16,12 @@ const navLinks = [
 
 export function PublicHeader() {
   const [openMobile, setOpenMobile] = useState(false);
-  const [openMyOrders, setOpenMyOrders] = useState(false);
   const { user, isAuthenticated, logout } = useAuthStore();
   const { theme, setTheme } = useAppThemeStore();
   const navigate = useNavigate();
 
-  const isManagementRole =
-    user?.role === 'SystemAdmin' || user?.role === 'CourtOwner' || user?.role === 'Staff';
+  // Chỉ hiển thị thông tin người dùng khi đã đăng nhập và có role là Player
+  const isPlayer = isAuthenticated && String(user?.role || '').toLowerCase() === 'player';
 
   const handleLogout = () => {
     logout();
@@ -104,35 +102,65 @@ export function PublicHeader() {
 
         {/* Right: Auth CTA Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          {isAuthenticated ? (
-            <div className="flex items-center gap-2.5">
-              {/* Nút Đơn của tôi cho Người chơi */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setOpenMyOrders(true)}
-                className="gap-1.5 border-border/80 text-foreground hover:bg-[#397B48]/10 hover:text-[#397B48] rounded-xl text-xs font-semibold cursor-pointer"
-                title="Xem đơn đặt sân của bạn"
+          {isPlayer ? (
+            <div className="relative group py-2">
+              {/* Nút tên / avatar: bấm vào thì mặc định vào tab đơn hàng (/account?tab=orders) */}
+              <button
+                type="button"
+                onClick={() => navigate('/account?tab=orders')}
+                className="flex items-center gap-2 rounded-full border border-border/80 bg-muted/40 hover:bg-muted/80 px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer select-none group-hover:border-[#397B48]/50"
               >
-                <Receipt className="size-3.5 text-[#397B48]" />
-                <span>Đơn của tôi</span>
-              </Button>
+                <div className="size-6 rounded-full bg-[#397B48]/15 text-[#397B48] flex items-center justify-center font-bold text-xs shrink-0">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user?.name} className="size-6 rounded-full object-cover" />
+                  ) : (
+                    <UserIcon className="size-3.5 text-[#397B48]" />
+                  )}
+                </div>
+                <span className="max-w-[130px] truncate text-foreground font-bold">
+                  {user?.name || user?.email?.split('@')[0]}
+                </span>
+              </button>
 
-              {isManagementRole && (
-                <Button variant="outline" asChild size="sm" className="gap-2 border-[#397B48]/40 text-[#397B48] hover:bg-[#397B48]/10 rounded-xl">
-                  <Link to="/admin">
-                    <ShieldCheck className="size-4" />
-                    <span>Quản trị</span>
+              {/* Dropdown Menu xổ xuống khi hover vào */}
+              <div className="absolute right-0 top-full pt-1.5 hidden group-hover:block z-50 animate-in fade-in-0 zoom-in-95 duration-150">
+                <div className="w-52 rounded-2xl border border-border/80 bg-card p-1.5 shadow-2xl text-xs space-y-0.5 relative before:content-[''] before:absolute before:-top-1.5 before:right-6 before:size-3 before:bg-card before:border-t before:border-l before:border-border/80 before:rotate-45">
+                  <Link
+                    to="/account?tab=profile"
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-foreground hover:bg-secondary/70 transition-colors font-semibold"
+                  >
+                    <UserIcon className="size-4 text-muted-foreground" />
+                    <span>Tài Khoản Của Tôi</span>
                   </Link>
-                </Button>
-              )}
-              <div className="flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1.5 text-xs font-medium">
-                <UserIcon className="size-3.5 text-[#397B48]" />
-                <span className="max-w-[120px] truncate">{user?.name || user?.email}</span>
+
+                  <Link
+                    to="/account?tab=orders"
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-foreground hover:bg-secondary/70 transition-colors font-semibold"
+                  >
+                    <Receipt className="size-4 text-[#397B48]" />
+                    <span>Đơn Mua</span>
+                  </Link>
+
+                  <Link
+                    to="/account?tab=joined_matches"
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-foreground hover:bg-secondary/70 transition-colors font-semibold"
+                  >
+                    <Users className="size-4 text-[#397B48]" />
+                    <span>Kèo Đã Tham Gia</span>
+                  </Link>
+
+                  <div className="my-1 border-t border-border/60" />
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-destructive hover:bg-destructive/10 transition-colors font-semibold text-left cursor-pointer"
+                  >
+                    <LogOut className="size-4" />
+                    <span>Đăng Xuất</span>
+                  </button>
+                </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleLogout} title="Đăng xuất" className="rounded-xl cursor-pointer">
-                <LogOut className="size-4 text-muted-foreground hover:text-destructive" />
-              </Button>
             </div>
           ) : (
             <div className="flex items-center gap-3">
@@ -178,22 +206,49 @@ export function PublicHeader() {
                   </Link>
                 ))}
                 <div className="pt-4 flex flex-col gap-3">
-                  {isAuthenticated ? (
+                  {isPlayer ? (
                     <>
-                      {isManagementRole && (
-                        <Button className="w-full bg-[#397B48] rounded-xl" asChild onClick={() => setOpenMobile(false)}>
-                          <Link to="/admin">Trang Quản Trị</Link>
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-2.5 rounded-xl border bg-muted/40 p-2.5 text-xs font-semibold">
+                        <div className="size-7 rounded-full bg-[#397B48]/15 text-[#397B48] flex items-center justify-center font-bold shrink-0">
+                          <UserIcon className="size-4" />
+                        </div>
+                        <span className="truncate">{user?.name || user?.email}</span>
+                      </div>
+
                       <Button
                         variant="outline"
-                        className="w-full text-destructive rounded-xl"
+                        asChild
+                        onClick={() => setOpenMobile(false)}
+                        className="w-full justify-start gap-2.5 border-border/80 text-foreground hover:bg-[#397B48]/10 hover:text-[#397B48] rounded-xl font-semibold text-xs py-2.5"
+                      >
+                        <Link to="/account?tab=profile">
+                          <UserIcon className="size-4 text-muted-foreground" />
+                          <span>Tài Khoản Của Tôi</span>
+                        </Link>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        asChild
+                        onClick={() => setOpenMobile(false)}
+                        className="w-full justify-start gap-2.5 border-border/80 text-foreground hover:bg-[#397B48]/10 hover:text-[#397B48] rounded-xl font-semibold text-xs py-2.5"
+                      >
+                        <Link to="/account?tab=orders">
+                          <Receipt className="size-4 text-[#397B48]" />
+                          <span>Đơn Mua</span>
+                        </Link>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2.5 text-destructive rounded-xl font-semibold text-xs py-2.5 mt-1"
                         onClick={() => {
                           setOpenMobile(false);
                           handleLogout();
                         }}
                       >
-                        Đăng xuất
+                        <LogOut className="size-4" />
+                        <span>Đăng Xuất</span>
                       </Button>
                     </>
                   ) : (
@@ -212,12 +267,6 @@ export function PublicHeader() {
           </Sheet>
         </div>
       </div>
-
-      {/* Modal Đơn của tôi */}
-      <MyOrdersModal
-        isOpen={openMyOrders}
-        onClose={() => setOpenMyOrders(false)}
-      />
     </header>
   );
 }

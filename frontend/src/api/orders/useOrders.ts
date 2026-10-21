@@ -14,6 +14,11 @@ import {
   type CreateOrderByOwnerPayload,
   type CreateFixedOrderByOwnerPayload,
   type UpdateOrderItemsPayload,
+  type CreateOrderOnlinePayload,
+  type CreateOrderOnlineResponse,
+  type SubmitPaymentProofPayload,
+  type CancelOrderOnlinePayload,
+  type MyOrderDetailResponse,
 } from './types';
 
 // ============================================================================
@@ -480,24 +485,142 @@ export function useDeleteFixedOrderCycleMutation() {
 }
 
 /**
- * Hook lấy danh sách đơn đặt sân của người chơi (GET /api/v1/orders/my-orders)
+ * Hook lấy danh sách đơn đặt sân của người chơi có phân trang (GET /api/v1/orders/my-orders)
  */
-export function useMyOrdersQuery(onlyAvailableForMatch?: boolean) {
+export function useMyOrdersPagedQuery(params: import('./types').GetMyOrdersParams = {}) {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery<PagedList<import('./types').MyOrderDto>>({
+    queryKey: ['orders', 'my-orders-paged', params],
+    queryFn: async (): Promise<PagedList<import('./types').MyOrderDto>> => {
+      const response = await apiClient.get<PagedList<import('./types').MyOrderDto>>(
+        API_ENDPOINTS.ORDERS.MY_ORDERS,
+        {
+          params: {
+            status: params.status,
+            page: params.page || 1,
+            pageSize: params.pageSize || 5,
+          },
+        }
+      );
+      return (
+        (response as unknown as PagedList<import('./types').MyOrderDto>) || {
+          items: [],
+          totalCount: 0,
+          page: params.page || 1,
+          pageSize: params.pageSize || 5,
+          totalPages: 0,
+          hasPrevious: false,
+          hasNext: false,
+        }
+      );
+    },
+    enabled: isAuthenticated,
+    staleTime: 1000 * 15,
+  });
+}
+
+/**
+ * Hook lấy toàn bộ danh sách đơn đặt sân của người chơi (dành cho modal chọn đơn mở kèo)
+ */
+export function useMyOrdersQuery(status?: import('./types').OrderStatus) {
   const { isAuthenticated } = useAuthStore();
 
   return useQuery<import('./types').MyOrderDto[]>({
-    queryKey: ['orders', 'my-orders', { onlyAvailableForMatch }],
+    queryKey: ['orders', 'my-orders', { status }],
     queryFn: async (): Promise<import('./types').MyOrderDto[]> => {
-      const response = await apiClient.get<import('./types').MyOrderDto[]>(
+      const response = await apiClient.get<PagedList<import('./types').MyOrderDto> | import('./types').MyOrderDto[]>(
         API_ENDPOINTS.ORDERS.MY_ORDERS,
-        { params: { onlyAvailableForMatch } }
+        { params: { status, page: 1, pageSize: 100 } }
       );
-      return (response as unknown as import('./types').MyOrderDto[]) || [];
+      if (Array.isArray(response)) return response;
+      if (response && 'items' in (response as any) && Array.isArray((response as any).items)) {
+        return (response as any).items;
+      }
+      return [];
     },
     enabled: isAuthenticated,
   });
 }
 
+/**
+ * Hook lấy chi tiết đơn đặt sân của người chơi
+ * Endpoint: GET /api/v1/orders/my-orders/{id}
+ */
+export function useMyOrderDetailQuery(orderId: string | null | undefined, enabled: boolean = true) {
+  const { isAuthenticated } = useAuthStore();
 
+  return useQuery<MyOrderDetailResponse>({
+    queryKey: ['orders', 'my-orders', 'detail', orderId],
+    queryFn: async (): Promise<MyOrderDetailResponse> => {
+      if (!orderId) throw new Error('orderId is required');
 
+      const response = await apiClient.get<MyOrderDetailResponse>(
+        API_ENDPOINTS.ORDERS.MY_ORDER_DETAIL(orderId)
+      );
+      return response as unknown as MyOrderDetailResponse;
+    },
+    enabled: isAuthenticated && !!orderId && enabled,
+    staleTime: 1000 * 30,
+  });
+}
 
+/**
+ * Hook tạo đơn đặt sân online (POST /api/v1/orders)
+ */
+export function useCreateOrderOnlineMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: CreateOrderOnlinePayload): Promise<CreateOrderOnlineResponse> => {
+      const response = await apiClient.post<CreateOrderOnlineResponse>(
+        API_ENDPOINTS.ORDERS.CREATE_ONLINE,
+        payload
+      );
+      return response as unknown as CreateOrderOnlineResponse;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+    },
+  });
+}
+
+/**
+ * Hook nộp ảnh biên lai thanh toán (PUT /api/v1/orders/{id}/payment-proof)
+ */
+export function useSubmitPaymentProofMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ orderId, imageId }: SubmitPaymentProofPayload) => {
+      return await apiClient.put(
+        API_ENDPOINTS.ORDERS.SUBMIT_PAYMENT_PROOF(orderId),
+        { orderId, imageId }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+}
+
+/**
+ * Hook hủy đơn online đang chờ thanh toán (PUT /api/v1/orders/{id}/cancel)
+ */
+export function useCancelOrderOnlineMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ orderId, reason }: CancelOrderOnlinePayload) => {
+      return await apiClient.put(
+        API_ENDPOINTS.ORDERS.CANCEL_ONLINE(orderId),
+        { orderId, reason }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+    },
+  });
+}
