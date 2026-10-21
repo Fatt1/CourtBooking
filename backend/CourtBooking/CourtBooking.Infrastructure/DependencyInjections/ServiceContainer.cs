@@ -48,7 +48,6 @@ public static class ServiceContainer
             options.Password.RequireNonAlphanumeric = false;
             options.Password.RequireUppercase = false;
             options.Password.RequiredLength = 6;
-            options.User.RequireUniqueEmail = true;
         })
         .AddRoles<ApplicationRole>()
         .AddEntityFrameworkStores<ApplicationDbContext>()
