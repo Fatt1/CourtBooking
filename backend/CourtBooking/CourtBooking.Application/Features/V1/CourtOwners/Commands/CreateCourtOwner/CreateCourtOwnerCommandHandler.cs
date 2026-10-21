@@ -93,24 +93,31 @@ internal sealed class CreateCourtOwnerCommandHandler(
 
         dbContext.CourtOwners.Add(courtOwner);
 
-        // 6. Gán gói dịch vụ ban đầu cho chủ sân mới (Mặc định gói 499k / 1 tháng)
-        var defaultPackage = await dbContext.ServicePackages
+        // 6. Gán gói dịch vụ ban đầu cho chủ sân mới (theo gói được chọn hoặc mặc định)
+        Domain.Entities.Subscriptions.ServicePackage? selectedPackage = null;
+        if (request.ServicePackageId.HasValue && request.ServicePackageId.Value != Guid.Empty)
+        {
+            selectedPackage = await dbContext.ServicePackages
+                .FirstOrDefaultAsync(p => p.Id == request.ServicePackageId.Value, ct);
+        }
+
+        selectedPackage ??= await dbContext.ServicePackages
             .FirstOrDefaultAsync(p => p.Price == 499000m, ct)
             ?? await dbContext.ServicePackages
                 .FirstOrDefaultAsync(p => p.Name.Contains("Cơ Bản") || p.Name.Contains("Basic"), ct)
             ?? await dbContext.ServicePackages.FirstOrDefaultAsync(ct);
 
-        if (defaultPackage is not null)
+        if (selectedPackage is not null)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var initialSub = new Domain.Entities.Subscriptions.CourtOwnerSubscription
             {
                 Id = Guid.NewGuid(),
                 CourtOwnerId = user.Id,
-                ServicePackageId = defaultPackage.Id,
-                PricePaid = 499000m,
+                ServicePackageId = selectedPackage.Id,
+                PricePaid = selectedPackage.Price,
                 StartDate = today,
-                EndDate = today.AddMonths(defaultPackage.DurationMonths > 0 ? defaultPackage.DurationMonths : 1),
+                EndDate = today.AddMonths(selectedPackage.DurationMonths > 0 ? selectedPackage.DurationMonths : 1),
                 CreatedAt = DateTime.UtcNow
             };
             dbContext.CourtOwnerSubscriptions.Add(initialSub);

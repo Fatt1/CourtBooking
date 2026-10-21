@@ -6,7 +6,7 @@ export const createCourtOwnerSchema = z.object({
   phoneNumber: z.string().min(10, 'Số điện thoại không hợp lệ').max(15),
   businessName: z.string().optional().or(z.literal('')),
   password: z.string().min(6, 'Mật khẩu khởi tạo tối thiểu 6 ký tự').default('Owner@123456'),
-  packageId: z.string().default('499.000 đ/tháng'),
+  packageId: z.string().min(1, 'Vui lòng chọn 1 trong 3 gói cước dịch vụ').default('855b558f-7f95-4107-9df2-0f1fb5da8218'),
   mustChangePwd: z.boolean().default(true),
 });
 

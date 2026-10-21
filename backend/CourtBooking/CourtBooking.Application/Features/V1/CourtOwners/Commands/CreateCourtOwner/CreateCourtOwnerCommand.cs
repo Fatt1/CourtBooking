@@ -11,4 +11,5 @@ public sealed record CreateCourtOwnerCommand(
     string Email,
     bool MustChangePwd = true,
     string? Password = null,
-    string? BusinessName = null) : ICommand<Guid>;
+    string? BusinessName = null,
+    Guid? ServicePackageId = null) : ICommand<Guid>;

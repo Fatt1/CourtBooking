@@ -71,7 +71,7 @@ export function EditMatchPage() {
       skillLevel: match.skillLevel || 'Trung bình',
       feePerPlayer: match.feePerPlayer || 70000,
       description: match.description || '',
-      approvalMode: match.approvalMode ?? 1,
+      approvalMode: (match.approvalMode === 0 ? 0 : 1) as 0 | 1,
     },
   });
 
@@ -82,7 +82,7 @@ export function EditMatchPage() {
         skillLevel: match.skillLevel || 'Trung bình',
         feePerPlayer: match.feePerPlayer,
         description: match.description || '',
-        approvalMode: match.approvalMode,
+        approvalMode: (match.approvalMode === 0 ? 0 : 1) as 0 | 1,
       });
     }
   }, [match, reset]);
