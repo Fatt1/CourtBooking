@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +9,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -16,8 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PackagePlus, Loader2, Sparkles } from 'lucide-react';
+import { PackagePlus, Loader2 } from 'lucide-react';
 import type { CreatePackagePayload } from '@/api/subscriptions';
+import {
+  createServicePackageSchema,
+  type CreateServicePackageFormValues,
+} from '@/features/admin/schemas/servicePackageSchema';
 
 interface Props {
   open: boolean;
@@ -32,29 +46,43 @@ export function CreateServicePackageDialog({
   onSubmit,
   isSubmitting,
 }: Props) {
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('999000');
-  const [durationMonths, setDurationMonths] = useState('3');
-  const [description, setDescription] = useState('');
-  const [maxCourts, setMaxCourts] = useState('8');
-  const [maxBranches, setMaxBranches] = useState('2');
+  const form = useForm<CreateServicePackageFormValues>({
+    resolver: zodResolver(createServicePackageSchema),
+    defaultValues: {
+      name: '',
+      price: 999000,
+      durationMonths: 3,
+      maxCourts: 8,
+      maxBranches: 2,
+      description: '',
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: '',
+        price: 999000,
+        durationMonths: 3,
+        maxCourts: 8,
+        maxBranches: 2,
+        description: '',
+      });
+    }
+  }, [open, form]);
 
+  const handleFormSubmit = async (values: CreateServicePackageFormValues) => {
     await onSubmit({
-      name: name.trim(),
-      price: Number(price) || 0,
-      durationMonths: Number(durationMonths) || 1,
-      description: description.trim(),
-      maxCourts: Number(maxCourts) || 1,
-      maxBranches: Number(maxBranches) || 1,
+      name: values.name,
+      price: values.price,
+      durationMonths: values.durationMonths,
+      description: values.description || '',
+      maxCourts: values.maxCourts,
+      maxBranches: values.maxBranches,
     });
 
+    form.reset();
     onOpenChange(false);
-    setName('');
-    setDescription('');
   };
 
   return (
@@ -74,115 +102,173 @@ export function CreateServicePackageDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5 py-2">
-          {/* Tên gói */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-zinc-300">
-              Tên gói dịch vụ <span className="text-rose-400">*</span>
-            </label>
-            <Input
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ví dụ: Gói Pro Max / Giải đấu..."
-              className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-3.5 py-2">
+            {/* Tên gói */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-semibold text-zinc-300">
+                    Tên gói dịch vụ <span className="text-rose-400">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ví dụ: Gói Pro Max / Giải đấu..."
+                      className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-[11px] text-rose-400" />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {/* Giá gói */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-300">
-                Giá cước (VNĐ) <span className="text-rose-400">*</span>
-              </label>
-              <Input
-                type="number"
-                min="0"
-                step="10000"
-                required
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="499000"
-                className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
+            <div className="grid grid-cols-2 gap-3">
+              {/* Giá gói */}
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs font-semibold text-zinc-300">
+                      Giá cước (VNĐ) <span className="text-rose-400">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="10000"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || Number(e.target.value) || 0)}
+                        placeholder="499000"
+                        className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-[11px] text-rose-400" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Chu kỳ */}
+              <FormField
+                control={form.control}
+                name="durationMonths"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs font-semibold text-zinc-300">
+                      Chu kỳ thanh toán <span className="text-rose-400">*</span>
+                    </FormLabel>
+                    <Select
+                      value={String(field.value)}
+                      onValueChange={(val) => field.onChange(Number(val))}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="border-[#1b2d22] bg-[#0c1410] text-zinc-200">
+                        <SelectItem value="1" className="text-xs cursor-pointer">1 tháng</SelectItem>
+                        <SelectItem value="3" className="text-xs cursor-pointer">3 tháng (1 quý)</SelectItem>
+                        <SelectItem value="6" className="text-xs cursor-pointer">6 tháng (Nửa năm)</SelectItem>
+                        <SelectItem value="12" className="text-xs cursor-pointer">12 tháng (1 năm)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-[11px] text-rose-400" />
+                  </FormItem>
+                )}
               />
             </div>
 
-            {/* Chu kỳ */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-300">Chu kỳ thanh toán</label>
-              <Select value={durationMonths} onValueChange={setDurationMonths}>
-                <SelectTrigger className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="border-[#1b2d22] bg-[#0c1410] text-zinc-200">
-                  <SelectItem value="1" className="text-xs cursor-pointer">1 tháng</SelectItem>
-                  <SelectItem value="3" className="text-xs cursor-pointer">3 tháng (1 quý)</SelectItem>
-                  <SelectItem value="6" className="text-xs cursor-pointer">6 tháng (Nửa năm)</SelectItem>
-                  <SelectItem value="12" className="text-xs cursor-pointer">12 tháng (1 năm)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Giới hạn sân */}
+              <FormField
+                control={form.control}
+                name="maxCourts"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs font-semibold text-zinc-300">Số sân tối đa</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || Number(e.target.value) || 1)}
+                        placeholder="8"
+                        className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-[11px] text-rose-400" />
+                  </FormItem>
+                )}
+              />
 
-          <div className="grid grid-cols-2 gap-3">
-            {/* Giới hạn sân */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-300">Số sân tối đa</label>
-              <Input
-                type="number"
-                min="1"
-                value={maxCourts}
-                onChange={(e) => setMaxCourts(e.target.value)}
-                placeholder="8"
-                className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
+              {/* Giới hạn chi nhánh */}
+              <FormField
+                control={form.control}
+                name="maxBranches"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs font-semibold text-zinc-300">Số chi nhánh tối đa</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || Number(e.target.value) || 1)}
+                        placeholder="2"
+                        className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-[11px] text-rose-400" />
+                  </FormItem>
+                )}
               />
             </div>
 
-            {/* Giới hạn chi nhánh */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-300">Số chi nhánh tối đa</label>
-              <Input
-                type="number"
-                min="1"
-                value={maxBranches}
-                onChange={(e) => setMaxBranches(e.target.value)}
-                placeholder="2"
-                className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
-              />
-            </div>
-          </div>
-
-          {/* Mô tả */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-zinc-300">Mô tả & quyền lợi</label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
-              placeholder="Quyền lợi của gói dịch vụ, đối tượng sử dụng..."
-              className="w-full p-2.5 rounded-xl bg-[#111915] border border-[#1b2d22] text-xs text-white resize-none outline-none focus:border-emerald-500/50"
+            {/* Mô tả */}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-semibold text-zinc-300">Mô tả & quyền lợi</FormLabel>
+                  <FormControl>
+                    <textarea
+                      rows={3}
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="Quyền lợi của gói dịch vụ, đối tượng sử dụng..."
+                      className="w-full p-2.5 rounded-xl bg-[#111915] border border-[#1b2d22] text-xs text-white resize-none outline-none focus:border-emerald-500/50"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-[11px] text-rose-400" />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <DialogFooter className="gap-2 pt-3 border-t border-[#1b2d22]">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-9 rounded-xl border-[#1b2d22] bg-[#111915] text-zinc-300 hover:text-white hover:bg-[#16241c] text-xs cursor-pointer"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || !name.trim()}
-              className="h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer"
-            >
-              {isSubmitting && <Loader2 className="size-3.5 animate-spin text-slate-950" />}
-              <span>{isSubmitting ? 'Đang tạo...' : 'Lưu gói dịch vụ'}</span>
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter className="gap-2 pt-3 border-t border-[#1b2d22]">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="h-9 rounded-xl border-[#1b2d22] bg-[#111915] text-zinc-300 hover:text-white hover:bg-[#16241c] text-xs cursor-pointer"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer"
+              >
+                {isSubmitting && <Loader2 className="size-3.5 animate-spin text-slate-950" />}
+                <span>{isSubmitting ? 'Đang tạo...' : 'Lưu gói dịch vụ'}</span>
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

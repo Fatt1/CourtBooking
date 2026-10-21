@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +9,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -17,6 +27,10 @@ import {
 } from '@/components/ui/select';
 import { CalendarCheck, Loader2, Clock, CheckCircle2 } from 'lucide-react';
 import type { SubscriptionHistoryItem } from '@/api/subscriptions';
+import {
+  extendSubscriptionSchema,
+  type ExtendSubscriptionValues,
+} from '@/features/admin/schemas/courtOwnerSchema';
 
 interface Props {
   open: boolean;
@@ -33,12 +47,25 @@ export function SubscriptionExtendDialog({
   onSubmit,
   isSubmitting,
 }: Props) {
-  const [durationMonths, setDurationMonths] = useState<number>(1);
+  const form = useForm<ExtendSubscriptionValues>({
+    resolver: zodResolver(extendSubscriptionSchema),
+    defaultValues: {
+      durationMonths: 1,
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        durationMonths: 1,
+      });
+    }
+  }, [open, form]);
 
   if (!subscription) return null;
 
-  const handleConfirm = async () => {
-    await onSubmit(subscription.courtOwnerId, durationMonths);
+  const handleFormSubmit = async (values: ExtendSubscriptionValues) => {
+    await onSubmit(subscription.courtOwnerId, values.durationMonths);
     onOpenChange(false);
   };
 
@@ -66,81 +93,91 @@ export function SubscriptionExtendDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          {/* Card thông tin đăng ký hiện tại */}
-          <div className="rounded-xl bg-[#111915] border border-[#1b2d22] p-3 text-xs space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-400">Chủ sân / Cụm sân:</span>
-              <span className="font-bold text-white">{subscription.ownerName}</span>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 py-2">
+            {/* Card thông tin đăng ký hiện tại */}
+            <div className="rounded-xl bg-[#111915] border border-[#1b2d22] p-3 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-400">Chủ sân / Cụm sân:</span>
+                <span className="font-bold text-white">{subscription.ownerName}</span>
+              </div>
+              <div className="flex items-center justify-between text-zinc-400">
+                <span>Cơ sở:</span>
+                <span className="text-zinc-300 font-medium">{subscription.businessName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-400">Gói cước:</span>
+                <span className="font-semibold text-emerald-400">Gói {subscription.packageName}</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                <span>Hạn hiện tại:</span>
+                <span className="text-amber-400 font-medium">đến {subscription.endDate}</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between text-zinc-400">
-              <span>Cơ sở:</span>
-              <span className="text-zinc-300 font-medium">{subscription.businessName}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-400">Gói cước:</span>
-              <span className="font-semibold text-emerald-400">Gói {subscription.packageName}</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-zinc-400">
-              <span>Hạn hiện tại:</span>
-              <span className="text-amber-400 font-medium">đến {subscription.endDate}</span>
-            </div>
-          </div>
 
-          {/* Chọn thời gian gia hạn */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-300">
-              Thời gian gia hạn thêm:
-            </label>
-            <Select
-              value={String(durationMonths)}
-              onValueChange={(val) => setDurationMonths(Number(val))}
-            >
-              <SelectTrigger className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white">
-                <SelectValue placeholder="Chọn số tháng gia hạn" />
-              </SelectTrigger>
-              <SelectContent className="border-[#1b2d22] bg-[#0c1410] text-zinc-200">
-                {durationOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={String(opt.value)} className="text-xs cursor-pointer">
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Chọn thời gian gia hạn */}
+            <FormField
+              control={form.control}
+              name="durationMonths"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-xs font-semibold text-zinc-300">
+                    Thời gian gia hạn thêm:
+                  </FormLabel>
+                  <Select
+                    value={String(field.value)}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white">
+                        <SelectValue placeholder="Chọn số tháng gia hạn" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="border-[#1b2d22] bg-[#0c1410] text-zinc-200">
+                      {durationOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={String(opt.value)} className="text-xs cursor-pointer">
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-[11px] text-rose-400" />
+                </FormItem>
+              )}
+            />
 
-          {/* Thông báo tự động nối tiếp */}
-          <div className="flex items-start gap-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-[11px] text-emerald-300">
-            <Clock className="size-4 shrink-0 text-emerald-400 mt-0.5" />
-            <span>
-              Hệ thống sẽ tự động cộng thêm <strong>{durationMonths} tháng</strong> nối tiếp sau ngày {subscription.endDate}.
-            </span>
-          </div>
-        </div>
+            {/* Thông báo tự động nối tiếp */}
+            <div className="flex items-start gap-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-[11px] text-emerald-300">
+              <Clock className="size-4 shrink-0 text-emerald-400 mt-0.5" />
+              <span>
+                Hệ thống sẽ tự động cộng thêm <strong>{form.watch('durationMonths')} tháng</strong> nối tiếp sau ngày {subscription.endDate}.
+              </span>
+            </div>
 
-        <DialogFooter className="gap-2 pt-3 border-t border-[#1b2d22]">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="h-9 rounded-xl border-[#1b2d22] bg-[#111915] text-zinc-300 hover:text-white hover:bg-[#16241c] text-xs cursor-pointer"
-          >
-            Hủy bỏ
-          </Button>
-          <Button
-            type="button"
-            disabled={isSubmitting}
-            onClick={handleConfirm}
-            className="h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer"
-          >
-            {isSubmitting ? (
-              <Loader2 className="size-3.5 animate-spin text-slate-950" />
-            ) : (
-              <CheckCircle2 className="size-3.5 text-slate-950" />
-            )}
-            <span>{isSubmitting ? 'Đang gia hạn...' : 'Xác nhận gia hạn'}</span>
-          </Button>
-        </DialogFooter>
+            <DialogFooter className="gap-2 pt-3 border-t border-[#1b2d22]">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="h-9 rounded-xl border-[#1b2d22] bg-[#111915] text-zinc-300 hover:text-white hover:bg-[#16241c] text-xs cursor-pointer"
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="size-3.5 animate-spin text-slate-950" />
+                ) : (
+                  <CheckCircle2 className="size-3.5 text-slate-950" />
+                )}
+                <span>{isSubmitting ? 'Đang gia hạn...' : 'Xác nhận gia hạn'}</span>
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

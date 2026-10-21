@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { type CourtOwnerItem } from '@/api/court-owners';
 import { RefreshCw, Loader2, CheckCircle2, Sparkles, ShieldCheck } from 'lucide-react';
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { changePackageSchema, type ChangePackageValues } from '../../schemas/courtOwnerSchema';
+import { useServicePackagesConfigQuery } from '@/api/subscriptions';
 
 interface Props {
   open: boolean;
@@ -37,9 +42,9 @@ interface PackageOption {
   features: string[];
 }
 
-const AVAILABLE_PACKAGES: PackageOption[] = [
+const DEFAULT_PACKAGES: PackageOption[] = [
   {
-    id: 'pkg-basic',
+    id: 'e8379529-ece2-439c-8350-fb4e964013e9',
     code: 'Basic',
     name: 'Basic',
     price: 499000,
@@ -49,7 +54,7 @@ const AVAILABLE_PACKAGES: PackageOption[] = [
     features: [],
   },
   {
-    id: 'pkg-pro',
+    id: '855b558f-7f95-4107-9df2-0f1fb5da8218',
     code: 'Pro',
     name: 'Pro',
     price: 1000000,
@@ -59,7 +64,7 @@ const AVAILABLE_PACKAGES: PackageOption[] = [
     features: [],
   },
   {
-    id: 'pkg-ultra',
+    id: 'c57735d0-84af-46d3-87a5-f4f88f51ce70',
     code: 'Ultra',
     name: 'Ultra',
     price: 2000000,
@@ -77,38 +82,77 @@ export function ChangePackageDialog({
   onSubmit,
   isSubmitting,
 }: Props) {
-  const [selectedPkgId, setSelectedPkgId] = useState<string>('pkg-pro');
+  const { data: dbPackages = [] } = useServicePackagesConfigQuery();
 
-  useEffect(() => {
-    if (owner?.currentPackageName) {
-      const lower = owner.currentPackageName.toLowerCase();
-      if (lower.includes('ultra') || lower.includes('vip') || lower.includes('doanh nghiệp')) {
-        setSelectedPkgId('pkg-ultra');
-      } else if (lower.includes('pro') || lower.includes('nâng cao')) {
-        setSelectedPkgId('pkg-pro');
-      } else {
-        setSelectedPkgId('pkg-basic');
-      }
-    } else {
-      setSelectedPkgId('pkg-pro');
+  const packages: PackageOption[] = useMemo(() => {
+    if (dbPackages.length > 0) {
+      return dbPackages.map((p) => {
+        const lower = p.name.toLowerCase();
+        const badge = lower.includes('pro')
+          ? 'PHỔ BIẾN NHẤT'
+          : lower.includes('ultra') || lower.includes('vip')
+          ? 'TOÀN DIỆN'
+          : 'KHỞI ĐẦU';
+        return {
+          id: p.id,
+          code: p.name,
+          name: p.name,
+          price: p.price,
+          durationMonths: p.durationMonths,
+          badge,
+          description: p.description,
+          features: [],
+        };
+      });
     }
-  }, [owner, open]);
+    return DEFAULT_PACKAGES;
+  }, [dbPackages]);
+
+  // Bắt lỗi input bằng Zod Schema (hạn chế if-else thủ công)
+  const form = useForm<ChangePackageValues>({
+    resolver: zodResolver(changePackageSchema),
+    defaultValues: {
+      newPackageId: '',
+    },
+  });
+
+  const selectedPkgId = form.watch('newPackageId');
+
+  // Chỉ thiết lập gói mặc định khi mở modal hoặc đổi owner
+  useEffect(() => {
+    if (!open || !owner || packages.length === 0) return;
+
+    if (owner.currentPackageName) {
+      const lower = owner.currentPackageName.toLowerCase();
+      const matched = packages.find(
+        (p) => p.name.toLowerCase().includes(lower) || lower.includes(p.name.toLowerCase())
+      );
+      if (matched) {
+        form.setValue('newPackageId', matched.id, { shouldValidate: true });
+        return;
+      }
+    }
+
+    // Nếu chưa có gói, mặc định chọn gói đầu tiên hoặc Pro
+    form.setValue('newPackageId', packages[1]?.id || packages[0]?.id, { shouldValidate: true });
+  }, [open, owner?.id, owner?.currentPackageName, packages, form]);
 
   if (!owner) return null;
 
-  const currentPkg = AVAILABLE_PACKAGES.find((p) => p.id === selectedPkgId) || AVAILABLE_PACKAGES[1];
+  const currentPkg = packages.find((p) => p.id === selectedPkgId) || packages[0];
 
-  const handleConfirm = async () => {
+  const handleConfirm = form.handleSubmit(async (values) => {
+    const chosenPkg = packages.find((p) => p.id === values.newPackageId) || currentPkg;
     await onSubmit(
       owner.id,
-      currentPkg.id,
-      currentPkg.name,
+      chosenPkg.id,
+      chosenPkg.name,
       owner.fullName,
       owner.businessName || `Cụm sân ${owner.fullName}`,
-      currentPkg.price
+      chosenPkg.price
     );
     onOpenChange(false);
-  };
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -156,7 +200,7 @@ export function ChangePackageDialog({
             </label>
 
             <div className="grid grid-cols-1 gap-2.5">
-              {AVAILABLE_PACKAGES.map((pkg) => {
+              {packages.map((pkg) => {
                 const isSelected = selectedPkgId === pkg.id;
                 const isCurrent =
                   owner.currentPackageName?.toLowerCase().includes(pkg.code.toLowerCase()) ||
@@ -167,7 +211,7 @@ export function ChangePackageDialog({
                 return (
                   <div
                     key={pkg.id}
-                    onClick={() => setSelectedPkgId(pkg.id)}
+                    onClick={() => form.setValue('newPackageId', pkg.id, { shouldValidate: true })}
                     className={`relative rounded-xl border p-3.5 cursor-pointer transition-all ${
                       isSelected
                         ? 'border-emerald-500 bg-[#12241a] shadow-lg shadow-emerald-500/10'

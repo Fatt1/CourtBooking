@@ -348,8 +348,8 @@ export function CourtOwnersPage() {
                             Hoạt động
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 px-2.5 py-1 text-[11px] font-semibold text-rose-400">
-                            <span className="size-1.5 rounded-full bg-rose-400" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/30 px-2.5 py-1 text-[11px] font-semibold text-red-400">
+                            <span className="size-1.5 rounded-full bg-red-500" />
                             Đã khóa
                           </span>
                         )}
@@ -433,7 +433,7 @@ export function CourtOwnersPage() {
                               >
                                 {isActive ? (
                                   <>
-                                    <Ban className="size-3.5 text-amber-400" />
+                                    <Ban className="size-3.5 text-red-400" />
                                     <span>Khóa tài khoản</span>
                                   </>
                                 ) : (
