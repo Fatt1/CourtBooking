@@ -13,12 +13,14 @@ import {
   MapPin,
   ExternalLink,
   Info,
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { OwnerModal } from '@/features/court-owners/components/shared/OwnerModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TipTapEditor } from '@/components/ui/tiptap-editor';
 import {
   LocationSelectGroup,
   TimeSelect,
@@ -89,6 +91,7 @@ export function BranchFormModal({
   const [openTime, setOpenTime] = useState('06:00');
   const [closeTime, setCloseTime] = useState('23:00');
   const [policy, setPolicy] = useState('');
+  const [description, setDescription] = useState('');
 
   // VietQR states
   const [accountNumber, setAccountNumber] = useState('');
@@ -150,6 +153,7 @@ export function BranchFormModal({
       setOpenTime(branchDetail.openTime ? branchDetail.openTime.slice(0, 5) : '06:00');
       setCloseTime(branchDetail.closeTime ? branchDetail.closeTime.slice(0, 5) : '23:00');
       setPolicy(branchDetail.policy || '');
+      setDescription(branchDetail.description || '');
       setAccountNumber(branchDetail.accountNumber || '');
       setAccountName(branchDetail.accountName || '');
 
@@ -200,6 +204,7 @@ export function BranchFormModal({
       setOpenTime('06:00');
       setCloseTime('23:00');
       setPolicy('Khách hàng được hủy miễn phí trước 24h so với giờ bắt đầu thi đấu.');
+      setDescription('');
       setAccountNumber('');
       setAccountName('');
       setQrImage(null);
@@ -410,6 +415,7 @@ export function BranchFormModal({
       accountName: accountName.trim().toUpperCase(),
       sportTypeIds: selectedSportIds,
       policy: policy.trim() || null,
+      description: description.trim() || null,
       latitude: latitude ?? undefined,
       longitude: longitude ?? undefined,
       imageIds: images.map((img) => img.id),
@@ -460,13 +466,17 @@ export function BranchFormModal({
             <span className="text-xs">Đang tải thông tin chi nhánh...</span>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6 pt-2">
-            {/* 2 Cột Bố Cục Chính như bản thiết kế */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* CỘT TRÁI: Tên chi nhánh, Tỉnh/Huyện, Thư viện ảnh (3/2), Địa chỉ */}
-              <div className="space-y-4">
-                {/* 1. Tên chi nhánh */}
-                <div className="space-y-1.5">
+          <form onSubmit={handleSubmit} className="space-y-5 pt-1">
+            {/* 1. THÔNG TIN CƠ SỞ & ĐỊA CHỈ */}
+            <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5 space-y-4">
+              <div className="flex items-center gap-2 pb-2.5 border-b border-border/40 text-foreground font-bold text-xs">
+                <Building2 className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                <span>1. Thông tin cơ sở & Địa chỉ hoạt động</span>
+              </div>
+
+              {/* Tên chi nhánh & Hotline */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div className="sm:col-span-2 space-y-1.5">
                   <label className="text-xs font-semibold text-foreground">
                     Tên chi nhánh <span className="text-rose-500">*</span>
                   </label>
@@ -475,297 +485,318 @@ export function BranchFormModal({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ví dụ: Matchday Quận 7"
-                    className="h-11 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
+                    className="h-10 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 text-xs focus-visible:ring-[#a3e635]"
                   />
                 </div>
 
-                {/* 2. Tỉnh/Thành phố & Quận/Huyện từ JSON (Hỗ trợ tìm kiếm theo tên) */}
-                <LocationSelectGroup
-                  selectedProvinceCode={provinceCode}
-                  onProvinceChange={(code) => {
-                    setProvinceCode(code);
-                  }}
-                  selectedWard={district}
-                  onWardChange={(wardVal) => setDistrict(wardVal)}
-                  required
-                />
-
-                {/* 3. Thư viện ảnh chi nhánh (Aspect Ratio 3/2, Kéo thả sắp xếp, upload API) */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-foreground">
-                      Thư viện ảnh chi nhánh (Cho phép chọn nhiều ảnh){' '}
-                      <span className="text-rose-500">*</span>
-                    </label>
-                    <span className="text-[11px] text-muted-foreground">Tối đa 5MB/ảnh</span>
-                  </div>
-
-                  {/* Vùng Dropzone tải ảnh */}
-                  <div
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (e.dataTransfer.files) {
-                        handleUploadGalleryFiles(e.dataTransfer.files);
-                      }
-                    }}
-                    className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/70 bg-muted/30 p-6 text-center hover:border-[#a3e635]/60 hover:bg-accent transition-all"
-                  >
-                    <input
-                      ref={galleryInputRef}
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files) handleUploadGalleryFiles(e.target.files);
-                        if (galleryInputRef.current) galleryInputRef.current.value = '';
-                      }}
-                      className="hidden"
-                    />
-
-                    {isUploadingGallery ? (
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground py-2">
-                        <Loader2 className="size-7 animate-spin text-emerald-700 dark:text-[#a3e635]" />
-                        <span className="text-xs text-foreground">Đang tải và xử lý hình ảnh...</span>
-                      </div>
-                    ) : (
-                      <>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => galleryInputRef.current?.click()}
-                          className="h-10 rounded-xl bg-muted text-foreground hover:bg-accent border border-border/60 font-semibold px-5 cursor-pointer"
-                        >
-                          <Upload className="size-4 mr-2" />
-                          <span>Tải ảnh lên</span>
-                        </Button>
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          Hoặc kéo thả ảnh vào đây
-                        </p>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Danh sách ảnh đã tải - Hiển thị tỉ lệ 3/2 và cho phép kéo qua lại */}
-                  {images.length > 0 && (
-                    <div className="space-y-1.5 pt-1">
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                        <span>Đã tải {images.length} ảnh (Kéo thả để sắp xếp thứ tự)</span>
-                        <span className="text-emerald-700 dark:text-[#a3e635] font-semibold">Ảnh đầu tiên là ảnh bìa</span>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                        {images.map((img, index) => (
-                          <div
-                            key={img.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, index)}
-                            onDragOver={(e) => handleDragOver(e, index)}
-                            onDrop={(e) => handleDrop(e, index)}
-                            onDragEnd={handleDragEnd}
-                            className={`group relative aspect-[3/2] rounded-xl overflow-hidden border bg-muted cursor-grab active:cursor-grabbing transition-all select-none ${
-                              draggedIndex === index
-                                ? 'opacity-40 scale-95 border-amber-400'
-                                : dragOverIndex === index
-                                ? 'border-[#a3e635] scale-105 shadow-md'
-                                : 'border-border/60 hover:border-foreground/40'
-                            }`}
-                          >
-                            <img
-                              src={img.url}
-                              alt={`Branch ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-
-                            {/* Badge thứ tự */}
-                            <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/75 text-[10px] font-bold text-white backdrop-blur-xs">
-                              {index === 0 ? '★ Ảnh bìa' : `#${index + 1}`}
-                            </div>
-
-                            {/* Nút xóa ảnh */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveImage(index);
-                              }}
-                              className="absolute top-1.5 right-1.5 size-6 rounded-md bg-rose-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-700 cursor-pointer"
-                              title="Xóa ảnh"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 4. Địa chỉ chi tiết */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground">
-                    Địa chỉ chi tiết (Số nhà, Tên đường, Phường/Xã){' '}
-                    <span className="text-rose-500">*</span>
+                    Hotline liên hệ <span className="text-rose-500">*</span>
                   </label>
                   <Input
                     required
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    placeholder="Ví dụ: 123 Nguyễn Văn Linh, P. Tân Phong"
-                    className="h-11 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
+                    value={hotline}
+                    onChange={(e) => setHotline(e.target.value)}
+                    placeholder="090..."
+                    className="h-10 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 text-xs focus-visible:ring-[#a3e635]"
                   />
                 </div>
               </div>
 
-              {/* CỘT PHẢI: Google Maps URL + Lat/Lng (readonly), Hotline, Giờ, Chính sách, VietQR */}
-              <div className="space-y-4">
-                {/* 1. Tọa độ GPS / Google Maps URL */}
-                <div className="space-y-1.5">
+              {/* Tỉnh/Thành phố & Quận/Huyện */}
+              <LocationSelectGroup
+                selectedProvinceCode={provinceCode}
+                onProvinceChange={(code) => setProvinceCode(code)}
+                selectedWard={district}
+                onWardChange={(wardVal) => setDistrict(wardVal)}
+                required
+              />
+
+              {/* Địa chỉ chi tiết */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Địa chỉ chi tiết (Số nhà, Tên đường, Phường/Xã) <span className="text-rose-500">*</span>
+                </label>
+                <Input
+                  required
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  placeholder="Ví dụ: 123 Nguyễn Văn Linh, P. Tân Phong"
+                  className="h-10 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 text-xs focus-visible:ring-[#a3e635]"
+                />
+              </div>
+
+              {/* Google Maps URL & Tọa độ bóc tách */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-0.5">
+                <div className="sm:col-span-2 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-foreground">
-                      Tọa độ GPS / Google Maps URL <span className="text-xs text-muted-foreground font-normal">(tùy chọn)</span>
+                      Tọa độ GPS / Google Maps URL
                     </label>
                     {latitude && longitude && (
                       <span className="text-[11px] text-emerald-700 dark:text-[#a3e635] flex items-center gap-1 font-medium">
                         <CheckCircle2 className="size-3" />
-                        Đã xác định tọa độ
+                        Đã bóc tách tọa độ
                       </span>
                     )}
                   </div>
                   <Input
                     value={ggMapUrl}
                     onChange={(e) => handleGgMapUrlChange(e.target.value)}
-                    placeholder="Dán link Google Maps hoặc tọa độ (https://www.google.com/maps/...)"
-                    className="h-11 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
+                    placeholder="Dán link Google Maps vào đây (https://www.google.com/maps/...)"
+                    className="h-10 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 text-xs focus-visible:ring-[#a3e635]"
                   />
                 </div>
 
-                {/* 2. Trường Vĩ độ & Kinh độ (Read-only, không được nhập tay) */}
-                <div className="space-y-1">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-muted-foreground">
-                        Vĩ độ (Latitude)
-                      </label>
-                      <Input
-                        disabled
-                        readOnly
-                        value={latitude !== null ? latitude.toString() : ''}
-                        placeholder="Tự động bóc tách"
-                        className="h-10 rounded-xl bg-muted/40 border-border/40 text-muted-foreground font-mono text-xs cursor-not-allowed"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-muted-foreground">
-                        Kinh độ (Longitude)
-                      </label>
-                      <Input
-                        disabled
-                        readOnly
-                        value={longitude !== null ? longitude.toString() : ''}
-                        placeholder="Tự động bóc tách"
-                        className="h-10 rounded-xl bg-muted/40 border-border/40 text-muted-foreground font-mono text-xs cursor-not-allowed"
-                      />
-                    </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium text-muted-foreground">
+                    Tọa độ GPS trích xuất
+                  </label>
+                  <div className="h-10 rounded-xl bg-muted/40 border border-border/40 px-3 flex items-center text-xs font-mono text-foreground">
+                    {latitude && longitude ? (
+                      <span className="text-emerald-700 dark:text-[#a3e635]">
+                        {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground/50 italic text-[11px]">
+                        Tự động bóc tách từ URL
+                      </span>
+                    )}
                   </div>
-                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 pt-0.5">
-                    <Info className="size-3 text-sky-700 dark:text-sky-400" />
-                    <span>Tọa độ được tự động lấy từ đường dẫn Google Maps, không cho phép nhập tay.</span>
-                  </p>
+                </div>
+              </div>
+
+              {/* Khung giờ mở/đóng cửa & Bộ môn hoạt động */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-0.5">
+                <div className="space-y-1.5">
+                  <TimeSelect
+                    label="Giờ mở cửa"
+                    required
+                    value={openTime}
+                    onChange={setOpenTime}
+                    stepMinutes={30}
+                    startHour={0}
+                    endHour={24}
+                  />
                 </div>
 
-                {/* 3. Hotline & Khung giờ mở cửa */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="space-y-1.5 sm:col-span-1">
-                    <label className="text-xs font-semibold text-foreground">
-                      Hotline <span className="text-rose-500">*</span>
+                <div className="space-y-1.5">
+                  <TimeSelect
+                    label="Giờ đóng cửa"
+                    required
+                    value={closeTime}
+                    onChange={setCloseTime}
+                    stepMinutes={30}
+                    startHour={0}
+                    endHour={24}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <SportTypeMultiSelect
+                    selectedIds={selectedSportIds}
+                    onChange={setSelectedSportIds}
+                    variant="dropdown"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. GIỚI THIỆU & CHÍNH SÁCH QUY ĐỊNH (FULL-WIDTH) */}
+            <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5 space-y-4">
+              <div className="flex items-center justify-between pb-2.5 border-b border-border/40">
+                <div className="flex items-center gap-2 text-foreground font-bold text-xs">
+                  <FileText className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                  <span>2. Giới thiệu chi nhánh & Chính sách quy định</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                  Hỗ trợ định dạng văn bản TipTap Rich Text (tiêu đề, in đậm, danh sách...)
+                </span>
+              </div>
+
+              {/* TipTap Rich Text Editor */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Mô tả & Giới thiệu chi nhánh
+                </label>
+                <TipTapEditor
+                  content={description}
+                  onChange={setDescription}
+                  placeholder="Nhập thông tin giới thiệu chi nhánh, quy mô, cơ sở vật chất, tiện ích (wifi, giữ xe, phòng tắm, căn tin, điều hòa...)..."
+                  minHeight="160px"
+                />
+              </div>
+
+              {/* Chính sách & Quy định chi nhánh */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground">
+                    Chính sách & Quy định chi nhánh
+                  </label>
+                  <span className="text-[11px] text-muted-foreground">
+                    Xuống dòng để tạo các mục quy định
+                  </span>
+                </div>
+                <textarea
+                  rows={4}
+                  value={policy}
+                  onChange={(e) => setPolicy(e.target.value)}
+                  placeholder="Ví dụ:&#10;- Vui lòng có mặt trước giờ chơi 10 phút để xác nhận sân.&#10;- Khách hàng được hủy miễn phí trước 24h so với giờ bắt đầu thi đấu.&#10;- Mang giày thể thao chuyên dụng phù hợp và không mang thức ăn có mùi vào sân thi đấu."
+                  className="w-full rounded-xl bg-background border border-border/60 p-3 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:ring-2 focus:ring-[#a3e635] resize-y"
+                />
+              </div>
+            </div>
+
+            {/* 3. HÌNH THỨC & THANH TOÁN (2 CỘT CÂN ĐỐI) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Cột trái: Thư viện ảnh chi nhánh */}
+              <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                  <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                    <ImageIcon className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                    <span>3. Thư viện ảnh chi nhánh</span>
+                    <span className="text-rose-500">*</span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground">Tối đa 5MB/ảnh</span>
+                </div>
+
+                {/* Dropzone */}
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files) {
+                      handleUploadGalleryFiles(e.dataTransfer.files);
+                    }
+                  }}
+                  className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border/70 bg-muted/30 p-4 text-center hover:border-emerald-700/60 dark:hover:border-[#a3e635]/60 hover:bg-accent transition-all"
+                >
+                  <input
+                    ref={galleryInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files) handleUploadGalleryFiles(e.target.files);
+                      if (galleryInputRef.current) galleryInputRef.current.value = '';
+                    }}
+                    className="hidden"
+                  />
+
+                  {isUploadingGallery ? (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground py-1">
+                      <Loader2 className="size-6 animate-spin text-emerald-700 dark:text-[#a3e635]" />
+                      <span className="text-xs text-foreground">Đang tải và xử lý hình ảnh...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => galleryInputRef.current?.click()}
+                        className="h-9 rounded-xl bg-muted text-foreground hover:bg-accent border border-border/60 font-semibold px-4 cursor-pointer text-xs"
+                      >
+                        <Upload className="size-3.5 mr-1.5" />
+                        <span>Tải ảnh lên</span>
+                      </Button>
+                      <p className="mt-1.5 text-[11px] text-muted-foreground">
+                        Hoặc kéo thả ảnh vào đây (tỉ lệ 3:2)
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {/* Danh sách ảnh */}
+                {images.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>{images.length} ảnh (kéo thả sắp xếp)</span>
+                      <span className="text-emerald-700 dark:text-[#a3e635] font-semibold">Ảnh 1 là ảnh bìa</span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {images.map((img, index) => (
+                        <div
+                          key={img.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={(e) => handleDrop(e, index)}
+                          onDragEnd={handleDragEnd}
+                          className={`group relative aspect-[3/2] rounded-lg overflow-hidden border bg-muted cursor-grab active:cursor-grabbing transition-all select-none ${
+                            draggedIndex === index
+                              ? 'opacity-40 scale-95 border-amber-400'
+                              : dragOverIndex === index
+                              ? 'border-emerald-700 dark:border-[#a3e635] scale-105 shadow-md'
+                              : 'border-border/60 hover:border-foreground/40'
+                          }`}
+                        >
+                          <img
+                            src={img.url}
+                            alt={`Branch ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+
+                          <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/75 text-[9px] font-bold text-white backdrop-blur-xs">
+                            {index === 0 ? '★ Bìa' : `#${index + 1}`}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveImage(index);
+                            }}
+                            className="absolute top-1 right-1 size-5 rounded bg-rose-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-700 cursor-pointer"
+                            title="Xóa ảnh"
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Cột phải: Thông tin VietQR */}
+              <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5 space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/40 text-xs font-bold text-foreground">
+                  <CreditCard className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                  <span>4. Thông tin thanh toán VietQR</span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-medium text-foreground">
+                      Số tài khoản ngân hàng <span className="text-rose-500">*</span>
                     </label>
                     <Input
                       required
-                      value={hotline}
-                      onChange={(e) => setHotline(e.target.value)}
-                      placeholder="090..."
-                      className="h-11 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-[#a3e635]"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="Số tài khoản ngân hàng"
+                      className="h-10 rounded-xl bg-background border-border/60 text-foreground font-mono text-xs focus-visible:ring-[#a3e635]"
                     />
                   </div>
 
-                  <div className="space-y-1.5 sm:col-span-1">
-                    <TimeSelect
-                      label="Giờ mở cửa"
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-medium text-foreground">
+                      Tên chủ tài khoản <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
                       required
-                      value={openTime}
-                      onChange={setOpenTime}
-                      stepMinutes={30}
-                      startHour={0}
-                      endHour={24}
+                      value={accountName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                      placeholder="NGUYEN VAN A"
+                      className="h-10 rounded-xl bg-background border-border/60 text-foreground uppercase text-xs focus-visible:ring-[#a3e635]"
                     />
                   </div>
 
-                  <div className="space-y-1.5 sm:col-span-1">
-                    <TimeSelect
-                      label="Giờ đóng cửa"
-                      required
-                      value={closeTime}
-                      onChange={setCloseTime}
-                      stepMinutes={30}
-                      startHour={0}
-                      endHour={24}
-                    />
-                  </div>
-                </div>
-
-                {/* 4. Điều khoản hủy đặt sân */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-foreground">
-                    Điều khoản hủy đặt sân
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={policy}
-                    onChange={(e) => setPolicy(e.target.value)}
-                    placeholder="Khách hàng được hủy miễn phí trước 24h..."
-                    className="w-full rounded-xl bg-background border border-border/60 p-3 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:ring-2 focus:ring-[#a3e635] resize-none"
-                  />
-                </div>
-
-                {/* 5. TÁCH RIÊNG: Thông tin VietQR thanh toán */}
-                <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                    <CreditCard className="size-4 text-emerald-700 dark:text-[#a3e635]" />
-                    <span>Thông tin thanh toán VietQR (Tách riêng biệt)</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-muted-foreground">
-                        Số tài khoản <span className="text-rose-500">*</span>
-                      </label>
-                      <Input
-                        required
-                        value={accountNumber}
-                        onChange={(e) => setAccountNumber(e.target.value)}
-                        placeholder="Số tài khoản ngân hàng"
-                        className="h-10 rounded-xl bg-background border-border/60 text-foreground font-mono text-xs focus-visible:ring-[#a3e635]"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-muted-foreground">
-                        Tên chủ tài khoản <span className="text-rose-500">*</span>
-                      </label>
-                      <Input
-                        required
-                        value={accountName}
-                        onChange={(e) => setAccountName(e.target.value)}
-                        placeholder="NGUYEN VAN A"
-                        className="h-10 rounded-xl bg-background border-border/60 text-foreground uppercase text-xs focus-visible:ring-[#a3e635]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Upload Ảnh QR Code riêng */}
-                  <div className="space-y-1.5 pt-1">
-                    <label className="text-[11px] font-medium text-muted-foreground">
+                  {/* Ảnh QR */}
+                  <div className="space-y-1.5 pt-0.5">
+                    <label className="text-[11px] font-medium text-foreground">
                       Ảnh mã QR thanh toán <span className="text-rose-500">*</span>
                     </label>
 
@@ -782,7 +813,7 @@ export function BranchFormModal({
                         <img
                           src={qrImage.url}
                           alt="VietQR Code"
-                          className="size-14 rounded-lg object-contain bg-white p-1 border border-border/50"
+                          className="size-14 rounded-lg object-contain bg-white p-1 border border-border/50 shrink-0"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-foreground truncate">
@@ -814,7 +845,7 @@ export function BranchFormModal({
                           <>
                             <QrCode className="size-4 text-emerald-700 dark:text-[#a3e635]" />
                             <span className="text-xs font-medium text-foreground">
-                              Bấm để tải ảnh mã QR VietQR (PNG, JPG)
+                              Bấm để tải ảnh mã VietQR (PNG, JPG)
                             </span>
                           </>
                         )}
@@ -822,14 +853,6 @@ export function BranchFormModal({
                     )}
                   </div>
                 </div>
-
-                {/* 6. Môn thể thao tại cơ sở (Multi-select) */}
-                <SportTypeMultiSelect
-                  selectedIds={selectedSportIds}
-                  onChange={setSelectedSportIds}
-                  variant="pills"
-                  required
-                />
               </div>
             </div>
 
@@ -840,7 +863,7 @@ export function BranchFormModal({
                 variant="ghost"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
-                className="h-11 rounded-xl border border-border/60 bg-card px-6 text-sm font-bold text-foreground hover:bg-accent transition-colors cursor-pointer"
+                className="h-11 rounded-xl border border-border/60 bg-muted/30 px-6 text-sm font-bold text-foreground hover:bg-accent transition-colors cursor-pointer"
               >
                 Hủy
               </Button>
@@ -848,7 +871,7 @@ export function BranchFormModal({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-11 rounded-xl bg-[#a3e635] px-6 text-sm font-bold text-black hover:bg-[#8ece28] shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                className="h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-[#a3e635] dark:text-black dark:hover:bg-[#8ece28] px-6 text-sm font-bold shadow-sm transition-colors cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
