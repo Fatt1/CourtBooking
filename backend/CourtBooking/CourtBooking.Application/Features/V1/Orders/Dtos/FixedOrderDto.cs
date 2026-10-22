@@ -17,6 +17,8 @@ public sealed record FixedOrderDto(
     decimal TotalCourtAmount,
     decimal TotalServiceAmount,
     decimal RemainingAmount,
+    decimal PaidAmount,
+    decimal RefundAmount,
     decimal DiscountAmount,
     string? Note,
     DateTime CreatedAt,

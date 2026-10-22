@@ -15,7 +15,10 @@ import type {
  * Hook lấy danh sách sự kiện thể thao tại chi nhánh
  * Endpoint: GET /api/v1/owner/events
  */
-export function useOwnerEventsQuery(params: GetOwnerEventsParams) {
+export function useOwnerEventsQuery(
+  params: GetOwnerEventsParams,
+  options?: { enabled?: boolean }
+) {
   return useQuery<PagedList<OwnerEventItemDto>>({
     queryKey: ['owner', 'events', params],
     queryFn: async (): Promise<PagedList<OwnerEventItemDto>> => {
@@ -48,7 +51,7 @@ export function useOwnerEventsQuery(params: GetOwnerEventsParams) {
         }
       );
     },
-    enabled: !!params.branchId,
+    enabled: (options?.enabled ?? true) && !!params.branchId,
   });
 }
 

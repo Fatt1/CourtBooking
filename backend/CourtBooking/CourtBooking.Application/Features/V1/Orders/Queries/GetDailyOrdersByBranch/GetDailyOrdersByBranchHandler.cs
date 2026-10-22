@@ -57,29 +57,35 @@ public sealed class GetDailyOrdersByBranchHandler(
         // 4. Đếm tổng số bản ghi
         var totalCount = await query.CountAsync(cancellationToken);
 
-        // 5. Phân trang và chiếu trực tiếp sang DTO
-        var items = await query
+        // 5. Phân trang và tải dữ liệu đơn ngày kèm ca sân
+        var orders = await query
             .OrderByDescending(o => o.CreatedAt)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(o => new DailyOrderDto(
-                o.Id,
-                o.OrderCode,
-                o.CustomerName,
-                o.CustomerPhone,
-                o.Status,
-                o.OrderType,
-                o.OrderDate,
-                o.TotalAmount,
-                o.CalculateRemainingAmount(),
-                o.Note,
-                o.Details.Select(d => new OrderDetailDto(
-                    d.CourtId,
-                    d.Court.Name,
-                    d.Date,
-                    d.StartTime,
-                    d.EndTime)).ToList()))
+            .Include(o => o.Details)
+                .ThenInclude(d => d.Court)
             .ToListAsync(cancellationToken);
+
+        var items = orders.Select(o => new DailyOrderDto(
+            o.Id,
+            o.OrderCode,
+            o.CustomerName,
+            o.CustomerPhone,
+            o.Status,
+            o.OrderType,
+            o.OrderDate,
+            o.TotalAmount,
+            o.CalculateRemainingAmount(),
+            o.CalculatePaidAmount(),
+            o.CalculateRefundAmount(),
+            o.Note,
+            o.Details.Select(d => new OrderDetailDto(
+                d.CourtId,
+                d.Court.Name,
+                d.Date,
+                d.StartTime,
+                d.EndTime)).ToList()))
+        .ToList();
 
         var pagedList = new PagedList<DailyOrderDto>(items, totalCount, request.Page, request.PageSize);
         return Result<PagedList<DailyOrderDto>>.Success(pagedList);

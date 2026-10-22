@@ -442,19 +442,40 @@ export function CreateEventModal({
                 </div>
               </div>
 
-              {/* Thời gian tổ chức sự kiện (Tự động từ các ca sân đã chọn trên Time Grid) */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
-                    <Clock className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
-                    <span>Thời gian diễn ra sự kiện</span>
-                    <span className="text-[10px] text-muted-foreground font-normal">
-                      (Tự động xác định từ ca sân khóa lịch trên Time Grid)
-                    </span>
-                  </label>
+              {/* CÁC CA SÂN KHÓA LỊCH TRÊN TIME GRID (Thay thế khối thời gian cũ) */}
+              <div className="rounded-xl bg-card/60 border border-border/60 p-3.5 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                  <div className="flex items-center gap-2 text-foreground font-bold text-xs">
+                    <Grid className="size-4 text-emerald-700 dark:text-[#a3e635]" />
+                    <span>Các ca sân khóa lịch trên Time Grid</span>
+                    <span className="text-rose-600 dark:text-rose-400">*</span>
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      if (!activeBranchId) {
+                        toast.warning('Vui lòng chọn chi nhánh trước khi chọn ca sân.');
+                        return;
+                      }
+                      setIsVisualBookingOpen(true);
+                    }}
+                    className="h-8 rounded-xl bg-[#a3e635] hover:bg-[#8ece28] text-black text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <Grid className="size-3.5" />
+                    <span>Chọn ca sân trực quan</span>
+                  </Button>
                 </div>
 
-                {eventSchedule ? (
+                {formErrors.courtSlots && (
+                  <div className="text-xs text-rose-600 dark:text-rose-400 font-medium">
+                    {formErrors.courtSlots}
+                  </div>
+                )}
+
+                {/* Banner tóm tắt thời gian tổ chức khi đã chọn ca sân (chuẩn ảnh thiết kế) */}
+                {eventSchedule && (
                   <div className="p-3 rounded-xl bg-card border border-emerald-500/40 flex flex-wrap items-center justify-between gap-3 shadow-inner">
                     <div className="flex items-center gap-3">
                       <div className="size-8 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-[#a3e635] flex items-center justify-center shrink-0">
@@ -485,27 +506,83 @@ export function CreateEventModal({
                       <span>{mergedSelectedSlots.length} ca sân</span>
                     </div>
                   </div>
+                )}
+
+                {/* Danh sách các ca sân đã chọn */}
+                {selectedSlots.length > 0 ? (
+                  <div className="space-y-2.5">
+                    {Object.entries(groupedSlotsByDate).map(([dateKey, slotsGroup]) => {
+                      const dateParts = dateKey.split('-');
+                      const displayDate =
+                        dateParts.length === 3
+                          ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`
+                          : dateKey;
+
+                      return (
+                        <div
+                          key={dateKey}
+                          className="rounded-xl bg-background border border-border/50 p-3 space-y-2"
+                        >
+                          <div className="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-[#a3e635]">
+                            <span>Ngày: {displayDate}</span>
+                            <span className="text-[11px] text-muted-foreground font-normal">
+                              {slotsGroup.length} ca sân được giữ
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            {slotsGroup.map((slot, sIdx) => (
+                              <div
+                                key={sIdx}
+                                className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-muted/40 border border-border text-foreground hover:border-border"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-foreground">
+                                    {slot.courtName}
+                                  </span>
+                                  <span className="text-muted-foreground font-mono text-[11px]">
+                                    ({slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)})
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <span className="font-mono text-emerald-700 dark:text-[#a3e635] font-semibold text-xs">
+                                    {slot.price.toLocaleString('vi-VN')} đ
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveSlot(sIdx)}
+                                    className="text-muted-foreground hover:text-rose-600 dark:text-rose-400 transition-colors p-1 cursor-pointer"
+                                    title="Xóa ca sân này"
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
-                  <div className="p-3 rounded-xl bg-card/60 border border-dashed border-border/70 text-muted-foreground text-xs flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="size-4 text-muted-foreground shrink-0" />
-                      <span>Chưa chọn ca sân. Bấm <strong>"Chọn ca sân trực quan"</strong> ở dưới để tự động xác định ngày & giờ.</span>
+                  <div
+                    onClick={() => {
+                      if (!activeBranchId) {
+                        toast.warning('Vui lòng chọn chi nhánh trước khi chọn ca sân.');
+                        return;
+                      }
+                      setIsVisualBookingOpen(true);
+                    }}
+                    className="p-5 rounded-xl border border-dashed border-border/60 text-center text-xs text-muted-foreground hover:border-[#a3e635]/60 hover:text-muted-foreground cursor-pointer transition-colors space-y-1.5 bg-card/40"
+                  >
+                    <Grid className="size-5 text-muted-foreground mx-auto" />
+                    <div className="font-semibold text-muted-foreground">
+                      Chưa có ca sân nào được chọn cho sự kiện này
                     </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        if (!activeBranchId) {
-                          toast.warning('Vui lòng chọn chi nhánh trước khi chọn ca sân.');
-                          return;
-                        }
-                        setIsVisualBookingOpen(true);
-                      }}
-                      className="h-7 text-[11px] px-2.5 rounded-lg border-border bg-card hover:bg-muted text-foreground cursor-pointer shrink-0"
-                    >
-                      Chọn ca sân
-                    </Button>
+                    <div className="text-[11px] text-muted-foreground">
+                      Bấm vào đây hoặc nút <strong>"Chọn ca sân trực quan"</strong> ở trên để khóa lịch trên Time Grid.
+                    </div>
                   </div>
                 )}
               </div>
@@ -618,110 +695,7 @@ export function CreateEventModal({
               />
             </div>
 
-            {/* 4. KHÓA LỊCH SÂN (COURT SLOTS) - TÁI SỬ DỤNG VISUAL BOOKING MODAL */}
-            <div className="rounded-xl bg-muted/30 border border-border/60 p-4 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-border/40">
-                <div className="flex items-center gap-2 text-foreground font-bold text-xs">
-                  <Grid className="size-4 text-emerald-700 dark:text-[#a3e635]" />
-                  <span>Các ca sân khóa lịch trên Time Grid</span>
-                  <span className="text-rose-600 dark:text-rose-400">*</span>
-                </div>
 
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => {
-                    if (!activeBranchId) {
-                      toast.warning('Vui lòng chọn chi nhánh trước khi chọn ca sân.');
-                      return;
-                    }
-                    setIsVisualBookingOpen(true);
-                  }}
-                  className="h-8 rounded-xl bg-[#a3e635] hover:bg-[#8ece28] text-black text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Grid className="size-3.5" />
-                  <span>Chọn ca sân trực quan</span>
-                </Button>
-              </div>
-
-              {formErrors.courtSlots && (
-                <div className="text-xs text-rose-600 dark:text-rose-400 font-medium">
-                  {formErrors.courtSlots}
-                </div>
-              )}
-
-              {/* Danh sách các ca sân đã chọn */}
-              {selectedSlots.length > 0 ? (
-                <div className="space-y-3">
-                  {Object.entries(groupedSlotsByDate).map(([dateKey, slotsGroup]) => {
-                    const dateParts = dateKey.split('-');
-                    const displayDate =
-                      dateParts.length === 3
-                        ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`
-                        : dateKey;
-
-                    return (
-                      <div
-                        key={dateKey}
-                        className="rounded-xl bg-background border border-border/50 p-3 space-y-2"
-                      >
-                        <div className="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-[#a3e635]">
-                          <span>Ngày: {displayDate}</span>
-                          <span className="text-[11px] text-muted-foreground font-normal">
-                            {slotsGroup.length} ca sân được giữ
-                          </span>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          {slotsGroup.map((slot, sIdx) => (
-                            <div
-                              key={sIdx}
-                              className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-muted/40 border border-border text-foreground hover:border-border"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-foreground">
-                                  {slot.courtName}
-                                </span>
-                                <span className="text-muted-foreground font-mono text-[11px]">
-                                  ({slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)})
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-3">
-                                <span className="font-mono text-emerald-700 dark:text-[#a3e635] font-semibold text-xs">
-                                  {slot.price.toLocaleString('vi-VN')} đ
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveSlot(sIdx)}
-                                  className="text-muted-foreground hover:text-rose-600 dark:text-rose-400 transition-colors p-1"
-                                  title="Xóa ca sân này"
-                                >
-                                  <Trash2 className="size-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div
-                  onClick={() => setIsVisualBookingOpen(true)}
-                  className="p-6 rounded-xl border border-dashed border-border/60 text-center text-xs text-muted-foreground hover:border-[#a3e635]/60 hover:text-muted-foreground cursor-pointer transition-colors space-y-1.5"
-                >
-                  <Grid className="size-6 text-muted-foreground mx-auto" />
-                  <div className="font-semibold text-muted-foreground">
-                    Chưa có ca sân nào được chọn cho sự kiện này
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    Bấm vào đây để mở Time Grid và chọn các sân con cùng khung giờ tổ chức.
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Footer Modal: Submit Action */}

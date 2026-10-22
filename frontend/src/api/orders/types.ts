@@ -103,6 +103,8 @@ export interface DailyOrderDto {
   orderDate: string;        // YYYY-MM-DD
   totalAmount: number;
   remainingAmount: number;
+  paidAmount?: number;
+  refundAmount?: number;
   note?: string | null;
   details: OrderDetailDto[];
 }
@@ -269,6 +271,8 @@ export interface FixedOrderDto {
   totalCourtAmount: number;
   totalServiceAmount: number;
   remainingAmount: number;
+  paidAmount?: number;
+  refundAmount?: number;
   discountAmount: number;
   note?: string | null;
   createdAt: string;
@@ -283,6 +287,7 @@ export interface GetFixedOrdersParams {
   status?: OrderStatus;
   fromDate?: string;
   toDate?: string;
+  search?: string;
   searchTerm?: string;
   page?: number;
   pageSize?: number;

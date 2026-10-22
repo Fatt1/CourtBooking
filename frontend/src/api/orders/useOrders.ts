@@ -29,7 +29,10 @@ import {
  * Hook lấy danh sách đơn hàng đặt ngày tại chi nhánh
  * Endpoint: GET /api/v1/owner/orders?branchId=...&status=...&fromDate=...&toDate=...&search=...&page=...&pageSize=...
  */
-export function useDailyOrdersQuery(params: GetDailyOrdersParams) {
+export function useDailyOrdersQuery(
+  params: GetDailyOrdersParams,
+  options?: { enabled?: boolean }
+) {
   const { isAuthenticated, user } = useAuthStore();
   const isOwner = user?.role === 'CourtOwner' || user?.role === 'Admin';
 
@@ -64,7 +67,7 @@ export function useDailyOrdersQuery(params: GetDailyOrdersParams) {
         }
       );
     },
-    enabled: isAuthenticated && isOwner && !!params.branchId,
+    enabled: (options?.enabled ?? true) && isAuthenticated && isOwner && !!params.branchId,
     staleTime: 1000 * 30, // 30s cache
   });
 }
@@ -281,7 +284,10 @@ export function useCreateFixedOrderByOwnerMutation() {
 /**
  * Hook lấy danh sách đơn đặt lịch cố định tại chi nhánh (GET /api/v1/owner/orders/fixed)
  */
-export function useFixedOrdersQuery(params: import('./types').GetFixedOrdersParams) {
+export function useFixedOrdersQuery(
+  params: import('./types').GetFixedOrdersParams,
+  options?: { enabled?: boolean }
+) {
   const { isAuthenticated, user } = useAuthStore();
   const isOwner = user?.role === 'CourtOwner' || user?.role === 'Admin';
 
@@ -316,7 +322,7 @@ export function useFixedOrdersQuery(params: import('./types').GetFixedOrdersPara
         }
       );
     },
-    enabled: isAuthenticated && isOwner && !!params.branchId,
+    enabled: (options?.enabled ?? true) && isAuthenticated && isOwner && !!params.branchId,
     staleTime: 1000 * 30,
   });
 }
