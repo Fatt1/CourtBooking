@@ -9,5 +9,4 @@ public sealed record CourtOwnerSubscriptionDetailDto(
     Guid PackageId,
     string PackageName,
     DateOnly StartDate,
-    DateOnly EndDate,
-    bool IsActive);
+    DateOnly EndDate);

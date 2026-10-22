@@ -53,6 +53,17 @@ internal sealed class SubscribeServicePackageCommandHandler(
         };
 
         dbContext.CourtOwnerSubscriptions.Add(subscription);
+
+        // 4. Đồng bộ các trường nhúng trực tiếp trên CourtOwner
+        var owner = await dbContext.CourtOwners.FirstOrDefaultAsync(o => o.Id == ownerId, ct);
+        if (owner is not null)
+        {
+            owner.ServicePackageId = package.Id;
+            owner.PackageStartDate = startDate;
+            owner.PackageEndDate = endDate;
+            owner.UpdatedAt = DateTime.UtcNow;
+        }
+
         await dbContext.SaveChangesAsync(ct);
 
         return Result.Success(new SubscriptionDto(
@@ -61,7 +72,6 @@ internal sealed class SubscribeServicePackageCommandHandler(
             package.Name,
             subscription.PricePaid,
             subscription.StartDate,
-            subscription.EndDate,
-            subscription.IsActive));
+            subscription.EndDate));
     }
 }

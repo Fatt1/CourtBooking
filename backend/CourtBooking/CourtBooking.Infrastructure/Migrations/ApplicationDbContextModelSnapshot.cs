@@ -609,12 +609,6 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
-                    b.Property<byte>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint")
-                        .HasDefaultValue((byte)0)
-                        .HasComment("0: Open, 1: Full, 2: Closed, 3: Cancelled");
-
                     b.HasKey("Id");
 
                     b.HasIndex("BranchId")
@@ -1280,7 +1274,16 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
+                    b.Property<DateOnly?>("PackageEndDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("PackageStartDate")
+                        .HasColumnType("date");
+
                     b.Property<Guid>("QrImageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ServicePackageId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("TaxCode")
@@ -1293,6 +1296,8 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("QrImageId");
+
+                    b.HasIndex("ServicePackageId");
 
                     b.ToTable("CourtOwners", (string)null);
                 });
@@ -1941,7 +1946,14 @@ namespace CourtBooking.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("CourtBooking.Domain.Entities.Subscriptions.ServicePackage", "ServicePackage")
+                        .WithMany()
+                        .HasForeignKey("ServicePackageId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("QrImage");
+
+                    b.Navigation("ServicePackage");
 
                     b.Navigation("User");
                 });

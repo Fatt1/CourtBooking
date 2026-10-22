@@ -51,15 +51,9 @@ internal sealed class GetCourtOwnersQueryHandler(IApplicationDbContext dbContext
                 u.Status,
                 u.CourtOwner!.MustChangePwd,
                 u.CreatedAt,
-                LatestSubscription = u.CourtOwner!.Subscriptions
-                    .OrderByDescending(s => s.EndDate)
-                    .Select(s => new
-                    {
-                        PackageName = s.ServicePackage.Name,
-                        s.StartDate,
-                        s.EndDate
-                    })
-                    .FirstOrDefault()
+                CurrentPackageName = u.CourtOwner!.ServicePackage != null ? u.CourtOwner.ServicePackage.Name : null,
+                PackageStartDate = u.CourtOwner!.PackageStartDate,
+                PackageEndDate = u.CourtOwner!.PackageEndDate
             })
             .ToListAsync(ct);
 
@@ -67,10 +61,12 @@ internal sealed class GetCourtOwnersQueryHandler(IApplicationDbContext dbContext
 
         var items = rawItems.Select(x =>
         {
-            var createdDate = DateOnly.FromDateTime(x.CreatedAt);
-            var startDate = x.LatestSubscription?.StartDate ?? createdDate;
-            var endDate = x.LatestSubscription?.EndDate ?? createdDate.AddMonths(1);
-            var isSubActive = today >= startDate && today <= endDate;
+            var isSubActive = x.PackageStartDate.HasValue && x.PackageEndDate.HasValue
+                              && today >= x.PackageStartDate.Value && today <= x.PackageEndDate.Value;
+
+            var remainingDays = (x.PackageEndDate.HasValue && x.PackageEndDate.Value >= today)
+                ? (x.PackageEndDate.Value.DayNumber - today.DayNumber)
+                : 0;
 
             return new CourtOwnerSummaryDto(
                 x.Id,
@@ -81,10 +77,11 @@ internal sealed class GetCourtOwnersQueryHandler(IApplicationDbContext dbContext
                 x.Status,
                 x.MustChangePwd,
                 x.CreatedAt,
-                x.LatestSubscription?.PackageName,
-                startDate,
-                endDate,
-                isSubActive);
+                x.CurrentPackageName,
+                x.PackageStartDate,
+                x.PackageEndDate,
+                isSubActive,
+                remainingDays);
         }).ToList();
 
         return Result.Success(new PagedList<CourtOwnerSummaryDto>(items, totalCount, request.Page, request.PageSize));

@@ -8,6 +8,5 @@ namespace CourtBooking.Application.Features.V1.ServicePackages.Queries.GetSubscr
 /// </summary>
 public sealed record GetSubscriptionHistoryQuery(
     string? Search = null,
-    string? Status = null,
     int Page = 1,
     int PageSize = 10) : IQuery<SubscriptionHistoryResponse>;

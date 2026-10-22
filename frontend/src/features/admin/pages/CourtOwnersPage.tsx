@@ -362,7 +362,18 @@ export function CourtOwnersPage() {
 
                       {/* 5. Ngày hết hạn gói */}
                       <td className="py-3.5 px-5 text-center whitespace-nowrap font-medium text-zinc-300">
-                        {formatDateVN(owner.packageEndDate)}
+                        <div>{formatDateVN(owner.packageEndDate)}</div>
+                        {owner.packageEndDate && owner.remainingDays !== undefined && (
+                          owner.remainingDays > 0 ? (
+                            <div className="text-[10px] text-amber-400 font-medium">
+                              Còn {owner.remainingDays} ngày
+                            </div>
+                          ) : (
+                            <div className="text-[10px] text-rose-400 font-medium">
+                              Đã hết hạn
+                            </div>
+                          )
+                        )}
                       </td>
 
                       {/* 6. Gói đăng ký: Chức năng Đổi gói */}

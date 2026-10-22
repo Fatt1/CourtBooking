@@ -93,7 +93,7 @@ export interface SubscriptionHistoryItemDto {
   pricePaid: number;
   startDate: string;
   endDate: string;
-  transactionCode: string;
+  transactionCode?: string;
   status: string;
   daysRemaining: number;
 }

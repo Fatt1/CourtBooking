@@ -1,6 +1,5 @@
 import React from 'react';
-import { TrendingUp, CreditCard, Building2, RotateCw } from 'lucide-react';
-import { formatVND } from '@/lib/format';
+import { TrendingUp, CreditCard, Building2 } from 'lucide-react';
 import type { SaaSSubscriptionRevenueDto } from '@/api/analytics';
 
 interface DashboardKpiCardsProps {
@@ -21,7 +20,6 @@ export function DashboardKpiCards({
 
   const growth = Number(data?.growthPercentage ?? 0);
   const ownersGrowth = Number(data?.activeOwnersGrowth ?? 0);
-  const renewalGrowth = Number(data?.renewalRateGrowth ?? 0);
 
   const cards = [
     {
@@ -54,20 +52,10 @@ export function DashboardKpiCards({
       isPositive: ownersGrowth >= 0,
       iconType: 'stadium',
     },
-    {
-      id: 'renewal_rate',
-      title: 'Tỷ lệ gia hạn',
-      value: `${Number(data?.renewalRate ?? 0).toFixed(1).replace('.', ',')}%`,
-      suffix: '',
-      change: `${renewalGrowth >= 0 ? '+' : ''}${renewalGrowth}%`,
-      changeLabel: 'so với kỳ trước',
-      isPositive: renewalGrowth >= 0,
-      iconType: 'renewal',
-    },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 md:gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 md:gap-4">
       {cards.map((card) => (
         <div
           key={card.id}
@@ -89,9 +77,6 @@ export function DashboardKpiCards({
               )}
               {card.iconType === 'stadium' && (
                 <Building2 className="size-3.5 stroke-[2.2]" />
-              )}
-              {card.iconType === 'renewal' && (
-                <RotateCw className="size-3.5 stroke-[2.2]" />
               )}
             </div>
           </div>

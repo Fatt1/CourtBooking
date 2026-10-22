@@ -19,7 +19,5 @@ public class CourtOwnerSubscription : EntityBase<Guid>
     // Navigation properties
     public Users.CourtOwner CourtOwner { get; set; } = null!;
     public ServicePackage ServicePackage { get; set; } = null!;
-
-    public bool IsActive => DateOnly.FromDateTime(DateTime.UtcNow) >= StartDate
-                         && DateOnly.FromDateTime(DateTime.UtcNow) <= EndDate;
 }
+

@@ -56,6 +56,12 @@ internal sealed class ChangeCourtOwnerPackageCommandHandler(
 
         dbContext.CourtOwnerSubscriptions.Add(subscription);
 
+        // Cập nhật trường nhúng trên CourtOwner
+        courtOwner.ServicePackageId = newPackage.Id;
+        courtOwner.PackageStartDate = today;
+        courtOwner.PackageEndDate = endDate;
+        courtOwner.UpdatedAt = DateTime.UtcNow;
+
         await dbContext.SaveChangesAsync(ct);
 
         return Result.Success(new CourtOwnerSubscriptionDetailDto(
@@ -64,7 +70,6 @@ internal sealed class ChangeCourtOwnerPackageCommandHandler(
             newPackage.Id,
             newPackage.Name,
             subscription.StartDate,
-            subscription.EndDate,
-            subscription.IsActive));
+            subscription.EndDate));
     }
 }
