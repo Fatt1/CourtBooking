@@ -15,5 +15,7 @@ public sealed record DailyOrderDto(
     DateOnly OrderDate,
     decimal TotalAmount,
     decimal RemainingAmount,
+    decimal PaidAmount,
+    decimal RefundAmount,
     string? Note,
     List<OrderDetailDto> Details);

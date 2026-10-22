@@ -7,6 +7,7 @@ import {
   getOrderStatusLabel,
   getOrderStatusVariant,
 } from '@/api/orders';
+import { OrderPaymentSummaryCell } from './OrderPaymentSummaryCell';
 
 interface DailyOrderTableProps {
   data: DailyOrderDto[];
@@ -154,29 +155,15 @@ export function DailyOrderTable({
     {
       header: 'TỔNG TIỀN',
       headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[150px]',
-      cell: (item) => {
-        const isFullyPaid = item.remainingAmount <= 0;
-        const isPartiallyPaid = item.remainingAmount > 0 && item.remainingAmount < item.totalAmount;
-
-        return (
-          <div className="space-y-0.5">
-            <div className="text-sm font-bold text-foreground">
-              {item.totalAmount.toLocaleString('vi-VN')}đ
-            </div>
-            {isFullyPaid && (
-              <div className="text-xs font-medium text-emerald-400">Đã thanh toán</div>
-            )}
-            {isPartiallyPaid && (
-              <div className="text-xs font-medium text-amber-400">
-                Còn thiếu {item.remainingAmount.toLocaleString('vi-VN')}đ
-              </div>
-            )}
-            {!isFullyPaid && !isPartiallyPaid && (
-              <div className="text-xs font-medium text-rose-400">Chưa thanh toán</div>
-            )}
-          </div>
-        );
-      },
+      cell: (item) => (
+        <OrderPaymentSummaryCell
+          totalAmount={item.totalAmount}
+          remainingAmount={item.remainingAmount}
+          paidAmount={item.paidAmount}
+          refundAmount={item.refundAmount}
+          status={item.status}
+        />
+      ),
     },
 
     // 6. TRẠNG THÁI

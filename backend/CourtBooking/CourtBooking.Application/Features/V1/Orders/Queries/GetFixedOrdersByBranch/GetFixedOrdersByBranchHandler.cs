@@ -82,6 +82,8 @@ public sealed class GetFixedOrdersByBranchHandler(
             o.TotalCourtAmount,
             o.TotalServiceAmount,
             o.CalculateRemainingAmount(),
+            o.CalculatePaidAmount(),
+            o.CalculateRefundAmount(),
             o.DiscountAmount,
             o.Note,
             o.CreatedAt,
