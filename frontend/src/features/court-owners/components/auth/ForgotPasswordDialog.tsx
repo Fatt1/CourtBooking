@@ -8,7 +8,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Mail, CheckCircle2, Info, ArrowLeft } from 'lucide-react';
+import { Mail, CheckCircle2, Info, ArrowLeft, Loader2 } from 'lucide-react';
+import { useOwnerForgotPasswordMutation } from '@/api/auth';
+import { toast } from 'sonner';
 
 interface ForgotPasswordDialogProps {
   open: boolean;
@@ -18,7 +20,6 @@ interface ForgotPasswordDialogProps {
 
 /**
  * Modal Quên mật khẩu dành cho Chủ sân (Court Owner).
- * Lưu ý: Hiện tại chưa gọi API thực tế, hiển thị giao diện mẫu và thông báo hướng dẫn.
  */
 export function ForgotPasswordDialog({
   open,
@@ -27,13 +28,24 @@ export function ForgotPasswordDialog({
 }: ForgotPasswordDialogProps) {
   const [email, setEmail] = useState(defaultEmail);
   const [submitted, setSubmitted] = useState(false);
+  const { mutateAsync: sendOwnerForgotPassword, isPending } = useOwnerForgotPasswordMutation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    const cleanEmail = email.trim();
+    if (!cleanEmail) return;
 
-    // Chưa cần call API - ghi nhận và hiển thị thông báo hướng dẫn cho Chủ sân
-    setSubmitted(true);
+    try {
+      await sendOwnerForgotPassword({
+        email: cleanEmail,
+        clientResetUrl: `${window.location.origin}/reset-password?role=owner`,
+      });
+      setSubmitted(true);
+      toast.success('Yêu cầu đặt lại mật khẩu đã được gửi!');
+    } catch (err: unknown) {
+      const error = err as { detail?: string; message?: string };
+      toast.error(error?.detail || error?.message || 'Không thể gửi yêu cầu đặt lại mật khẩu.');
+    }
   };
 
   const handleClose = () => {
@@ -121,9 +133,11 @@ export function ForgotPasswordDialog({
               </Button>
               <Button
                 type="submit"
+                disabled={isPending || !email.trim()}
                 className="h-11 rounded-xl bg-[#a3e635] px-6 text-sm font-bold text-black hover:bg-[#8ece28] shadow-sm cursor-pointer"
               >
-                Gửi yêu cầu
+                {isPending && <Loader2 className="mr-2 size-4 animate-spin text-black" />}
+                {isPending ? 'Đang gửi...' : 'Gửi yêu cầu'}
               </Button>
             </div>
           </form>

@@ -150,9 +150,35 @@ export function useCreateCourtOwnerMutation() {
           password: payload.password || 'Owner@123456',
           businessName: payload.businessName || `Cụm sân ${payload.fullName}`,
           mustChangePwd: payload.mustChangePwd ?? true,
+          servicePackageId: payload.packageId && payload.packageId.includes('-') ? payload.packageId : undefined,
         });
       } catch (err) {
         console.warn('API error in useCreateCourtOwnerMutation, saving to local memory:', err);
+      }
+
+      // Xác định tên gói cước và giá tương ứng
+      let pkgName = 'Pro';
+      let pkgPrice = 1000000;
+      let durationMonths = 3;
+      const lowerPkg = (payload.packageId || '').toLowerCase();
+      if (
+        lowerPkg.includes('ultra') ||
+        lowerPkg.includes('vip') ||
+        payload.packageId === 'c57735d0-84af-46d3-87a5-f4f88f51ce70' ||
+        payload.packageId === 'pkg-ultra'
+      ) {
+        pkgName = 'Ultra';
+        pkgPrice = 2000000;
+        durationMonths = 6;
+      } else if (
+        lowerPkg.includes('basic') ||
+        lowerPkg.includes('cơ bản') ||
+        payload.packageId === 'e8379529-ece2-439c-8350-fb4e964013e9' ||
+        payload.packageId === 'pkg-basic'
+      ) {
+        pkgName = 'Basic';
+        pkgPrice = 499000;
+        durationMonths = 1;
       }
 
       // Cập nhật bộ nhớ đệm
@@ -163,24 +189,24 @@ export function useCreateCourtOwnerMutation() {
         phoneNumber: payload.phoneNumber,
         businessName: payload.businessName || `Cụm sân ${payload.fullName}`,
         status: 'active',
-        currentPackageName: 'Basic',
+        currentPackageName: pkgName,
         isPackageActive: true,
         packageStartDate: new Date().toISOString().split('T')[0],
-        packageEndDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+        packageEndDate: new Date(Date.now() + durationMonths * 30 * 86400000).toISOString().split('T')[0],
         createdAt: new Date().toISOString(),
       };
 
       localOwnersMemory = [newOwner, ...localOwnersMemory];
 
-      // Ghi nhận ngay vào Lịch sử gói cước: Đăng ký mới gói Basic
+      // Ghi nhận ngay vào Lịch sử gói cước: Đăng ký mới gói tương ứng
       recordSubscriptionHistoryChange({
         courtOwnerId: newOwner.id,
         ownerName: payload.fullName,
         businessName: payload.businessName || `Cụm sân ${payload.fullName}`,
-        packageName: 'Basic',
+        packageName: pkgName,
         actionType: 'Register',
-        actionNote: 'Đăng ký mới gói Basic (499.000 đ / 1 tháng)',
-        pricePaid: 499000,
+        actionNote: `Đăng ký mới gói ${pkgName} (${pkgPrice.toLocaleString('vi-VN')} đ / ${durationMonths} tháng)`,
+        pricePaid: pkgPrice,
       });
 
       queryClient.setQueriesData<PagedCourtOwnersResponse>(
@@ -198,6 +224,8 @@ export function useCreateCourtOwnerMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-court-owners'] });
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'subscriptions', 'recent'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics', 'admin', 'saas-revenue'] });
     },
   });
 }

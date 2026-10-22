@@ -7,30 +7,6 @@ interface PackageStructureDonutProps {
   packages?: RevenueByPackageItemDto[];
 }
 
-const DEFAULT_PACKAGES: RevenueByPackageItemDto[] = [
-  {
-    packageId: '1',
-    packageName: 'Gói Pro',
-    revenue: 51514000,
-    totalSold: 86,
-    percentage: 58,
-  },
-  {
-    packageId: '2',
-    packageName: 'Gói VIP',
-    revenue: 42957000,
-    totalSold: 43,
-    percentage: 29,
-  },
-  {
-    packageId: '3',
-    packageName: 'Gói Basic',
-    revenue: 11381000,
-    totalSold: 19,
-    percentage: 13,
-  },
-];
-
 const COLORS = [
   { stroke: '#34d399', bg: 'bg-[#34d399]' }, // Gói Pro (Mint)
   { stroke: '#0d9488', bg: 'bg-[#0d9488]' }, // Gói VIP (Teal)
@@ -38,8 +14,8 @@ const COLORS = [
 ];
 
 export function PackageStructureDonut({
-  totalSold = 148,
-  packages = DEFAULT_PACKAGES,
+  totalSold = 0,
+  packages = [],
 }: PackageStructureDonutProps) {
   const [hoveredPkg, setHoveredPkg] = useState<string | null>(null);
 

@@ -54,7 +54,7 @@ export function EditMatchPage() {
         skillLevel: serverMatch.skillLevel || 'Trung bình',
         feePerPlayer: serverMatch.feePerPlayer,
         description: serverMatch.description || '',
-        approvalMode: serverMatch.approvalMode,
+        approvalMode: (serverMatch.approvalMode === 0 ? 0 : 1) as 0 | 1,
       });
     }
   }, [serverMatch, reset]);

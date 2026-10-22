@@ -11,7 +11,8 @@ public sealed record CreateCourtOwnerRequest(
     string Email,
     bool MustChangePwd = true,
     string? Password = null,
-    string? BusinessName = null);
+    string? BusinessName = null,
+    Guid? ServicePackageId = null);
 
 /// <summary>
 /// Yêu cầu thay đổi gói dịch vụ SaaS của Chủ sân (PNG 2).

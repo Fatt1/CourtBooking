@@ -7,26 +7,15 @@ interface RevenueFluctuationChartProps {
   showComparison?: boolean;
 }
 
-// Mẫu dữ liệu chuỗi thời gian khớp hoàn hảo với biểu đồ trên ảnh
-const DEFAULT_POINTS = [
-  { label: '01/09', current: 1.4, previous: 1.1 },
-  { label: '05/09', current: 2.1, previous: 1.8 },
-  { label: '10/09', current: 3.8, previous: 2.3 },
-  { label: '15/09', current: 4.6, previous: 2.9 },
-  { label: '20/09', current: 5.8, previous: 3.2 },
-  { label: '25/09', current: 6.2, previous: 3.6 },
-  { label: '30/09', current: 7.8, previous: 4.8 },
-];
-
 export function RevenueFluctuationChart({
   timeline,
-  growthPercentage = 18.6,
+  growthPercentage = 0,
   showComparison = true,
 }: RevenueFluctuationChartProps) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const dataPoints = useMemo(() => {
-    if (timeline && timeline.length >= 2) {
+    if (timeline && timeline.length >= 1) {
       return timeline.map((item, idx) => {
         let label = item.period || `P${idx + 1}`;
         if (label.length === 10 && label.includes('-')) {
@@ -45,9 +34,7 @@ export function RevenueFluctuationChart({
         const prevInMio =
           rawPrev > 1000
             ? Math.round(rawPrev / 100000) / 10
-            : rawPrev > 0
-            ? rawPrev
-            : Math.round(currentInMio * 0.7 * 10) / 10;
+            : rawPrev;
 
         return {
           label,
@@ -56,7 +43,7 @@ export function RevenueFluctuationChart({
         };
       });
     }
-    return DEFAULT_POINTS;
+    return [];
   }, [timeline]);
 
   // Kích thước SVG

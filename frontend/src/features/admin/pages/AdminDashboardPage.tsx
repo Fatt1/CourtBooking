@@ -24,8 +24,8 @@ import {
 import {
   useSaaSSubscriptionRevenueQuery,
   useRecentSubscriptionsQuery,
-  MOCK_ADMIN_DASHBOARD_DATA,
   type TimeGrouping,
+  type SaaSSubscriptionRevenueDto,
 } from '@/api/analytics';
 import {
   DashboardKpiCards,
@@ -39,29 +39,52 @@ import {
 
 type TimeFilterType = 'month' | 'year' | 'custom';
 
+const EMPTY_DASHBOARD_DATA: SaaSSubscriptionRevenueDto = {
+  totalRevenue: 0,
+  totalSubscriptionsSold: 0,
+  averageRevenuePerSubscription: 0,
+  previousPeriodRevenue: 0,
+  growthPercentage: 0,
+  activeOwnersCount: 0,
+  activeOwnersGrowth: 0,
+  renewalRate: 0,
+  renewalRateGrowth: 0,
+  byPackage: [],
+  timeline: [],
+};
+
 export function AdminDashboardPage() {
+  const now = new Date();
+  const currentMonthNum = now.getMonth() + 1;
+  const currentYearNum = now.getFullYear();
+  const defaultMonthLabel = `Tháng ${currentMonthNum}, ${currentYearNum}`;
+  const defaultYearLabel = `Năm ${currentYearNum}`;
+  const defaultFromDate = `${currentYearNum}-${String(currentMonthNum).padStart(2, '0')}-01`;
+  const defaultLastDay = new Date(currentYearNum, currentMonthNum, 0).getDate();
+  const defaultToDate = `${currentYearNum}-${String(currentMonthNum).padStart(2, '0')}-${String(defaultLastDay).padStart(2, '0')}`;
+
   // Trạng thái bộ lọc
   const [filterType, setFilterType] = useState<TimeFilterType>('month');
-  const [selectedMonth, setSelectedMonth] = useState('Tháng 9, 2026');
-  const [selectedYear, setSelectedYear] = useState('Năm 2026');
-  const [customFromDate, setCustomFromDate] = useState('2026-09-01');
-  const [customToDate, setCustomToDate] = useState('2026-09-30');
-  const [draftFromDate, setDraftFromDate] = useState('2026-09-01');
-  const [draftToDate, setDraftToDate] = useState('2026-09-30');
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonthLabel);
+  const [selectedYear, setSelectedYear] = useState(defaultYearLabel);
+  const [customFromDate, setCustomFromDate] = useState(defaultFromDate);
+  const [customToDate, setCustomToDate] = useState(defaultToDate);
+  const [draftFromDate, setDraftFromDate] = useState(defaultFromDate);
+  const [draftToDate, setDraftToDate] = useState(defaultToDate);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [compareWithPrevious, setCompareWithPrevious] = useState(true);
 
   // Danh sách các tùy chọn Tháng & Năm
   const monthOptions = [
+    defaultMonthLabel,
+    `Tháng ${currentMonthNum === 1 ? 12 : currentMonthNum - 1}, ${currentMonthNum === 1 ? currentYearNum - 1 : currentYearNum}`,
+    `Tháng ${currentMonthNum <= 2 ? currentMonthNum + 10 : currentMonthNum - 2}, ${currentMonthNum <= 2 ? currentYearNum - 1 : currentYearNum}`,
     'Tháng 9, 2026',
-    'Tháng 10, 2026',
     'Tháng 8, 2026',
-    'Tháng 7, 2026',
-    'Tháng 6, 2026',
   ];
 
-  const yearOptions = ['Năm 2026', 'Năm 2025', 'Năm 2024'];
+  const yearOptions = [`Năm ${currentYearNum}`, `Năm ${currentYearNum - 1}`, `Năm ${currentYearNum - 2}`];
 
   // Mở Popover và đồng bộ dữ liệu tạm thời
   const handleOpenCalendar = (open: boolean) => {
@@ -514,7 +537,7 @@ export function AdminDashboardPage() {
 
       {/* 3. Row 1: KPI Statistic Cards (Cập nhật tức thì theo API khi đổi kỳ) */}
       <DashboardKpiCards
-        data={revenueData || MOCK_ADMIN_DASHBOARD_DATA}
+        data={revenueData || EMPTY_DASHBOARD_DATA}
         isLoading={isLoading}
         showComparison={compareWithPrevious}
       />
@@ -548,7 +571,7 @@ export function AdminDashboardPage() {
 
         {/* Right 1/3: Cần chú ý Notice */}
         <div className="lg:col-span-1">
-          <UrgentExpiringCard expiringCount={recentData?.expiringSoonCount ?? 2} />
+          <UrgentExpiringCard expiringCount={recentData?.expiringSoonCount ?? 0} />
         </div>
       </div>
     </div>

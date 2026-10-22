@@ -82,14 +82,14 @@ export function BranchCheckoutPage() {
   const branchBanner =
     state?.branchBanner ||
     (branchDetail?.images && branchDetail.images.length > 0
-      ? getImageUrl(branchDetail.images[0].key || branchDetail.images[0].url)
+      ? getImageUrl(branchDetail.images[0].key || (branchDetail.images[0] as any).url)
       : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=80');
 
   const selectedDate = state?.selectedDate || '';
   const groupedBookings = state?.groupedBookings || [];
 
   // 1. Form thông tin người đặt
-  const [customerName, setCustomerName] = useState(user?.fullName || user?.name || '');
+  const [customerName, setCustomerName] = useState((user as any)?.fullName || user?.name || '');
   const [customerPhone, setCustomerPhone] = useState(user?.phoneNumber || '');
   const [customerEmail, setCustomerEmail] = useState(user?.email || '');
   const [customerNote, setCustomerNote] = useState('');
@@ -97,8 +97,9 @@ export function BranchCheckoutPage() {
   // Tự động điền thông tin nếu user đăng nhập
   useEffect(() => {
     if (user) {
-      if (!customerName && (user.fullName || user.name)) {
-        setCustomerName(user.fullName || user.name || '');
+      const uName = (user as any)?.fullName || user?.name;
+      if (!customerName && uName) {
+        setCustomerName(uName);
       }
       if (!customerPhone && user.phoneNumber) {
         setCustomerPhone(user.phoneNumber);
