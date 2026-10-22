@@ -117,7 +117,7 @@ export const router = createBrowserRouter([
       { path: 'dashboard', element: <OwnerDashboardPage /> },
       { path: 'orders', element: <OrdersPage /> },
       { path: 'branches', element: <BranchesPage /> },
-      { path: 'court-status', element: <OrdersPage /> },
+      { path: 'court-status', element: <Navigate to="/owner/orders" replace /> },
       { path: 'courts', element: <CourtsPage /> },
       { path: 'court-types', element: <CourtTypesPage /> },
       { path: 'pricing', element: <PricingPage /> },
