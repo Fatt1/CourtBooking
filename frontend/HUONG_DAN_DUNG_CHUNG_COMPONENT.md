@@ -415,7 +415,7 @@ NHIỆM VỤ CỤ THỂ BÂY GIỜ:
 | :-: | :-------------------- | :-------------------------- | :-------------------------- | :------------------------: |
 |  1  | **Tổng quan**         | `/owner`                    | `DashboardPage.tsx`         |      Đang phát triển       |
 |  2  | **Lịch đặt sân**      | `/owner/orders`             | `OrdersPage.tsx`            | ✅ Đã hoàn thành chuẩn mẫu |
-|  3  | **Trạng thái sân**    | `/owner/court-status`       | `CourtStatusPage.tsx`       |          Chờ làm           |
+|  3  | ~~**Trạng thái sân**~~| `/owner/court-status`       | —                           | ❌ Đã lược bỏ (gộp vào Lịch đặt) |
 |  4  | **Quản lý sân**       | `/owner/courts`             | `CourtsPage.tsx`            |          Chờ làm           |
 |  5  | **Chi nhánh**         | `/owner/branches`           | `BranchesPage.tsx`          |   ✅ Đã kết nối API thật   |
 |  6  | **Giá và khung giờ**  | `/owner/pricing`            | `PricingPage.tsx`           |          Chờ làm           |
