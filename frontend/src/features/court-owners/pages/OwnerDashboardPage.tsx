@@ -1,11 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   DollarSign,
   CalendarDays,
   Clock,
   Activity,
-  ArrowRight,
   Store,
   ChevronRight,
   User,
@@ -20,10 +19,15 @@ import { useCourtOwnerRevenueQuery } from '@/api/analytics';
 import { useDailyOrdersQuery, OrderStatus, getOrderStatusLabel, getOrderStatusVariant } from '@/api/orders';
 import { useCourtsQuery } from '@/api/courts';
 import { OwnerStatusBadge } from '@/features/court-owners/components/shared';
+import { DailyOrderDetailModal } from '@/features/court-owners/components/orders';
 
 export function OwnerDashboardPage() {
   const { user } = useAuthStore();
   const { selectedBranchId, selectedBranch } = useBranchStore();
+
+  // State mở modal xem chi tiết đơn hàng trực tiếp tại Dashboard
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // 1. Ngày hôm nay theo chuẩn YYYY-MM-DD
   const todayStr = useMemo(() => {
@@ -52,14 +56,14 @@ export function OwnerDashboardPage() {
   const effectiveBranchId = selectedBranchId || branches[0]?.id;
 
   // 3. API Doanh thu & chỉ số vận hành hôm nay
-  const { data: todayRevenue, isLoading: isLoadingRevenue } = useCourtOwnerRevenueQuery({
+  const { data: todayRevenue, isLoading: isLoadingRevenue, refetch: refetchRevenue } = useCourtOwnerRevenueQuery({
     fromDate: todayStr,
     toDate: todayStr,
     branchId: effectiveBranchId,
   });
 
   // 4. API 5 đơn hàng gần nhất của chi nhánh
-  const { data: recentOrdersData, isLoading: isLoadingOrders } = useDailyOrdersQuery({
+  const { data: recentOrdersData, isLoading: isLoadingOrders, refetch: refetchOrders } = useDailyOrdersQuery({
     branchId: effectiveBranchId,
     page: 1,
     pageSize: 5,
@@ -92,16 +96,6 @@ export function OwnerDashboardPage() {
             {selectedBranch?.name ? ` • Cơ sở: ${selectedBranch.name}` : ''}
           </p>
         </div>
-
-        <Link to="/owner/orders">
-          <Button
-            size="sm"
-            className="bg-[#a3e635] hover:bg-[#8fd028] text-slate-950 font-bold gap-2 shadow-xs cursor-pointer"
-          >
-            <span>Lịch đặt sân</span>
-            <ArrowRight className="size-4" />
-          </Button>
-        </Link>
       </div>
 
       {/* ── 2. HÀNG 4 THẺ SỐ LIỆU HÔM NAY (TODAY'S NUMBERS) ────────────── */}
@@ -222,8 +216,8 @@ export function OwnerDashboardPage() {
                   <th className="py-3 px-4 font-semibold">Mã đơn & Khách hàng</th>
                   <th className="py-3 px-4 font-semibold">Sân & Khung giờ</th>
                   <th className="py-3 px-4 font-semibold text-right">Tổng tiền</th>
-                  <th className="py-3 px-4 font-semibold text-center">Trạng thái</th>
-                  <th className="py-3 px-4 font-semibold text-right">Thao tác</th>
+                  <th className="py-3 px-4 font-semibold text-center w-[160px]">Trạng thái</th>
+                  <th className="py-3 px-4 font-semibold text-center w-[130px]">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40 font-medium">
@@ -259,16 +253,18 @@ export function OwnerDashboardPage() {
                           status={getOrderStatusLabel(order.status)}
                         />
                       </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <Link to={`/owner/orders?search=${order.orderCode}`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-xs font-semibold hover:text-[#a3e635] hover:bg-[#a3e635]/10"
-                          >
-                            Xem chi tiết
-                          </Button>
-                        </Link>
+                      <td className="py-3.5 px-4 text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrderId(order.id);
+                            setIsDetailOpen(true);
+                          }}
+                          className="h-8 text-xs font-semibold hover:text-[#a3e635] hover:bg-[#a3e635]/10 cursor-pointer"
+                        >
+                          Xem chi tiết
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -278,6 +274,17 @@ export function OwnerDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* ── 4. MODAL CHI TIẾT ĐƠN ĐẶT SÂN (POPUP TRỰC TIẾP TẠI DASHBOARD) ─── */}
+      <DailyOrderDetailModal
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        orderId={selectedOrderId}
+        onOrderUpdated={() => {
+          void refetchOrders();
+          void refetchRevenue();
+        }}
+      />
     </div>
   );
 }
