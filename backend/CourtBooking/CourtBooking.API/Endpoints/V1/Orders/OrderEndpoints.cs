@@ -81,17 +81,19 @@ public class OrderEndpoints : IEndpointGroup
                 [FromQuery] DateOnly? fromDate,
                 [FromQuery] DateOnly? toDate,
                 [FromQuery] string? search,
+                [FromQuery] string? searchTerm,
                 [FromQuery] int page = 1,
                 [FromQuery] int pageSize = 10,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
         {
+            var effectiveSearch = !string.IsNullOrWhiteSpace(search) ? search : searchTerm;
             var query = new GetFixedOrdersByBranchQuery(
                 branchId,
                 status,
                 fromDate,
                 toDate,
-                search,
+                effectiveSearch,
                 page,
                 pageSize);
 

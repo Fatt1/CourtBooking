@@ -44,6 +44,7 @@ import { useUpdateOrderItemsMutation, type CourtBookingSlotPayload } from '@/api
 import { updateEventSchema } from './schemas/createEventSchema';
 import { TipTapEditor } from '@/components/ui/tiptap-editor';
 import { VisualBookingModal } from './VisualBookingModal';
+import { UpdateCustomerModal } from './UpdateCustomerModal';
 import { type SelectedCourtSlot, mergeAdjacentSlots, timeToMinutes } from './timeline';
 import { getApiErrorMessage } from '@/types/api';
 import { cn } from '@/lib/utils';
@@ -72,7 +73,8 @@ const SKILL_LEVEL_OPTIONS = [
 function formatDate(dateStr?: string): string {
   if (!dateStr) return '—';
   try {
-    const parts = dateStr.split('-');
+    const clean = dateStr.split('T')[0];
+    const parts = clean.split('-');
     if (parts.length === 3) {
       return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
@@ -80,6 +82,14 @@ function formatDate(dateStr?: string): string {
     // fallback
   }
   return dateStr;
+}
+
+/**
+ * Format khung giờ thi đấu: HH:mm - HH:mm
+ */
+function formatEventTime(startTime?: string, endTime?: string): string {
+  if (!startTime || !endTime) return '—';
+  return `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}`;
 }
 
 /**
@@ -94,20 +104,6 @@ function formatDateTime(isoStr?: string): string {
     return `${timePart} - ${datePart}`;
   } catch {
     return isoStr;
-  }
-}
-
-/**
- * Convert ISO string sang định dạng YYYY-MM-DDTHH:mm cho input datetime-local
- */
-function toDatetimeLocal(isoStr?: string): string {
-  if (!isoStr) return '';
-  try {
-    const d = new Date(isoStr);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  } catch {
-    return '';
   }
 }
 
@@ -139,17 +135,16 @@ export function EventDetailModal({
   // Form states
   const [title, setTitle] = useState('');
   const [sportTypeId, setSportTypeId] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [ticketPrice, setTicketPrice] = useState<number | ''>(0);
   const [slots, setSlots] = useState<number | ''>(0);
   const [status, setStatus] = useState<EventStatus>(EventStatus.Open);
   const [skillLevelFrom, setSkillLevelFrom] = useState('');
   const [skillLevelTo, setSkillLevelTo] = useState('');
   const [description, setDescription] = useState('');
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
   const [note, setNote] = useState('');
+
+  // Modal cập nhật thông tin người đại diện / khách hàng
+  const [isUpdateCustomerOpen, setIsUpdateCustomerOpen] = useState(false);
 
   // Danh sách slots đang chỉnh sửa
   const [selectedSlots, setSelectedSlots] = useState<SelectedCourtSlot[]>([]);
@@ -167,16 +162,12 @@ export function EventDetailModal({
     if (event) {
       setTitle(event.title || '');
       setSportTypeId(event.sportTypeId || '');
-      setStartDate(toDatetimeLocal(event.startDate));
-      setEndDate(toDatetimeLocal(event.endDate));
       setTicketPrice(event.ticketPrice || 0);
       setSlots(event.slots || 0);
       setStatus(event.status ?? EventStatus.Open);
       setSkillLevelFrom(event.skillLevelFrom || '');
       setSkillLevelTo(event.skillLevelTo || '');
       setDescription(event.description || '');
-      setCustomerName(event.customerName || '');
-      setCustomerPhone(event.customerPhone || '');
       setNote(event.note || '');
       setFormErrors({});
       setIsEditing(false);
@@ -280,7 +271,7 @@ export function EventDetailModal({
       }
       groupMap[groupKey].slots.push({
         courtId: slot.courtId,
-        date: slot.date?.split('T')[0] || event.startDate?.split('T')[0] || '',
+        date: slot.date?.split('T')[0] || event.date || event.startDate?.split('T')[0] || '',
         startTime: slot.startTime.length === 5 ? `${slot.startTime}:00` : slot.startTime,
         endTime: slot.endTime.length === 5 ? `${slot.endTime}:00` : slot.endTime,
       });
@@ -341,16 +332,6 @@ export function EventDetailModal({
     const numericPrice = ticketPrice === '' ? 0 : Number(ticketPrice);
     const numericSlots = slots === '' ? 0 : Number(slots);
 
-    // Chuẩn hóa SĐT
-    let formattedPhone = customerPhone.trim();
-    if (formattedPhone.startsWith('+84')) {
-      formattedPhone = '0' + formattedPhone.slice(3);
-    } else if (formattedPhone.startsWith('84') && formattedPhone.length >= 11) {
-      formattedPhone = '0' + formattedPhone.slice(2);
-    } else if (/^[1-9][0-9]{8,9}$/.test(formattedPhone)) {
-      formattedPhone = '0' + formattedPhone;
-    }
-
     // Kiểm tra số lượng vé không được nhỏ hơn số vé đã bán
     if (numericSlots < event.soldTickets) {
       const err = `Số lượng vé tối đa không được nhỏ hơn số vé đã bán (${event.soldTickets} vé).`;
@@ -363,16 +344,12 @@ export function EventDetailModal({
     const validationResult = updateEventSchema.safeParse({
       title: title.trim(),
       sportTypeId,
-      startDate,
-      endDate,
       ticketPrice: numericPrice,
       slots: numericSlots,
       status: Number(status),
       skillLevelFrom: skillLevelFrom.trim() || null,
       skillLevelTo: skillLevelTo.trim() || null,
       description: description.trim() || null,
-      customerName: customerName.trim() || null,
-      customerPhone: formattedPhone || null,
       note: note.trim() || null,
     });
 
@@ -396,16 +373,12 @@ export function EventDetailModal({
         payload: {
           title: title.trim(),
           sportTypeId,
-          startDate: new Date(startDate).toISOString(),
-          endDate: new Date(endDate).toISOString(),
           ticketPrice: numericPrice,
           slots: numericSlots,
           status: Number(status),
           skillLevelFrom: skillLevelFrom.trim() || null,
           skillLevelTo: skillLevelTo.trim() || null,
           description: description.trim() || null,
-          customerName: customerName.trim() || null,
-          customerPhone: formattedPhone || null,
           note: note.trim() || null,
         },
       });
@@ -546,58 +519,33 @@ export function EventDetailModal({
                   </div>
 
                   <div className="flex-1 min-w-0 pr-8 space-y-1.5">
-                    {isEditing ? (
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-[11px] text-muted-foreground">Người đại diện:</label>
-                          <Input
-                            value={customerName}
-                            onChange={(e) => setCustomerName(e.target.value)}
-                            placeholder="Tên người đại diện..."
-                            className="h-8 rounded-lg bg-muted/30 border-border/60 text-xs text-foreground"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[11px] text-muted-foreground">Số điện thoại:</label>
-                          <Input
-                            value={customerPhone}
-                            onChange={(e) => setCustomerPhone(e.target.value)}
-                            placeholder="Số điện thoại..."
-                            className="h-8 rounded-lg bg-muted/30 border-border/60 text-xs text-foreground"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="text-sm font-semibold text-muted-foreground">
-                          Đại diện:{' '}
-                          <span className="font-bold text-foreground text-base">
-                            {event.customerName || 'Ban Tổ Chức Sự Kiện'}
-                          </span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          SĐT:{' '}
-                          <span
-                            className={cn(
-                              'font-semibold',
-                              event.customerPhone && event.customerPhone !== 'Không cung cấp'
-                                ? 'text-emerald-700 dark:text-[#a3e635]'
-                                : 'text-muted-foreground'
-                            )}
-                          >
-                            {event.customerPhone || 'Không cung cấp'}
-                          </span>
-                        </div>
-                      </>
-                    )}
+                    <div className="text-sm font-semibold text-muted-foreground">
+                      Đại diện:{' '}
+                      <span className="font-bold text-foreground text-base">
+                        {event.customerName || 'Ban Tổ Chức Sự Kiện'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      SĐT:{' '}
+                      <span
+                        className={cn(
+                          'font-semibold',
+                          event.customerPhone && event.customerPhone !== 'Không cung cấp'
+                            ? 'text-emerald-700 dark:text-[#a3e635]'
+                            : 'text-muted-foreground'
+                        )}
+                      >
+                        {event.customerPhone || 'Không cung cấp'}
+                      </span>
+                    </div>
                   </div>
 
-                  {!isEditing && !isTerminalState && (
+                  {!isTerminalState && (
                     <button
                       type="button"
-                      onClick={() => setIsEditing(true)}
+                      onClick={() => setIsUpdateCustomerOpen(true)}
                       className="absolute top-4 right-4 size-8 rounded-lg bg-muted border border-border/60 hover:bg-accent text-foreground flex items-center justify-center cursor-pointer transition-colors"
-                      title="Chỉnh sửa thông tin"
+                      title="Chỉnh sửa thông tin người đại diện"
                     >
                       <Pencil className="size-3.5" />
                     </button>
@@ -711,39 +659,6 @@ export function EventDetailModal({
                         </div>
                       </div>
 
-                      {/* Thời gian bắt đầu & Thời gian kết thúc */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <label className="text-[11px] font-semibold text-muted-foreground">
-                            Thời gian bắt đầu tham gia <span className="text-rose-600 dark:text-rose-400">*</span>
-                          </label>
-                          <Input
-                            type="datetime-local"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="h-8.5 rounded-lg bg-muted/30 border-border/60 text-xs text-foreground px-2"
-                          />
-                          {formErrors.startDate && (
-                            <span className="text-[10px] text-rose-600 dark:text-rose-400">{formErrors.startDate}</span>
-                          )}
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[11px] font-semibold text-muted-foreground">
-                            Thời gian kết thúc tham gia <span className="text-rose-600 dark:text-rose-400">*</span>
-                          </label>
-                          <Input
-                            type="datetime-local"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="h-8.5 rounded-lg bg-muted/30 border-border/60 text-xs text-foreground px-2"
-                          />
-                          {formErrors.endDate && (
-                            <span className="text-[10px] text-rose-600 dark:text-rose-400">{formErrors.endDate}</span>
-                          )}
-                        </div>
-                      </div>
-
                       {/* Giá vé & Số lượng vé */}
                       <div className="grid grid-cols-2 gap-2.5">
                         <div className="space-y-1">
@@ -845,12 +760,20 @@ export function EventDetailModal({
                           <span className="font-semibold text-foreground">{event.sportTypeName}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Bắt đầu: </span>
-                          <span className="font-semibold text-foreground">{formatDateTime(event.startDate)}</span>
+                          <span className="text-muted-foreground">Ngày diễn ra: </span>
+                          <span className="font-semibold text-foreground">
+                            {formatDate(event.date || event.startDate || event.slotDetails?.[0]?.date)}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Kết thúc: </span>
-                          <span className="font-semibold text-emerald-700 dark:text-[#a3e635]">{formatDateTime(event.endDate)}</span>
+                          <span className="text-muted-foreground">Khung giờ: </span>
+                          <span className="font-semibold text-emerald-700 dark:text-[#a3e635]">
+                            {event.startTime && event.endTime
+                              ? formatEventTime(event.startTime, event.endTime)
+                              : event.startDate && event.endDate
+                              ? `${formatDateTime(event.startDate)} - ${formatDateTime(event.endDate)}`
+                              : '—'}
+                          </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Trình độ: </span>
@@ -909,7 +832,7 @@ export function EventDetailModal({
                 <div className="flex items-center justify-between pb-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2 rounded-xl bg-muted border border-border/60 px-3 py-1.5 text-xs font-semibold text-foreground">
                     <Calendar className="size-3.5 text-emerald-700 dark:text-[#a3e635]" />
-                    <span>Ngày diễn ra: {formatDate(event.slotDetails?.[0]?.date || event.startDate?.split('T')[0])}</span>
+                    <span>Ngày diễn ra: {formatDate(event.date || event.slotDetails?.[0]?.date || event.startDate?.split('T')[0])}</span>
                   </div>
 
                   {/* Nút Đổi ca sân trực quan (Visual Booking Modal) */}
@@ -1139,7 +1062,7 @@ export function EventDetailModal({
         onOpenChange={setIsVisualBookingOpen}
         branchId={event.branchId}
         branchName={event.branchName}
-        initialDate={event.slotDetails?.[0]?.date || event.startDate?.split('T')[0] || ''}
+        initialDate={event.date || event.slotDetails?.[0]?.date || event.startDate?.split('T')[0] || ''}
         initialSlots={selectedSlots}
         excludeOrderCode={event.orderCode}
         excludeTitle={event.title}
@@ -1204,6 +1127,21 @@ export function EventDetailModal({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal cập nhật thông tin người đại diện / khách hàng */}
+      {event && event.orderId && (
+        <UpdateCustomerModal
+          open={isUpdateCustomerOpen}
+          onOpenChange={setIsUpdateCustomerOpen}
+          orderId={event.orderId}
+          initialName={event.customerName || ''}
+          initialPhone={event.customerPhone || ''}
+          onSuccess={() => {
+            refetch();
+            onEventUpdated?.();
+          }}
+        />
+      )}
     </>
   );
 }

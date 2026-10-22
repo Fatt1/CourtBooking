@@ -55,21 +55,31 @@ function getEventDisplayStatus(item: OwnerEventItemDto): {
   // Kiểm tra thời gian thực tế xem có đang diễn ra hay đã kết thúc
   try {
     const now = new Date();
-    const start = new Date(item.startDate);
-    const end = new Date(item.endDate);
+    let start: Date | null = null;
+    let end: Date | null = null;
 
-    if (end < now || item.status === EventStatus.Closed) {
-      return {
-        label: 'Đã kết thúc',
-        className: 'bg-slate-100 text-slate-600 dark:bg-slate-800/90 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-medium',
-      };
+    if (item.date && item.startTime && item.endTime) {
+      start = new Date(`${item.date}T${item.startTime}`);
+      end = new Date(`${item.date}T${item.endTime}`);
+    } else if (item.startDate && item.endDate) {
+      start = new Date(item.startDate);
+      end = new Date(item.endDate);
     }
 
-    if (now >= start && now <= end) {
-      return {
-        label: 'Đang diễn ra',
-        className: 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold animate-pulse',
-      };
+    if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
+      if (end < now || item.status === EventStatus.Closed) {
+        return {
+          label: 'Đã kết thúc',
+          className: 'bg-slate-100 text-slate-600 dark:bg-slate-800/90 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-medium',
+        };
+      }
+
+      if (now >= start && now <= end) {
+        return {
+          label: 'Đang diễn ra',
+          className: 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold animate-pulse',
+        };
+      }
     }
   } catch {
     // fallback
@@ -141,27 +151,48 @@ export function OwnerEventTable({
         },
       },
 
-      // 3. THỜI GIAN TỔ CHỨC
+      // 3. THỜI GIAN TỔ CHỨC (Chuẩn hóa từ date, startTime, endTime của backend)
       {
         header: 'THỜI GIAN TỔ CHỨC',
         headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground min-w-[170px]',
         cell: (item) => {
-          const s = new Date(item.startDate);
-          const e = new Date(item.endDate);
-          const sDate = s.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-          const sTime = s.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-          const eDate = e.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-          const eTime = e.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+          let dateDisplay = '—';
+          if (item.date) {
+            const parts = item.date.split('-');
+            if (parts.length === 3) {
+              dateDisplay = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            } else {
+              dateDisplay = item.date;
+            }
+          } else if (item.startDate) {
+            const s = new Date(item.startDate);
+            if (!isNaN(s.getTime())) {
+              dateDisplay = s.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            }
+          }
 
-          const isSameDay = sDate === eDate;
+          let timeDisplay = '—';
+          if (item.startTime && item.endTime) {
+            const sTime = item.startTime.substring(0, 5);
+            const eTime = item.endTime.substring(0, 5);
+            timeDisplay = `${sTime} - ${eTime}`;
+          } else if (item.startDate && item.endDate) {
+            const s = new Date(item.startDate);
+            const e = new Date(item.endDate);
+            if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
+              const sTime = s.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+              const eTime = e.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+              timeDisplay = `${sTime} - ${eTime}`;
+            }
+          }
 
           return (
             <div className="space-y-0.5 whitespace-nowrap">
               <div className="font-semibold text-foreground text-xs">
-                {isSameDay ? sDate : `${sDate} - ${eDate}`}
+                {dateDisplay}
               </div>
               <div className="text-[11px] text-muted-foreground font-mono">
-                {sTime} - {eTime}
+                {timeDisplay}
               </div>
             </div>
           );

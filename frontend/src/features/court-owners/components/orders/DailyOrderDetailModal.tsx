@@ -5,6 +5,7 @@ import {
   FileText,
   X,
   Pencil,
+  Trash2,
   Grid,
   Calendar,
   Plus,
@@ -29,6 +30,7 @@ import {
   useDailyOrderDetailQuery,
   useConfirmOrderMutation,
   useUpdateOrderItemsMutation,
+  useUpdateOrderServicesMutation,
   OrderStatus,
   getOrderStatusLabel,
   getOrderStatusVariant,
@@ -37,6 +39,8 @@ import {
   PaymentTransactionType,
   type DailyOrderResponse,
   type DailyOrderSlotItemDto,
+  type DailyOrderServiceItemDto,
+  type OrderServiceInputItem,
   type PaymentTransactionDto,
   type CourtBookingSlotPayload,
 } from '@/api/orders';
@@ -98,11 +102,14 @@ export function DailyOrderDetailModal({
   const { data: order, isLoading, refetch } = useDailyOrderDetailQuery(orderId);
   const { mutateAsync: confirmOrder, isPending: isConfirming } = useConfirmOrderMutation();
   const { mutateAsync: updateOrderItems, isPending: isUpdatingSlots } = useUpdateOrderItemsMutation();
+  const { mutateAsync: updateOrderServices } = useUpdateOrderServicesMutation();
 
   // Sub-modals
   const [isUpdateCustomerOpen, setIsUpdateCustomerOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<DailyOrderServiceItemDto | null>(null);
+  const [isDeletingService, setIsDeletingService] = useState(false);
   const [isConfirmCompleteOpen, setIsConfirmCompleteOpen] = useState(false);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
   const [isEditSlotsOpen, setIsEditSlotsOpen] = useState(false);
@@ -110,6 +117,34 @@ export function DailyOrderDetailModal({
 
   // Xem trước ảnh biên lai thanh toán
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
+
+  // Xóa 1 dịch vụ khỏi đơn hàng
+  const handleConfirmDeleteService = async () => {
+    if (!order || !serviceToDelete) return;
+    try {
+      setIsDeletingService(true);
+      const remainingServices: OrderServiceInputItem[] = (order.services || [])
+        .filter((s) => s.serviceId !== serviceToDelete.serviceId)
+        .map((s) => ({
+          serviceId: s.serviceId,
+          quantity: s.quantity,
+        }));
+
+      await updateOrderServices({
+        orderId: order.id,
+        services: remainingServices,
+      });
+
+      toast.success(`Đã xóa dịch vụ "${serviceToDelete.serviceName}" khỏi đơn hàng thành công!`);
+      setServiceToDelete(null);
+      refetch();
+      onOrderUpdated?.();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Không thể xóa dịch vụ'));
+    } finally {
+      setIsDeletingService(false);
+    }
+  };
 
   // Lấy ngày hôm nay (YYYY-MM-DD theo giờ địa phương)
   const todayStr = useMemo(() => {
@@ -623,8 +658,9 @@ export function DailyOrderDetailModal({
 
                   <Button
                     size="sm"
+                    disabled={isTerminalState}
                     onClick={() => setIsAddServiceOpen(true)}
-                    className="h-8 rounded-xl bg-muted hover:bg-accent border border-border/60 text-foreground text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
+                    className="h-8 rounded-xl bg-muted hover:bg-accent border border-border/60 text-foreground text-xs font-bold gap-1.5 cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Plus className="size-3.5" />
                     <span>Thêm dịch vụ</span>
@@ -638,7 +674,7 @@ export function DailyOrderDetailModal({
                       {displayOrder.services.map((srv, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between rounded-xl bg-muted/30 border border-border/50 px-3.5 py-2.5 text-xs text-foreground"
+                          className="flex items-center justify-between rounded-xl bg-muted/30 border border-border/50 px-3.5 py-2.5 text-xs text-foreground group hover:border-border/80 transition-all"
                         >
                           <div>
                             <div className="font-semibold text-foreground">{srv.serviceName}</div>
@@ -647,8 +683,30 @@ export function DailyOrderDetailModal({
                               {srv.unitPrice.toLocaleString('vi-VN')}đ
                             </div>
                           </div>
-                          <div className="font-bold text-emerald-700 dark:text-[#a3e635]">
-                            {srv.totalPrice.toLocaleString('vi-VN')}đ
+                          <div className="flex items-center gap-3">
+                            <div className="font-bold text-emerald-700 dark:text-[#a3e635]">
+                              {srv.totalPrice.toLocaleString('vi-VN')}đ
+                            </div>
+                            {!isTerminalState && (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsAddServiceOpen(true)}
+                                  className="size-7 rounded-lg bg-muted hover:bg-accent border border-border/50 text-muted-foreground hover:text-foreground flex items-center justify-center cursor-pointer transition-colors"
+                                  title={`Chỉnh sửa dịch vụ ${srv.serviceName}`}
+                                >
+                                  <Pencil className="size-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setServiceToDelete(srv)}
+                                  className="size-7 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-600 dark:text-rose-400 flex items-center justify-center cursor-pointer transition-colors"
+                                  title={`Xóa dịch vụ ${srv.serviceName}`}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -892,6 +950,72 @@ export function DailyOrderDetailModal({
           onOrderUpdated?.();
         }}
       />
+
+      {/* Modal xác nhận xóa dịch vụ */}
+      {serviceToDelete && (
+        <Dialog open={!!serviceToDelete} onOpenChange={(op) => !op && setServiceToDelete(null)}>
+          <DialogContent className="w-[95vw] max-w-md p-6 bg-card border border-border/70 text-foreground shadow-2xl rounded-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+              <div className="size-10 rounded-xl bg-rose-500/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="size-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-foreground">Xác nhận xóa dịch vụ</h3>
+                <p className="text-xs text-muted-foreground">
+                  Hành động này sẽ xóa dịch vụ khỏi đơn và cập nhật lại tổng tiền.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/50 text-xs space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Tên dịch vụ:</span>
+                <span className="font-bold text-foreground text-sm">{serviceToDelete.serviceName}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Số lượng:</span>
+                <span className="font-semibold text-foreground">
+                  {serviceToDelete.quantity} {serviceToDelete.unit || 'phần'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Đơn giá:</span>
+                <span className="text-muted-foreground">
+                  {serviceToDelete.unitPrice.toLocaleString('vi-VN')}đ
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-1.5 border-t border-border/40">
+                <span className="text-muted-foreground font-medium">Thành tiền xóa:</span>
+                <span className="font-bold text-rose-600 dark:text-rose-400 text-sm">
+                  {serviceToDelete.totalPrice.toLocaleString('vi-VN')}đ
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isDeletingService}
+                onClick={() => setServiceToDelete(null)}
+                className="border-border/60 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={isDeletingService}
+                onClick={handleConfirmDeleteService}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer"
+              >
+                {isDeletingService ? 'Đang xóa...' : 'Xóa dịch vụ'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <ConfirmCompleteOrderModal
         open={isConfirmCompleteOpen}

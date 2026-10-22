@@ -21,6 +21,7 @@ import { useServicesByBranchQuery, type ServiceByBranchDto } from '@/api/service
 import { getImageUrl } from '@/api/storage';
 import { getApiErrorMessage } from '@/types/api';
 import { useDebounce } from '@/hooks/useDebounce';
+import { cn } from '@/lib/utils';
 
 export interface SelectedServiceItem {
   serviceId: string;
@@ -217,6 +218,11 @@ export function AddServiceModal({
     );
   };
 
+  // Xóa hẳn 1 món khỏi giỏ hàng
+  const handleRemoveItem = (serviceId: string) => {
+    setItems((prev) => prev.filter((i) => i.serviceId !== serviceId));
+  };
+
   // Hủy / xóa sạch toàn bộ giỏ hàng
   const handleClearCart = () => {
     if (items.length === 0) return;
@@ -381,14 +387,26 @@ export function AddServiceModal({
         {/* ================================================================= */}
         <div className="w-full md:w-[360px] lg:w-[400px] shrink-0 flex flex-col bg-card border-t md:border-t-0 border-border/60">
           {/* Header Hóa đơn & Nút Hủy */}
-          <div className="p-4 pb-6 flex items-center justify-between border-b border-border/60">
-
-
-
+          <div className="p-4 pr-14 pb-3 flex items-center justify-between border-b border-border/60">
+            <div className="flex items-center gap-2 min-w-0">
+              <ShoppingBag className="size-4 text-emerald-700 dark:text-[#a3e635] shrink-0" />
+              <span className="font-bold text-sm text-foreground truncate">
+                Dịch vụ đã chọn ({items.length})
+              </span>
+            </div>
+            {items.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearCart}
+                className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 font-semibold hover:underline cursor-pointer shrink-0 transition-colors"
+              >
+                Xóa tất cả
+              </button>
+            )}
           </div>
 
           {/* Danh sách các món đã chọn */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
             {items.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-xs text-center py-12 gap-2">
                 <ShoppingBag className="size-8 stroke-1 text-slate-600" />
@@ -401,7 +419,7 @@ export function AddServiceModal({
               items.map((item) => (
                 <div
                   key={item.serviceId}
-                  className="flex items-center justify-between gap-2 pb-2.5 border-b border-border/40 last:border-0"
+                  className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-muted/20 border border-border/40 hover:border-border/70 transition-all"
                 >
                   {/* Tên & đơn giá */}
                   <div className="min-w-0 flex-1 space-y-0.5">
@@ -409,37 +427,47 @@ export function AddServiceModal({
                       {item.name}
                     </div>
                     <div className="text-[11px] text-muted-foreground">
-                      {item.unitPrice.toLocaleString('vi-VN')}đ
+                      {item.unitPrice.toLocaleString('vi-VN')}đ{item.unit ? ` / ${item.unit}` : ''}
                     </div>
                   </div>
 
-                  {/* Bộ nút Stepper [-] [số lượng] [+] */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleDecrement(item.serviceId)}
-                      className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      <Minus className="size-3" />
-                    </button>
-                    <span className="w-5 text-center font-bold text-xs text-foreground">
-                      {item.quantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleIncrement(item.serviceId)}
-                      className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      <Plus className="size-3" />
-                    </button>
-                  </div>
+                    {/* Bộ nút Stepper [-] [số lượng] [+] */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleDecrement(item.serviceId)}
+                        className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        <Minus className="size-3" />
+                      </button>
+                      <span className="w-5 text-center font-bold text-xs text-foreground">
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleIncrement(item.serviceId)}
+                        className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        <Plus className="size-3" />
+                      </button>
+                    </div>
 
-                  {/* Thành tiền */}
-                  <div className="text-right min-w-[70px] shrink-0 font-bold text-xs sm:text-sm text-foreground">
-                    {(item.quantity * item.unitPrice).toLocaleString('vi-VN')}đ
+                    {/* Thành tiền */}
+                    <div className="text-right min-w-[65px] shrink-0 font-bold text-xs sm:text-sm text-foreground">
+                      {(item.quantity * item.unitPrice).toLocaleString('vi-VN')}đ
+                    </div>
+
+                    {/* Nút xóa món */}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(item.serviceId)}
+                      className="size-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                      title="Xóa món này khỏi đơn"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
                   </div>
-                </div>
-              ))
+                ))
             )}
           </div>
 

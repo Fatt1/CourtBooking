@@ -49,9 +49,11 @@ public sealed class GetFixedOrdersByBranchHandler(
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var term = request.SearchTerm.Trim();
+            var cleanTerm = term.TrimStart('#');
             query = query.Where(o => o.CustomerPhone.Contains(term)
+                                  || o.CustomerName.Contains(term)
                                   || o.OrderCode.Contains(term)
-                                  || o.CustomerName.Contains(term));
+                                  || (cleanTerm != "" && o.OrderCode.Contains(cleanTerm)));
         }
 
         // 4. Đếm tổng số bản ghi

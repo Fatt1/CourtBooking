@@ -24,8 +24,11 @@ export interface OwnerEventItemDto {
   eventCode: string;
   title: string;
   courts: CourtSummaryDto[];
-  startDate: string;
-  endDate: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  startDate?: string;
+  endDate?: string;
   slots: number;
   soldTickets: number;
   availableSlot: number;
@@ -63,8 +66,11 @@ export interface OwnerEventDetailDto {
   title: string;
   sportTypeId: string;
   sportTypeName: string;
-  startDate: string;
-  endDate: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  startDate?: string;
+  endDate?: string;
   ticketPrice: number;
   slots: number;
   availableSlot: number;
@@ -122,19 +128,12 @@ export interface CreateEventPayload {
 export interface UpdateEventPayload {
   title: string;
   sportTypeId: string;
-  date?: string;
-  startTime?: string;
-  endTime?: string;
-  startDate?: string;
-  endDate?: string;
   ticketPrice: number;
   slots: number;
   status: EventStatus;
   skillLevelFrom?: string | null;
   skillLevelTo?: string | null;
   description?: string | null;
-  customerName?: string | null;
-  customerPhone?: string | null;
   note?: string | null;
 }
 

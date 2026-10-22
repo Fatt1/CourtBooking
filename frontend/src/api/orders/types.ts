@@ -283,6 +283,7 @@ export interface GetFixedOrdersParams {
   status?: OrderStatus;
   fromDate?: string;
   toDate?: string;
+  search?: string;
   searchTerm?: string;
   page?: number;
   pageSize?: number;
