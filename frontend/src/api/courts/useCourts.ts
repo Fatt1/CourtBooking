@@ -7,7 +7,6 @@ import type {
   GetCourtsParams,
   CreateCourtRequest,
   UpdateCourtRequest,
-  UpdateCourtStatusRequest,
 } from './types';
 
 /**
@@ -81,7 +80,7 @@ export function useCreateCourtMutation() {
 }
 
 /**
- * Hook cập nhật thông tin sân (tên hoặc loại sân)
+ * Hook cập nhật thông tin sân (tên, loại sân hoặc trạng thái)
  * Endpoint: PUT /api/v1/owner/courts/{id}
  */
 export function useUpdateCourtMutation() {
@@ -97,25 +96,6 @@ export function useUpdateCourtMutation() {
       });
       queryClient.invalidateQueries({
         queryKey: ['owner', 'court-types'],
-      });
-    },
-  });
-}
-
-/**
- * Hook đổi trạng thái sân (Hoạt động / Bảo trì)
- * Endpoint: PUT /api/v1/owner/courts/{id}/status
- */
-export function useUpdateCourtStatusMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateCourtStatusRequest }): Promise<void> => {
-      await apiClient.put(API_ENDPOINTS.COURTS.UPDATE_STATUS(id), data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['owner', 'courts'],
       });
     },
   });

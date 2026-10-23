@@ -1,3 +1,5 @@
+using CourtBooking.Domain.Enums;
+
 namespace CourtBooking.Application.Features.V1.Pricing.Dtos;
 
 /// <summary>
@@ -5,7 +7,8 @@ namespace CourtBooking.Application.Features.V1.Pricing.Dtos;
 /// </summary>
 public sealed record AppliedCourtDto(
     Guid CourtId,
-    string CourtName);
+    string CourtName,
+    CourtStatus Status = CourtStatus.Available);
 
 /// <summary>
 /// DTO khung giờ bắt buộc (Fixed Time Block) đã được giải mã bitmask ngày trong tuần.
@@ -60,4 +63,3 @@ public sealed record CourtTypePricingConfigDto(
     IReadOnlyList<AppliedCourtDto> AvailableCourts,
     IReadOnlyList<FixedTimeBlockDto> FixedTimeBlocks,
     IReadOnlyList<PriceTableDto> PriceTables);
-

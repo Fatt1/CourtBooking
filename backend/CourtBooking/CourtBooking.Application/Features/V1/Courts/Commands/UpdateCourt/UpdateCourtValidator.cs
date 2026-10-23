@@ -18,5 +18,11 @@ public sealed class UpdateCourtValidator : AbstractValidator<UpdateCourtCommand>
             RuleFor(x => x.CourtTypeId!.Value)
                 .NotEmpty().WithMessage("CourtTypeId must not be empty if provided.");
         });
+
+        When(x => x.Status.HasValue, () =>
+        {
+            RuleFor(x => x.Status!.Value)
+                .IsInEnum().WithMessage("Court status must be a valid CourtStatus.");
+        });
     }
 }

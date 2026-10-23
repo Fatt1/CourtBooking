@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { CourtDto } from '@/api/courts';
+import { CourtStatus, type CourtDto } from '@/api/courts';
 import type { CourtTypeDto } from '@/api/court-types';
 
 interface CourtFormModalProps {
@@ -22,7 +22,7 @@ interface CourtFormModalProps {
   courtToEdit: CourtDto | null;
   courtTypes: CourtTypeDto[];
   branchName?: string;
-  onSubmit: (data: { courtTypeId: string; name: string }) => Promise<void>;
+  onSubmit: (data: { courtTypeId: string; name: string; status?: CourtStatus }) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -37,6 +37,7 @@ export function CourtFormModal({
 }: CourtFormModalProps) {
   const [name, setName] = useState('');
   const [courtTypeId, setCourtTypeId] = useState('');
+  const [status, setStatus] = useState<CourtStatus>(CourtStatus.Available);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,9 +45,11 @@ export function CourtFormModal({
       if (courtToEdit) {
         setName(courtToEdit.name);
         setCourtTypeId(courtToEdit.courtTypeId);
+        setStatus(courtToEdit.status ?? CourtStatus.Available);
       } else {
         setName('');
         setCourtTypeId(courtTypes[0]?.id || '');
+        setStatus(CourtStatus.Available);
       }
       setError(null);
     }
@@ -65,10 +68,11 @@ export function CourtFormModal({
       return;
     }
 
-    try {
+  try {
       await onSubmit({
         courtTypeId,
         name: name.trim(),
+        status,
       });
       onOpenChange(false);
     } catch (err: unknown) {
@@ -85,7 +89,7 @@ export function CourtFormModal({
       <DialogContent className="max-w-[480px] rounded-2xl bg-card border border-border/80 text-foreground p-6 shadow-2xl">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-xl font-bold text-foreground tracking-tight">
-            {isEditing ? 'Cập nhật thông tin sân' : 'Thông tin sân'}
+            {isEditing ? 'Cập nhật thông tin sân' : 'Thêm sân mới'}
           </DialogTitle>
         </DialogHeader>
 
@@ -118,7 +122,7 @@ export function CourtFormModal({
                 setName(e.target.value);
                 if (error) setError(null);
               }}
-              placeholder="Ví dụ: Sân 1, VIP 2..."
+              placeholder="Ví dụ: Sân 1, Sân VIP 2..."
               className="w-full h-11 rounded-xl bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground/50 border border-border/70 focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] transition-all"
             />
           </div>
@@ -150,6 +154,44 @@ export function CourtFormModal({
                     </SelectItem>
                   ))
                 )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 3. Trạng thái sân (Có đủ 3 trạng thái: Hoạt động, Bảo trì, Không hoạt động) */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-foreground flex items-center gap-1">
+              Trạng thái sân <span className="text-rose-500">*</span>
+            </label>
+            <Select
+              value={status.toString()}
+              onValueChange={(val) => {
+                setStatus(Number(val) as CourtStatus);
+                if (error) setError(null);
+              }}
+            >
+              <SelectTrigger className="w-full h-11 rounded-xl bg-background px-3.5 text-sm text-foreground border border-border/70 focus:ring-1 focus:ring-[#a3e635] focus:border-[#a3e635] transition-all cursor-pointer">
+                <SelectValue placeholder="Chọn trạng thái" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border border-border bg-popover text-popover-foreground shadow-xl z-50">
+                <SelectItem value={CourtStatus.Available.toString()} className="cursor-pointer text-xs">
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-emerald-500" />
+                    Hoạt động
+                  </span>
+                </SelectItem>
+                <SelectItem value={CourtStatus.Maintenance.toString()} className="cursor-pointer text-xs">
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    Bảo trì
+                  </span>
+                </SelectItem>
+                <SelectItem value={CourtStatus.Inactive.toString()} className="cursor-pointer text-xs">
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-rose-500" />
+                    Không hoạt động
+                  </span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

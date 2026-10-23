@@ -2,7 +2,7 @@
  * Trạng thái sân thể thao
  * 1: Available (Hoạt động)
  * 2: Maintenance (Bảo trì)
- * 3: Inactive (Tạm ngưng)
+ * 3: Inactive (Không hoạt động)
  */
 export enum CourtStatus {
   Available = 1,
@@ -36,8 +36,5 @@ export interface CreateCourtRequest {
 export interface UpdateCourtRequest {
   courtTypeId?: string;
   name: string;
-}
-
-export interface UpdateCourtStatusRequest {
-  status: CourtStatus;
+  status?: CourtStatus;
 }

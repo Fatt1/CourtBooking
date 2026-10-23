@@ -1,6 +1,8 @@
+import { CourtStatus } from '../courts/types';
 export interface AppliedCourtDto {
   courtId: string;
   courtName: string;
+  status?: CourtStatus;
 }
 
 export interface FixedTimeBlockDto {

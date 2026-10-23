@@ -8,35 +8,26 @@ namespace CourtBooking.Application.Features.V1.Pricing.Mappers;
 /// <summary>
 /// Cung cấp các phương thức mở rộng (Extension Methods) để ánh xạ các thực thể cấu hình giá sang DTO.
 /// Dùng chung cho cả luồng quản lý của Owner và luồng xem cấu hình đặt sân của Client.
+/// Mapper chỉ chịu trách nhiệm chuyển đổi dữ liệu (việc lọc active/inactive do tầng truy vấn đảm nhiệm).
 /// </summary>
 public static class CourtTypePricingMapper
 {
     /// <summary>
     /// Ánh xạ một Loại sân (CourtType) kèm sân con, khung giờ bắt buộc và bảng giá sang DTO tổng hợp.
     /// </summary>
-    /// <param name="courtType">Loại sân cần ánh xạ</param>
-    /// <param name="onlyActive">Nếu là true (public), chỉ lấy sân không Inactive và bảng giá đang Active.</param>
-    public static CourtTypePricingConfigDto ToPricingConfigDto(this CourtType courtType, bool onlyActive = false)
+    public static CourtTypePricingConfigDto ToPricingConfigDto(this CourtType courtType)
     {
-        var courtsQuery = onlyActive
-            ? courtType.Courts.Where(c => c.Status != CourtStatus.Inactive)
-            : courtType.Courts;
-
-        var availableCourts = courtsQuery
+        var availableCourts = courtType.Courts
             .OrderBy(c => c.Name)
-            .Select(c => new AppliedCourtDto(c.Id, c.Name))
+            .Select(c => new AppliedCourtDto(c.Id, c.Name, c.Status))
             .ToList();
 
         var fixedTimeBlocks = courtType.FixedTimeBlocks
             .OrderBy(ftb => ftb.StartTime)
-            .Select(ftb => ftb.ToDto(onlyActive))
+            .Select(ftb => ftb.ToDto())
             .ToList();
 
-        var priceTablesQuery = onlyActive
-            ? courtType.PriceTables.Where(pt => pt.IsActive)
-            : courtType.PriceTables;
-
-        var priceTables = priceTablesQuery
+        var priceTables = courtType.PriceTables
             .OrderByDescending(pt => pt.IsActive)
             .ThenBy(pt => pt.Name)
             .Select(pt => pt.ToDto())
@@ -55,17 +46,17 @@ public static class CourtTypePricingMapper
     /// <summary>
     /// Ánh xạ Khung giờ bắt buộc (FixedTimeBlock) sang DTO kèm giải mã bitmask ngày trong tuần.
     /// </summary>
-    public static FixedTimeBlockDto ToDto(this FixedTimeBlock ftb, bool onlyActive = false)
+    public static FixedTimeBlockDto ToDto(this FixedTimeBlock ftb)
     {
+        // Chỉ giải mã bitmask 1 lần, sau đó chuyển đổi sang tên thứ
         var daysOfWeek = DaysOfWeekMaskHelper.DecodeMask(ftb.DaysOfWeekMask);
-        var dayNames = DaysOfWeekMaskHelper.DecodeMaskToNames(ftb.DaysOfWeekMask);
+        var dayNames = daysOfWeek.Select(DaysOfWeekMaskHelper.GetDayName).ToList();
 
-        var courtsQuery = onlyActive
-            ? ftb.Courts.Where(c => c.Court == null || c.Court.Status != CourtStatus.Inactive)
-            : ftb.Courts;
-
-        var appliedCourts = courtsQuery
-            .Select(c => new AppliedCourtDto(c.CourtId, c.Court != null ? c.Court.Name : string.Empty))
+        var appliedCourts = ftb.Courts
+            .Select(c => new AppliedCourtDto(
+                c.CourtId,
+                c.Court != null ? c.Court.Name : string.Empty,
+                c.Court != null ? c.Court.Status : CourtStatus.Available))
             .OrderBy(c => c.CourtName)
             .ToList();
 
@@ -86,7 +77,7 @@ public static class CourtTypePricingMapper
     public static PriceTableDto ToDto(this PriceTable pt)
     {
         var rules = pt.Rules
-            .OrderBy(r => r.StartDate.HasValue || r.EndDate.HasValue ? 0 : 1) // Rule có ngày cụ thể lên trước
+            .OrderBy(r => (r.StartDate.HasValue || r.EndDate.HasValue) ? 0 : 1) // Rule có ngày cụ thể lên trước
             .ThenBy(r => r.StartDate)
             .ThenBy(r => r.DayOfWeekFrom)
             .ThenBy(r => r.StartTime)

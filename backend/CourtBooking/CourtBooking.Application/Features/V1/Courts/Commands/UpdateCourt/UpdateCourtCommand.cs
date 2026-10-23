@@ -1,8 +1,10 @@
 using CourtBooking.Application.Messaging;
+using CourtBooking.Domain.Enums;
 
 namespace CourtBooking.Application.Features.V1.Courts.Commands.UpdateCourt;
 
 public sealed record UpdateCourtCommand(
     Guid Id,
     Guid? CourtTypeId,
-    string Name) : ICommand;
+    string Name,
+    CourtStatus? Status = null) : ICommand;
