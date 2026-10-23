@@ -25,6 +25,7 @@ import {
   LocationSelectGroup,
   TimeSelect,
   SportTypeMultiSelect,
+  BankSelect,
 } from '@/components/common';
 import { uploadImageApi, getImageUrl } from '@/api/storage';
 import {
@@ -34,6 +35,7 @@ import {
   findWardByName,
   extractLatLngFromGoogleMapsUrl,
 } from '@/lib/vietnamLocations';
+import { findBankByCodeOrName } from '@/lib/vietnamBanks';
 import {
   useCreateBranchMutation,
   useUpdateBranchMutation,
@@ -94,10 +96,17 @@ export function BranchFormModal({
   const [description, setDescription] = useState('');
 
   // VietQR states
+  const [bankCode, setBankCode] = useState('');
+  const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
   const [qrImage, setQrImage] = useState<ImageItem | null>(null);
   const [isUploadingQr, setIsUploadingQr] = useState(false);
+
+  // Thông tin ngân hàng hoặc ví điện tử được chọn
+  const selectedReceiverBank = useMemo(() => {
+    return findBankByCodeOrName(bankCode || bankName);
+  }, [bankCode, bankName]);
 
   // Gallery images states (Aspect ratio 3/2, drag & drop)
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -156,6 +165,8 @@ export function BranchFormModal({
       setDescription(branchDetail.description || '');
       setAccountNumber(branchDetail.accountNumber || '');
       setAccountName(branchDetail.accountName || '');
+      setBankCode(branchDetail.bankCode || '');
+      setBankName(branchDetail.bankName || '');
 
       // QR Image
       if (branchDetail.qrImage) {
@@ -207,6 +218,8 @@ export function BranchFormModal({
       setDescription('');
       setAccountNumber('');
       setAccountName('');
+      setBankCode('');
+      setBankName('');
       setQrImage(null);
       setImages([]);
       setSelectedSportIds(sportTypes.length > 0 ? [sportTypes[0].id] : []);
@@ -384,6 +397,11 @@ export function BranchFormModal({
       return;
     }
 
+    if (!bankName.trim() && !bankCode.trim()) {
+      toast.error('Vui lòng chọn ngân hàng nhận thụ hưởng');
+      return;
+    }
+
     if (!accountNumber.trim() || !accountName.trim()) {
       toast.error('Vui lòng nhập số tài khoản và tên chủ tài khoản thụ hưởng');
       return;
@@ -411,6 +429,8 @@ export function BranchFormModal({
       openTime: openTime.length === 5 ? `${openTime}:00` : openTime,
       closeTime: closeTime.length === 5 ? `${closeTime}:00` : closeTime,
       qrImageId: qrImage.id,
+      bankName: bankName.trim() || null,
+      bankCode: bankCode.trim() || null,
       accountNumber: accountNumber.trim(),
       accountName: accountName.trim().toUpperCase(),
       sportTypeIds: selectedSportIds,
@@ -764,19 +784,48 @@ export function BranchFormModal({
               <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5 space-y-3">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/40 text-xs font-bold text-foreground">
                   <CreditCard className="size-4 text-emerald-700 dark:text-[#a3e635]" />
-                  <span>4. Thông tin thanh toán VietQR</span>
+                  <span>4. Thông tin thanh toán VietQR / Ví điện tử</span>
                 </div>
 
                 <div className="space-y-3">
+                  {/* Ngân hàng nhận */}
+                  <BankSelect
+                    value={bankCode || bankName}
+                    onChange={(selected) => {
+                      if (selected) {
+                        setBankCode(selected.code);
+                        setBankName(selected.shortName);
+                      } else {
+                        setBankCode('');
+                        setBankName('');
+                      }
+                    }}
+                    required
+                  />
+
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-foreground">
-                      Số tài khoản ngân hàng <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-medium text-foreground">
+                        {selectedReceiverBank?.type === 'wallet'
+                          ? 'Số tài khoản / Số điện thoại ví'
+                          : 'Số tài khoản ngân hàng'}{' '}
+                        <span className="text-rose-500">*</span>
+                      </label>
+                      {selectedReceiverBank?.type === 'wallet' && (
+                        <span className="text-[10px] text-pink-600 dark:text-pink-400 font-medium">
+                          (Ví {selectedReceiverBank.shortName})
+                        </span>
+                      )}
+                    </div>
                     <Input
                       required
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
-                      placeholder="Số tài khoản ngân hàng"
+                      placeholder={
+                        selectedReceiverBank?.type === 'wallet'
+                          ? `Số điện thoại đăng ký ví (vd: 0912345678)`
+                          : 'Số tài khoản ngân hàng'
+                      }
                       className="h-10 rounded-xl bg-background border-border/60 text-foreground font-mono text-xs focus-visible:ring-[#a3e635]"
                     />
                   </div>

@@ -33,6 +33,8 @@ public class Branch : EntityBase<Guid>, IAuditable
     public Guid QrImageId { get; set; }
     public string AccountNumber { get; set; } = null!;
     public string AccountName { get; set; } = null!;
+    public string? BankName { get; set; }
+    public string? BankCode { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

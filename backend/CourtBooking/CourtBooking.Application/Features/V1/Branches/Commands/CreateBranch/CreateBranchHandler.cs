@@ -40,6 +40,8 @@ internal sealed class CreateBranchHandler(IApplicationDbContext dbContext, IUser
             QrImageId = request.QrImageId,
             AccountNumber = request.AccountNumber.Trim(),
             AccountName = request.AccountName.Trim(),
+            BankName = request.BankName?.Trim(),
+            BankCode = request.BankCode?.Trim(),
             Policy = request.Policy?.Trim(),
             Description = request.Description?.Trim(),
             Latitude = request.Latitude,

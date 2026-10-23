@@ -15,6 +15,7 @@ import { OwnerModal } from '@/features/court-owners/components/shared/OwnerModal
 import { OwnerStatusBadge } from '@/features/court-owners/components/shared/OwnerStatusBadge';
 import { getImageUrl } from '@/api/storage';
 import { useOwnerBranchDetailQuery, type OwnerBranchListItem } from '@/api/branches';
+import { findBankByCodeOrName } from '@/lib/vietnamBanks';
 
 interface BranchDetailModalProps {
   branch: OwnerBranchListItem | null;
@@ -166,13 +167,37 @@ export function BranchDetailModal({
                 <CreditCard className="size-4 text-emerald-400" />
                 <span>Tài khoản VietQR thụ hưởng</span>
               </h4>
-              <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11px]">
+                {detail.bankName && (
+                  (() => {
+                    const bank = findBankByCodeOrName(detail.bankCode || detail.bankName);
+                    return (
+                      <div className="flex items-center gap-2">
+                        {bank?.logo ? (
+                          <div className="size-6 rounded-full bg-white p-0.5 border border-border/40 shrink-0 flex items-center justify-center overflow-hidden shadow-2xs">
+                            <img src={bank.logo} alt={detail.bankName} className="w-full h-full object-contain" />
+                          </div>
+                        ) : null}
+                        <div>
+                          <span className="text-muted-foreground block text-[10px]">
+                            {bank?.type === 'wallet' ? 'Ví điện tử' : 'Ngân hàng'}
+                          </span>
+                          <span className="font-bold text-foreground">{detail.bankName}</span>
+                        </div>
+                      </div>
+                    );
+                  })()
+                )}
                 <div>
-                  <span className="text-muted-foreground">Số tài khoản: </span>
+                  <span className="text-muted-foreground block text-[10px]">
+                    {findBankByCodeOrName(detail.bankCode || detail.bankName)?.type === 'wallet'
+                      ? 'Số điện thoại ví'
+                      : 'Số tài khoản'}
+                  </span>
                   <span className="font-mono font-bold text-foreground">{detail.accountNumber}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Chủ tài khoản: </span>
+                  <span className="text-muted-foreground block text-[10px]">Chủ tài khoản</span>
                   <span className="font-bold text-foreground">{detail.accountName}</span>
                 </div>
               </div>

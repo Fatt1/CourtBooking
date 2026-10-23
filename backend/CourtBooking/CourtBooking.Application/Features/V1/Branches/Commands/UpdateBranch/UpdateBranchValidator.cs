@@ -14,6 +14,8 @@ public sealed class UpdateBranchValidator : AbstractValidator<UpdateBranchComman
         RuleFor(x => x.Street).NotEmpty().MaximumLength(255);
         RuleFor(x => x.AccountNumber).NotEmpty().MaximumLength(255);
         RuleFor(x => x.AccountName).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.BankName).MaximumLength(255);
+        RuleFor(x => x.BankCode).MaximumLength(50);
         RuleFor(x => x.Policy).MaximumLength(4000);
         RuleFor(x => x.QrImageId).NotEmpty();
         RuleFor(x => x.CloseTime).NotEqual(x => x.OpenTime)

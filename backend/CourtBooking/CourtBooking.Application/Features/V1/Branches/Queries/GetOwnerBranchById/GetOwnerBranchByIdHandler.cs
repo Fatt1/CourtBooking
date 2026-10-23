@@ -35,6 +35,8 @@ internal sealed class GetOwnerBranchByIdHandler(IApplicationDbContext dbContext,
                 QrImage = new ImageDto(b.QrImage.StorageKey, b.QrImageId),
                 b.AccountNumber,
                 b.AccountName,
+                b.BankName,
+                b.BankCode,
                 Sports = b.BranchSportTypes.Select(x => new BranchSportDto(x.SportTypeId, x.SportType.Name)).ToList(),
                 Images = b.Images.OrderBy(x => x.DisplayOrder)
                     .Select(x => new ImageDto(x.Image.StorageKey, x.ImageId)).ToList(),
@@ -69,7 +71,9 @@ internal sealed class GetOwnerBranchByIdHandler(IApplicationDbContext dbContext,
             AccountName: branch.AccountName,
             Sports: branch.Sports,
             Images: branch.Images,
-            AverageRating: branch.AverageRating);
+            AverageRating: branch.AverageRating,
+            BankName: branch.BankName,
+            BankCode: branch.BankCode);
 
         return Result.Success(dto);
     }

@@ -3,5 +3,6 @@ export * from './SearchableSelect';
 export * from './LocationSelect';
 export * from './TimeSelect';
 export * from './SportTypeMultiSelect';
+export * from './BankSelect';
 export { getImageUrl, STORAGE_BASE_URL } from '@/api/storage';
 
