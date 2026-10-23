@@ -19,6 +19,7 @@ import {
   BranchCard,
   BranchFormModal,
 } from '@/features/court-owners/components/branches';
+import { BranchReviewsModal } from '@/features/customer/components/BranchReviewsModal';
 import {
   useOwnerBranchesQuery,
   useUpdateBranchStatusMutation,
@@ -45,6 +46,10 @@ export function BranchesPage() {
   // States quản lý xác nhận Xóa chi nhánh chuẩn ServiceCategoriesPage
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [branchToDelete, setBranchToDelete] = useState<OwnerBranchListItem | null>(null);
+
+  // States quản lý Modal xem đánh giá chi nhánh
+  const [selectedBranchForReviews, setSelectedBranchForReviews] =
+    useState<OwnerBranchListItem | null>(null);
 
   // Mở modal tạo chi nhánh mới
   const handleCreateBranch = () => {
@@ -203,6 +208,7 @@ export function BranchesPage() {
           onToggleStatus={handleToggleStatus}
           onEdit={handleEditBranch}
           onDelete={handleOpenDelete}
+          onViewReviews={setSelectedBranchForReviews}
           isUpdatingStatus={isUpdatingStatus}
         />
       ) : (
@@ -237,6 +243,7 @@ export function BranchesPage() {
                   onToggleStatus={handleToggleStatus}
                   onEdit={handleEditBranch}
                   onDelete={handleOpenDelete}
+                  onViewReviews={setSelectedBranchForReviews}
                   isUpdatingStatus={isUpdatingStatus}
                 />
               ))}
@@ -284,6 +291,15 @@ export function BranchesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* KHỐI 6: Modal xem chi tiết đánh giá chi nhánh */}
+      <BranchReviewsModal
+        isOpen={Boolean(selectedBranchForReviews)}
+        onClose={() => setSelectedBranchForReviews(null)}
+        branchId={selectedBranchForReviews?.id}
+        branchName={selectedBranchForReviews?.name}
+        reviewAverage={selectedBranchForReviews?.averageRating ?? undefined}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ interface BranchTableProps {
   onToggleStatus: (branch: OwnerBranchListItem) => void;
   onEdit?: (branch: OwnerBranchListItem) => void;
   onDelete?: (branch: OwnerBranchListItem) => void;
+  onViewReviews?: (branch: OwnerBranchListItem) => void;
   isUpdatingStatus?: boolean;
 }
 
@@ -19,6 +20,7 @@ export function BranchTable({
   onToggleStatus,
   onEdit,
   onDelete,
+  onViewReviews,
   isUpdatingStatus = false,
 }: BranchTableProps) {
   const columns: ColumnDef<OwnerBranchListItem>[] = [
@@ -52,17 +54,36 @@ export function BranchTable({
     },
     {
       header: 'ĐÁNH GIÁ',
-      headerClassName: 'text-xs font-semibold text-muted-foreground w-[140px]',
+      headerClassName: 'text-xs font-semibold text-muted-foreground w-[150px]',
       cell: (branch) => (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center">
           {branch.averageRating ? (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-semibold text-xs">
-              <Star className="size-3.5 fill-amber-400 text-amber-400" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewReviews?.(branch);
+              }}
+              title="Nhấn để xem chi tiết các đánh giá của chi nhánh này"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-semibold text-xs hover:bg-amber-500/20 hover:border-amber-500/40 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+            >
+              <Star className="size-3.5 fill-amber-400 text-amber-400 group-hover:rotate-12 transition-transform" />
               <span>{branch.averageRating.toFixed(1)}</span>
               <span className="text-[10px] text-muted-foreground font-normal">/ 5.0</span>
-            </div>
+            </button>
           ) : (
-            <span className="text-xs text-muted-foreground italic">Chưa có đánh giá</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewReviews?.(branch);
+              }}
+              title="Chưa có đánh giá nào, nhấn để xem"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground italic hover:text-foreground transition-colors cursor-pointer group"
+            >
+              <Star className="size-3 text-muted-foreground/40 group-hover:text-amber-400 transition-colors" />
+              <span className="group-hover:underline">Chưa có đánh giá</span>
+            </button>
           )}
         </div>
       ),
@@ -106,10 +127,25 @@ export function BranchTable({
     },
     {
       header: 'THAO TÁC',
-      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground text-right w-[180px] pr-4',
+      headerClassName: 'text-xs font-semibold tracking-wider text-muted-foreground text-right w-[190px] pr-4',
       className: 'text-right pr-4',
       cell: (branch) => (
         <div className="flex items-center justify-end gap-2">
+          {/* Nút Xem đánh giá */}
+          {onViewReviews && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewReviews(branch);
+              }}
+              title="Xem đánh giá của khách hàng"
+              className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground hover:bg-accent hover:text-amber-400 transition-colors cursor-pointer"
+            >
+              <Star className="size-3.5 fill-amber-400/20 text-amber-400" />
+            </button>
+          )}
+
           {/* Nút Bật/Tắt trạng thái hoạt động (Giữ lại nút tạm dừng) */}
           <Button
             variant="ghost"
