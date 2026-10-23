@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/axios';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { API_ENDPOINTS } from '@/constants/api-endpoints';
@@ -11,6 +11,9 @@ import type {
   AdminLoginRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  OwnerProfileResponse,
+  UpdateOwnerProfileRequest,
+  ChangePasswordRequest,
 } from './types';
 
 // ==========================================
@@ -91,6 +94,62 @@ export function useOwnerResetPasswordMutation() {
 }
 
 // ==========================================
+
+/**
+ * Hook Query lấy thông tin hồ sơ của Chủ sân (kèm gói dịch vụ hiện tại)
+ */
+export function useOwnerProfileQuery() {
+  return useQuery({
+    queryKey: ['owner-profile'],
+    queryFn: async (): Promise<OwnerProfileResponse> => {
+      const response = await apiClient.get<OwnerProfileResponse>(
+        API_ENDPOINTS.OWNER_AUTH.PROFILE
+      );
+      return response as unknown as OwnerProfileResponse;
+    },
+  });
+}
+
+/**
+ * Hook Mutation cập nhật thông tin cá nhân và doanh nghiệp của Chủ sân
+ */
+export function useUpdateOwnerProfileMutation() {
+  const queryClient = useQueryClient();
+  const { updateUser } = useAuthStore();
+
+  return useMutation({
+    mutationFn: async (payload: UpdateOwnerProfileRequest) => {
+      const response = await apiClient.put(
+        API_ENDPOINTS.OWNER_AUTH.PROFILE,
+        payload
+      );
+      return response;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['owner-profile'] });
+      updateUser({
+        name: variables.fullName,
+        email: variables.email,
+      });
+    },
+  });
+}
+
+/**
+ * Hook Mutation đổi mật khẩu cho Chủ sân
+ */
+export function useOwnerChangePasswordMutation() {
+  return useMutation({
+    mutationFn: async (payload: ChangePasswordRequest) => {
+      const response = await apiClient.post(
+        API_ENDPOINTS.OWNER_AUTH.CHANGE_PASSWORD,
+        payload
+      );
+      return response;
+    },
+  });
+}
+
 // 2. USER / PLAYER AUTH HOOKS
 // ==========================================
 

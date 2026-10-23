@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Menu,
   PanelLeftClose,
@@ -9,6 +9,8 @@ import {
   LogOut,
   ExternalLink,
   Store,
+  User,
+  ChevronDown,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -52,6 +54,30 @@ export function OwnerHeader({ onMenuClick }: OwnerHeaderProps) {
     logoutCourtOwner();
     navigate('/owner/login', { replace: true });
   };
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+    }
+    setDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setDropdownOpen(false);
+    }, 180);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (dropdownTimeoutRef.current) {
+        clearTimeout(dropdownTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const isDark = theme === 'dark';
 
@@ -224,24 +250,84 @@ export function OwnerHeader({ onMenuClick }: OwnerHeaderProps) {
           )}
         </button>
 
-        {/* User Avatar MD (Matchday) hình tròn xanh neon theo Figma */}
-        <div className="flex items-center gap-2 pl-1 border-l border-border/60">
-          <div
-            className="flex size-9 items-center justify-center rounded-full bg-[#a3e635] text-black font-extrabold text-xs shadow-xs select-none"
-            title={user?.name || 'Matchday Owner'}
-          >
-            MD
+        {/* User Avatar MD Dropdown theo yêu cầu: Hover hiện popup (Thông tin cá nhân & Đăng xuất), click avatar vào trang Profile */}
+        <div
+          className="relative pl-1 border-l border-border/60"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="flex items-center gap-1.5 cursor-pointer">
+            <button
+              type="button"
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate('/owner/profile');
+              }}
+              title="Xem thông tin cá nhân"
+              className="flex size-9 items-center justify-center rounded-full bg-[#a3e635] text-black font-extrabold text-xs shadow-sm select-none transition-all hover:scale-105 hover:ring-2 hover:ring-[#a3e635]/40 active:scale-95 cursor-pointer"
+            >
+              MD
+            </button>
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              aria-label="Menu tài khoản"
+              className="text-muted-foreground hover:text-foreground p-0.5 rounded transition-colors"
+            >
+              <ChevronDown className={cn("size-3.5 transition-transform duration-200", dropdownOpen && "rotate-180")} />
+            </button>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            title="Đăng xuất"
-            className="size-8 text-muted-foreground hover:text-destructive"
-          >
-            <LogOut className="size-4" />
-          </Button>
+          {/* Dropdown Menu khi hover / click */}
+          {dropdownOpen && (
+            <div
+              className="absolute right-0 top-full pt-2 z-50 w-60 animate-in fade-in slide-in-from-top-2 duration-150"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <div className="rounded-2xl border border-border/60 bg-popover/95 p-2 shadow-2xl backdrop-blur-md">
+                {/* Thông tin vắn tắt user */}
+                <div className="px-3 py-2.5 border-b border-border/50 mb-1">
+                  <p className="text-xs font-semibold text-foreground truncate">
+                    {user?.name || 'Chủ sân Matchday'}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {user?.email || 'owner@courton.vn'}
+                  </p>
+                  <div className="mt-1.5 inline-flex items-center rounded-md bg-[#a3e635]/15 px-2 py-0.5 text-[10px] font-bold text-[#65a30d] dark:text-[#a3e635]">
+                    Chủ sân
+                  </div>
+                </div>
+
+                {/* Các lựa chọn menu */}
+                <div className="space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      navigate('/owner/profile');
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-left"
+                  >
+                    <User className="size-4 text-[#a3e635]" />
+                    <span>Thông tin cá nhân</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      handleLogout();
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+                  >
+                    <LogOut className="size-4" />
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

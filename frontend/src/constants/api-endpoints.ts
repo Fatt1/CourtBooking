@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: '/owner/identity/forgot-password',
     RESET_PASSWORD: '/owner/identity/reset-password',
     CHANGE_PASSWORD: '/owner/identity/change-password',
+    PROFILE: '/owner/identity/profile',
   },
 
   // 1b. Xác thực & Tài khoản Người chơi (Player Identities)

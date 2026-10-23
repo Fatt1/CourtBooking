@@ -252,7 +252,6 @@ public static class DatabaseSeeder
         {
             Id = userOwner.Id,
             BusinessName = "CLB Cầu Lông & Pickleball Sài Gòn Star",
-            QrImageId = ownerQrImage.Id,
             TaxCode = "0312345678",
             MustChangePwd = true,
             CreatedAt = DateTime.UtcNow,

@@ -9,9 +9,11 @@ import {
   Clock,
   Sparkles,
   Lock,
+  Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOneTimeBookingQuery, TimelineSlotStatus, type OccupiedSlotDto } from '@/api/branches';
+import { CourtStatus } from '@/api/courts';
 import { useBranchPricingConfigQuery, type CourtTypePricingConfigDto, type PriceTableDto } from '@/api/pricing';
 import {
   type SelectedCourtSlot,
@@ -435,6 +437,12 @@ export function BranchBookingTab({
               <span className="text-muted-foreground">Khóa</span>
             </div>
             <div className="flex items-center gap-2">
+              <div className="size-4 rounded bg-muted/90 border border-amber-500/50 flex items-center justify-center text-amber-600 dark:text-amber-400 text-[10px]">
+                <Wrench className="size-2.5" />
+              </div>
+              <span className="text-amber-600 dark:text-amber-400 font-semibold">Bảo trì</span>
+            </div>
+            <div className="flex items-center gap-2">
               <div className="size-4 rounded bg-purple-900/40 border border-purple-500/40 flex items-center justify-center text-purple-300 text-[10px]">
                 <Sparkles className="size-2.5" />
               </div>
@@ -527,6 +535,12 @@ export function BranchBookingTab({
                       <tbody>
                         {ct.availableCourts && ct.availableCourts.length > 0 ? (
                           ct.availableCourts.map((court) => {
+                            const isMaintenance =
+                              (court as any).isMaintenance ||
+                              court.status === CourtStatus.Maintenance ||
+                              (court.status as unknown) === 'Maintenance' ||
+                              (court.status as unknown) === 2;
+
                             // Lọc các khung giờ cố định bắt buộc áp dụng cho sân này trong ngày này
                             const courtFixedBlocks = (ct.fixedTimeBlocks || []).filter((ftb) => {
                               const appliesToCourt =
@@ -544,7 +558,9 @@ export function BranchBookingTab({
                             return (
                               <tr
                                 key={court.courtId}
-                                className="border-b border-border/40 hover:bg-card/40 transition-colors"
+                                className={`border-b border-border/40 transition-colors ${
+                                  isMaintenance ? 'bg-muted/30 opacity-75' : 'hover:bg-card/40'
+                                }`}
                               >
                                 {/* Cột 1: Tên sân (Sticky) */}
                                 <td className="sticky left-0 z-10 bg-card p-3 font-semibold text-foreground text-xs border-r border-border/60 whitespace-nowrap shadow-xs">
@@ -552,10 +568,41 @@ export function BranchBookingTab({
                                   <div className="text-[10px] text-muted-foreground font-normal">
                                     {ct.courtTypeName}
                                   </div>
+                                  {isMaintenance && (
+                                    <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-0.5">
+                                      <Wrench className="size-2.5 shrink-0" />
+                                      <span>Bảo trì</span>
+                                    </div>
+                                  )}
                                 </td>
 
                                 {/* Các ô khung giờ */}
                                 {(() => {
+                                  if (isMaintenance) {
+                                    return timeSlots.map((ts) => {
+                                      const startTimeStr = minutesToTimeString(ts.startMin);
+                                      const endTimeStr = minutesToTimeString(ts.endMin);
+
+                                      return (
+                                        <td
+                                          key={ts.startMin}
+                                          onClick={() => {
+                                            toast.warning(`Sân "${court.courtName}" đang bảo trì, không thể đặt.`);
+                                          }}
+                                          title={`Sân "${court.courtName}" đang bảo trì (${startTimeStr} - ${endTimeStr})`}
+                                          className="h-11 min-w-16 p-1 text-center border-r border-border/40 select-none relative bg-muted/90 text-muted-foreground cursor-not-allowed opacity-60"
+                                        >
+                                          <div className="size-full flex flex-col items-center justify-center gap-0.5">
+                                            <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
+                                            <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400">
+                                              Bảo trì
+                                            </span>
+                                          </div>
+                                        </td>
+                                      );
+                                    });
+                                  }
+
                                   return timeSlots.map((ts) => {
                                     const startTimeStr = minutesToTimeString(ts.startMin);
                                     const endTimeStr = minutesToTimeString(ts.endMin);

@@ -30,7 +30,7 @@ internal sealed class GetOwnerSubscriptionMeQueryHandler(
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(ct);
 
-        // 3. Xác định gói cước hiện tại trực tiếp từ trường nhúng trên CourtOwner (không dùng fallback)
+        // 3. Xác định gói cước hiện tại trực tiếp từ trường nhúng trên CourtOwner (kèm fallback nếu chưa đồng bộ)
         SubscriptionDto? currentSubDto = null;
         if (owner?.ServicePackage is not null && owner.PackageStartDate.HasValue && owner.PackageEndDate.HasValue)
         {
@@ -41,6 +41,21 @@ internal sealed class GetOwnerSubscriptionMeQueryHandler(
                 owner.ServicePackage.Price,
                 owner.PackageStartDate.Value,
                 owner.PackageEndDate.Value);
+        }
+        else if (allSubs.Count > 0)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var activeSub = allSubs.FirstOrDefault(s => s.EndDate >= today) ?? allSubs.First();
+            if (activeSub.ServicePackage is not null)
+            {
+                currentSubDto = new SubscriptionDto(
+                    activeSub.Id,
+                    activeSub.ServicePackageId,
+                    activeSub.ServicePackage.Name,
+                    activeSub.PricePaid,
+                    activeSub.StartDate,
+                    activeSub.EndDate);
+            }
         }
 
         // 4. Map danh sách lịch sử gói dịch vụ tinh gọn (không có trạng thái)

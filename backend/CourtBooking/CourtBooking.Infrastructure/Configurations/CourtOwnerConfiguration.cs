@@ -21,9 +21,6 @@ public class CourtOwnerConfiguration : IEntityTypeConfiguration<CourtOwner>
         builder.Property(c => c.TaxCode)
             .HasMaxLength(50);
 
-        builder.Property(c => c.QrImageId)
-            .IsRequired();
-
         builder.Property(c => c.MustChangePwd)
             .HasDefaultValue(true);
 
@@ -31,10 +28,6 @@ public class CourtOwnerConfiguration : IEntityTypeConfiguration<CourtOwner>
         builder.Property(c => c.UpdatedAt).IsRequired();
 
         // Relationships
-        builder.HasOne(c => c.QrImage)
-            .WithMany()
-            .HasForeignKey(c => c.QrImageId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(c => c.ServicePackage)
             .WithMany()

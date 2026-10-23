@@ -1,6 +1,8 @@
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Features.V1.Identities.Commands.ChangePassword;
+using CourtBooking.Application.Features.V1.Identities.Commands.UpdateOwnerProfile;
+using CourtBooking.Application.Features.V1.Identities.Queries.GetOwnerProfile;
 using CourtBooking.Application.Features.V1.Identities.Commands.ForgotPassword;
 using CourtBooking.Application.Features.V1.Identities.Commands.Login;
 using CourtBooking.Application.Features.V1.Identities.Commands.RefreshToken;
@@ -126,7 +128,54 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        // 6. POST /api/v1/owner/identity/logout — Chủ sân đăng xuất và xóa Refresh Token Cookie
+        // 5. GET /api/v1/owner/identity/profile — Lấy thông tin cá nhân của Chủ sân
+        group.MapGet("/profile", async (
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var query = new GetOwnerProfileQuery();
+            var result = await sender.Send(query, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner))
+            .WithName("OwnerGetProfile")
+            .WithSummary("Lấy thông tin cá nhân và gói cước hiện tại của Chủ sân")
+            .WithTags(IdentityTag)
+            .Produces<OwnerProfileDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        // 6. PUT /api/v1/owner/identity/profile — Cập nhật thông tin cá nhân của Chủ sân
+        group.MapPut("/profile", async (
+                [FromBody] UpdateOwnerProfileRequest request,
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var command = new UpdateOwnerProfileCommand(
+                request.FullName,
+                request.Email,
+                request.PhoneNumber,
+                request.BusinessName,
+                request.TaxCode);
+            var result = await sender.Send(command, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(new { message = "Cập nhật thông tin cá nhân thành công." })
+                : result.ToProblemDetails();
+        })
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner))
+            .WithName("OwnerUpdateProfile")
+            .WithSummary("Cập nhật thông tin cá nhân và thông tin kinh doanh của Chủ sân")
+            .WithTags(IdentityTag)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // 7. POST /api/v1/owner/identity/logout — Chủ sân đăng xuất và xóa Refresh Token Cookie
         group.MapPost("/logout", (IAuthCookieService cookieService) =>
         {
             cookieService.DeleteRefreshTokenCookie();
