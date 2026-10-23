@@ -12,6 +12,8 @@ interface AddFixedTimeBlockModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: NewFixedBlockFormValues) => void;
+  minuteConfig?: number;
+  minutesConfig?: number;
 }
 
 const dayOptions = [
@@ -28,7 +30,10 @@ export function AddFixedTimeBlockModal({
   open,
   onOpenChange,
   onSubmit,
+  minuteConfig,
+  minutesConfig,
 }: AddFixedTimeBlockModalProps) {
+  const stepMinutes = minuteConfig ?? minutesConfig ?? 30;
   const [startTime, setStartTime] = useState('17:00');
   const [endTime, setEndTime] = useState('19:00');
   const [selectedDays, setSelectedDays] = useState<number[]>([6, 0]); // Mặc định Thứ 7, CN
@@ -65,7 +70,7 @@ export function AddFixedTimeBlockModal({
             label="Giờ bắt đầu"
             value={startTime}
             onChange={setStartTime}
-            stepMinutes={30}
+            stepMinutes={stepMinutes}
             startHour={0}
             endHour={24}
             required
@@ -77,7 +82,7 @@ export function AddFixedTimeBlockModal({
             label="Giờ kết thúc"
             value={endTime}
             onChange={setEndTime}
-            stepMinutes={30}
+            stepMinutes={stepMinutes}
             startHour={0}
             endHour={24}
             required

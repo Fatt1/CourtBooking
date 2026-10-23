@@ -91,6 +91,15 @@ export function PricingPage() {
     refetch: refetchPricing,
   } = useCourtTypePricingQuery(selectedBranchId, selectedCourtTypeId);
 
+  // Thời lượng mỗi lượt đặt (phút) của loại sân đang chọn (VD: 60 phút, 30 phút,...)
+  const currentMinutesConfig = useMemo(() => {
+    if (backendPricingDto?.minutesConfig) {
+      return backendPricingDto.minutesConfig;
+    }
+    const ct = rawCourtTypes.find((c) => c.id === selectedCourtTypeId);
+    return ct?.minutesConfig || 60;
+  }, [backendPricingDto?.minutesConfig, rawCourtTypes, selectedCourtTypeId]);
+
   // Các Mutation hooks tương tác Backend
   const createFixedBlockMutation = useCreateFixedTimeBlockMutation();
   const deleteFixedBlockMutation = useDeleteFixedTimeBlockMutation();
@@ -409,9 +418,6 @@ export function PricingPage() {
       endDate: rule.endDate || '',
       fixedPrice: rule.fixedPrice ?? 0,
       walkInPrice: rule.walkInPrice ?? 0,
-      unitMinutes: 60,
-      unitLabel: 'h',
-      minBookingMinutes: 60,
     });
     setIsPriceRuleModalOpen(true);
   };
@@ -574,6 +580,7 @@ export function PricingPage() {
         defaultPriceTableId={availablePriceTables[0]?.id}
         ruleToEdit={ruleToEdit}
         onSubmit={handleAddPriceRuleSubmit}
+        minuteConfig={currentMinutesConfig}
       />
 
       {/* Modal 2: Thêm khung giờ bắt buộc */}
@@ -581,6 +588,7 @@ export function PricingPage() {
         open={isFixedBlockModalOpen}
         onOpenChange={setIsFixedBlockModalOpen}
         onSubmit={handleAddFixedBlockSubmit}
+        minuteConfig={currentMinutesConfig}
       />
 
       {/* Modal 3: Thêm / Sửa loại bảng giá mới */}
