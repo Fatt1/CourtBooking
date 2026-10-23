@@ -57,25 +57,6 @@ internal sealed class CreateCourtOwnerCommandHandler(
 
         await userManager.AddToRoleAsync(user, RoleConstants.CourtOwner);
 
-        // 4. Đảm bảo có QrImageId hợp lệ cho ràng buộc Foreign Key của CourtOwner
-        var defaultQrImage = await dbContext.Images
-            .FirstOrDefaultAsync(img => img.StorageKey.Contains("qr"), ct)
-            ?? await dbContext.Images.FirstOrDefaultAsync(ct);
-
-        if (defaultQrImage is null)
-        {
-            defaultQrImage = new Image
-            {
-                Id = Guid.NewGuid(),
-                StorageProvider = StorageProvider.S3,
-                StorageKey = "images/qr/default-qr.webp",
-                Status = ImageStatus.Attached,
-                CreatedAt = DateTime.UtcNow,
-                AttachedAt = DateTime.UtcNow
-            };
-            dbContext.Images.Add(defaultQrImage);
-        }
-
         // 5. Khởi tạo hồ sơ Chủ sân (CourtOwner) kèm cờ MustChangePwd
         var businessName = !string.IsNullOrWhiteSpace(request.BusinessName)
             ? request.BusinessName.Trim()
@@ -86,7 +67,6 @@ internal sealed class CreateCourtOwnerCommandHandler(
             Id = user.Id,
             BusinessName = businessName,
             MustChangePwd = request.MustChangePwd,
-            QrImageId = defaultQrImage.Id,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

@@ -43,6 +43,8 @@ import { PricingPage } from '@/features/court-owners/pages/PricingPage';
 import { CourtOwnerLoginPage } from '@/features/court-owners/pages/CourtOwnerLoginPage';
 import { OwnerReportsPage } from '@/features/court-owners/pages/OwnerReportsPage';
 import { OwnerDashboardPage } from '@/features/court-owners/pages/OwnerDashboardPage';
+import { OwnerPackagesPage } from '@/features/court-owners/pages/OwnerPackagesPage';
+import { OwnerProfilePage } from '@/features/court-owners/pages/OwnerProfilePage';
 
 // Auth Pages
 import { UserLoginPage } from '@/features/auth/pages/UserLoginPage';
@@ -130,7 +132,8 @@ export const router = createBrowserRouter([
       // Tạm tắt /owner/wallet: route cũ chỉ hiển thị nhầm trang lịch đặt sân.
       { path: 'reports', element: <OwnerReportsPage /> },
       { path: 'analytics', element: <OwnerReportsPage /> },
-      { path: 'packages', element: <OrdersPage /> },
+      { path: 'packages', element: <OwnerPackagesPage /> },
+      { path: 'profile', element: <OwnerProfilePage /> },
     ],
   },
 

@@ -28,3 +28,10 @@ public sealed record ResetPasswordRequest(
     string Email,
     string Token,
     string NewPassword);
+
+public sealed record UpdateOwnerProfileRequest(
+    string FullName,
+    string Email,
+    string PhoneNumber,
+    string BusinessName,
+    string? TaxCode);

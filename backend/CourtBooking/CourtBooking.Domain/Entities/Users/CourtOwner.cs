@@ -13,7 +13,6 @@ public class CourtOwner : EntityBase<Guid>, IAuditable
     public string BusinessName { get; set; } = null!;
     public string? TaxCode { get; set; }
     public bool MustChangePwd { get; set; }
-    public Guid QrImageId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
@@ -24,7 +23,6 @@ public class CourtOwner : EntityBase<Guid>, IAuditable
 
     // Navigation
     public ApplicationUser User { get; set; } = null!;
-    public Images.Image QrImage { get; set; } = null!;
     public Subscriptions.ServicePackage? ServicePackage { get; set; }
 
     public List<Courts.Branch> Branches { get; set; } = [];

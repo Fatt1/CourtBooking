@@ -33,3 +33,25 @@ public sealed record CurrentPlayerDto(
     string? ImageKey,
     Gender Gender,
     DateOnly? DateOfBirth);
+
+/// <summary>
+/// DTO gói dịch vụ hiện tại của chủ sân
+/// </summary>
+public sealed record CurrentOwnerPackageDto(
+    Guid PackageId,
+    string PackageName,
+    decimal Price,
+    DateOnly StartDate,
+    DateOnly EndDate);
+
+/// <summary>
+/// DTO hồ sơ cá nhân và thông tin kinh doanh của Chủ sân
+/// </summary>
+public sealed record OwnerProfileDto(
+    Guid Id,
+    string FullName,
+    string Email,
+    string PhoneNumber,
+    string BusinessName,
+    string? TaxCode,
+    CurrentOwnerPackageDto? CurrentPackage);

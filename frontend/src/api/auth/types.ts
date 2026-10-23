@@ -67,3 +67,34 @@ export interface AdminAuthResponse {
   user: User;
   tokens: AuthTokens;
 }
+
+export interface CurrentOwnerPackage {
+  packageId: string;
+  packageName: string;
+  price: number;
+  startDate: string;
+  endDate: string;
+}
+
+export interface OwnerProfileResponse {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  businessName: string;
+  taxCode: string | null;
+  currentPackage: CurrentOwnerPackage | null;
+}
+
+export interface UpdateOwnerProfileRequest {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  businessName: string;
+  taxCode?: string | null;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
