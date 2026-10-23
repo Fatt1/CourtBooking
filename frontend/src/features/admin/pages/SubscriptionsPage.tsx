@@ -7,7 +7,6 @@ import {
   useToggleSubscriptionStatusMutation,
   useUpdatePackageMutation,
   useDeletePackageMutation,
-  recordSubscriptionHistoryChange,
   type SubscriptionHistoryItem,
   type UpdatePackagePayload,
 } from '@/api/subscriptions';
@@ -61,17 +60,6 @@ export function SubscriptionsPage() {
   const handleConfirmExtend = async (courtOwnerId: string, durationMonths: number) => {
     try {
       await extendSub({ courtOwnerId, durationMonths });
-      if (selectedSub) {
-        recordSubscriptionHistoryChange({
-          courtOwnerId,
-          ownerName: selectedSub.ownerName,
-          businessName: selectedSub.businessName,
-          packageName: selectedSub.packageName,
-          actionType: 'Extend',
-          actionNote: `Gia hạn thêm ${durationMonths} tháng gói ${selectedSub.packageName}`,
-          pricePaid: selectedSub.pricePaid || 499000,
-        });
-      }
       toast.success(
         `Đã gia hạn thành công thêm ${durationMonths} tháng cho ${selectedSub?.ownerName || 'chủ sân'}!`
       );
@@ -89,18 +77,6 @@ export function SubscriptionsPage() {
   const handleConfirmPauseToggle = async (courtOwnerId: string, newStatus: 0 | 1) => {
     try {
       await toggleStatus({ courtOwnerId, status: newStatus });
-      if (selectedSub) {
-        recordSubscriptionHistoryChange({
-          courtOwnerId,
-          ownerName: selectedSub.ownerName,
-          businessName: selectedSub.businessName,
-          packageName: selectedSub.packageName,
-          actionType: newStatus === 1 ? 'Cancel' : 'Register',
-          actionNote: newStatus === 1 ? 'Hủy gói / Tạm dừng dịch vụ cụm sân' : 'Mở lại hoạt động dịch vụ cụm sân',
-          status: newStatus === 1 ? 'Suspended' : 'Active',
-          pricePaid: 0,
-        });
-      }
       toast.success(
         newStatus === 1
           ? `Đã tạm dừng hoạt động cụm sân của ${selectedSub?.ownerName}.`

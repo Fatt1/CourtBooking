@@ -208,10 +208,22 @@ export const API_ENDPOINTS = {
 
   // 11. Gói cước SaaS & Thuê bao (ServicePackages)
   SUBSCRIPTIONS: {
+    // Public
     PACKAGES: '/service-packages',
     PACKAGE_DETAIL: (id: string) => `/service-packages/${id}`,
-    OWNER_SUBSCRIPTION: '/owner/subscriptions',
-    SYSTEM_SUBSCRIPTIONS: '/system/subscriptions',
+
+    // Admin CRUD & History (/admin/service-packages)
+    ADMIN_PACKAGES: '/admin/service-packages',
+    CREATE_PACKAGE: '/admin/service-packages',
+    UPDATE_PACKAGE: (id: string) => `/admin/service-packages/${id}`,
+    DELETE_PACKAGE: (id: string) => `/admin/service-packages/${id}`,
+    ADMIN_HISTORY: '/admin/service-packages/subscriptions/history',
+    SYSTEM_SUBSCRIPTIONS: '/admin/service-packages/subscriptions/history',
+
+    // Court Owner (/owner/service-packages/me)
+    OWNER_ME: '/owner/service-packages/me',
+    OWNER_SUBSCRIPTION: '/owner/service-packages/me',
+    SUBSCRIBE: (id: string) => `/owner/service-packages/${id}/subscribe`,
   },
 
   // 12. Danh mục môn thể thao (SportTypes)

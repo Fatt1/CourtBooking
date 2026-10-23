@@ -29,7 +29,6 @@ import {
   useCourtsQuery,
   useCreateCourtMutation,
   useUpdateCourtMutation,
-  useUpdateCourtStatusMutation,
   useDeleteCourtMutation,
   CourtStatus,
   type CourtDto,
@@ -54,6 +53,8 @@ export function CourtsPage() {
       ? CourtStatus.Available
       : selectedStatus === 'maintenance'
       ? CourtStatus.Maintenance
+      : selectedStatus === 'inactive'
+      ? CourtStatus.Inactive
       : undefined;
 
   const courtTypeParam = selectedCourtType === 'all' ? undefined : selectedCourtType;
@@ -69,7 +70,6 @@ export function CourtsPage() {
   // 4. Mutations
   const { mutateAsync: createCourt, isPending: isCreating } = useCreateCourtMutation();
   const { mutateAsync: updateCourt, isPending: isUpdating } = useUpdateCourtMutation();
-  const { mutateAsync: updateStatus, isPending: isUpdatingStatus } = useUpdateCourtStatusMutation();
   const { mutateAsync: deleteCourt, isPending: isDeleting } = useDeleteCourtMutation();
 
   // 5. Modal States
@@ -102,30 +102,15 @@ export function CourtsPage() {
     setIsDeleteOpen(true);
   };
 
-  // Toggle trạng thái nhanh trên bảng (Hoạt động <-> Bảo trì)
-  const handleToggleStatus = async (item: CourtDto, newStatus: CourtStatus) => {
-    try {
-      await updateStatus({
-        id: item.id,
-        data: { status: newStatus },
-      });
-      const statusLabel = newStatus === CourtStatus.Available ? 'Hoạt động' : 'Bảo trì';
-      toast.success(`Đã chuyển sân "${item.name}" sang trạng thái: ${statusLabel}`);
-    } catch (err: unknown) {
-      const errorObj = err as { detail?: string; title?: string; message?: string };
-      const msg = errorObj?.detail || errorObj?.title || errorObj?.message || 'Không thể đổi trạng thái sân';
-      toast.error(msg);
-    }
-  };
-
   // Submit form thêm / sửa
-  const handleFormSubmit = async (values: { courtTypeId: string; name: string }) => {
+  const handleFormSubmit = async (values: { courtTypeId: string; name: string; status?: CourtStatus }) => {
     if (courtToEdit) {
       await updateCourt({
         id: courtToEdit.id,
         data: {
           courtTypeId: values.courtTypeId,
           name: values.name,
+          status: values.status,
         },
       });
       toast.success(`Cập nhật sân "${values.name}" thành công!`);
@@ -216,7 +201,7 @@ export function CourtsPage() {
           </SelectContent>
         </Select>
 
-        {/* Dropdown 2: Mọi trạng thái */}
+        {/* Dropdown 2: Mọi trạng thái (Hoạt động, Bảo trì, Không hoạt động) */}
         <Select
           value={selectedStatus}
           onValueChange={(val) => {
@@ -224,7 +209,7 @@ export function CourtsPage() {
             setCurrentPage(1);
           }}
         >
-          <SelectTrigger className="h-10 min-w-[130px] w-auto rounded-xl border border-border/70 bg-card hover:bg-accent/50 text-foreground font-semibold text-xs shadow-xs focus:ring-1 focus:ring-[#a3e635] focus:border-[#a3e635] transition-all cursor-pointer">
+          <SelectTrigger className="h-10 min-w-[140px] w-auto rounded-xl border border-border/70 bg-card hover:bg-accent/50 text-foreground font-semibold text-xs shadow-xs focus:ring-1 focus:ring-[#a3e635] focus:border-[#a3e635] transition-all cursor-pointer">
             <SelectValue placeholder="Mọi trạng thái" />
           </SelectTrigger>
           <SelectContent className="min-w-[var(--radix-select-trigger-width)] w-auto rounded-xl border border-border bg-popover text-popover-foreground shadow-xl z-50">
@@ -237,6 +222,9 @@ export function CourtsPage() {
             <SelectItem value="maintenance" className="cursor-pointer font-medium text-xs">
               Bảo trì
             </SelectItem>
+            <SelectItem value="inactive" className="cursor-pointer font-medium text-xs">
+              Không hoạt động
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -247,8 +235,6 @@ export function CourtsPage() {
         isLoading={isLoadingCourts}
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
-        onToggleStatus={handleToggleStatus}
-        isStatusPending={isUpdatingStatus}
       />
 
       {/* KHỐI 4: Phân trang */}

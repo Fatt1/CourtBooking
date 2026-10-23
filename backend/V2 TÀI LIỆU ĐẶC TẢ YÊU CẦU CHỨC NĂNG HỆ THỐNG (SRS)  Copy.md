@@ -217,4 +217,3 @@
 - Sau khi hoàn thành buổi chơi, người chơi gửi đánh giá điểm sao \(1–5 sao\), nhận xét phản hồi chất lượng mặt sân/dịch vụ và tải kèm hình ảnh thực tế\(\)\.   
 
 - Điểm đánh giá tự động đồng bộ vào hồ sơ chi nhánh để hỗ trợ các khách hàng khác tham khảo\(\)\.
-

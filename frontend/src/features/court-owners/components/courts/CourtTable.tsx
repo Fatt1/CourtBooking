@@ -1,14 +1,12 @@
 import { Pencil, Trash2 } from 'lucide-react';
 import { CommonTable, ColumnDef } from '@/components/common/CommonTable';
-import { Switch } from '@/components/ui/switch';
 import { CourtStatus, type CourtDto } from '@/api/courts';
+
 interface CourtTableProps {
   data: CourtDto[];
   isLoading: boolean;
   onEdit: (item: CourtDto) => void;
   onDelete: (item: CourtDto) => void;
-  onToggleStatus: (item: CourtDto, newStatus: CourtStatus) => void;
-  isStatusPending?: boolean;
 }
 
 export function CourtTable({
@@ -16,8 +14,6 @@ export function CourtTable({
   isLoading,
   onEdit,
   onDelete,
-  onToggleStatus,
-  isStatusPending = false,
 }: CourtTableProps) {
   const columns: ColumnDef<CourtDto>[] = [
     {
@@ -39,30 +35,30 @@ export function CourtTable({
       ),
     },
     {
-      header: 'TRẠNG THÁI (BẢO TRÌ)',
-      headerClassName: 'text-xs font-semibold text-muted-foreground min-w-[180px]',
+      header: 'TRẠNG THÁI',
+      headerClassName: 'text-xs font-semibold text-muted-foreground min-w-[160px]',
       cell: (item) => {
-        const isAvailable = item.status === CourtStatus.Available;
+        let badgeColor = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30';
+        let dotColor = 'bg-emerald-500';
+        let label = 'Hoạt động';
+
+        if (item.status === CourtStatus.Maintenance) {
+          badgeColor = 'bg-amber-500/10 text-amber-500 border-amber-500/30';
+          dotColor = 'bg-amber-500';
+          label = 'Bảo trì';
+        } else if (item.status === CourtStatus.Inactive) {
+          badgeColor = 'bg-rose-500/10 text-rose-500 border-rose-500/30';
+          dotColor = 'bg-rose-500';
+          label = 'Không hoạt động';
+        }
 
         return (
-          <div className="flex items-center gap-3">
-            <Switch
-              checked={isAvailable}
-              disabled={isStatusPending}
-              onCheckedChange={(checked) => {
-                const targetStatus = checked ? CourtStatus.Available : CourtStatus.Maintenance;
-                onToggleStatus(item, targetStatus);
-              }}
-              aria-label={`Trạng thái ${item.name}`}
-            />
-            <span
-              className={`text-xs font-semibold transition-colors ${
-                isAvailable ? 'text-[#a3e635]' : 'text-muted-foreground'
-              }`}
-            >
-              {isAvailable ? 'Hoạt động' : 'Bảo trì'}
-            </span>
-          </div>
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badgeColor}`}
+          >
+            <span className={`size-1.5 rounded-full ${dotColor}`} />
+            {label}
+          </span>
         );
       },
     },

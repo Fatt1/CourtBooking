@@ -17,4 +17,5 @@ public sealed record CourtOwnerSummaryDto(
     string? CurrentPackageName,
     DateOnly? PackageStartDate,
     DateOnly? PackageEndDate,
-    bool IsPackageActive);
+    bool IsPackageActive,
+    int RemainingDays = 0);

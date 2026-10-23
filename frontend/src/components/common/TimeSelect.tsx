@@ -73,10 +73,13 @@ export function TimeSelect({
     return value.length > 5 ? value.slice(0, 5) : value;
   }, [value]);
 
-  const timeSlots = useMemo(
-    () => generateTimeSlots(stepMinutes, startHour, endHour),
-    [stepMinutes, startHour, endHour]
-  );
+  const timeSlots = useMemo(() => {
+    const slots = generateTimeSlots(stepMinutes, startHour, endHour);
+    if (normalizedValue && !slots.includes(normalizedValue)) {
+      return [...slots, normalizedValue].sort();
+    }
+    return slots;
+  }, [stepMinutes, startHour, endHour, normalizedValue]);
 
   if (variant === 'bar') {
     return (

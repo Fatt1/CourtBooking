@@ -1,3 +1,4 @@
+import { CourtStatus } from '@/api/courts';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Calendar,
@@ -293,6 +294,11 @@ export function FixedVisualBookingModal({
       return activeCourtType.availableCourts.map((c) => ({
         courtId: c.courtId,
         courtName: c.courtName,
+        isMaintenance:
+          c.status === CourtStatus.Maintenance ||
+          (c.status as unknown) === 'Maintenance' ||
+          (c.status as unknown) === 2,
+        status: c.status,
       }));
     }
     const ctFromSchedule = scheduleData?.schedules?.[0]?.courtTypes?.find(

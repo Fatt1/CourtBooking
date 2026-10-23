@@ -15,26 +15,23 @@ internal sealed class GetCurrentSubscriptionQueryHandler(
     {
         var ownerId = userContext.UserId;
 
-        var latestSub = await dbContext.CourtOwnerSubscriptions
-            .Include(s => s.ServicePackage)
+        var owner = await dbContext.CourtOwners
+            .Include(co => co.ServicePackage)
             .AsNoTracking()
-            .Where(s => s.CourtOwnerId == ownerId)
-            .OrderByDescending(s => s.EndDate)
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(co => co.Id == ownerId, ct);
 
-        if (latestSub is null)
+        if (owner?.ServicePackage is null || !owner.PackageStartDate.HasValue || !owner.PackageEndDate.HasValue)
         {
             return Result.Success<SubscriptionDto?>(null);
         }
 
         var dto = new SubscriptionDto(
-            latestSub.Id,
-            latestSub.ServicePackageId,
-            latestSub.ServicePackage.Name,
-            latestSub.PricePaid,
-            latestSub.StartDate,
-            latestSub.EndDate,
-            latestSub.IsActive);
+            owner.ServicePackage.Id,
+            owner.ServicePackage.Id,
+            owner.ServicePackage.Name,
+            owner.ServicePackage.Price,
+            owner.PackageStartDate.Value,
+            owner.PackageEndDate.Value);
 
         return Result.Success<SubscriptionDto?>(dto);
     }
