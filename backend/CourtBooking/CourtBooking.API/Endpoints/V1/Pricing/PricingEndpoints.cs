@@ -1,6 +1,7 @@
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Features.V1.Pricing.Commands.FixedTimeBlocks.CreateFixedTimeBlock;
 using CourtBooking.Application.Features.V1.Pricing.Commands.FixedTimeBlocks.DeleteFixedTimeBlock;
+using CourtBooking.Application.Features.V1.Pricing.Commands.FixedTimeBlocks.UpdateFixedTimeBlock;
 using CourtBooking.Application.Features.V1.Pricing.Commands.PriceTableRules.CreatePriceTableRule;
 using CourtBooking.Application.Features.V1.Pricing.Commands.PriceTableRules.DeletePriceTableRule;
 using CourtBooking.Application.Features.V1.Pricing.Commands.PriceTableRules.UpdatePriceTableRule;
@@ -38,8 +39,6 @@ public sealed class PricingEndpoints : IEndpointGroup
         // 4. Quản lý Khung giờ bắt buộc (FixedTimeBlock)
         MapFixedTimeBlocks(group);
 
-      
-
         var publicGroup = app.MapApiV1Group("pricing");
         // 3. Xem cấu hình giá và loại sân công khai phục vụ đặt sân
         publicGroup.MapGet("/", async (
@@ -50,7 +49,7 @@ public sealed class PricingEndpoints : IEndpointGroup
             var result = await sender.Send(new GetPricingConfigByBranchIdQuery(branchId), ct);
             return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
         })
-         .WithTags(PricingTag)
+        .WithTags(PricingTag)
         .WithName("GetPublicBranchPricingConfig")
         .WithSummary("Lấy toàn bộ cấu hình giá và loại sân của chi nhánh cho đặt sân")
         .WithDescription("Trả về danh sách tất cả loại sân kèm các sân con khả dụng, khung giờ bắt buộc và bảng giá đang hoạt động.")
@@ -303,6 +302,38 @@ public sealed class PricingEndpoints : IEndpointGroup
         .WithDescription("Thiết lập khung giờ không được xé lẻ cho danh sách sân chỉ định và các thứ trong tuần (0 = Chủ nhật, 1 = Thứ hai,...). Tự động tính toán bitmask DaysOfWeekMask và kiểm tra chống trùng lấn.")
         .WithTags(PricingTag)
         .Produces(StatusCodes.Status201Created)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // PUT /api/v1/owner/pricing/fixed-time-blocks/{blockId}?branchId={branchId}
+        group.MapPut("/fixed-time-blocks/{blockId:guid}", async (
+                Guid blockId,
+                [FromQuery] Guid branchId,
+                [FromBody] UpdateFixedTimeBlockRequest request,
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var command = new UpdateFixedTimeBlockCommand(
+                branchId,
+                blockId,
+                request.StartTime,
+                request.EndTime,
+                request.DaysOfWeek,
+                request.CourtIds);
+
+            var result = await sender.Send(command, ct);
+
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+        .WithName("UpdateFixedTimeBlock")
+        .WithSummary("Cập nhật khung giờ bắt buộc")
+        .WithDescription("Chỉnh sửa khoảng thời gian, các ngày trong tuần và danh sách sân áp dụng của khung giờ bắt buộc.")
+        .WithTags(PricingTag)
+        .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)

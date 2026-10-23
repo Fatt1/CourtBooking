@@ -11,6 +11,7 @@ import type {
   UpdatePriceTableRulePayload,
   DeletePriceTableRulePayload,
   CreateFixedTimeBlockPayload,
+  UpdateFixedTimeBlockPayload,
   DeleteFixedTimeBlockPayload,
 } from './types';
 
@@ -252,6 +253,35 @@ export function useCreateFixedTimeBlockMutation() {
     mutationFn: async ({ branchId, ...body }: CreateFixedTimeBlockPayload) => {
       const response = await apiClient.post<{ id: string }>(
         API_ENDPOINTS.PRICING.FIXED_TIME_BLOCKS,
+        body,
+        {
+          params: { branchId },
+        }
+      );
+      return response;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'pricing', variables.branchId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['pricing', 'branch-config', variables.branchId],
+      });
+    },
+  });
+}
+
+/**
+ * Cập nhật khung giờ bắt buộc liền mạch
+ * PUT /api/v1/owner/pricing/fixed-time-blocks/{blockId}?branchId={branchId}
+ */
+export function useUpdateFixedTimeBlockMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ branchId, blockId, ...body }: UpdateFixedTimeBlockPayload) => {
+      const response = await apiClient.put(
+        API_ENDPOINTS.PRICING.FIXED_TIME_BLOCK_DETAIL(blockId),
         body,
         {
           params: { branchId },

@@ -54,3 +54,12 @@ public sealed record CreateFixedTimeBlockRequest(
     TimeOnly EndTime,
     List<int> DaysOfWeek,
     List<Guid> CourtIds);
+
+/// <summary>
+/// Request cập nhật khung giờ bắt buộc liền mạch (Fixed Time Block).
+/// </summary>
+public sealed record UpdateFixedTimeBlockRequest(
+    TimeOnly StartTime,
+    TimeOnly EndTime,
+    List<int> DaysOfWeek,
+    List<Guid> CourtIds);

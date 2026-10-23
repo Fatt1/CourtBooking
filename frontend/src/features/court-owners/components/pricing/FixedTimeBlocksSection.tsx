@@ -1,16 +1,18 @@
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FixedTimeBlock } from './types';
 
 interface FixedTimeBlocksSectionProps {
   blocks: FixedTimeBlock[];
   onAddBlock: () => void;
+  onEditBlock?: (block: FixedTimeBlock) => void;
   onDeleteBlock: (block: FixedTimeBlock) => void;
 }
 
 export function FixedTimeBlocksSection({
   blocks,
   onAddBlock,
+  onEditBlock,
   onDeleteBlock,
 }: FixedTimeBlocksSectionProps) {
   return (
@@ -40,23 +42,41 @@ export function FixedTimeBlocksSection({
           {blocks.map((block) => (
             <div
               key={block.id}
-              className="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl border border-border/80 bg-card hover:bg-accent/40 text-foreground transition-colors"
+              className="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl border border-border/80 bg-card hover:bg-accent/40 text-foreground transition-colors shadow-2xs"
             >
-              <span className="text-sm font-semibold tracking-tight">
-                {block.timeRange}
-              </span>
-              <span className="text-muted-foreground font-normal text-xs">|</span>
-              <span className="text-sm font-medium text-muted-foreground">
-                {block.daysText}
-              </span>
-              <button
-                type="button"
-                onClick={() => onDeleteBlock(block)}
-                title="Xóa khung giờ bắt buộc"
-                className="ml-1 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-semibold tracking-tight text-foreground">
+                  {block.timeRange}
+                </span>
+                <span className="text-muted-foreground font-normal text-xs">|</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {block.daysText}
+                </span>
+                <span className="text-muted-foreground font-normal text-xs">|</span>
+                <span className="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                  {block.appliedCourtsText || 'Tất cả các sân'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 border-l border-border/60 pl-2 ml-1 shrink-0">
+                {onEditBlock && (
+                  <button
+                    type="button"
+                    onClick={() => onEditBlock(block)}
+                    title="Chỉnh sửa khung giờ bắt buộc"
+                    className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onDeleteBlock(block)}
+                  title="Xóa khung giờ bắt buộc"
+                  className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
