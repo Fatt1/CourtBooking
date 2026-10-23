@@ -75,6 +75,12 @@ export function useCreateCourtMutation() {
       queryClient.invalidateQueries({
         queryKey: ['owner', 'court-types'],
       });
+      queryClient.invalidateQueries({
+        queryKey: ['pricing'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'pricing'],
+      });
     },
   });
 }
@@ -97,6 +103,12 @@ export function useUpdateCourtMutation() {
       queryClient.invalidateQueries({
         queryKey: ['owner', 'court-types'],
       });
+      queryClient.invalidateQueries({
+        queryKey: ['pricing'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'pricing'],
+      });
     },
   });
 }
@@ -118,6 +130,12 @@ export function useDeleteCourtMutation() {
       });
       queryClient.invalidateQueries({
         queryKey: ['owner', 'court-types'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['pricing'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'pricing'],
       });
     },
   });

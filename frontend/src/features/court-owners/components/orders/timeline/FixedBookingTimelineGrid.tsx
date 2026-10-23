@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
-import { Lock, Sparkles, Check, AlertCircle, Layers } from 'lucide-react';
+import { Lock, Sparkles, Check, AlertCircle, Layers, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CourtTypePricingConfigDto, FixedTimeBlockDto } from '@/api/pricing';
 import type { DayOfWeekScheduleDto, OccupiedSlotDetailDto } from '@/api/branches';
 import { TimelineSlotStatus } from '@/api/branches';
+import { CourtStatus } from '@/api/courts';
 import { timeToMinutes, minutesToTimeString, calculateSlotPrice, formatPrice } from './pricingCalculator';
 
 export interface CourtItem {
   courtId: string;
   courtName: string;
   isMaintenance?: boolean;
+  status?: CourtStatus;
 }
 
 export interface SelectedDayConfig {
@@ -274,13 +276,22 @@ export function FixedBookingTimelineGrid({
 
                 return courts.map((court, courtIdx) => {
                   const isFirstCourt = courtIdx === 0;
-                  const isCourtSelected = selectedCourtIds.includes(court.courtId);
+                  const isMaintenance =
+                    court.isMaintenance ||
+                    court.status === CourtStatus.Maintenance ||
+                    (court.status as unknown) === 'Maintenance' ||
+                    (court.status as unknown) === 2;
+                  const isCourtSelected = !isMaintenance && selectedCourtIds.includes(court.courtId);
 
                   return (
                     <tr
                       key={`${day.number}-${court.courtId}`}
                       className={`transition-colors ${
-                        isCourtSelected ? 'bg-white/[0.02]' : 'hover:bg-white/[0.01]'
+                        isMaintenance
+                          ? 'bg-muted/30 opacity-75'
+                          : isCourtSelected
+                          ? 'bg-white/[0.02]'
+                          : 'hover:bg-white/[0.01]'
                       }`}
                     >
                       {/* Cột 1: Thứ / Ngày (Gộp ô dọc rowSpan theo số lượng sân của Thứ này) */}
@@ -302,9 +313,23 @@ export function FixedBookingTimelineGrid({
 
                       {/* Cột 2: Sân (Tên sân + Checkbox chọn) */}
                       <td
-                        onClick={() => onToggleCourt(court.courtId)}
-                        className="sticky left-28 z-10 bg-background border-r border-border/60 p-2.5 cursor-pointer hover:bg-accent/40 transition-colors shadow-xs"
-                        title="Nhấp để chọn/bỏ chọn sân này áp dụng vào chu kỳ"
+                        onClick={() => {
+                          if (isMaintenance) {
+                            toast.warning(`Sân "${court.courtName}" đang bảo trì, không thể chọn vào chu kỳ.`);
+                            return;
+                          }
+                          onToggleCourt(court.courtId);
+                        }}
+                        className={`sticky left-28 z-10 bg-background border-r border-border/60 p-2.5 shadow-xs transition-colors ${
+                          isMaintenance
+                            ? 'cursor-not-allowed opacity-60 bg-muted/40'
+                            : 'cursor-pointer hover:bg-accent/40'
+                        }`}
+                        title={
+                          isMaintenance
+                            ? `Sân "${court.courtName}" đang bảo trì`
+                            : 'Nhấp để chọn/bỏ chọn sân này áp dụng vào chu kỳ'
+                        }
                       >
                         <div className="flex items-center gap-2">
                           <span
@@ -312,22 +337,55 @@ export function FixedBookingTimelineGrid({
                               isCourtSelected
                                 ? 'bg-[#a3e635] border-[#a3e635] text-black font-bold'
                                 : 'border-border'
-                            }`}
+                            } ${isMaintenance ? 'opacity-40 cursor-not-allowed' : ''}`}
                           >
                             {isCourtSelected && <Check className="size-2.5 stroke-[3]" />}
                           </span>
-                          <span
-                            className={`font-semibold text-xs truncate ${
-                              isCourtSelected ? 'text-foreground' : 'text-muted-foreground'
-                            }`}
-                          >
-                            {court.courtName}
-                          </span>
+                          <div className="flex flex-col min-w-0">
+                            <span
+                              className={`font-semibold text-xs truncate ${
+                                isCourtSelected
+                                  ? 'text-foreground'
+                                  : isMaintenance
+                                  ? 'text-muted-foreground/70'
+                                  : 'text-muted-foreground'
+                              }`}
+                            >
+                              {court.courtName}
+                            </span>
+                            {isMaintenance && (
+                              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                <Wrench className="size-2.5 shrink-0" />
+                                <span>Bảo trì</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
 
                       {/* Cột 3+: Các ô thời gian */}
                       {(() => {
+                        if (isMaintenance) {
+                          return timeColumns.map((col, colIdx) => (
+                            <td
+                              key={colIdx}
+                              className="p-0 border-r border-border/25 last:border-r-0 relative group bg-muted/80 opacity-60 cursor-not-allowed select-none"
+                            >
+                              <div
+                                onClick={() => {
+                                  toast.warning(`Sân "${court.courtName}" đang bảo trì, không thể chọn.`);
+                                }}
+                                title={`Sân "${court.courtName}" đang bảo trì (${day.label} • ${col.fullLabel})`}
+                                className="w-full min-h-[44px] p-1 flex flex-col items-center justify-center text-[10px]"
+                              >
+                                <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
+                                <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400">
+                                  Bảo trì
+                                </span>
+                              </div>
+                            </td>
+                          ));
+                        }
                         const courtFixedBlocks = (courtTypeConfig?.fixedTimeBlocks || []).filter((ftb) => {
                           const appliesToCourt =
                             !ftb.appliedCourts ||

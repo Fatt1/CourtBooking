@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { Lock, Sparkles, Check } from 'lucide-react';
+import { Lock, Sparkles, Check, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CourtTypePricingConfigDto, FixedTimeBlockDto } from '@/api/pricing';
 import { TimelineSlotStatus, type OccupiedSlotDto } from '@/api/branches';
+import { CourtStatus } from '@/api/courts';
 import {
   type SelectedCourtSlot,
   timeToMinutes,
@@ -235,21 +236,59 @@ export function BookingTimelineGrid({
 
                   <tbody>
                     {ct.availableCourts && ct.availableCourts.length > 0 ? (
-                      ct.availableCourts.map((court) => (
-                        <tr
-                          key={court.courtId}
-                          className="border-b border-border/40 hover:bg-card/40 transition-colors"
-                        >
-                          {/* Cột 1: Tên sân (Sticky) */}
-                          <td className="sticky left-0 z-10 bg-card p-3 font-semibold text-foreground text-xs border-r border-border/60 whitespace-nowrap shadow-xs">
-                            <div>{court.courtName}</div>
-                            <div className="text-[10px] text-muted-foreground font-normal">
-                              {ct.courtTypeName}
-                            </div>
-                          </td>
+                      ct.availableCourts.map((court) => {
+                        const isMaintenance =
+                          court.status === CourtStatus.Maintenance ||
+                          (court.status as unknown) === 'Maintenance' ||
+                          (court.status as unknown) === 2;
 
-                          {/* Các ô khung giờ */}
-                          {(() => {
+                        return (
+                          <tr
+                            key={court.courtId}
+                            className={`border-b border-border/40 transition-colors ${
+                              isMaintenance ? 'bg-muted/30 opacity-75' : 'hover:bg-card/40'
+                            }`}
+                          >
+                            {/* Cột 1: Tên sân (Sticky) */}
+                            <td className="sticky left-0 z-10 bg-card p-3 font-semibold text-foreground text-xs border-r border-border/60 whitespace-nowrap shadow-xs">
+                              <div>{court.courtName}</div>
+                              <div className="text-[10px] text-muted-foreground font-normal">
+                                {ct.courtTypeName}
+                              </div>
+                              {isMaintenance && (
+                                <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-0.5">
+                                  <Wrench className="size-2.5 shrink-0" />
+                                  <span>Bảo trì</span>
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Các ô khung giờ */}
+                            {(() => {
+                              if (isMaintenance) {
+                                return timeSlots.map((ts) => {
+                                  const startTimeStr = minutesToTimeString(ts.startMin);
+                                  const endTimeStr = minutesToTimeString(ts.endMin);
+
+                                  return (
+                                    <td
+                                      key={ts.startMin}
+                                      onClick={() => {
+                                        toast.warning(`Sân "${court.courtName}" đang bảo trì, không thể đặt.`);
+                                      }}
+                                      title={`Sân "${court.courtName}" đang bảo trì (${startTimeStr} - ${endTimeStr})`}
+                                      className="h-11 min-w-16 p-1 text-center border-r border-border/40 select-none relative bg-muted/90 text-muted-foreground cursor-not-allowed opacity-60"
+                                    >
+                                      <div className="size-full flex flex-col items-center justify-center gap-0.5">
+                                        <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
+                                        <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400">
+                                          Bảo trì
+                                        </span>
+                                      </div>
+                                    </td>
+                                  );
+                                });
+                              }
                             // Lọc các khung giờ cố định bắt buộc áp dụng cho sân này trong ngày này
                             const courtFixedBlocks = (ct.fixedTimeBlocks || []).filter((ftb) => {
                               const appliesToCourt =
@@ -808,7 +847,8 @@ export function BookingTimelineGrid({
                             });
                           })()}
                         </tr>
-                      ))
+                      );
+                    })
                     ) : (
                       <tr>
                         <td
