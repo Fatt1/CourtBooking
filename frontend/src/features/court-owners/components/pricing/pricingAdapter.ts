@@ -103,6 +103,11 @@ export function mapBackendDtoToUiData(
           b.appliedCourts && b.appliedCourts.length > 0
             ? b.appliedCourts.map((c) => c.courtName).join(', ')
             : 'Tất cả các sân',
+        rawStartTime: formatTimeDisplay(b.startTime),
+        rawEndTime: formatTimeDisplay(b.endTime),
+        daysOfWeek: b.daysOfWeek || [],
+        courtIds: (b.appliedCourts || []).map((c) => c.courtId),
+        appliedCourts: b.appliedCourts || [],
       };
     }
   );

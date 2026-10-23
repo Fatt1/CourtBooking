@@ -1,4 +1,5 @@
 import { CourtStatus } from '../courts/types';
+
 export interface AppliedCourtDto {
   courtId: string;
   courtName: string;
@@ -114,7 +115,16 @@ export interface CreateFixedTimeBlockPayload {
   startTime: string; // "17:00:00"
   endTime: string;   // "19:00:00"
   daysOfWeek: number[];
-  courtIds?: string[];
+  courtIds: string[];
+}
+
+export interface UpdateFixedTimeBlockPayload {
+  branchId: string;
+  blockId: string;
+  startTime: string; // "17:00:00"
+  endTime: string;   // "19:00:00"
+  daysOfWeek: number[];
+  courtIds: string[];
 }
 
 export interface DeleteFixedTimeBlockPayload {

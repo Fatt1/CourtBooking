@@ -10,6 +10,7 @@ import {
   useCourtTypePricingQuery,
   useCreateFixedTimeBlockMutation,
   useDeleteFixedTimeBlockMutation,
+  useUpdateFixedTimeBlockMutation,
   useCreatePriceTableRuleMutation,
   useUpdatePriceTableRuleMutation,
   useDeletePriceTableRuleMutation,
@@ -32,6 +33,7 @@ import {
   CourtTypePricingData,
   NewPriceRuleFormValues,
   NewFixedBlockFormValues,
+  FixedBlockToEdit,
   PriceRuleToEdit,
   PriceTableFormValues,
   PriceTableToEdit,
@@ -53,6 +55,7 @@ export function PricingPage() {
 
   // Dữ liệu đối tượng đang chỉnh sửa
   const [ruleToEdit, setRuleToEdit] = useState<PriceRuleToEdit | null>(null);
+  const [blockToEdit, setBlockToEdit] = useState<FixedBlockToEdit | null>(null);
   const [priceTableToEdit, setPriceTableToEdit] = useState<PriceTableToEdit | null>(null);
 
   // 1. Lấy danh sách Loại sân thật từ Backend
@@ -103,6 +106,7 @@ export function PricingPage() {
   // Các Mutation hooks tương tác Backend
   const createFixedBlockMutation = useCreateFixedTimeBlockMutation();
   const deleteFixedBlockMutation = useDeleteFixedTimeBlockMutation();
+  const updateFixedBlockMutation = useUpdateFixedTimeBlockMutation();
   const createPriceRuleMutation = useCreatePriceTableRuleMutation();
   const updatePriceRuleMutation = useUpdatePriceTableRuleMutation();
   const deletePriceRuleMutation = useDeletePriceTableRuleMutation();
@@ -146,10 +150,27 @@ export function PricingPage() {
     setSelectedCourtTypeId(id);
   };
 
-  // 1. Thêm mới Khung giờ bắt buộc từ Modal
-  const handleAddFixedBlockSubmit = async (values: NewFixedBlockFormValues) => {
+  // 1. Mở Modal Thêm mới / Chỉnh sửa Khung giờ bắt buộc
+  const handleOpenAddFixedBlock = () => {
+    setBlockToEdit(null);
+    setIsFixedBlockModalOpen(true);
+  };
+
+  const handleOpenEditFixedBlock = (block: FixedTimeBlock) => {
+    setBlockToEdit({
+      id: block.id,
+      startTime: block.rawStartTime || '17:00',
+      endTime: block.rawEndTime || '19:00',
+      selectedDays: block.daysOfWeek && block.daysOfWeek.length > 0 ? block.daysOfWeek : [6, 0],
+      courtIds: block.courtIds || [],
+    });
+    setIsFixedBlockModalOpen(true);
+  };
+
+  // Thêm mới / Cập nhật Khung giờ bắt buộc từ Modal
+  const handleFixedBlockSubmit = async (values: NewFixedBlockFormValues, blockId?: string) => {
     if (!selectedBranchId) {
-      toast.warning('Vui lòng chọn chi nhánh trước khi thêm khung giờ.');
+      toast.warning('Vui lòng chọn chi nhánh trước khi thực hiện.');
       return;
     }
 
@@ -158,37 +179,43 @@ export function PricingPage() {
       return;
     }
 
+    if (!values.courtIds || values.courtIds.length === 0) {
+      toast.warning('Vui lòng chọn ít nhất một sân áp dụng.');
+      return;
+    }
+
     try {
-      // Format giờ HH:mm -> HH:mm:00
-      const startTimeFormatted = `${values.startTime}:00`;
-      const endTimeFormatted = `${values.endTime}:00`;
+      const startTimeFormatted = values.startTime.length === 5 ? `${values.startTime}:00` : values.startTime;
+      const endTimeFormatted = values.endTime.length === 5 ? `${values.endTime}:00` : values.endTime;
 
-      // Lấy danh sách ID các sân con thuộc loại sân này
-      const courtIds =
-        backendPricingDto?.availableCourts?.map((c) => c.courtId) || [];
-
-      if (courtIds.length === 0) {
-        toast.warning(
-          'Loại sân này hiện chưa có sân con nào để áp dụng khung giờ bắt buộc. Vui lòng thêm sân vào chi nhánh trước.'
+      if (blockId) {
+        await updateFixedBlockMutation.mutateAsync({
+          branchId: selectedBranchId,
+          blockId: blockId,
+          startTime: startTimeFormatted,
+          endTime: endTimeFormatted,
+          daysOfWeek: values.selectedDays,
+          courtIds: values.courtIds,
+        });
+        toast.success(
+          `Đã cập nhật khung giờ bắt buộc: ${values.startTime} - ${values.endTime} thành công!`
         );
-        return;
+      } else {
+        await createFixedBlockMutation.mutateAsync({
+          branchId: selectedBranchId,
+          courtTypeId: selectedCourtTypeId,
+          startTime: startTimeFormatted,
+          endTime: endTimeFormatted,
+          daysOfWeek: values.selectedDays,
+          courtIds: values.courtIds,
+        });
+        toast.success(
+          `Đã thêm khung giờ bắt buộc: ${values.startTime} - ${values.endTime} thành công!`
+        );
       }
-
-      await createFixedBlockMutation.mutateAsync({
-        branchId: selectedBranchId,
-        courtTypeId: selectedCourtTypeId,
-        startTime: startTimeFormatted,
-        endTime: endTimeFormatted,
-        daysOfWeek: values.selectedDays,
-        courtIds: courtIds,
-      });
-
-      toast.success(
-        `Đã thêm khung giờ bắt buộc: ${values.startTime} - ${values.endTime} thành công!`
-      );
       refetchPricing();
     } catch (err) {
-      const msg = getErrorMessage(err, 'Không thể thêm khung giờ bắt buộc');
+      const msg = getErrorMessage(err, blockId ? 'Không thể cập nhật khung giờ bắt buộc' : 'Không thể thêm khung giờ bắt buộc');
       toast.error(msg);
     }
   };
@@ -527,7 +554,8 @@ export function PricingPage() {
               {/* Phần 1: Khung giờ bắt buộc (Cố định liền mạch) */}
               <FixedTimeBlocksSection
                 blocks={currentPricingData.fixedBlocks}
-                onAddBlock={() => setIsFixedBlockModalOpen(true)}
+                onAddBlock={handleOpenAddFixedBlock}
+                onEditBlock={handleOpenEditFixedBlock}
                 onDeleteBlock={handleDeleteFixedBlock}
               />
 
@@ -586,9 +614,19 @@ export function PricingPage() {
       {/* Modal 2: Thêm khung giờ bắt buộc */}
       <AddFixedTimeBlockModal
         open={isFixedBlockModalOpen}
-        onOpenChange={setIsFixedBlockModalOpen}
-        onSubmit={handleAddFixedBlockSubmit}
+        onOpenChange={(open) => {
+          setIsFixedBlockModalOpen(open);
+          if (!open) setBlockToEdit(null);
+        }}
+        onSubmit={handleFixedBlockSubmit}
         minuteConfig={currentMinutesConfig}
+        availableCourts={
+          backendPricingDto?.availableCourts?.map((c) => ({
+            courtId: c.courtId,
+            courtName: c.courtName,
+          })) || []
+        }
+        blockToEdit={blockToEdit}
       />
 
       {/* Modal 3: Thêm / Sửa loại bảng giá mới */}
