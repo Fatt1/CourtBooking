@@ -20,20 +20,6 @@ public sealed class UpdateEventValidator : AbstractValidator<UpdateEventCommand>
             .NotEmpty()
             .WithMessage("Vui lòng chọn bộ môn thể thao.");
 
-        RuleFor(x => x.Date)
-            .NotEmpty()
-            .WithMessage("Ngày diễn ra sự kiện không được để trống.");
-
-        RuleFor(x => x.StartTime)
-            .NotEmpty()
-            .WithMessage("Giờ bắt đầu không được để trống.");
-
-        RuleFor(x => x.EndTime)
-            .NotEmpty()
-            .WithMessage("Giờ kết thúc không được để trống.")
-            .GreaterThan(x => x.StartTime)
-            .WithMessage("Giờ kết thúc phải sau giờ bắt đầu.");
-
         RuleFor(x => x.TicketPrice)
             .GreaterThanOrEqualTo(0)
             .WithMessage("Giá vé không thể là số âm.");

@@ -2,12 +2,14 @@ using CourtBooking.API.Extensions;
 using CourtBooking.Application.Features.V1.Matches.Commands.ApproveParticipant;
 using CourtBooking.Application.Features.V1.Matches.Commands.CancelMatch;
 using CourtBooking.Application.Features.V1.Matches.Commands.CreateMatch;
+using CourtBooking.Application.Features.V1.Matches.Commands.DeleteMatch;
 using CourtBooking.Application.Features.V1.Matches.Commands.JoinMatch;
 using CourtBooking.Application.Features.V1.Matches.Commands.LeaveMatch;
 using CourtBooking.Application.Features.V1.Matches.Commands.RejectParticipant;
 using CourtBooking.Application.Features.V1.Matches.Dtos;
 using CourtBooking.Application.Features.V1.Matches.Queries.GetMatchById;
 using CourtBooking.Application.Features.V1.Matches.Queries.GetMatches;
+using CourtBooking.Application.Features.V1.Matches.Queries.GetMyJoinedMatches;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
@@ -40,26 +42,47 @@ public sealed class MatchEndpoints : IEndpointGroup
         .WithSummary("Mở kèo giao lưu mới từ đơn đặt sân đã xác nhận")
         .Produces<CreateMatchResponse>(StatusCodes.Status201Created);
 
-        // 2. GET /api/v1/matches — Danh sách kèo giao lưu (Công khai - hỗ trợ bộ lọc và phân trang)
+        // 1b. PUT /api/v1/matches/{id:guid} — Chỉnh sửa kèo giao lưu (Yêu cầu đăng nhập)
+        group.MapPut("{id:guid}", async (
+            [FromRoute] Guid id,
+            [FromBody] CourtBooking.Application.Features.V1.Matches.Commands.UpdateMatch.UpdateMatchRequest request,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new CourtBooking.Application.Features.V1.Matches.Commands.UpdateMatch.UpdateMatchCommand(
+                id,
+                request.SkillLevel,
+                request.MissingPlayers,
+                request.FeePerPlayer,
+                request.ApprovalMode,
+                request.Description);
+
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+        .RequireAuthorization()
+        .WithName("UpdateMatch")
+        .WithSummary("Chỉnh sửa thông tin kèo giao lưu của chính mình")
+        .Produces(StatusCodes.Status204NoContent);
+
+        // 2. GET /api/v1/matches — Danh sách kèo giao lưu (Công khai - hỗ trợ phân trang và tìm gần bạn)
         group.MapGet("", async (
+            [FromQuery] decimal? latitude,
+            [FromQuery] decimal? longitude,
             [FromQuery] Guid? sportTypeId,
-            [FromQuery] DateOnly? date,
-            [FromQuery] string? province,
-            [FromQuery] string? district,
             [FromQuery] string? skillLevel,
-            [FromQuery] SocialMatchStatus? status,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
             ISender sender = default!,
             CancellationToken ct = default) =>
         {
             var query = new GetMatchesQuery(
+                latitude,
+                longitude,
                 sportTypeId,
-                date,
-                province,
-                district,
                 skillLevel,
-                status,
                 page,
                 pageSize);
 
@@ -69,7 +92,25 @@ public sealed class MatchEndpoints : IEndpointGroup
                 : result.ToProblemDetails();
         })
         .WithName("GetMatches")
-        .WithSummary("Lấy danh sách các kèo giao lưu thể thao với bộ lọc và phân trang");
+        .WithSummary("Lấy danh sách các kèo giao lưu thể thao sắp diễn ra gần bạn nhất");
+
+        // 2b. GET /api/v1/matches/my-joined — Danh sách các kèo đã tham gia (Yêu cầu đăng nhập)
+        group.MapGet("my-joined", async (
+            [FromQuery] decimal? latitude,
+            [FromQuery] decimal? longitude,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetMyJoinedMatchesQuery(latitude, longitude);
+            var result = await sender.Send(query, ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+        .RequireAuthorization()
+        .WithName("GetMyJoinedMatches")
+        .WithSummary("Lấy danh sách các kèo giao lưu người dùng hiện tại đã tham gia")
+        .Produces<List<MatchDto>>(StatusCodes.Status200OK);
 
         // 3. GET /api/v1/matches/{id:guid} — Chi tiết kèo giao lưu (Công khai)
         group.MapGet("{id:guid}", async (
@@ -131,7 +172,7 @@ public sealed class MatchEndpoints : IEndpointGroup
         })
         .RequireAuthorization()
         .WithName("RejectParticipant")
-        .WithSummary("Chủ phòng từ chối yêu cầu tham gia của một thành viên");
+        .WithSummary("Chủ phòng từ chối và xóa thành viên khỏi danh sách");
 
         // 7. POST /api/v1/matches/{id:guid}/leave — Người tham gia rút lui khỏi kèo (Yêu cầu đăng nhập)
         group.MapPost("{id:guid}/leave", async (
@@ -148,19 +189,34 @@ public sealed class MatchEndpoints : IEndpointGroup
         .WithName("LeaveMatch")
         .WithSummary("Người tham gia rút lui khỏi kèo trước giờ thi đấu");
 
-        // 8. POST /api/v1/matches/{id:guid}/cancel — Chủ phòng hủy kèo (Yêu cầu đăng nhập)
+        // 8. DELETE /api/v1/matches/{id:guid} — Chủ phòng xóa kèo (Yêu cầu đăng nhập)
+        group.MapDelete("{id:guid}", async (
+            [FromRoute] Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new DeleteMatchCommand(id), ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+        .RequireAuthorization()
+        .WithName("DeleteMatch")
+        .WithSummary("Chủ phòng xóa kèo giao lưu");
+
+        // 8b. POST /api/v1/matches/{id:guid}/cancel — Tương thích ngược: chuyển hướng thành xóa kèo
         group.MapPost("{id:guid}/cancel", async (
             [FromRoute] Guid id,
             ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new CancelMatchCommand(id), ct);
+            var result = await sender.Send(new DeleteMatchCommand(id), ct);
             return result.IsSuccess
                 ? Results.NoContent()
                 : result.ToProblemDetails();
         })
         .RequireAuthorization()
         .WithName("CancelMatch")
-        .WithSummary("Chủ phòng hủy kèo giao lưu");
+        .WithSummary("Chủ phòng xóa kèo giao lưu (alias)");
     }
 }

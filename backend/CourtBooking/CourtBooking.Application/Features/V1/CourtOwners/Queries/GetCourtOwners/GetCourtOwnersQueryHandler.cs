@@ -51,36 +51,38 @@ internal sealed class GetCourtOwnersQueryHandler(IApplicationDbContext dbContext
                 u.Status,
                 u.CourtOwner!.MustChangePwd,
                 u.CreatedAt,
-                LatestSubscription = u.CourtOwner!.Subscriptions
-                    .OrderByDescending(s => s.EndDate)
-                    .Select(s => new
-                    {
-                        PackageName = s.ServicePackage.Name,
-                        s.StartDate,
-                        s.EndDate
-                    })
-                    .FirstOrDefault()
+                CurrentPackageName = u.CourtOwner!.ServicePackage != null ? u.CourtOwner.ServicePackage.Name : null,
+                PackageStartDate = u.CourtOwner!.PackageStartDate,
+                PackageEndDate = u.CourtOwner!.PackageEndDate
             })
             .ToListAsync(ct);
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        var items = rawItems.Select(x => new CourtOwnerSummaryDto(
-            x.Id,
-            x.FullName,
-            x.Email,
-            x.PhoneNumber,
-            x.BusinessName,
-            x.Status,
-            x.MustChangePwd,
-            x.CreatedAt,
-            x.LatestSubscription?.PackageName,
-            x.LatestSubscription?.StartDate,
-            x.LatestSubscription?.EndDate,
-            x.LatestSubscription is not null
-                && today >= x.LatestSubscription.StartDate
-                && today <= x.LatestSubscription.EndDate
-        )).ToList();
+        var items = rawItems.Select(x =>
+        {
+            var isSubActive = x.PackageStartDate.HasValue && x.PackageEndDate.HasValue
+                              && today >= x.PackageStartDate.Value && today <= x.PackageEndDate.Value;
+
+            var remainingDays = (x.PackageEndDate.HasValue && x.PackageEndDate.Value >= today)
+                ? (x.PackageEndDate.Value.DayNumber - today.DayNumber)
+                : 0;
+
+            return new CourtOwnerSummaryDto(
+                x.Id,
+                x.FullName,
+                x.Email,
+                x.PhoneNumber,
+                x.BusinessName,
+                x.Status,
+                x.MustChangePwd,
+                x.CreatedAt,
+                x.CurrentPackageName,
+                x.PackageStartDate,
+                x.PackageEndDate,
+                isSubActive,
+                remainingDays);
+        }).ToList();
 
         return Result.Success(new PagedList<CourtOwnerSummaryDto>(items, totalCount, request.Page, request.PageSize));
     }

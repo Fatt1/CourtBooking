@@ -11,6 +11,8 @@ using CourtBooking.Application.Features.V1.Branches.Queries.GetPublicBranchById;
 using CourtBooking.Application.Features.V1.Branches.Queries.SearchPublicBranches;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetOneTimeBooking;
 using CourtBooking.Application.Features.V1.Branches.Queries.GetFromTimeBooking;
+using CourtBooking.Domain.Constants;
+using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +25,7 @@ public sealed class BranchEndpoints : IEndpointGroup
     public void Map(IEndpointRouteBuilder app)
     {
         var group = app.MapApiV1Group("owner/branches")
-            .RequireAuthorization(policy => policy.RequireRole("CourtOwner"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner))
             .WithTags(BranchTag);
 
         MapToOwner(group);

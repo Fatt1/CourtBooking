@@ -51,3 +51,60 @@ export interface CourtOwnerRevenueParams {
   branchId?: string;
   groupBy?: TimeGrouping;
 }
+
+// ── Admin SaaS Subscription Revenue & Analytics Types ─────────
+export interface RevenueByPackageItemDto {
+  packageId: string;
+  packageName: string;
+  revenue: number;
+  totalSold: number;
+  percentage: number;
+}
+
+export interface RevenueTimelineItemDto {
+  period: string;
+  startDate: string;
+  revenue: number;
+  subscriptionCount: number;
+  previousRevenue?: number;
+}
+
+export interface SaaSSubscriptionRevenueDto {
+  totalRevenue: number;
+  totalSubscriptionsSold: number;
+  averageRevenuePerSubscription: number;
+  previousPeriodRevenue: number;
+  growthPercentage: number;
+  activeOwnersCount?: number;
+  activeOwnersGrowth?: number;
+  renewalRate?: number;
+  renewalRateGrowth?: number;
+  byPackage: RevenueByPackageItemDto[];
+  timeline: RevenueTimelineItemDto[];
+}
+
+export interface SubscriptionHistoryItemDto {
+  id: string;
+  courtOwnerId: string;
+  ownerName: string;
+  businessName: string;
+  avatarInitial?: string;
+  packageName: string;
+  pricePaid: number;
+  startDate: string;
+  endDate: string;
+  transactionCode?: string;
+  status: string;
+  daysRemaining: number;
+}
+
+export interface SubscriptionHistoryResponse {
+  subscriptions: {
+    items: SubscriptionHistoryItemDto[];
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+  } | SubscriptionHistoryItemDto[];
+  expiringSoonCount: number;
+}

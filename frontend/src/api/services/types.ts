@@ -12,6 +12,21 @@ export interface ServiceImageDto {
 /**
  * Dịch vụ theo chi nhánh (GET /api/v1/services/{branchId})
  */
+export interface BranchServiceItemDto {
+  id: string;
+  name: string;
+  unit: string;
+  price: number;
+  image?: ServiceImageDto | null;
+  isActive: boolean;
+}
+
+export interface BranchCategoryServicesDto {
+  categoryId: string;
+  categoryName: string;
+  services: BranchServiceItemDto[];
+}
+
 export interface ServiceByBranchDto {
   id: string;
   name: string;

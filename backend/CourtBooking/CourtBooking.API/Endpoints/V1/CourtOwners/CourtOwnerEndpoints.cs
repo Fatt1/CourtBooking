@@ -60,7 +60,8 @@ public sealed class CourtOwnerEndpoints : IEndpointGroup
                 request.Email,
                 request.MustChangePwd,
                 request.Password,
-                request.BusinessName);
+                request.BusinessName,
+                request.ServicePackageId);
 
             var result = await sender.Send(command, ct);
 

@@ -1,5 +1,4 @@
 export * from './types';
-export * from './mockData';
 export * from './CourtTypeSidebar';
 export * from './FixedTimeBlocksSection';
 export * from './PriceTableBlock';

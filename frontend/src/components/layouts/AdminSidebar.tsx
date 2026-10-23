@@ -56,6 +56,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       label: 'Gói cước & đăng ký',
       href: '/admin/subscriptions',
       icon: CalendarCheck,
+      badge: 5,
     },
     {
       label: 'Môn thể thao',
@@ -92,17 +93,17 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Sidebar Content */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#16241c] bg-[#0c1410] text-slate-200 transition-all duration-300 md:static md:z-auto select-none',
+          'fixed inset-y-0 left-0 z-50 flex flex-col h-full min-h-screen shrink-0 border-r border-[#141b16] bg-[#070a08] text-slate-200 transition-all duration-300 md:static md:z-auto select-none',
           sidebarCollapsed ? 'md:w-20' : 'md:w-64',
           isOpen ? 'w-64 translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
         {/* 1. Brand Bar chuẩn CourtOS Admin Console */}
-        <div className="flex h-16 items-center justify-between border-b border-[#16241c] px-4">
-          <Link to="/admin/users" className="flex items-center gap-3 group">
+        <div className="flex h-16 items-center justify-between border-b border-[#141b16] px-4">
+          <Link to="/admin/dashboard" className="flex items-center gap-3 group">
             {/* Logo Icon CourtOS */}
             <div className="size-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-0.5 shadow-md shadow-emerald-500/20 flex items-center justify-center shrink-0">
-              <div className="size-full bg-[#0c1410] rounded-[10px] flex items-center justify-center">
+              <div className="size-full bg-[#070a08] rounded-[10px] flex items-center justify-center">
                 <svg
                   viewBox="0 0 24 24"
                   className="size-5 text-emerald-400 stroke-current"
@@ -148,7 +149,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         {/* 2. Workspace Selector Box */}
         {!sidebarCollapsed && (
           <div className="px-3 pt-3">
-            <div className="flex items-center justify-between rounded-xl bg-[#111c16] border border-[#1b2d22] p-2.5 transition-colors">
+            <div className="flex items-center justify-between rounded-xl bg-[#0d1410] border border-[#17261d] p-2.5 transition-colors">
               <div className="flex items-center gap-2.5 truncate">
                 <div className="size-7 rounded-lg bg-[#0e271c] border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-xs shrink-0 shadow-2xs">
                   C
@@ -175,7 +176,8 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             const Icon = item.icon;
             const isActive =
               location.pathname === item.href ||
-              location.pathname.startsWith(`${item.href}/`);
+              (item.href === '/admin/dashboard' && (location.pathname === '/admin' || location.pathname === '/admin/')) ||
+              (item.href !== '/admin/dashboard' && location.pathname.startsWith(`${item.href}/`));
 
             return (
               <Link
@@ -185,8 +187,8 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 className={cn(
                   'flex items-center justify-between rounded-xl px-3 py-2.5 text-xs transition-all duration-150',
                   isActive
-                    ? 'bg-[#0d281e] text-emerald-400 font-semibold border border-emerald-500/25 shadow-xs'
-                    : 'text-zinc-400 hover:bg-[#121c17] hover:text-white font-medium',
+                    ? 'bg-[#0e2418] text-emerald-400 font-semibold border border-emerald-500/25 shadow-xs'
+                    : 'text-zinc-400 hover:bg-[#0d1712] hover:text-white font-medium',
                   sidebarCollapsed && 'justify-center px-2 py-2.5'
                 )}
                 title={sidebarCollapsed ? item.label : undefined}
@@ -202,7 +204,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 </div>
 
                 {!sidebarCollapsed && item.badge && (
-                  <span className="flex size-5 items-center justify-center rounded-md bg-[#16271e] border border-emerald-500/20 text-[10px] font-bold text-emerald-400">
+                  <span className="flex size-5 items-center justify-center rounded-md bg-[#132b1e] border border-emerald-500/20 text-[10px] font-bold text-emerald-400">
                     {item.badge}
                   </span>
                 )}
@@ -212,7 +214,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         </div>
 
         {/* 4. Bottom System Status & Admin Profile Footer */}
-        <div className="border-t border-[#16241c] p-3 space-y-2.5">
+        <div className="mt-auto border-t border-[#141b16] p-3 space-y-2.5">
           {/* Trạng thái hệ thống */}
           {!sidebarCollapsed && (
             <div className="flex items-center gap-2 px-1 text-[11px] text-zinc-400">
@@ -224,7 +226,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           {/* Admin Profile Box */}
           <div
             className={cn(
-              'flex items-center justify-between rounded-xl bg-[#111c16]/70 border border-[#1b2d22] p-2',
+              'flex items-center justify-between rounded-xl bg-[#0d1410] border border-[#17261d] p-2',
               sidebarCollapsed && 'justify-center p-1.5'
             )}
           >

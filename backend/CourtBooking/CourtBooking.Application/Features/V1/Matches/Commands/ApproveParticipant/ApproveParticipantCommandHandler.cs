@@ -50,10 +50,6 @@ public sealed class ApproveParticipantCommandHandler(
         // 4. Cập nhật trạng thái
         participant.Status = ParticipantStatus.Confirmed;
         match.AvailableSlots -= 1;
-        if (match.AvailableSlots == 0)
-        {
-            match.Status = SocialMatchStatus.Full;
-        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

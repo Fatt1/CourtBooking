@@ -33,6 +33,47 @@ public static class DatabaseSeeder
     [SuppressMessage("Minor Code Smell", "S1075:URIs should not be hardcoded", Justification = "Sample seeded URLs for mock branches")]
     public static async Task SeedAsync(ApplicationDbContext context, ILogger logger, CancellationToken cancellationToken = default)
     {
+        // 0. Đảm bảo ServicePackages luôn tồn tại trong DB
+        if (!await context.ServicePackages.AnyAsync(cancellationToken))
+        {
+            var defaultPackages = new List<ServicePackage>
+            {
+                new()
+                {
+                    Id = Guid.Parse("11111111-2222-3333-4444-555555555551"),
+                    Name = "Basic",
+                    Price = 499000m,
+                    Description = "",
+                    DurationMonths = 1,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new()
+                {
+                    Id = Guid.Parse("11111111-2222-3333-4444-555555555552"),
+                    Name = "Pro",
+                    Price = 1000000m,
+                    Description = "",
+                    DurationMonths = 3,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new()
+                {
+                    Id = Guid.Parse("11111111-2222-3333-4444-555555555553"),
+                    Name = "Ultra",
+                    Price = 2000000m,
+                    Description = "",
+                    DurationMonths = 6,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                }
+            };
+            await context.ServicePackages.AddRangeAsync(defaultPackages, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("ServicePackages seeded successfully.");
+        }
+
         // 0. Check if database has already been seeded
         if (await context.Roles.AnyAsync(cancellationToken) || await context.Users.IgnoreQueryFilters().AnyAsync(cancellationToken))
         {
@@ -258,9 +299,9 @@ public static class DatabaseSeeder
         var pkgBasic = new ServicePackage
         {
             Id = Guid.NewGuid(),
-            Name = "Gói Cơ Bản (1 Tháng)",
-            Price = 299000m,
-            Description = "Quản lý tối đa 4 sân, tính năng đặt sân cơ bản.",
+            Name = "Basic",
+            Price = 499000m,
+            Description = "",
             DurationMonths = 1,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -269,10 +310,10 @@ public static class DatabaseSeeder
         var pkgStandard = new ServicePackage
         {
             Id = Guid.NewGuid(),
-            Name = "Gói Tiêu Chuẩn (6 Tháng)",
-            Price = 1499000m,
-            Description = "Quản lý tối đa 10 sân, đầy đủ bán lẻ và thống kê.",
-            DurationMonths = 6,
+            Name = "Pro",
+            Price = 1000000m,
+            Description = "",
+            DurationMonths = 3,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -280,10 +321,10 @@ public static class DatabaseSeeder
         var pkgEnterprise = new ServicePackage
         {
             Id = Guid.NewGuid(),
-            Name = "Gói Doanh Nghiệp (12 Tháng)",
-            Price = 2699000m,
-            Description = "Không giới hạn sân, ưu tiên hỗ trợ 24/7 và giải đấu.",
-            DurationMonths = 12,
+            Name = "Ultra",
+            Price = 2000000m,
+            Description = "",
+            DurationMonths = 6,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -871,7 +912,6 @@ public static class DatabaseSeeder
             ApprovalMode = 0,
             SkillLevel = "Trình độ B-C",
             Description = "Giao lưu cầu lông phong trào tối thứ 4, vui vẻ rèn luyện sức khỏe, có nước uống miễn phí.",
-            Status = SocialMatchStatus.Open,
             CreatedAt = DateTime.UtcNow
         };
 

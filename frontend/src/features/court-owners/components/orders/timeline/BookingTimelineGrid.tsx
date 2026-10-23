@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
-import { Lock, Sparkles } from 'lucide-react';
+import { Lock, Sparkles, Check, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CourtTypePricingConfigDto, FixedTimeBlockDto } from '@/api/pricing';
 import { TimelineSlotStatus, type OccupiedSlotDto } from '@/api/branches';
+import { CourtStatus } from '@/api/courts';
 import {
   type SelectedCourtSlot,
   timeToMinutes,
   minutesToTimeString,
   calculateSlotPrice,
+  formatPrice,
 } from './pricingCalculator';
 
 export interface BookingTimelineGridProps {
@@ -158,6 +160,14 @@ export function BookingTimelineGrid({
           <span className="text-emerald-700 dark:text-[#a3e635] font-semibold">Đang chọn</span>
         </div>
 
+        <div className="flex items-center gap-2">
+          <div className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-[#a3e635] text-[10px] font-semibold flex items-center gap-1">
+            <Sparkles className="size-2.5 text-emerald-500" />
+            <span>Khung cố định</span>
+          </div>
+          <span className="text-muted-foreground">Khung giờ bắt buộc (gộp ca)</span>
+        </div>
+
         {lockSameTimeSlots && baseCourtInfo && (
           <div className="flex items-center gap-2 ml-auto text-xs bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full text-amber-300 animate-in fade-in">
             <Lock className="size-3" />
@@ -226,55 +236,384 @@ export function BookingTimelineGrid({
 
                   <tbody>
                     {ct.availableCourts && ct.availableCourts.length > 0 ? (
-                      ct.availableCourts.map((court) => (
-                        <tr
-                          key={court.courtId}
-                          className="border-b border-border/40 hover:bg-card/40 transition-colors"
-                        >
-                          {/* Cột 1: Tên sân (Sticky) */}
-                          <td className="sticky left-0 z-10 bg-card p-3 font-semibold text-foreground text-xs border-r border-border/60 whitespace-nowrap shadow-xs">
-                            <div>{court.courtName}</div>
-                            <div className="text-[10px] text-muted-foreground font-normal">
-                              {ct.courtTypeName}
-                            </div>
-                          </td>
+                      ct.availableCourts.map((court) => {
+                        const isMaintenance =
+                          court.status === CourtStatus.Maintenance ||
+                          (court.status as unknown) === 'Maintenance' ||
+                          (court.status as unknown) === 2;
 
-                          {/* Các ô khung giờ */}
-                          {timeSlots.map((ts) => {
-                            const startTimeStr = minutesToTimeString(ts.startMin);
-                            const endTimeStr = minutesToTimeString(ts.endMin);
+                        return (
+                          <tr
+                            key={court.courtId}
+                            className={`border-b border-border/40 transition-colors ${
+                              isMaintenance ? 'bg-muted/30 opacity-75' : 'hover:bg-card/40'
+                            }`}
+                          >
+                            {/* Cột 1: Tên sân (Sticky) */}
+                            <td className="sticky left-0 z-10 bg-card p-3 font-semibold text-foreground text-xs border-r border-border/60 whitespace-nowrap shadow-xs">
+                              <div>{court.courtName}</div>
+                              <div className="text-[10px] text-muted-foreground font-normal">
+                                {ct.courtTypeName}
+                              </div>
+                              {isMaintenance && (
+                                <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-0.5">
+                                  <Wrench className="size-2.5 shrink-0" />
+                                  <span>Bảo trì</span>
+                                </div>
+                              )}
+                            </td>
 
-                            // 0. Kiểm tra khóa bởi sự kiện khi lockSameTimeSlots = true
-                            let isLockedByEventConstraint = false;
-                            if (lockSameTimeSlots && baseCourtInfo) {
-                              const isBaseCourt = court.courtId === baseCourtInfo.baseCourtId;
-                              const slotKey = `${ts.startMin}-${ts.endMin}`;
+                            {/* Các ô khung giờ */}
+                            {(() => {
+                              if (isMaintenance) {
+                                return timeSlots.map((ts) => {
+                                  const startTimeStr = minutesToTimeString(ts.startMin);
+                                  const endTimeStr = minutesToTimeString(ts.endMin);
 
-                              if (!isBaseCourt) {
-                                // Sân khác: Chỉ được chọn các slot khớp chính xác với baseCourtSlots
-                                if (!baseCourtInfo.slotKeys.has(slotKey)) {
-                                  isLockedByEventConstraint = true;
-                                }
-                              } else {
-                                // Sân cơ sở: Nếu đã chọn >= 2 sân, các ô ngoài khung giờ cũng bị khóa để giữ đồng bộ
-                                if (baseCourtInfo.uniqueCourtIds.length > 1 && !baseCourtInfo.slotKeys.has(slotKey)) {
-                                  isLockedByEventConstraint = true;
+                                  return (
+                                    <td
+                                      key={ts.startMin}
+                                      onClick={() => {
+                                        toast.warning(`Sân "${court.courtName}" đang bảo trì, không thể đặt.`);
+                                      }}
+                                      title={`Sân "${court.courtName}" đang bảo trì (${startTimeStr} - ${endTimeStr})`}
+                                      className="h-11 min-w-16 p-1 text-center border-r border-border/40 select-none relative bg-muted/90 text-muted-foreground cursor-not-allowed opacity-60"
+                                    >
+                                      <div className="size-full flex flex-col items-center justify-center gap-0.5">
+                                        <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
+                                        <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400">
+                                          Bảo trì
+                                        </span>
+                                      </div>
+                                    </td>
+                                  );
+                                });
+                              }
+                            // Lọc các khung giờ cố định bắt buộc áp dụng cho sân này trong ngày này
+                            const courtFixedBlocks = (ct.fixedTimeBlocks || []).filter((ftb) => {
+                              const appliesToCourt =
+                                !ftb.appliedCourts ||
+                                ftb.appliedCourts.length === 0 ||
+                                ftb.appliedCourts.some((ac) => ac.courtId === court.courtId);
+                              const appliesToDay =
+                                !ftb.daysOfWeek ||
+                                ftb.daysOfWeek.length === 0 ||
+                                ftb.daysOfWeek.includes(dayOfWeek);
+
+                              return appliesToCourt && appliesToDay;
+                            });
+
+                            return timeSlots.map((ts) => {
+                              const startTimeStr = minutesToTimeString(ts.startMin);
+                              const endTimeStr = minutesToTimeString(ts.endMin);
+
+                              // Kiểm tra xem ô này có thuộc FixedTimeBlock nào không
+                              const matchingBlock = courtFixedBlocks.find((ftb) => {
+                                const bStart = timeToMinutes(ftb.startTime);
+                                const bEnd = timeToMinutes(ftb.endTime);
+                                return ts.startMin >= bStart && ts.endMin <= bEnd;
+                              });
+
+                              let blockSlotsCount = 1;
+                              let isBlockLeader = false;
+                              let isBlockFollower = false;
+                              let blockSlots: typeof timeSlots = [];
+
+                              if (matchingBlock) {
+                                const bStart = timeToMinutes(matchingBlock.startTime);
+                                const bEnd = timeToMinutes(matchingBlock.endTime);
+                                blockSlots = timeSlots.filter(
+                                  (s) => s.startMin >= bStart && s.endMin <= bEnd
+                                );
+
+                                if (blockSlots.length > 1) {
+                                  if (ts.startMin === blockSlots[0].startMin) {
+                                    isBlockLeader = true;
+                                    blockSlotsCount = blockSlots.length;
+                                  } else {
+                                    isBlockFollower = true;
+                                  }
                                 }
                               }
-                            }
 
-                            // 1. Kiểm tra xem ô này đã được chọn chưa (hỗ trợ cả atomic slot và merged slot)
-                            const isSelected = selectedSlots.some(
-                              (s) =>
-                                s.courtId === court.courtId &&
-                                s.date === date &&
-                                timeToMinutes(s.startTime) <= ts.startMin &&
-                                timeToMinutes(s.endTime) >= ts.endMin
-                            );
+                              // Nếu ô này là ô phía sau của một block nhiều ô -> Không render td vì đã gộp vào ô đầu (colSpan)
+                              if (isBlockFollower) {
+                                return null;
+                              }
 
-                            // 2. Kiểm tra xung đột với OccupiedSlots (Đã đặt / Khóa / Sự kiện)
-                            const conflict = occupiedSlots.find(
-                              (os) => {
+                              // 0. Kiểm tra khóa bởi sự kiện khi lockSameTimeSlots = true
+                              let isLockedByEventConstraint = false;
+                              if (lockSameTimeSlots && baseCourtInfo) {
+                                const isBaseCourt = court.courtId === baseCourtInfo.baseCourtId;
+                                const slotKey = `${ts.startMin}-${ts.endMin}`;
+
+                                if (!isBaseCourt) {
+                                  if (!baseCourtInfo.slotKeys.has(slotKey)) {
+                                    isLockedByEventConstraint = true;
+                                  }
+                                } else {
+                                  if (
+                                    baseCourtInfo.uniqueCourtIds.length > 1 &&
+                                    !baseCourtInfo.slotKeys.has(slotKey)
+                                  ) {
+                                    isLockedByEventConstraint = true;
+                                  }
+                                }
+                              }
+
+                              // ==========================================================
+                              // TRƯỜNG HỢP 1: Ô GỘP KHUNG GIỜ CỐ ĐỊNH (FIXED TIME BLOCK)
+                              // ==========================================================
+                              if (matchingBlock && isBlockLeader) {
+                                const blockStartMin = timeToMinutes(matchingBlock.startTime);
+                                const blockEndMin = timeToMinutes(matchingBlock.endTime);
+                                const blockStartStr = matchingBlock.startTime.substring(0, 5);
+                                const blockEndStr = matchingBlock.endTime.substring(0, 5);
+
+                                // Kiểm tra xem tất cả các ô trong block này đã được chọn chưa
+                                const isBlockSelected = blockSlots.every((bs) =>
+                                  selectedSlots.some(
+                                    (s) =>
+                                      s.courtId === court.courtId &&
+                                      s.date === date &&
+                                      timeToMinutes(s.startTime) <= bs.startMin &&
+                                      timeToMinutes(s.endTime) >= bs.endMin
+                                  )
+                                );
+
+                                const isBlockPartiallySelected =
+                                  !isBlockSelected &&
+                                  blockSlots.some((bs) =>
+                                    selectedSlots.some(
+                                      (s) =>
+                                        s.courtId === court.courtId &&
+                                        s.date === date &&
+                                        timeToMinutes(s.startTime) <= bs.startMin &&
+                                        timeToMinutes(s.endTime) >= bs.endMin
+                                    )
+                                  );
+
+                                // Kiểm tra xung đột với occupiedSlots trong toàn bộ block
+                                const blockConflicts = occupiedSlots.filter((os) => {
+                                  if (os.courtId !== court.courtId) return false;
+                                  if (excludeOrderCode) {
+                                    const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
+                                    const cleanCurrent = os.orderCode?.replace(/^#/, '').trim().toLowerCase();
+                                    if (cleanTarget && cleanCurrent && cleanTarget === cleanCurrent) return false;
+                                  }
+                                  if (excludeTitle) {
+                                    const cleanTargetTitle = excludeTitle.trim().toLowerCase();
+                                    const cleanCurrentTitle = os.title?.trim().toLowerCase();
+                                    if (
+                                      cleanTargetTitle &&
+                                      cleanCurrentTitle &&
+                                      (cleanCurrentTitle === cleanTargetTitle || cleanCurrentTitle.includes(cleanTargetTitle))
+                                    ) {
+                                      return false;
+                                    }
+                                  }
+                                  return (
+                                    timeToMinutes(os.startTime) < blockEndMin &&
+                                    timeToMinutes(os.endTime) > blockStartMin
+                                  );
+                                });
+
+                                const isBlockEvent = blockConflicts.some(
+                                  (c) => c.status === TimelineSlotStatus.Event
+                                );
+                                const isBlockLocked = blockConflicts.some(
+                                  (c) => c.status === TimelineSlotStatus.Locked
+                                );
+                                const isBlockBooked =
+                                  blockConflicts.length > 0 && !isBlockEvent && !isBlockLocked;
+
+                                const isBlockPast =
+                                  isPastDate || (isToday && blockEndMin <= currentMinutes);
+
+                                const isBlockUnavailable =
+                                  isBlockPast ||
+                                  isBlockBooked ||
+                                  isBlockLocked ||
+                                  isBlockEvent ||
+                                  isLoading;
+
+                                // Tính tổng giá cho toàn bộ khung giờ cố định này
+                                let totalBlockPrice = 0;
+                                for (const bs of blockSlots) {
+                                  totalBlockPrice += calculateSlotPrice(
+                                    date,
+                                    bs.timeLabel,
+                                    minutesToTimeString(bs.endMin),
+                                    activePriceTable
+                                  );
+                                }
+
+                                const handleBlockClick = () => {
+                                  // Nếu đang được chọn (hoặc chọn 1 phần) -> Bấm vào để BỎ CHỌN cả block
+                                  if (isBlockSelected || isBlockPartiallySelected) {
+                                    const blockSlotsToToggle: SelectedCourtSlot[] = blockSlots.map((bs) => {
+                                      const sStr = minutesToTimeString(bs.startMin);
+                                      const eStr = minutesToTimeString(bs.endMin);
+                                      const bPrice = calculateSlotPrice(date, sStr, eStr, activePriceTable);
+                                      return {
+                                        courtId: court.courtId,
+                                        courtName: court.courtName,
+                                        courtTypeId: ct.courtTypeId,
+                                        courtTypeName: ct.courtTypeName,
+                                        date,
+                                        startTime: `${sStr}:00`,
+                                        endTime: `${eStr}:00`,
+                                        priceTableId: activePriceTableId || '',
+                                        priceTableName: activePriceTable?.name || 'Mặc định',
+                                        price: bPrice,
+                                        fixedBlockId: matchingBlock.id,
+                                      };
+                                    });
+                                    onToggleSlot(blockSlotsToToggle[0], blockSlotsToToggle);
+                                    return;
+                                  }
+
+                                  if (isBlockUnavailable) {
+                                    if (isBlockPast) {
+                                      toast.warning('Khung giờ bắt buộc này đã kết thúc trong quá khứ.');
+                                    } else if (isBlockBooked) {
+                                      toast.warning(
+                                        `Khung giờ này đã được đặt bởi: ${
+                                          blockConflicts[0]?.customerName || 'Khách'
+                                        }`
+                                      );
+                                    } else if (isBlockLocked) {
+                                      toast.warning('Sân đang khóa hoặc bảo trì trong khung giờ này.');
+                                    } else if (isBlockEvent) {
+                                      toast.warning(
+                                        `Sân đang diễn ra sự kiện: ${blockConflicts[0]?.title || ''}`
+                                      );
+                                    } else if (isLoading) {
+                                      toast.info('Đang tải dữ liệu lịch sân, vui lòng đợi...');
+                                    }
+                                    return;
+                                  }
+
+                                  // Chọn toàn bộ khung giờ bắt buộc này
+                                  const blockSlotsToToggle: SelectedCourtSlot[] = blockSlots.map((bs) => {
+                                    const sStr = minutesToTimeString(bs.startMin);
+                                    const eStr = minutesToTimeString(bs.endMin);
+                                    const bPrice = calculateSlotPrice(date, sStr, eStr, activePriceTable);
+                                    return {
+                                      courtId: court.courtId,
+                                      courtName: court.courtName,
+                                      courtTypeId: ct.courtTypeId,
+                                      courtTypeName: ct.courtTypeName,
+                                      date,
+                                      startTime: `${sStr}:00`,
+                                      endTime: `${eStr}:00`,
+                                      priceTableId: activePriceTableId || '',
+                                      priceTableName: activePriceTable?.name || 'Mặc định',
+                                      price: bPrice,
+                                      fixedBlockId: matchingBlock.id,
+                                    };
+                                  });
+                                  onToggleSlot(blockSlotsToToggle[0], blockSlotsToToggle);
+                                };
+
+                                return (
+                                  <td
+                                    key={`block-${matchingBlock.id}-${court.courtId}-${ts.startMin}`}
+                                    colSpan={blockSlotsCount}
+                                    onClick={handleBlockClick}
+                                    title={
+                                      isBlockSelected
+                                        ? `Đang chọn: ${blockStartStr} - ${blockEndStr} • Giá: ${formatPrice(
+                                            totalBlockPrice
+                                          )} (Nhấp để bỏ chọn)`
+                                        : isBlockBooked
+                                        ? `Đã đặt bởi: ${
+                                            blockConflicts[0]?.customerName || 'Khách'
+                                          } (${blockStartStr} - ${blockEndStr})`
+                                        : isBlockLocked
+                                        ? `Khóa sân: ${blockStartStr} - ${blockEndStr}`
+                                        : isBlockEvent
+                                        ? `Sự kiện: ${blockConflicts[0]?.title || ''}`
+                                        : isBlockPast
+                                        ? 'Thời gian đã qua (không thể đặt)'
+                                        : `Khung giờ bắt buộc: ${blockStartStr} - ${blockEndStr} • Giá: ${formatPrice(
+                                            totalBlockPrice
+                                          )} (Nhấp để chọn cả ${blockSlotsCount} ô)`
+                                    }
+                                    className={`h-11 p-1 text-center border-r border-border/40 transition-all select-none relative group ${
+                                      isBlockSelected
+                                        ? 'bg-emerald-700/90 hover:bg-emerald-700 cursor-pointer shadow-inner'
+                                        : isBlockPast
+                                        ? 'bg-muted/90 text-slate-600 cursor-not-allowed border-slate-800/80'
+                                        : isBlockEvent
+                                        ? 'bg-purple-900/60 cursor-not-allowed'
+                                        : isBlockLocked
+                                        ? 'bg-muted/60 cursor-not-allowed'
+                                        : isBlockBooked
+                                        ? 'bg-muted/80 cursor-not-allowed'
+                                        : 'bg-emerald-950/20 hover:bg-emerald-900/30 cursor-pointer'
+                                    }`}
+                                  >
+                                    <div className="size-full flex items-center justify-center">
+                                      {isBlockSelected ? (
+                                        <div className="w-full h-8 px-2 rounded-lg bg-white/20 border border-white/40 flex items-center justify-between gap-1 text-[11px] text-white shadow-xs">
+                                          <span className="font-bold flex items-center gap-1.5 truncate">
+                                            <Check className="size-3.5 stroke-[3] text-white" />
+                                            <span>
+                                              {blockStartStr} - {blockEndStr}
+                                            </span>
+                                          </span>
+                                          <span className="font-mono font-bold text-[10px] bg-black/30 px-1.5 py-0.5 rounded text-white shrink-0">
+                                            {formatPrice(totalBlockPrice)}
+                                          </span>
+                                        </div>
+                                      ) : isBlockPast ? (
+                                        <span className="text-[10px] text-slate-500 font-medium">Hết giờ</span>
+                                      ) : isBlockEvent ? (
+                                        <div className="flex items-center gap-1 text-[10px] text-purple-300">
+                                          <Sparkles className="size-3" />
+                                          <span className="truncate">Sự kiện</span>
+                                        </div>
+                                      ) : isBlockLocked ? (
+                                        <div className="flex items-center gap-1 text-[10px] text-amber-400">
+                                          <Lock className="size-3" />
+                                          <span>Khóa</span>
+                                        </div>
+                                      ) : isBlockBooked ? (
+                                        <span className="text-[10px] text-muted-foreground font-semibold truncate">
+                                          Đã đặt • {blockStartStr} - {blockEndStr}
+                                        </span>
+                                      ) : (
+                                        <div className="w-full h-8 px-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/35 hover:border-emerald-500/60 flex items-center justify-between gap-1 text-[11px] text-emerald-700 dark:text-[#a3e635] transition-all shadow-xs">
+                                          <span className="font-semibold flex items-center gap-1.5 truncate text-[10px] sm:text-[11px]">
+                                            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                                            <span>Khung cố định</span>
+                                          </span>
+                                          <span className="font-mono font-bold text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-800 dark:text-[#a3e635] shrink-0">
+                                            {formatPrice(totalBlockPrice)}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                );
+                              }
+
+                              // ==========================================================
+                              // TRƯỜNG HỢP 2: Ô ĐƠN LẺ TIÊU CHUẨN
+                              // ==========================================================
+
+                              // 1. Kiểm tra xem ô này đã được chọn chưa
+                              const isSelected = selectedSlots.some(
+                                (s) =>
+                                  s.courtId === court.courtId &&
+                                  s.date === date &&
+                                  timeToMinutes(s.startTime) <= ts.startMin &&
+                                  timeToMinutes(s.endTime) >= ts.endMin
+                              );
+
+                              // 2. Kiểm tra xung đột với OccupiedSlots
+                              const conflict = occupiedSlots.find((os) => {
                                 if (os.courtId !== court.courtId) return false;
                                 if (excludeOrderCode) {
                                   const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
@@ -284,7 +623,11 @@ export function BookingTimelineGrid({
                                 if (excludeTitle) {
                                   const cleanTargetTitle = excludeTitle.trim().toLowerCase();
                                   const cleanCurrentTitle = os.title?.trim().toLowerCase();
-                                  if (cleanTargetTitle && cleanCurrentTitle && (cleanCurrentTitle === cleanTargetTitle || cleanCurrentTitle.includes(cleanTargetTitle))) {
+                                  if (
+                                    cleanTargetTitle &&
+                                    cleanCurrentTitle &&
+                                    (cleanCurrentTitle === cleanTargetTitle || cleanCurrentTitle.includes(cleanTargetTitle))
+                                  ) {
                                     return false;
                                   }
                                 }
@@ -292,165 +635,23 @@ export function BookingTimelineGrid({
                                   timeToMinutes(os.startTime) < ts.endMin &&
                                   timeToMinutes(os.endTime) > ts.startMin
                                 );
-                              }
-                            );
-
-                            // 3. Kiểm tra blocktime bắt buộc (FixedTimeBlock)
-                            let matchingBlock: FixedTimeBlockDto | undefined;
-                            if (ct.fixedTimeBlocks && ct.fixedTimeBlocks.length > 0) {
-                              matchingBlock = ct.fixedTimeBlocks.find((ftb) => {
-                                const appliesToCourt =
-                                  !ftb.appliedCourts ||
-                                  ftb.appliedCourts.length === 0 ||
-                                  ftb.appliedCourts.some((ac) => ac.courtId === court.courtId);
-                                const appliesToDay =
-                                  !ftb.daysOfWeek ||
-                                  ftb.daysOfWeek.length === 0 ||
-                                  ftb.daysOfWeek.includes(dayOfWeek);
-
-                                if (!appliesToCourt || !appliesToDay) return false;
-
-                                const bStart = timeToMinutes(ftb.startTime);
-                                const bEnd = timeToMinutes(ftb.endTime);
-                                return ts.startMin >= bStart && ts.endMin <= bEnd;
                               });
-                            }
 
-                            // 4. Kiểm tra thời gian đã qua hoặc quá sát giờ hiện tại (< 30 phút)
-                            const isPastOrTooClose =
-                              isPastDate || (isToday && ts.endMin <= currentMinutes);
+                              // 4. Kiểm tra thời gian đã qua
+                              const isPastOrTooClose =
+                                isPastDate || (isToday && ts.endMin <= currentMinutes);
 
-                            const isBlockPastOrTooClose = Boolean(
-                              matchingBlock &&
-                              (isPastDate ||
-                                (isToday &&
-                                  timeToMinutes(matchingBlock.endTime) <= currentMinutes))
-                            );
+                              // Trạng thái ô
+                              const isEvent = conflict?.status === TimelineSlotStatus.Event;
+                              const isLocked = conflict?.status === TimelineSlotStatus.Locked;
+                              const isBooked = Boolean(conflict) && !isEvent && !isLocked;
 
-                            // Trạng thái ô
-                            const isEvent = conflict?.status === TimelineSlotStatus.Event;
-                            const isLocked =
-                              conflict?.status === TimelineSlotStatus.Locked;
-                            const isBooked =
-                              Boolean(conflict) && !isEvent && !isLocked;
-
-                            const isUnavailable =
-                              isPastOrTooClose ||
-                              isBlockPastOrTooClose ||
-                              isBooked ||
-                              isLocked ||
-                              isEvent ||
-                              isLoading;
-
-                            // Xử lý khi click vào ô
-                            const handleClick = () => {
-                              // Nếu ô đang bị khóa bởi ràng buộc sự kiện
-                              if (!isSelected && isLockedByEventConstraint) {
-                                if (baseCourtInfo && baseCourtInfo.uniqueCourtIds.length > 1 && court.courtId === baseCourtInfo.baseCourtId) {
-                                  toast.warning(
-                                    `Sự kiện đang áp dụng khung giờ ${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr} cho nhiều sân. Để đổi khung giờ, vui lòng bỏ chọn các sân phụ trước.`
-                                  );
-                                } else if (baseCourtInfo) {
-                                  toast.warning(
-                                    `Sự kiện chỉ áp dụng khung giờ ${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr} (theo ${baseCourtInfo.baseCourtName}). Không thể chọn khung giờ khác!`
-                                  );
-                                }
-                                return;
-                              }
-
-                              // Thao tác với sân phụ trong chế độ sự kiện (lockSameTimeSlots): Đồng bộ toàn bộ khung giờ sự kiện
-                              if (lockSameTimeSlots && baseCourtInfo && court.courtId !== baseCourtInfo.baseCourtId) {
-                                if (isSelected) {
-                                  // Bỏ chọn toàn bộ các slot của sân phụ này
-                                  const courtSlotsToToggle: SelectedCourtSlot[] = baseCourtInfo.baseCourtSlots.map((bs) => ({
-                                    courtId: court.courtId,
-                                    courtName: court.courtName,
-                                    courtTypeId: ct.courtTypeId,
-                                    courtTypeName: ct.courtTypeName,
-                                    date,
-                                    startTime: bs.startTime,
-                                    endTime: bs.endTime,
-                                    priceTableId: activePriceTableId || '',
-                                    priceTableName: activePriceTable?.name || 'Mặc định',
-                                    price: 0,
-                                  }));
-                                  onToggleSlot(courtSlotsToToggle[0], courtSlotsToToggle);
-                                  return;
-                                }
-
-                                // Chọn toàn bộ khung giờ sự kiện cho sân phụ này
-                                // Kiểm tra xem có slot nào trong khung giờ bị trùng/quá khứ không
-                                const hasConflict = baseCourtInfo.baseCourtSlots.some((bs) => {
-                                  const bStart = timeToMinutes(bs.startTime);
-                                  const bEnd = timeToMinutes(bs.endTime);
-                                  const occ = occupiedSlots.find((os) => {
-                                    if (os.courtId !== court.courtId) return false;
-                                    if (excludeOrderCode) {
-                                      const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
-                                      const cleanCurrent = os.orderCode?.replace(/^#/, '').trim().toLowerCase();
-                                      if (cleanTarget && cleanCurrent && cleanTarget === cleanCurrent) return false;
-                                    }
-                                    if (excludeTitle) {
-                                      const cleanTargetTitle = excludeTitle.trim().toLowerCase();
-                                      const cleanCurrentTitle = os.title?.trim().toLowerCase();
-                                      if (cleanTargetTitle && cleanCurrentTitle && (cleanCurrentTitle === cleanTargetTitle || cleanCurrentTitle.includes(cleanTargetTitle))) {
-                                        return false;
-                                      }
-                                    }
-                                    return timeToMinutes(os.startTime) < bEnd && timeToMinutes(os.endTime) > bStart;
-                                  });
-                                  const past = isPastDate || (isToday && bEnd <= currentMinutes);
-                                  return Boolean(occ) || past;
-                                });
-
-                                if (hasConflict) {
-                                  toast.warning(
-                                    `Sân ${court.courtName} có ca đã bị đặt hoặc đã qua trong khung giờ sự kiện (${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr}). Vui lòng chọn sân khác!`
-                                  );
-                                  return;
-                                }
-
-                                const courtSlotsToToggle: SelectedCourtSlot[] = baseCourtInfo.baseCourtSlots.map((bs) => {
-                                  const sStr = bs.startTime.substring(0, 5);
-                                  const eStr = bs.endTime.substring(0, 5);
-                                  const sPrice = calculateSlotPrice(date, sStr, eStr, activePriceTable);
-                                  return {
-                                    courtId: court.courtId,
-                                    courtName: court.courtName,
-                                    courtTypeId: ct.courtTypeId,
-                                    courtTypeName: ct.courtTypeName,
-                                    date,
-                                    startTime: bs.startTime,
-                                    endTime: bs.endTime,
-                                    priceTableId: activePriceTableId || '',
-                                    priceTableName: activePriceTable?.name || 'Mặc định',
-                                    price: sPrice,
-                                    fixedBlockId: bs.fixedBlockId,
-                                  };
-                                });
-
-                                onToggleSlot(courtSlotsToToggle[0], courtSlotsToToggle);
-                                return;
-                              }
-
-                              // Nếu ô đang được chọn -> Thao tác click là để BỎ CHỌN (deselection)
-                              // Bỏ chọn luôn được cho phép, không bị chặn bởi xung đột hay quá khứ
-                              if (!isSelected && isUnavailable) {
-                                if (isPastDate || isPastOrTooClose) {
-                                  toast.warning('Khung giờ này đã kết thúc trong quá khứ.');
-                                } else if (isBlockPastOrTooClose) {
-                                  toast.warning('Khung giờ bắt buộc này đã kết thúc trong quá khứ.');
-                                } else if (isBooked) {
-                                  toast.warning(`Ca này đã được đặt bởi: ${conflict?.customerName || 'Khách'}`);
-                                } else if (isLocked) {
-                                  toast.warning('Sân đang khóa hoặc bảo trì.');
-                                } else if (isEvent) {
-                                  toast.warning(`Sân đang diễn ra sự kiện: ${conflict?.title || ''}`);
-                                } else if (isLoading) {
-                                  toast.info('Đang tải dữ liệu lịch sân, vui lòng đợi...');
-                                }
-                                return;
-                              }
+                              const isUnavailable =
+                                isPastOrTooClose ||
+                                isBooked ||
+                                isLocked ||
+                                isEvent ||
+                                isLoading;
 
                               const unitPrice = calculateSlotPrice(
                                 date,
@@ -459,121 +660,195 @@ export function BookingTimelineGrid({
                                 activePriceTable
                               );
 
-                              const primarySlot: SelectedCourtSlot = {
-                                courtId: court.courtId,
-                                courtName: court.courtName,
-                                courtTypeId: ct.courtTypeId,
-                                courtTypeName: ct.courtTypeName,
-                                date,
-                                startTime: `${startTimeStr}:00`,
-                                endTime: `${endTimeStr}:00`,
-                                priceTableId: activePriceTableId || '',
-                                priceTableName: activePriceTable?.name || 'Mặc định',
-                                price: unitPrice,
-                                fixedBlockId: matchingBlock?.id,
-                              };
+                              // Xử lý khi click vào ô đơn
+                              const handleClick = () => {
+                                if (!isSelected && isLockedByEventConstraint) {
+                                  if (
+                                    baseCourtInfo &&
+                                    baseCourtInfo.uniqueCourtIds.length > 1 &&
+                                    court.courtId === baseCourtInfo.baseCourtId
+                                  ) {
+                                    toast.warning(
+                                      `Sự kiện đang áp dụng khung giờ ${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr} cho nhiều sân. Để đổi khung giờ, vui lòng bỏ chọn các sân phụ trước.`
+                                    );
+                                  } else if (baseCourtInfo) {
+                                    toast.warning(
+                                      `Sự kiện chỉ áp dụng khung giờ ${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr} (theo ${baseCourtInfo.baseCourtName}). Không thể chọn khung giờ khác!`
+                                    );
+                                  }
+                                  return;
+                                }
 
-                              // Nếu thuộc blocktime thì sinh tất cả các slot trong block
-                              if (matchingBlock) {
-                                const bStart = timeToMinutes(matchingBlock.startTime);
-                                const bEnd = timeToMinutes(matchingBlock.endTime);
-                                const blockSlots: SelectedCourtSlot[] = [];
+                                if (lockSameTimeSlots && baseCourtInfo && court.courtId !== baseCourtInfo.baseCourtId) {
+                                  if (isSelected) {
+                                    const courtSlotsToToggle: SelectedCourtSlot[] = baseCourtInfo.baseCourtSlots.map(
+                                      (bs) => ({
+                                        courtId: court.courtId,
+                                        courtName: court.courtName,
+                                        courtTypeId: ct.courtTypeId,
+                                        courtTypeName: ct.courtTypeName,
+                                        date,
+                                        startTime: bs.startTime,
+                                        endTime: bs.endTime,
+                                        priceTableId: activePriceTableId || '',
+                                        priceTableName: activePriceTable?.name || 'Mặc định',
+                                        price: 0,
+                                      })
+                                    );
+                                    onToggleSlot(courtSlotsToToggle[0], courtSlotsToToggle);
+                                    return;
+                                  }
 
-                                for (let bm = bStart; bm + stepMinutes <= bEnd; bm += stepMinutes) {
-                                  const sStr = minutesToTimeString(bm);
-                                  const eStr = minutesToTimeString(bm + stepMinutes);
-                                  const bPrice = calculateSlotPrice(
-                                    date,
-                                    sStr,
-                                    eStr,
-                                    activePriceTable
+                                  const hasConflict = baseCourtInfo.baseCourtSlots.some((bs) => {
+                                    const bStart = timeToMinutes(bs.startTime);
+                                    const bEnd = timeToMinutes(bs.endTime);
+                                    const occ = occupiedSlots.find((os) => {
+                                      if (os.courtId !== court.courtId) return false;
+                                      if (excludeOrderCode) {
+                                        const cleanTarget = excludeOrderCode.replace(/^#/, '').trim().toLowerCase();
+                                        const cleanCurrent = os.orderCode?.replace(/^#/, '').trim().toLowerCase();
+                                        if (cleanTarget && cleanCurrent && cleanTarget === cleanCurrent) return false;
+                                      }
+                                      if (excludeTitle) {
+                                        const cleanTargetTitle = excludeTitle.trim().toLowerCase();
+                                        const cleanCurrentTitle = os.title?.trim().toLowerCase();
+                                        if (
+                                          cleanTargetTitle &&
+                                          cleanCurrentTitle &&
+                                          (cleanCurrentTitle === cleanTargetTitle || cleanCurrentTitle.includes(cleanTargetTitle))
+                                        ) {
+                                          return false;
+                                        }
+                                      }
+                                      return timeToMinutes(os.startTime) < bEnd && timeToMinutes(os.endTime) > bStart;
+                                    });
+                                    const past = isPastDate || (isToday && bEnd <= currentMinutes);
+                                    return Boolean(occ) || past;
+                                  });
+
+                                  if (hasConflict) {
+                                    toast.warning(
+                                      `Sân ${court.courtName} có ca đã bị đặt hoặc đã qua trong khung giờ sự kiện (${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr}). Vui lòng chọn sân khác!`
+                                    );
+                                    return;
+                                  }
+
+                                  const courtSlotsToToggle: SelectedCourtSlot[] = baseCourtInfo.baseCourtSlots.map(
+                                    (bs) => {
+                                      const sStr = bs.startTime.substring(0, 5);
+                                      const eStr = bs.endTime.substring(0, 5);
+                                      const sPrice = calculateSlotPrice(date, sStr, eStr, activePriceTable);
+                                      return {
+                                        courtId: court.courtId,
+                                        courtName: court.courtName,
+                                        courtTypeId: ct.courtTypeId,
+                                        courtTypeName: ct.courtTypeName,
+                                        date,
+                                        startTime: bs.startTime,
+                                        endTime: bs.endTime,
+                                        priceTableId: activePriceTableId || '',
+                                        priceTableName: activePriceTable?.name || 'Mặc định',
+                                        price: sPrice,
+                                        fixedBlockId: bs.fixedBlockId,
+                                      };
+                                    }
                                   );
 
-                                  blockSlots.push({
-                                    courtId: court.courtId,
-                                    courtName: court.courtName,
-                                    courtTypeId: ct.courtTypeId,
-                                    courtTypeName: ct.courtTypeName,
-                                    date,
-                                    startTime: `${sStr}:00`,
-                                    endTime: `${eStr}:00`,
-                                    priceTableId: activePriceTableId || '',
-                                    priceTableName: activePriceTable?.name || 'Mặc định',
-                                    price: bPrice,
-                                    fixedBlockId: matchingBlock.id,
-                                  });
+                                  onToggleSlot(courtSlotsToToggle[0], courtSlotsToToggle);
+                                  return;
                                 }
 
-                                onToggleSlot(primarySlot, blockSlots);
-                              } else {
-                                onToggleSlot(primarySlot);
-                              }
-                            };
+                                if (!isSelected && isUnavailable) {
+                                  if (isPastDate || isPastOrTooClose) {
+                                    toast.warning('Khung giờ này đã kết thúc trong quá khứ.');
+                                  } else if (isBooked) {
+                                    toast.warning(`Ca này đã được đặt bởi: ${conflict?.customerName || 'Khách'}`);
+                                  } else if (isLocked) {
+                                    toast.warning('Sân đang khóa hoặc bảo trì.');
+                                  } else if (isEvent) {
+                                    toast.warning(`Sân đang diễn ra sự kiện: ${conflict?.title || ''}`);
+                                  } else if (isLoading) {
+                                    toast.info('Đang tải dữ liệu lịch sân, vui lòng đợi...');
+                                  }
+                                  return;
+                                }
 
-                            return (
-                              <td
-                                key={ts.startMin}
-                                onClick={handleClick}
-                                title={
-                                  isSelected
-                                    ? `Đang chọn: ${startTimeStr} - ${endTimeStr}`
-                                    : isLockedByEventConstraint && baseCourtInfo
+                                const primarySlot: SelectedCourtSlot = {
+                                  courtId: court.courtId,
+                                  courtName: court.courtName,
+                                  courtTypeId: ct.courtTypeId,
+                                  courtTypeName: ct.courtTypeName,
+                                  date,
+                                  startTime: `${startTimeStr}:00`,
+                                  endTime: `${endTimeStr}:00`,
+                                  priceTableId: activePriceTableId || '',
+                                  priceTableName: activePriceTable?.name || 'Mặc định',
+                                  price: unitPrice,
+                                  fixedBlockId: matchingBlock?.id,
+                                };
+
+                                onToggleSlot(primarySlot);
+                              };
+
+                              return (
+                                <td
+                                  key={ts.startMin}
+                                  onClick={handleClick}
+                                  title={
+                                    isSelected
+                                      ? `Đang chọn: ${startTimeStr} - ${endTimeStr} • Giá: ${formatPrice(unitPrice)}`
+                                      : isLockedByEventConstraint && baseCourtInfo
                                       ? `Khóa bởi sự kiện: Chỉ áp dụng khung giờ ${baseCourtInfo.startTimeStr} - ${baseCourtInfo.endTimeStr}`
                                       : isPastOrTooClose
-                                        ? isPastDate
-                                          ? 'Thời gian đã qua (không thể đặt)'
-                                          : 'Chỉ cho phép đặt trước giờ chơi tối thiểu 30 phút'
-                                        : isEvent
-                                          ? `Sự kiện: ${conflict?.title || 'Đang diễn ra'}`
-                                          : isLocked
-                                            ? 'Sân đang khóa / bảo trì'
-                                            : isBooked
-                                              ? `Đã đặt bởi: ${conflict?.customerName || 'Khách'}`
-                                              : matchingBlock
-                                                ? `Khung giờ bắt buộc: ${matchingBlock.startTime.substring(0, 5)} - ${matchingBlock.endTime.substring(0, 5)}`
-                                                : `Trống: ${startTimeStr} - ${endTimeStr}`
-                                }
-                                className={`h-11 min-w-16 p-1 text-center border-r border-border/40 transition-all select-none ${isSelected
-                                  ? 'bg-emerald-700/80 cursor-pointer shadow-inner'
-                                  : isLockedByEventConstraint
-                                    ? 'bg-muted/40 text-muted-foreground opacity-40 cursor-not-allowed border-dashed border-border'
-                                    : isPastOrTooClose
+                                      ? isPastDate
+                                        ? 'Thời gian đã qua (không thể đặt)'
+                                        : 'Chỉ cho phép đặt trước giờ chơi tối thiểu 30 phút'
+                                      : isEvent
+                                      ? `Sự kiện: ${conflict?.title || 'Đang diễn ra'}`
+                                      : isLocked
+                                      ? 'Sân đang khóa / bảo trì'
+                                      : isBooked
+                                      ? `Đã đặt bởi: ${conflict?.customerName || 'Khách'}`
+                                      : `Trống: ${startTimeStr} - ${endTimeStr} • Giá: ${formatPrice(unitPrice)}`
+                                  }
+                                  className={`h-11 min-w-16 p-1 text-center border-r border-border/40 transition-all select-none relative group ${
+                                    isSelected
+                                      ? 'bg-emerald-700/80 cursor-pointer shadow-inner'
+                                      : isLockedByEventConstraint
+                                      ? 'bg-muted/40 text-muted-foreground opacity-40 cursor-not-allowed border-dashed border-border'
+                                      : isPastOrTooClose
                                       ? 'bg-muted/90 text-slate-600 cursor-not-allowed border-slate-800/80'
                                       : isEvent
-                                        ? 'bg-purple-900/60 cursor-not-allowed'
-                                        : isLocked
-                                          ? 'bg-muted/60 cursor-not-allowed'
-                                          : isBooked
-                                            ? 'bg-muted/80 cursor-not-allowed'
-                                            : matchingBlock
-                                              ? 'bg-card hover:bg-muted cursor-pointer'
-                                              : 'bg-muted/40 hover:bg-muted cursor-pointer'
+                                      ? 'bg-purple-900/60 cursor-not-allowed'
+                                      : isLocked
+                                      ? 'bg-muted/60 cursor-not-allowed'
+                                      : isBooked
+                                      ? 'bg-muted/80 cursor-not-allowed'
+                                      : 'bg-muted/40 hover:bg-muted/80 hover:border-emerald-500/40 cursor-pointer'
                                   }`}
-                              >
-                                <div className="size-full flex items-center justify-center">
-                                  {isSelected ? (
-                                    <div className="size-2.5 rounded-full bg-white shadow-xs animate-in zoom-in-50" />
-                                  ) : isLockedByEventConstraint ? (
-                                    <Lock className="size-2.5 text-slate-600" />
-                                  ) : isPastOrTooClose ? (
-                                    <div className="size-1.5 rounded-full bg-slate-700/80" />
-                                  ) : isEvent ? (
-                                    <Sparkles className="size-3 text-purple-300" />
-                                  ) : isLocked ? (
-                                    <Lock className="size-3 text-amber-700 dark:text-amber-400" />
-                                  ) : isBooked ? (
-                                    <span className="text-[10px] text-muted-foreground font-bold">•</span>
-                                  ) : matchingBlock ? (
-                                    <span className="text-[9px] text-emerald-700 dark:text-[#a3e635]/60 font-semibold select-none">
-                                      block
-                                    </span>
-                                  ) : null}
-                                </div>
-                              </td>
-                            );
-                          })}
+                                >
+                                  <div className="size-full flex items-center justify-center">
+                                    {isSelected ? (
+                                      <div className="size-2.5 rounded-full bg-white shadow-xs animate-in zoom-in-50" />
+                                    ) : isLockedByEventConstraint ? (
+                                      <Lock className="size-2.5 text-slate-600" />
+                                    ) : isPastOrTooClose ? (
+                                      <div className="size-1.5 rounded-full bg-slate-700/80" />
+                                    ) : isEvent ? (
+                                      <Sparkles className="size-3 text-purple-300" />
+                                    ) : isLocked ? (
+                                      <Lock className="size-3 text-amber-700 dark:text-amber-400" />
+                                    ) : isBooked ? (
+                                      <span className="text-[10px] text-muted-foreground font-bold">•</span>
+                                    ) : null}
+                                  </div>
+                                </td>
+                              );
+                            });
+                          })()}
                         </tr>
-                      ))
+                      );
+                    })
                     ) : (
                       <tr>
                         <td

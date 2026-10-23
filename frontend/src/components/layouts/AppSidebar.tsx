@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   CalendarDays,
-  Activity,
   Grid3X3,
   Layers,
   Building2,
@@ -37,7 +36,6 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
   const ownerNavItems = [
     { label: 'Tổng quan', href: '/owner', icon: LayoutDashboard },
     { label: 'Lịch đặt sân', href: '/owner/orders', icon: CalendarDays },
-    { label: 'Trạng thái sân', href: '/owner/court-status', icon: Activity },
     { label: 'Quản lý sân', href: '/owner/courts', icon: Grid3X3 },
     { label: 'Loại sân', href: '/owner/court-types', icon: Layers },
     { label: 'Chi nhánh', href: '/owner/branches', icon: Building2 },

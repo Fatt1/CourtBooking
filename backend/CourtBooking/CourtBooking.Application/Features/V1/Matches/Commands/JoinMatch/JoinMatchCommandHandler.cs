@@ -26,7 +26,7 @@ public sealed class JoinMatchCommandHandler(
         }
 
         // 1. Kiểm tra trạng thái kèo
-        if (match.Status != SocialMatchStatus.Open || match.AvailableSlots <= 0)
+        if (match.AvailableSlots <= 0)
         {
             return Result.Failure<Guid>(new ConflictError("Kèo giao lưu đã đủ người hoặc không còn nhận thêm thành viên."));
         }
@@ -61,10 +61,6 @@ public sealed class JoinMatchCommandHandler(
             if (match.ApprovalMode == 0)
             {
                 match.AvailableSlots -= 1;
-                if (match.AvailableSlots == 0)
-                {
-                    match.Status = SocialMatchStatus.Full;
-                }
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -88,10 +84,6 @@ public sealed class JoinMatchCommandHandler(
         if (match.ApprovalMode == 0)
         {
             match.AvailableSlots -= 1;
-            if (match.AvailableSlots == 0)
-            {
-                match.Status = SocialMatchStatus.Full;
-            }
         }
 
         match.Participants.Add(participant);

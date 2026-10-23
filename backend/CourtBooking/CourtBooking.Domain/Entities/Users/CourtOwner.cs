@@ -17,9 +17,15 @@ public class CourtOwner : EntityBase<Guid>, IAuditable
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
+    // Thông tin gói dịch vụ hiện tại được nhúng trực tiếp
+    public Guid? ServicePackageId { get; set; }
+    public DateOnly? PackageStartDate { get; set; }
+    public DateOnly? PackageEndDate { get; set; }
+
     // Navigation
     public ApplicationUser User { get; set; } = null!;
     public Images.Image QrImage { get; set; } = null!;
+    public Subscriptions.ServicePackage? ServicePackage { get; set; }
 
     public List<Courts.Branch> Branches { get; set; } = [];
     public List<Services.ServiceCategory> ServiceCategories { get; set; } = [];

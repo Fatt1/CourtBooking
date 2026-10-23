@@ -1,3 +1,5 @@
+import type { AppliedCourtDto } from '@/api/pricing';
+
 export interface CourtTypeOption {
   id: string;
   name: string;
@@ -10,6 +12,19 @@ export interface FixedTimeBlock {
   timeRange: string; // ví dụ: "17h30 - 19h30"
   daysText: string;  // ví dụ: "T7, CN"
   appliedCourtsText?: string; // ví dụ: "Áp dụng: Sân 1, Sân 2"
+  rawStartTime?: string;      // ví dụ: "17:00"
+  rawEndTime?: string;        // ví dụ: "19:00"
+  daysOfWeek?: number[];      // [1, 2, ..., 0]
+  courtIds?: string[];        // ["id1", "id2"]
+  appliedCourts?: AppliedCourtDto[];
+}
+
+export interface FixedBlockToEdit {
+  id: string;
+  startTime: string; // "17:00"
+  endTime: string;   // "19:00"
+  selectedDays: number[];
+  courtIds: string[];
 }
 
 export interface PriceRuleItem {
@@ -37,6 +52,8 @@ export interface PriceTableGroup {
   id: string;
   name: string;           // ví dụ: "Bảng giá", "Đặc quyền HSSV"
   isHSSV?: boolean;       // nếu true -> hiển thị cột "GIÁ" duy nhất thay vì 2 cột cố định/vãng lai
+  defaultPrice?: number;
+  defaultWalkInPrice?: number;
   groups: PriceRuleGroup[];
 }
 

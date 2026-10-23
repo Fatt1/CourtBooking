@@ -5,10 +5,9 @@ namespace CourtBooking.Application.Features.V1.Services.Queries.GetServicesByBra
 
 public sealed record GetServicesByBranchQuery(
     Guid BranchId,
-    string? SearchTerm = null,
-    Guid? CategoryId = null,
-    bool? IsActive = null
-    ) : IQuery<List<ServiceByBranchDto>>;
+    bool? IsActive = true
+) : IQuery<List<BranchCategoryServicesDto>>;
+
 
 
 

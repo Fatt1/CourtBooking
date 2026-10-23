@@ -4,6 +4,7 @@ using CourtBooking.Application.Features.V1.Orders.Commands.AddFixedOrderCycle;
 using CourtBooking.Application.Features.V1.Orders.Commands.AddOrderSlots;
 using CourtBooking.Application.Features.V1.Orders.Commands.AddPaymentTransaction;
 using CourtBooking.Application.Features.V1.Orders.Commands.CancelOrderByOwner;
+using CourtBooking.Application.Features.V1.Orders.Commands.CancelOrderOnline;
 using CourtBooking.Application.Features.V1.Orders.Commands.CancelOrderSlot;
 using CourtBooking.Application.Features.V1.Orders.Commands.CompleteOrder;
 using CourtBooking.Application.Features.V1.Orders.Commands.ConfirmOrder;
@@ -21,6 +22,7 @@ using CourtBooking.Application.Features.V1.Orders.Queries.GetDailyOrderById;
 using CourtBooking.Application.Features.V1.Orders.Queries.GetFixedOrderById;
 using CourtBooking.Application.Features.V1.Orders.Queries.GetFixedOrdersByBranch;
 using CourtBooking.Application.Features.V1.Orders.Queries.GetOrdersByBranch;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
@@ -36,11 +38,13 @@ public class OrderEndpoints : IEndpointGroup
 
     public void Map(IEndpointRouteBuilder app)
     {
-        var groupOwner = app.MapApiV1Group("owner/orders");
+        var groupOwner = app.MapApiV1Group("owner/orders")
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
         MapToOwner(groupOwner);
 
 
-        var groupFixedOrder = app.MapApiV1Group("owner/orders/fixed");
+        var groupFixedOrder = app.MapApiV1Group("owner/orders/fixed")
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner));
         MapToFixedOrder(groupFixedOrder);
 
 
@@ -77,17 +81,19 @@ public class OrderEndpoints : IEndpointGroup
                 [FromQuery] DateOnly? fromDate,
                 [FromQuery] DateOnly? toDate,
                 [FromQuery] string? search,
+                [FromQuery] string? searchTerm,
                 [FromQuery] int page = 1,
                 [FromQuery] int pageSize = 10,
                 ISender sender = default!,
                 CancellationToken ct = default) =>
         {
+            var effectiveSearch = !string.IsNullOrWhiteSpace(search) ? search : searchTerm;
             var query = new GetFixedOrdersByBranchQuery(
                 branchId,
                 status,
                 fromDate,
                 toDate,
-                search,
+                effectiveSearch,
                 page,
                 pageSize);
 
@@ -462,6 +468,42 @@ public class OrderEndpoints : IEndpointGroup
     // Dành cho public API
     private static void MapToPublic(RouteGroupBuilder group)
     {
+        // GET /api/v1/orders/my-orders — Danh sách đơn đặt sân của người dùng hiện tại (Yêu cầu đăng nhập)
+        group.MapGet("/my-orders", async (
+            [FromQuery] CourtBooking.Domain.Enums.OrderStatus? status,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 5,
+            ISender sender = default!,
+            CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new CourtBooking.Application.Features.V1.Orders.Queries.GetMyOrders.GetMyOrdersQuery(status, page, pageSize), ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+        .RequireAuthorization()
+        .WithName("GetMyOrders")
+        .WithSummary("Lấy danh sách các đơn đặt sân của người chơi đang đăng nhập có phân trang")
+        .WithTags(OrderTag);
+
+        // GET /api/v1/orders/my-orders/{id:guid} — Xem chi tiết đơn đặt sân của tôi
+        group.MapGet("/my-orders/{id:guid}", async (
+            [FromRoute] Guid id,
+            ISender sender = default!,
+            CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new CourtBooking.Application.Features.V1.Orders.Queries.GetMyOrderDetail.GetMyOrderDetailQuery(id), ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+        .RequireAuthorization()
+        .WithName("GetMyOrderDetail")
+        .WithSummary("Lấy thông tin chi tiết đơn đặt sân của người chơi")
+        .WithTags(OrderTag)
+        .Produces<CourtBooking.Application.Features.V1.Orders.Queries.GetMyOrderDetail.MyOrderDetailResponse>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         // POST /api/v1/orders — Tạo đơn đặt sân online
         group.MapPost("/", async (
                 [FromBody] CreateOrderOnlineCommand command,
@@ -485,8 +527,7 @@ public class OrderEndpoints : IEndpointGroup
             [FromBody] SubmitPaymentProofCommand command,
             ISender sender) =>
         {
-
-            var result = await sender.Send(command);
+            var result = await sender.Send(command with { OrderId = id });
             return result.IsSuccess
             ? Results.Ok()
             : result.ToProblemDetails();
@@ -494,6 +535,26 @@ public class OrderEndpoints : IEndpointGroup
             .WithName("SubmitPaymentProof")
             .WithSummary("Nộp chứng nhận thanh toán")
             .WithDescription("Nộp chứng nhận thanh toán cho đơn hàng")
+            .WithTags(OrderTag)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        // PUT /api/v1/orders/{id:guid}/cancel — Khách hàng hủy đơn hàng online đang chờ thanh toán
+        group.MapPut("/{id:guid}/cancel", async (
+            [FromRoute] Guid id,
+            [FromBody] CancelOrderOnlineCommand? command,
+            ISender sender,
+            CancellationToken ct = default) =>
+        {
+            var cmd = (command ?? new CancelOrderOnlineCommand(id)) with { OrderId = id };
+            var result = await sender.Send(cmd, ct);
+            return result.IsSuccess
+                ? Results.Ok()
+                : result.ToProblemDetails();
+        })
+            .WithName("CancelOrderOnline")
+            .WithSummary("Khách hàng hủy đơn hàng online đang chờ thanh toán")
             .WithTags(OrderTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)

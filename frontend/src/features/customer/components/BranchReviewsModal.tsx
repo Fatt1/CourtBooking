@@ -28,9 +28,9 @@ export function BranchReviewsModal({
 }: BranchReviewsModalProps) {
   const { data: reviewsData, isLoading } = useBranchReviewsQuery(branchId, 1, 20);
 
-  const reviews = reviewsData?.items || [];
-  const average = reviewsData?.averageRating ?? reviewAverage ?? 5.0;
-  const totalCount = reviewsData?.totalCount ?? reviews.length;
+  const reviews = reviewsData?.items || reviewsData?.reviews?.items || [];
+  const average = reviewsData?.averageRating ?? reviewsData?.reviewAverage ?? reviewAverage ?? 5.0;
+  const totalCount = reviewsData?.totalCount ?? reviewsData?.reviews?.totalCount ?? reviews.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -139,7 +139,7 @@ export function BranchReviewsModal({
                           ))}
                         </div>
                         <span className="text-[11px] text-muted-foreground">
-                          {formatDate(rev.createdAt)}
+                          {rev.createdAt ? formatDate(rev.createdAt) : 'Gần đây'}
                         </span>
                       </div>
                     </div>

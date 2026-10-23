@@ -8,6 +8,7 @@ using CourtBooking.Application.Features.V1.Identities.Commands.RegisterPlayer;
 using CourtBooking.Application.Features.V1.Identities.Commands.ResetPassword;
 using CourtBooking.Application.Features.V1.Identities.Dtos;
 using CourtBooking.Application.Features.V1.Identities.Queries.GetCurrentUser;
+using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
 using MediatR;
@@ -116,7 +117,7 @@ public sealed class IdentityEndpoints : IEndpointGroup
                 ? Results.Ok(new { message = "Đổi mật khẩu thành công." })
                 : result.ToProblemDetails();
         })
-            .RequireAuthorization()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.CourtOwner))
             .WithName("OwnerChangePassword")
             .WithSummary("Chủ sân đổi mật khẩu")
             .WithDescription("Yêu cầu đăng nhập. Tự động tắt cờ bắt buộc đổi mật khẩu (MustChangePwd = 0) sau lần đổi đầu tiên.")

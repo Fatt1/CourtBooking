@@ -79,33 +79,79 @@ import {
   type GetOwnerEventsParams,
 } from '@/api/events';
 
+type TabType = 'daily' | 'recurring' | 'event';
+
+interface TabFilterState {
+  search: string;
+  status: string;
+  dateRange: DateRange | undefined;
+  page: number;
+  pageSize: number;
+}
+
+const initialFilters: Record<TabType, TabFilterState> = {
+  daily: {
+    search: '',
+    status: 'ALL',
+    dateRange: undefined,
+    page: 1,
+    pageSize: 25,
+  },
+  recurring: {
+    search: '',
+    status: 'ALL',
+    dateRange: undefined,
+    page: 1,
+    pageSize: 25,
+  },
+  event: {
+    search: '',
+    status: 'ALL',
+    dateRange: undefined,
+    page: 1,
+    pageSize: 25,
+  },
+};
+
 export function OrdersPage() {
   // 1. Lấy chi nhánh được chọn từ Zustand Store (quản lý bởi Header)
   const { selectedBranchId, selectedBranch } = useBranchStore();
 
-  // 2. States quản lý bộ lọc & phân trang
-  const [activeTab, setActiveTab] = useState<'daily' | 'recurring' | 'event'>('daily');
-  const [searchQuery, setSearchQuery] = useState('');
-  // Áp dụng useDebounce cho tìm kiếm (trì hoãn 400ms để tránh spam API liên tục khi gõ)
-  const debouncedSearch = useDebounce(searchQuery, 400);
-
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  // Lọc theo khoảng ngày (từ ngày mấy tới ngày mấy)
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  // 2. States quản lý bộ lọc & phân trang độc lập cho từng Tab
+  const [activeTab, setActiveTab] = useState<TabType>('daily');
+  const [tabFilters, setTabFilters] = useState<Record<TabType, TabFilterState>>(initialFilters);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
 
-  // Nhãn hiển thị cho nút bộ lọc ngày
+  // Filter hiện tại của tab đang chọn
+  const currentFilter = tabFilters[activeTab];
+
+  // Helper cập nhật filter cho tab đang chọn
+  const updateCurrentFilter = (updates: Partial<TabFilterState>) => {
+    setTabFilters((prev) => ({
+      ...prev,
+      [activeTab]: {
+        ...prev[activeTab],
+        ...updates,
+      },
+    }));
+  };
+
+  // Áp dụng useDebounce độc lập cho từng tab (trì hoãn 400ms để tránh spam API)
+  const debouncedDailySearch = useDebounce(tabFilters.daily.search, 400);
+  const debouncedRecurringSearch = useDebounce(tabFilters.recurring.search, 400);
+  const debouncedEventSearch = useDebounce(tabFilters.event.search, 400);
+
+  // Nhãn hiển thị cho nút bộ lọc ngày của tab đang chọn
   const dateRangeLabel = useMemo(() => {
-    if (!dateRange?.from) return 'Tất cả ngày';
-    const fromStr = format(dateRange.from, 'dd/MM/yyyy');
-    if (!dateRange.to || dateRange.from.getTime() === dateRange.to.getTime()) {
+    const range = currentFilter.dateRange;
+    if (!range?.from) return 'Tất cả ngày';
+    const fromStr = format(range.from, 'dd/MM/yyyy');
+    if (!range.to || range.from.getTime() === range.to.getTime()) {
       return fromStr;
     }
-    const toStr = format(dateRange.to, 'dd/MM/yyyy');
+    const toStr = format(range.to, 'dd/MM/yyyy');
     return `${fromStr} - ${toStr}`;
-  }, [dateRange]);
+  }, [currentFilter.dateRange]);
 
   // 3. States quản lý Modals
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -166,103 +212,130 @@ export function OrdersPage() {
     { id: 'event', label: 'Sự kiện' },
   ];
 
-  // 5. Query lấy danh sách đơn ngày từ API backend (kèm debounce search & date range)
-  const queryParams = useMemo(() => {
+  // 5. Query lấy danh sách đơn ngày từ API backend (CHỈ gọi khi activeTab === 'daily')
+  const dailyQueryParams = useMemo(() => {
     const params: Record<string, any> = {
       branchId: selectedBranchId || undefined,
-      page: currentPage,
-      pageSize: pageSize,
+      page: tabFilters.daily.page,
+      pageSize: tabFilters.daily.pageSize,
     };
 
-    if (debouncedSearch.trim()) {
-      params.search = debouncedSearch.trim();
+    if (debouncedDailySearch.trim()) {
+      params.search = debouncedDailySearch.trim();
     }
 
-    if (statusFilter !== 'ALL') {
-      params.status = Number(statusFilter);
+    if (tabFilters.daily.status !== 'ALL') {
+      params.status = Number(tabFilters.daily.status);
     }
 
-    if (dateRange?.from) {
-      params.fromDate = format(dateRange.from, 'yyyy-MM-dd');
-      params.toDate = dateRange.to
-        ? format(dateRange.to, 'yyyy-MM-dd')
-        : format(dateRange.from, 'yyyy-MM-dd');
+    if (tabFilters.daily.dateRange?.from) {
+      params.fromDate = format(tabFilters.daily.dateRange.from, 'yyyy-MM-dd');
+      params.toDate = tabFilters.daily.dateRange.to
+        ? format(tabFilters.daily.dateRange.to, 'yyyy-MM-dd')
+        : format(tabFilters.daily.dateRange.from, 'yyyy-MM-dd');
     }
 
     return params;
-  }, [selectedBranchId, currentPage, pageSize, debouncedSearch, statusFilter, dateRange]);
+  }, [
+    selectedBranchId,
+    tabFilters.daily.page,
+    tabFilters.daily.pageSize,
+    debouncedDailySearch,
+    tabFilters.daily.status,
+    tabFilters.daily.dateRange,
+  ]);
 
-  const { data: pagedData, isLoading, refetch } = useDailyOrdersQuery(queryParams);
+  const {
+    data: pagedData,
+    isLoading,
+    refetch,
+  } = useDailyOrdersQuery(dailyQueryParams, { enabled: activeTab === 'daily' });
 
   // Dữ liệu đơn ngày hiển thị
   const dailyOrders = pagedData?.items || [];
   const totalCount = pagedData?.totalCount || dailyOrders.length;
 
-  // 6. Query lấy danh sách đơn cố định (chu kỳ)
+  // 6. Query lấy danh sách đơn cố định (chu kỳ) (CHỈ gọi khi activeTab === 'recurring')
   const fixedQueryParams = useMemo(() => {
     const params: GetFixedOrdersParams = {
       branchId: selectedBranchId || '',
-      page: currentPage,
-      pageSize: pageSize,
+      page: tabFilters.recurring.page,
+      pageSize: tabFilters.recurring.pageSize,
     };
 
-    if (debouncedSearch.trim()) {
-      params.searchTerm = debouncedSearch.trim();
+    if (debouncedRecurringSearch.trim()) {
+      const term = debouncedRecurringSearch.trim();
+      params.search = term;
+      params.searchTerm = term;
     }
 
-    if (statusFilter !== 'ALL') {
-      params.status = Number(statusFilter);
+    if (tabFilters.recurring.status !== 'ALL') {
+      params.status = Number(tabFilters.recurring.status);
     }
 
-    if (dateRange?.from) {
-      params.fromDate = format(dateRange.from, 'yyyy-MM-dd');
-      params.toDate = dateRange.to
-        ? format(dateRange.to, 'yyyy-MM-dd')
-        : format(dateRange.from, 'yyyy-MM-dd');
+    if (tabFilters.recurring.dateRange?.from) {
+      params.fromDate = format(tabFilters.recurring.dateRange.from, 'yyyy-MM-dd');
+      params.toDate = tabFilters.recurring.dateRange.to
+        ? format(tabFilters.recurring.dateRange.to, 'yyyy-MM-dd')
+        : format(tabFilters.recurring.dateRange.from, 'yyyy-MM-dd');
     }
 
     return params;
-  }, [selectedBranchId, currentPage, pageSize, debouncedSearch, statusFilter, dateRange]);
+  }, [
+    selectedBranchId,
+    tabFilters.recurring.page,
+    tabFilters.recurring.pageSize,
+    debouncedRecurringSearch,
+    tabFilters.recurring.status,
+    tabFilters.recurring.dateRange,
+  ]);
 
   const {
     data: fixedPagedData,
     isLoading: isFixedLoading,
     refetch: refetchFixed,
-  } = useFixedOrdersQuery(fixedQueryParams);
+  } = useFixedOrdersQuery(fixedQueryParams, { enabled: activeTab === 'recurring' });
   const fixedOrders = fixedPagedData?.items || [];
   const fixedTotalCount = fixedPagedData?.totalCount || fixedOrders.length;
 
-  // 7. Query lấy danh sách sự kiện thể thao tại chi nhánh
+  // 7. Query lấy danh sách sự kiện thể thao tại chi nhánh (CHỈ gọi khi activeTab === 'event')
   const eventQueryParams = useMemo(() => {
     const params: GetOwnerEventsParams = {
       branchId: selectedBranchId || '',
-      page: currentPage,
-      pageSize: pageSize,
+      page: tabFilters.event.page,
+      pageSize: tabFilters.event.pageSize,
     };
 
-    if (debouncedSearch.trim()) {
-      params.search = debouncedSearch.trim();
+    if (debouncedEventSearch.trim()) {
+      params.search = debouncedEventSearch.trim();
     }
 
-    if (statusFilter !== 'ALL') {
-      params.status = Number(statusFilter) as EventStatus;
+    if (tabFilters.event.status !== 'ALL') {
+      params.status = Number(tabFilters.event.status) as EventStatus;
     }
 
-    if (dateRange?.from) {
-      params.fromDate = format(dateRange.from, 'yyyy-MM-dd');
-      params.toDate = dateRange.to
-        ? format(dateRange.to, 'yyyy-MM-dd')
-        : format(dateRange.from, 'yyyy-MM-dd');
+    if (tabFilters.event.dateRange?.from) {
+      params.fromDate = format(tabFilters.event.dateRange.from, 'yyyy-MM-dd');
+      params.toDate = tabFilters.event.dateRange.to
+        ? format(tabFilters.event.dateRange.to, 'yyyy-MM-dd')
+        : format(tabFilters.event.dateRange.from, 'yyyy-MM-dd');
     }
 
     return params;
-  }, [selectedBranchId, currentPage, pageSize, debouncedSearch, statusFilter, dateRange]);
+  }, [
+    selectedBranchId,
+    tabFilters.event.page,
+    tabFilters.event.pageSize,
+    debouncedEventSearch,
+    tabFilters.event.status,
+    tabFilters.event.dateRange,
+  ]);
 
   const {
     data: eventPagedData,
     isLoading: isEventLoading,
     refetch: refetchEvents,
-  } = useOwnerEventsQuery(eventQueryParams);
+  } = useOwnerEventsQuery(eventQueryParams, { enabled: activeTab === 'event' });
   const events = eventPagedData?.items || [];
   const eventTotalCount = eventPagedData?.totalCount || events.length;
 
@@ -426,15 +499,16 @@ export function OrdersPage() {
         tabs={filterTabs}
         activeTab={activeTab}
         onTabChange={(id) => {
-          setActiveTab(id as 'daily' | 'recurring' | 'event');
-          setStatusFilter('ALL');
-          setCurrentPage(1);
+          setActiveTab(id as TabType);
         }}
-        searchPlaceholder="Mã đơn, Tên, SĐT..."
-        searchValue={searchQuery}
+        searchPlaceholder={
+          activeTab === 'event'
+            ? 'Mã sự kiện, Tên giải...'
+            : 'Mã đơn, Tên, SĐT...'
+        }
+        searchValue={currentFilter.search}
         onSearchChange={(val) => {
-          setSearchQuery(val);
-          setCurrentPage(1);
+          updateCurrentFilter({ search: val, page: 1 });
         }}
       >
         {/* Bộ chọn khoảng ngày: Popover Date Range Picker */}
@@ -445,14 +519,14 @@ export function OrdersPage() {
                 variant="outline"
                 size="sm"
                 className={`gap-1.5 h-9.5 border-border/60 bg-card/60 hover:bg-accent text-xs font-medium rounded-xl cursor-pointer ${
-                  dateRange?.from
+                  currentFilter.dateRange?.from
                     ? 'border-[#a3e635]/60 text-[#a3e635] bg-[#a3e635]/10'
                     : 'text-foreground'
                 }`}
               >
                 <CalendarIcon
                   className={`size-3.5 ${
-                    dateRange?.from ? 'text-[#a3e635]' : 'text-muted-foreground'
+                    currentFilter.dateRange?.from ? 'text-[#a3e635]' : 'text-muted-foreground'
                   }`}
                 />
                 <span>{dateRangeLabel}</span>
@@ -473,13 +547,12 @@ export function OrdersPage() {
                     {dateRangeLabel}
                   </div>
                 </div>
-                {dateRange?.from && (
+                {currentFilter.dateRange?.from && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setDateRange(undefined);
-                      setCurrentPage(1);
+                      updateCurrentFilter({ dateRange: undefined, page: 1 });
                     }}
                     className="h-7 cursor-pointer px-2 text-xs text-muted-foreground hover:text-rose-600"
                   >
@@ -495,8 +568,10 @@ export function OrdersPage() {
                   type="button"
                   onClick={() => {
                     const today = new Date();
-                    setDateRange({ from: today, to: today });
-                    setCurrentPage(1);
+                    updateCurrentFilter({
+                      dateRange: { from: today, to: today },
+                      page: 1,
+                    });
                   }}
                   className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
@@ -506,8 +581,10 @@ export function OrdersPage() {
                   type="button"
                   onClick={() => {
                     const yesterday = subDays(new Date(), 1);
-                    setDateRange({ from: yesterday, to: yesterday });
-                    setCurrentPage(1);
+                    updateCurrentFilter({
+                      dateRange: { from: yesterday, to: yesterday },
+                      page: 1,
+                    });
                   }}
                   className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
@@ -517,8 +594,10 @@ export function OrdersPage() {
                   type="button"
                   onClick={() => {
                     const today = new Date();
-                    setDateRange({ from: subDays(today, 6), to: today });
-                    setCurrentPage(1);
+                    updateCurrentFilter({
+                      dateRange: { from: subDays(today, 6), to: today },
+                      page: 1,
+                    });
                   }}
                   className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
@@ -528,8 +607,10 @@ export function OrdersPage() {
                   type="button"
                   onClick={() => {
                     const today = new Date();
-                    setDateRange({ from: startOfMonth(today), to: today });
-                    setCurrentPage(1);
+                    updateCurrentFilter({
+                      dateRange: { from: startOfMonth(today), to: today },
+                      page: 1,
+                    });
                   }}
                   className="cursor-pointer rounded-lg border border-border/50 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
@@ -541,10 +622,9 @@ export function OrdersPage() {
               <div className="p-2 flex justify-center">
                 <Calendar
                   mode="range"
-                  selected={dateRange}
+                  selected={currentFilter.dateRange}
                   onSelect={(range) => {
-                    setDateRange(range);
-                    setCurrentPage(1);
+                    updateCurrentFilter({ dateRange: range, page: 1 });
                   }}
                   locale={vi}
                   className="bg-transparent"
@@ -568,13 +648,12 @@ export function OrdersPage() {
           </Popover>
 
           {/* Nút X nhanh bên cạnh nút ngày nếu đang có filter */}
-          {dateRange?.from && (
+          {currentFilter.dateRange?.from && (
             <Button
               variant="ghost"
               size="icon"
               onClick={() => {
-                setDateRange(undefined);
-                setCurrentPage(1);
+                updateCurrentFilter({ dateRange: undefined, page: 1 });
               }}
               className="size-8 rounded-xl text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
               title="Xóa bộ lọc ngày"
@@ -586,10 +665,9 @@ export function OrdersPage() {
 
         {/* Dropdown Lọc Trạng Thái */}
         <Select
-          value={statusFilter}
+          value={currentFilter.status}
           onValueChange={(val) => {
-            setStatusFilter(val);
-            setCurrentPage(1);
+            updateCurrentFilter({ status: val, page: 1 });
           }}
         >
           <SelectTrigger className="w-[165px] h-9.5 rounded-xl border-border/60 bg-card/60 text-xs font-medium">
@@ -655,14 +733,13 @@ export function OrdersPage() {
 
           {/* Thanh phân trang chuẩn */}
           <OwnerPagination
-            currentPage={currentPage}
-            pageSize={pageSize}
+            currentPage={tabFilters.daily.page}
+            pageSize={tabFilters.daily.pageSize}
             pageSizeOptions={[25, 50, 100]}
             totalItems={totalCount}
-            onPageChange={setCurrentPage}
+            onPageChange={(p) => updateCurrentFilter({ page: p })}
             onPageSizeChange={(newSize) => {
-              setPageSize(newSize);
-              setCurrentPage(1);
+              updateCurrentFilter({ pageSize: newSize, page: 1 });
             }}
           />
         </div>
@@ -679,14 +756,13 @@ export function OrdersPage() {
 
           {/* Thanh phân trang cho đơn cố định */}
           <OwnerPagination
-            currentPage={currentPage}
-            pageSize={pageSize}
+            currentPage={tabFilters.recurring.page}
+            pageSize={tabFilters.recurring.pageSize}
             pageSizeOptions={[25, 50, 100]}
             totalItems={fixedTotalCount}
-            onPageChange={setCurrentPage}
+            onPageChange={(p) => updateCurrentFilter({ page: p })}
             onPageSizeChange={(newSize) => {
-              setPageSize(newSize);
-              setCurrentPage(1);
+              updateCurrentFilter({ pageSize: newSize, page: 1 });
             }}
           />
         </div>
@@ -710,14 +786,13 @@ export function OrdersPage() {
 
           {/* Thanh phân trang cho sự kiện */}
           <OwnerPagination
-            currentPage={currentPage}
-            pageSize={pageSize}
+            currentPage={tabFilters.event.page}
+            pageSize={tabFilters.event.pageSize}
             pageSizeOptions={[25, 50, 100]}
             totalItems={eventTotalCount}
-            onPageChange={setCurrentPage}
+            onPageChange={(p) => updateCurrentFilter({ page: p })}
             onPageSizeChange={(newSize) => {
-              setPageSize(newSize);
-              setCurrentPage(1);
+              updateCurrentFilter({ pageSize: newSize, page: 1 });
             }}
           />
         </div>

@@ -33,11 +33,20 @@ export const API_ENDPOINTS = {
 
   // 2. Quản lý Người dùng & Phân quyền (System Admin)
   USERS: {
-    LIST: '/users',
-    DETAIL: (id: string) => `/users/${id}`,
-    CREATE_OWNER: '/users/court-owner',
-    UPDATE_STATUS: (id: string) => `/users/${id}/status`,
-    DELETE: (id: string) => `/users/${id}`,
+    LIST: '/admin/users',
+    UPDATE_STATUS: (id: string) => `/admin/users/${id}/status`,
+    DELETE: (id: string) => `/admin/users/${id}`,
+    RESTORE: (id: string) => `/admin/users/${id}/restore`,
+  },
+
+  // 2b. Quản lý Chủ sân (System Admin)
+  ADMIN_COURT_OWNERS: {
+    LIST: '/admin/court-owners',
+    CREATE: '/admin/court-owners',
+    UPDATE_STATUS: (id: string) => `/admin/court-owners/${id}/status`,
+    CHANGE_PACKAGE: (id: string) => `/admin/court-owners/${id}/package`,
+    EXTEND_SUBSCRIPTION: (id: string) => `/admin/court-owners/${id}/extend`,
+    DELETE: (id: string) => `/admin/users/${id}`,
   },
 
   // 3. Chi nhánh & Thông tin VietQR (Branches)
@@ -125,7 +134,11 @@ export const API_ENDPOINTS = {
     CONFIRM_BOOKING: '/orders/confirm',
     CONFIRM_TRANSFER: (id: string) => `/orders/${id}/confirm-transfer`,
     MY_ORDERS: '/orders/my-orders',
+    MY_ORDER_DETAIL: (id: string) => `/orders/my-orders/${id}`,
     REQUEST_CANCEL: (id: string) => `/orders/${id}/request-cancel`,
+    CREATE_ONLINE: '/orders',
+    SUBMIT_PAYMENT_PROOF: (id: string) => `/orders/${id}/payment-proof`,
+    CANCEL_ONLINE: (id: string) => `/orders/${id}/cancel`,
   },
 
   // 7. Sự kiện Giao lưu & Giải đấu (Events)
@@ -173,11 +186,18 @@ export const API_ENDPOINTS = {
   // 9. Kèo giao lưu cộng đồng người chơi (Matches)
   MATCHES: {
     LIST: '/matches',
+    MY_JOINED: '/matches/my-joined',
     DETAIL: (id: string) => `/matches/${id}`,
     CREATE: '/matches',
+    UPDATE: (id: string) => `/matches/${id}`,
     JOIN: (id: string) => `/matches/${id}/join`,
-    APPROVE_PARTICIPANT: (matchId: string, userId: string) =>
-      `/matches/${matchId}/participants/${userId}/approve`,
+    APPROVE_PARTICIPANT: (matchId: string, participantId: string) =>
+      `/matches/${matchId}/participants/${participantId}/approve`,
+    REJECT_PARTICIPANT: (matchId: string, participantId: string) =>
+      `/matches/${matchId}/participants/${participantId}/reject`,
+    LEAVE: (id: string) => `/matches/${id}/leave`,
+    CANCEL: (id: string) => `/matches/${id}/cancel`,
+    DELETE: (id: string) => `/matches/${id}`,
   },
 
   // 10. Đánh giá & Nhận xét (Reviews)
@@ -188,10 +208,22 @@ export const API_ENDPOINTS = {
 
   // 11. Gói cước SaaS & Thuê bao (ServicePackages)
   SUBSCRIPTIONS: {
+    // Public
     PACKAGES: '/service-packages',
     PACKAGE_DETAIL: (id: string) => `/service-packages/${id}`,
-    OWNER_SUBSCRIPTION: '/owner/subscriptions',
-    SYSTEM_SUBSCRIPTIONS: '/system/subscriptions',
+
+    // Admin CRUD & History (/admin/service-packages)
+    ADMIN_PACKAGES: '/admin/service-packages',
+    CREATE_PACKAGE: '/admin/service-packages',
+    UPDATE_PACKAGE: (id: string) => `/admin/service-packages/${id}`,
+    DELETE_PACKAGE: (id: string) => `/admin/service-packages/${id}`,
+    ADMIN_HISTORY: '/admin/service-packages/subscriptions/history',
+    SYSTEM_SUBSCRIPTIONS: '/admin/service-packages/subscriptions/history',
+
+    // Court Owner (/owner/service-packages/me)
+    OWNER_ME: '/owner/service-packages/me',
+    OWNER_SUBSCRIPTION: '/owner/service-packages/me',
+    SUBSCRIBE: (id: string) => `/owner/service-packages/${id}/subscribe`,
   },
 
   // 12. Danh mục môn thể thao (SportTypes)
@@ -210,8 +242,8 @@ export const API_ENDPOINTS = {
     SYSTEM_REVENUE: '/system/analytics/revenue',
     OWNER_DASHBOARD: (branchId?: string) =>
       branchId ? `/owner/analytics/dashboard?branchId=${branchId}` : '/owner/analytics/dashboard',
-    COURT_OWNER_REVENUE: '/analytics/court-owner/revenue',
-    OWNER_REVENUE: '/analytics/court-owner/revenue',
+    COURT_OWNER_REVENUE: '/owner/analytics/revenue',
+    OWNER_REVENUE: '/owner/analytics/revenue',
     OWNER_OCCUPANCY_RATE: '/owner/analytics/occupancy',
   },
 

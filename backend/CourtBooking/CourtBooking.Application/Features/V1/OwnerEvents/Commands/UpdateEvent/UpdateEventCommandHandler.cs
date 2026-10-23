@@ -61,12 +61,7 @@ internal sealed class UpdateEventCommandHandler(
             sportEvent.Status = EventStatus.Full;
         }
 
-        // 6. Cập nhật thông tin Order liên kết
-        sportEvent.Order.OrderDate = request.Date;
-        if (!string.IsNullOrWhiteSpace(request.CustomerName))
-            sportEvent.Order.CustomerName = request.CustomerName.Trim();
-        if (!string.IsNullOrWhiteSpace(request.CustomerPhone))
-            sportEvent.Order.CustomerPhone = request.CustomerPhone.Trim();
+        // 6. Cập nhật ghi chú của Order nếu có
         if (request.Note != null)
             sportEvent.Order.Note = request.Note.Trim();
 

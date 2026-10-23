@@ -32,7 +32,7 @@ export function DeleteSportTypeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px] bg-[#0c1410] border border-[#1b2b22] text-zinc-100 p-6 rounded-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-[440px] bg-[#0f2218] border border-[#1a3828] text-zinc-100 p-6 rounded-2xl shadow-2xl">
         <DialogHeader className="space-y-2">
           {/* Top Icon Pill */}
           <div className="flex items-center gap-3">
@@ -92,12 +92,12 @@ export function DeleteSportTypeDialog({
           </div>
         ) : null}
 
-        <DialogFooter className="pt-3 sm:justify-end gap-2 border-t border-[#16241c]">
+        <DialogFooter className="pt-3 sm:justify-end gap-2 border-t border-[#162e21]">
           {isBlockedByBranches ? (
             <Button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="h-10 px-5 rounded-xl bg-[#16241c] hover:bg-[#1f3126] text-white font-bold text-xs cursor-pointer"
+              className="h-10 px-5 rounded-xl bg-[#142e20] hover:bg-[#1a3828] text-white font-bold text-xs cursor-pointer border border-[#1a3828]"
             >
               Đã hiểu
             </Button>
@@ -108,7 +108,7 @@ export function DeleteSportTypeDialog({
                 variant="outline"
                 disabled={isDeleting}
                 onClick={() => onOpenChange(false)}
-                className="h-10 px-4 rounded-xl border-[#1b2b22] bg-[#111915] text-zinc-300 hover:bg-[#16241c] hover:text-white text-xs cursor-pointer"
+                className="h-10 px-4 rounded-xl border-[#1a3828] bg-[#0c1a12] text-zinc-300 hover:bg-[#142e20] hover:text-white text-xs cursor-pointer"
               >
                 Hủy bỏ
               </Button>

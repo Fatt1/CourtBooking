@@ -4,8 +4,6 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeft,
-  Search,
-  Bell,
   LogOut,
   ChevronDown,
 } from 'lucide-react';
@@ -33,16 +31,14 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   const { sidebarCollapsed, toggleSidebar } = useAppThemeStore();
   const { mutate: adminLogout } = useAdminLogoutMutation();
 
-  const [hasUnreadNotification, setHasUnreadNotification] = useState(true);
-
   // Xác định tiêu đề Breadcrumb động dựa trên Route hiện tại
   const getPageTitle = (pathname: string) => {
+    if (pathname === '/admin' || pathname.includes('/admin/dashboard')) return 'Tổng quan';
     if (pathname.includes('/admin/users')) return 'Quản lý người dùng';
     if (pathname.includes('/admin/owners')) return 'Quản lý chủ sân';
     if (pathname.includes('/admin/subscriptions')) return 'Gói cước & đăng ký';
     if (pathname.includes('/admin/sport-types')) return 'Môn thể thao';
-    if (pathname === '/admin') return 'Tổng quan hệ thống';
-    return 'Quản trị hệ thống';
+    return 'Tổng quan';
   };
 
   const pageTitle = getPageTitle(location.pathname);
@@ -62,7 +58,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-[#16241c] bg-[#0c1410]/90 px-4 backdrop-blur-md md:px-6 select-none">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-[#141b16] bg-[#070a08]/95 px-4 backdrop-blur-md md:px-6 select-none">
       {/* 1. Bên Trái: Toggle sidebar & Breadcrumbs chuẩn CourtOS Console */}
       <div className="flex items-center gap-3">
         {/* Mobile menu trigger */}
@@ -95,41 +91,14 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         </nav>
       </div>
 
-      {/* 2. Bên Phải: Tìm kiếm toàn hệ thống + Notification + Avatar Profile */}
+      {/* 2. Bên Phải: Notification + Avatar Profile */}
       <div className="flex items-center gap-3 md:gap-4">
-        {/* Search input with shortcut badge */}
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm trong hệ thống..."
-            className="h-9 w-60 lg:w-72 rounded-xl bg-[#111915] border border-[#1b2b22] pl-9 pr-12 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-all"
-          />
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5 text-[10px] font-mono font-semibold text-zinc-500 bg-[#16241c] px-1.5 py-0.5 rounded border border-[#213429]">
-            <span>⌘K</span>
-          </div>
-        </div>
-
-        {/* Notification Bell */}
-        <button
-          type="button"
-          onClick={() => setHasUnreadNotification(false)}
-          className="relative flex size-9 items-center justify-center rounded-xl border border-[#1b2b22] bg-[#111915] text-zinc-400 hover:text-white hover:bg-[#16241c] transition-colors cursor-pointer"
-          aria-label="Thông báo hệ thống"
-          title="Thông báo hệ thống"
-        >
-          <Bell className="size-4" />
-          {hasUnreadNotification && (
-            <span className="absolute top-2 right-2 size-2 rounded-full bg-emerald-500 ring-2 ring-[#0c1410]" />
-          )}
-        </button>
-
         {/* Admin Avatar Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#1b2b22] bg-[#111915] p-1 pr-2 hover:bg-[#16241c] transition-colors cursor-pointer"
+              className="flex items-center gap-2 rounded-xl border border-[#18241d] bg-[#0c130f] p-1 pr-2 hover:bg-[#121c17] transition-colors cursor-pointer"
             >
               <div className="flex size-7 items-center justify-center rounded-lg bg-[#132c20] border border-emerald-500/30 text-emerald-400 font-extrabold text-xs select-none">
                 {initials}

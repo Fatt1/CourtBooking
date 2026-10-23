@@ -12,9 +12,9 @@ export interface NewPriceRuleFormValues {
   endDate: string;
   fixedPrice: number;
   walkInPrice: number;
-  unitMinutes: number;
-  unitLabel: string;
-  minBookingMinutes: number;
+  unitMinutes?: number;
+  unitLabel?: string;
+  minBookingMinutes?: number;
 }
 
 export interface PriceRuleToEdit {
@@ -39,6 +39,8 @@ interface AddPriceRuleModalProps {
   defaultPriceTableId?: string;
   ruleToEdit?: PriceRuleToEdit | null;
   onSubmit: (values: NewPriceRuleFormValues, ruleId?: string) => void;
+  minuteConfig?: number;
+  minutesConfig?: number;
 }
 
 const dayOptions = [
@@ -58,8 +60,11 @@ export function AddPriceRuleModal({
   defaultPriceTableId,
   ruleToEdit,
   onSubmit,
+  minuteConfig,
+  minutesConfig,
 }: AddPriceRuleModalProps) {
   const isEditing = Boolean(ruleToEdit);
+  const stepMinutes = minuteConfig ?? minutesConfig ?? 60;
 
   const [priceTableId, setPriceTableId] = useState<string>(
     ruleToEdit?.priceTableId || defaultPriceTableId || availablePriceTables[0]?.id || ''
@@ -71,9 +76,6 @@ export function AddPriceRuleModal({
   const [endDate, setEndDate] = useState<string>('');
   const [fixedPrice, setFixedPrice] = useState<number>(100000);
   const [walkInPrice, setWalkInPrice] = useState<number>(120000);
-  const [unitMinutes, setUnitMinutes] = useState<number>(60);
-  const [unitLabel, setUnitLabel] = useState<string>('h');
-  const [minBookingMinutes, setMinBookingMinutes] = useState<number>(60);
 
   // Đồng bộ dữ liệu khi mở modal hoặc thay đổi chế độ tạo/sửa
   useEffect(() => {
@@ -87,9 +89,6 @@ export function AddPriceRuleModal({
         setEndDate(ruleToEdit.endDate || '');
         setFixedPrice(ruleToEdit.fixedPrice ?? 100000);
         setWalkInPrice(ruleToEdit.walkInPrice ?? 120000);
-        setUnitMinutes(ruleToEdit.unitMinutes ?? 60);
-        setUnitLabel(ruleToEdit.unitLabel ?? 'h');
-        setMinBookingMinutes(ruleToEdit.minBookingMinutes ?? 60);
       } else {
         // Mode tạo mới: reset về mặc định và chọn đúng ID bảng giá thật
         const validDefaultId =
@@ -105,9 +104,6 @@ export function AddPriceRuleModal({
         setEndDate('');
         setFixedPrice(100000);
         setWalkInPrice(120000);
-        setUnitMinutes(60);
-        setUnitLabel('h');
-        setMinBookingMinutes(60);
       }
     }
   }, [open, ruleToEdit, availablePriceTables, defaultPriceTableId]);
@@ -133,9 +129,6 @@ export function AddPriceRuleModal({
         endDate,
         fixedPrice,
         walkInPrice,
-        unitMinutes,
-        unitLabel,
-        minBookingMinutes,
       },
       ruleToEdit?.ruleId
     );
@@ -175,13 +168,13 @@ export function AddPriceRuleModal({
           </div>
         </div>
 
-        {/* 2. Khung giờ bắt đầu & kết thúc (Dùng TimeSelect dropdown) */}
+        {/* 2. Khung giờ bắt đầu & kết thúc (Dùng TimeSelect dropdown theo stepMinutes) */}
         <div className="grid grid-cols-2 gap-3.5">
           <TimeSelect
             label="Khung giờ bắt đầu"
             value={startTime}
             onChange={setStartTime}
-            stepMinutes={30}
+            stepMinutes={stepMinutes}
             startHour={0}
             endHour={24}
             required
@@ -193,7 +186,7 @@ export function AddPriceRuleModal({
             label="Khung giờ kết thúc"
             value={endTime}
             onChange={setEndTime}
-            stepMinutes={30}
+            stepMinutes={stepMinutes}
             startHour={0}
             endHour={24}
             required
@@ -315,54 +308,6 @@ export function AddPriceRuleModal({
             />
           </div>
         </div>
-
-        {/* 6. Số phút đơn giá & Đơn vị */}
-        <div className="grid grid-cols-2 gap-3.5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
-              Số phút đơn giá
-            </label>
-            <input
-              type="number"
-              value={unitMinutes}
-              onChange={(e) => setUnitMinutes(Number(e.target.value))}
-              placeholder="60"
-              className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
-              Đơn vị
-            </label>
-            <input
-              type="text"
-              value={unitLabel}
-              onChange={(e) => setUnitLabel(e.target.value)}
-              placeholder="h"
-              className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
-            />
-          </div>
-        </div>
-
-        {/* 7. Thời gian đặt tối thiểu (phút) * */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-foreground flex items-center gap-1">
-            Thời gian đặt tối thiểu (phút) <span className="text-rose-500">*</span>
-          </label>
-          <input
-            type="number"
-            value={minBookingMinutes}
-            onChange={(e) => setMinBookingMinutes(Number(e.target.value))}
-            placeholder="60"
-            className="w-full h-11 rounded-xl bg-background border border-border/80 px-3.5 text-sm text-foreground focus:outline-none focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635]"
-          />
-        </div>
-
-        {/* 8. Dòng chú thích mờ */}
-        <p className="text-xs text-muted-foreground/80 leading-relaxed pt-1">
-          Lưu ý: Bạn có thể đặt tối thiểu 60 phút, tuy nhiên khách vẫn có thể đặt thêm các mốc 30 phút (VD: 1.5h = 90 phút).
-        </p>
       </div>
     </OwnerModal>
   );

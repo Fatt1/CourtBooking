@@ -21,8 +21,7 @@ public sealed record SubscriptionDto(
     string PackageName,
     decimal PricePaid,
     DateOnly StartDate,
-    DateOnly EndDate,
-    bool IsActive);
+    DateOnly EndDate);
 
 /// <summary>
 /// DTO đại diện cho 1 dòng trên bảng Lịch sử đăng ký của Chủ sân (dành cho Admin Console).
@@ -32,14 +31,12 @@ public sealed record SubscriptionHistoryItemDto(
     Guid CourtOwnerId,
     string OwnerName,
     string BusinessName,
-    string? AvatarInitial,
     string PackageName,
     decimal PricePaid,
     DateOnly StartDate,
     DateOnly EndDate,
-    string TransactionCode,
-    string Status,
-    int DaysRemaining);
+    DateTime? CreatedAt = null);
+
 
 /// <summary>
 /// DTO phản hồi danh sách lịch sử đăng ký có phân trang kèm số lượng badge "Sắp hết hạn".
@@ -47,3 +44,10 @@ public sealed record SubscriptionHistoryItemDto(
 public sealed record SubscriptionHistoryResponse(
     PagedList<SubscriptionHistoryItemDto> Subscriptions,
     int ExpiringSoonCount);
+
+/// <summary>
+/// DTO phản hồi thông tin gói dịch vụ hiện tại và toàn bộ lịch sử gói dịch vụ của Chủ sân.
+/// </summary>
+public sealed record OwnerSubscriptionMeResponse(
+    SubscriptionDto? CurrentSubscription,
+    IReadOnlyList<SubscriptionHistoryItemDto> History);

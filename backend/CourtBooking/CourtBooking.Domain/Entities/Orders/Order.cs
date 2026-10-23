@@ -185,6 +185,10 @@ public class Order : EntityBase<Guid>, IAuditable
         {
             throw new DomainException("Chỉ đơn hàng đã được xác nhận mới có thể hoàn thành.");
         }
+        if (CalculateRemainingAmount() > 0)
+        {
+            throw new DomainException("Đơn hàng còn thiếu tiền chưa thanh toán đủ, không thể hoàn thành.");
+        }
         Status = OrderStatus.Completed;
     }
 
@@ -194,16 +198,31 @@ public class Order : EntityBase<Guid>, IAuditable
         CancelReason = cancelReason;
     }
 
-    public decimal CalculateRemainingAmount()
+    public decimal CalculatePaidAmount()
     {
-        var totalPaid = PaymentTransactions
+        return PaymentTransactions
             .Where(t => t.Type == PaymentTransactionType.Payment)
             .Sum(t => t.Amount);
-        var totalRefunded = PaymentTransactions
+    }
+
+    public decimal CalculateRefundAmount()
+    {
+        return PaymentTransactions
             .Where(t => t.Type == PaymentTransactionType.Refund)
             .Sum(t => t.Amount);
+    }
 
-        return TotalAmount - (totalPaid - totalRefunded);
+    public decimal CalculateRemainingAmount()
+    {
+        if (Status == OrderStatus.Cancelled)
+        {
+            return 0;
+        }
+
+        var totalPaid = CalculatePaidAmount();
+        var totalRefunded = CalculateRefundAmount();
+
+        return Math.Max(0, TotalAmount - (totalPaid - totalRefunded));
     }
 
     public void ClearOrderDetails()

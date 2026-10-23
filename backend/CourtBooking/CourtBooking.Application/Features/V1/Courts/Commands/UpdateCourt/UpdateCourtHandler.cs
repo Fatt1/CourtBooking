@@ -59,6 +59,12 @@ internal sealed class UpdateCourtHandler(
         }
 
         court.Name = normalizedName;
+
+        if (request.Status.HasValue)
+        {
+            court.Status = request.Status.Value;
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

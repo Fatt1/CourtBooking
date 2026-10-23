@@ -161,6 +161,26 @@ html[data-theme-transition="light"]::view-transition-new(root) {
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* Đảm bảo toàn bộ ứng dụng và giao diện nền (#root) luôn luôn hiển thị và trải rộng 100% */
+#root,
+div#root,
+div#root[aria-hidden="true"],
+body > div[aria-hidden="true"]:not([data-radix-portal]) {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
 /* ========================================================================= */
 /* TIPTAP RICH TEXT EDITOR & CONTENT STYLES                                  */
 /* Khắc phục việc Tailwind v4 CSS reset làm mất định dạng h1, ul, ol,...     */

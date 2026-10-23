@@ -11,15 +11,22 @@ import { ProtectedRoute, OwnerProtectedRoute } from '@/components/layouts/Protec
 import { HomePage } from '@/features/customer/pages/HomePage';
 import { CourtsPage as CustomerCourtsPage } from '@/features/customer/pages/CourtsPage';
 import { BranchDetailPage } from '@/features/customer/pages/BranchDetailPage';
+import { BranchCheckoutPage } from '@/features/customer/pages/BranchCheckoutPage';
 import { CreateReviewPage } from '@/features/customer/pages/CreateReviewPage';
 import { EventsPage } from '@/features/events/pages/EventsPage';
 import { EventDetailPage } from '@/features/events/pages/EventDetailPage';
 import { EventCheckoutPage } from '@/features/events/pages/EventCheckoutPage';
 import { EventSuccessPage } from '@/features/events/pages/EventSuccessPage';
+import { MatchesPage } from '@/features/matches/pages/MatchesPage';
+import { MatchDetailPage } from '@/features/matches/pages/MatchDetailPage';
+import { AccountBookingsPage } from '@/features/customer/pages/AccountBookingsPage';
 
 
 // Admin Pages
+import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage';
 import { UsersPage } from '@/features/admin/pages/UsersPage';
+import { CourtOwnersPage } from '@/features/admin/pages/CourtOwnersPage';
+import { SubscriptionsPage } from '@/features/admin/pages/SubscriptionsPage';
 import { SportTypesPage } from '@/features/admin/pages/SportTypesPage';
 
 // Court Owners / Management Pages
@@ -40,6 +47,8 @@ import { OwnerDashboardPage } from '@/features/court-owners/pages/OwnerDashboard
 // Auth Pages
 import { UserLoginPage } from '@/features/auth/pages/UserLoginPage';
 import { UserRegisterPage } from '@/features/auth/pages/UserRegisterPage';
+import { UserForgotPasswordPage } from '@/features/auth/pages/UserForgotPasswordPage';
+import { UserResetPasswordPage } from '@/features/auth/pages/UserResetPasswordPage';
 import { AdminLoginPage } from '@/features/auth/pages/AdminLoginPage';
 
 export const router = createBrowserRouter([
@@ -53,8 +62,11 @@ export const router = createBrowserRouter([
       { path: '/reviews/create', element: <CreateReviewPage /> },
       // Danh sách sân & Chi nhánh công khai
       { path: '/courts', element: <CustomerCourtsPage /> },
-      { path: '/matches', element: <EventsPage /> },
-      { path: '/matches/:id', element: <EventsPage /> },
+      // Kèo giao lưu thể thao (Matchday Social Matches)
+      { path: '/matches', element: <MatchesPage /> },
+      { path: '/matches/create', element: <Navigate to="/account?tab=orders" replace /> },
+      { path: '/matches/:id', element: <MatchDetailPage /> },
+      { path: '/matches/:id/edit', element: <Navigate to="/account?tab=orders" replace /> },
       // Sự kiện thể thao (Matchday Events)
       { path: '/events', element: <EventsPage /> },
       { path: '/events/:id', element: <EventDetailPage /> },
@@ -62,7 +74,13 @@ export const router = createBrowserRouter([
       { path: '/events/:id/success', element: <EventSuccessPage /> },
       { path: '/ai-assistant', element: <HomePage /> },
       { path: '/branches/:id', element: <BranchDetailPage /> },
+      { path: '/branches/:id/checkout', element: <BranchCheckoutPage /> },
       { path: '/courts/:id', element: <BranchDetailPage /> },
+      { path: '/courts/:id/checkout', element: <BranchCheckoutPage /> },
+      // Tài khoản & Lịch đặt sân của người chơi
+      { path: '/account', element: <AccountBookingsPage /> },
+      { path: '/account/orders', element: <AccountBookingsPage /> },
+      { path: '/my-bookings', element: <AccountBookingsPage /> },
     ],
   },
 
@@ -72,6 +90,8 @@ export const router = createBrowserRouter([
     children: [
       { path: '/login', element: <UserLoginPage /> },
       { path: '/register', element: <UserRegisterPage /> },
+      { path: '/forgot-password', element: <UserForgotPasswordPage /> },
+      { path: '/reset-password', element: <UserResetPasswordPage /> },
     ],
   },
   // Cổng Đăng nhập Chủ sân & Quản trị
@@ -97,7 +117,7 @@ export const router = createBrowserRouter([
       { path: 'dashboard', element: <OwnerDashboardPage /> },
       { path: 'orders', element: <OrdersPage /> },
       { path: 'branches', element: <BranchesPage /> },
-      { path: 'court-status', element: <OrdersPage /> },
+      { path: 'court-status', element: <Navigate to="/owner/orders" replace /> },
       { path: 'courts', element: <CourtsPage /> },
       { path: 'court-types', element: <CourtTypesPage /> },
       { path: 'pricing', element: <PricingPage /> },
@@ -123,11 +143,11 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/admin/users" replace /> },
-      { path: 'dashboard', element: <UsersPage /> },
+      { index: true, element: <AdminDashboardPage /> },
+      { path: 'dashboard', element: <AdminDashboardPage /> },
       { path: 'users', element: <UsersPage /> },
-      { path: 'owners', element: <UsersPage /> },
-      { path: 'subscriptions', element: <UsersPage /> },
+      { path: 'owners', element: <CourtOwnersPage /> },
+      { path: 'subscriptions', element: <SubscriptionsPage /> },
       { path: 'sport-types', element: <SportTypesPage /> },
     ],
   },

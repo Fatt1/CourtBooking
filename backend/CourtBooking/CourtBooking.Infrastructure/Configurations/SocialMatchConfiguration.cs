@@ -29,11 +29,6 @@ public class SocialMatchConfiguration : IEntityTypeConfiguration<SocialMatch>
             .HasDefaultValue((byte)0)
             .HasComment("0: Tự động duyệt, 1: Chủ kèo duyệt tay");
 
-        builder.Property(m => m.Status)
-            .HasConversion<byte>()
-            .HasDefaultValue(SocialMatchStatus.Open)
-            .HasComment("0: Open, 1: Full, 2: Closed, 3: Cancelled");
-
         builder.Property(m => m.Description)
             .HasMaxLength(500);
 

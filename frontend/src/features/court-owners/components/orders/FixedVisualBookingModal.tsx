@@ -1,3 +1,4 @@
+import { CourtStatus } from '@/api/courts';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Calendar,
@@ -293,6 +294,11 @@ export function FixedVisualBookingModal({
       return activeCourtType.availableCourts.map((c) => ({
         courtId: c.courtId,
         courtName: c.courtName,
+        isMaintenance:
+          c.status === CourtStatus.Maintenance ||
+          (c.status as unknown) === 'Maintenance' ||
+          (c.status as unknown) === 2,
+        status: c.status,
       }));
     }
     const ctFromSchedule = scheduleData?.schedules?.[0]?.courtTypes?.find(
@@ -621,6 +627,24 @@ export function FixedVisualBookingModal({
     if (matchingBlock) {
       const bStart = matchingBlock.startTime.slice(0, 5);
       const bEnd = matchingBlock.endTime.slice(0, 5);
+
+      // Nếu sân này đã được chọn với đúng khung giờ bắt buộc này -> Bấm vào để BỎ CHỌN (toggle off)
+      if (
+        selectedCourtIds.includes(courtId) &&
+        startTime === bStart &&
+        endTime === bEnd
+      ) {
+        if (selectedCourtIds.length <= 1) {
+          setStartTime('');
+          setEndTime('');
+          setSelectedCourtIds([]);
+        } else {
+          setSelectedCourtIds((prev) => prev.filter((id) => id !== courtId));
+        }
+        toast.info(`Đã bỏ chọn khung giờ bắt buộc: ${bStart} - ${bEnd}`);
+        return;
+      }
+
       setStartTime(bStart);
       setEndTime(bEnd);
       if (!selectedCourtIds.includes(courtId)) {
@@ -1189,6 +1213,7 @@ export function FixedVisualBookingModal({
               onSelectSlot={handleTimelineSlotClick}
               onConflictClick={handleConflictSlotClick}
               isLoading={isScheduleLoading}
+              selectedPriceTableId={selectedPriceTableId}
             />
           </div>
         </div>

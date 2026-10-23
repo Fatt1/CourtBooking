@@ -12,7 +12,6 @@ internal sealed class GetServicePackagesQueryHandler(IApplicationDbContext dbCon
     public async Task<Result<List<ServicePackageDto>>> Handle(GetServicePackagesQuery request, CancellationToken ct)
     {
         var packages = await dbContext.ServicePackages
-            .AsNoTracking()
             .OrderBy(p => p.Price)
             .Select(p => new ServicePackageDto(
                 p.Id,

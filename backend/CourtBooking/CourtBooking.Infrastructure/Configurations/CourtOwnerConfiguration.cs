@@ -35,5 +35,10 @@ public class CourtOwnerConfiguration : IEntityTypeConfiguration<CourtOwner>
             .WithMany()
             .HasForeignKey(c => c.QrImageId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(c => c.ServicePackage)
+            .WithMany()
+            .HasForeignKey(c => c.ServicePackageId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

@@ -22,21 +22,62 @@ import { ProvinceSelect, WardSelect, generateTimeSlots } from '@/components/comm
 // Khung giờ chuẩn theo bước nhảy 30 phút từ 00:00 đến 23:30
 const TIME_OPTIONS = generateTimeSlots(30, 0, 24);
 
-export function QuickSearchBar() {
+export interface QuickSearchParams {
+  province?: string;
+  district?: string;
+  sport?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+}
+
+export interface QuickSearchBarProps {
+  initialValues?: QuickSearchParams;
+  onSearch?: (params: QuickSearchParams) => void;
+  targetUrl?: string;
+  buttonText?: string;
+  helperText?: React.ReactNode;
+  showHelperText?: boolean;
+  isEmbedded?: boolean;
+  className?: string;
+}
+
+export function QuickSearchBar({
+  initialValues,
+  onSearch,
+  targetUrl = '/courts',
+  buttonText = 'Tìm',
+  helperText,
+  showHelperText = true,
+  isEmbedded = false,
+  className = '',
+}: QuickSearchBarProps = {}) {
   const navigate = useNavigate();
 
-  // 1. Thành phố & Quận/Huyện: Ban đầu KHÔNG mặc định
-  const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>('');
-  const [selectedWard, setSelectedWard] = useState<string>('');
+  // 1. Thành phố & Quận/Huyện: Khởi tạo từ initialValues nếu có
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>(() => {
+    if (!initialValues?.province) return '';
+    const found = PROVINCES.find(
+      (p) => p.name.toLowerCase() === initialValues.province?.toLowerCase()
+    );
+    return found ? found.code : '';
+  });
+  const [selectedWard, setSelectedWard] = useState<string>(initialValues?.district || '');
 
   // 2. Môn thể thao: Mặc định là 'all' (Tất cả) theo yêu cầu
-  const [selectedSport, setSelectedSport] = useState<string>('all');
+  const [selectedSport, setSelectedSport] = useState<string>(initialValues?.sport || 'all');
 
   // 3. Ngày chơi & Khung giờ: Mặc định là ĐỂ TRỐNG theo yêu cầu
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
+    if (initialValues?.date) {
+      const d = new Date(initialValues.date);
+      return isNaN(d.getTime()) ? undefined : d;
+    }
+    return undefined;
+  });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [startTime, setStartTime] = useState<string>('');
-  const [endTime, setEndTime] = useState<string>('');
+  const [startTime, setStartTime] = useState<string>(initialValues?.startTime || '');
+  const [endTime, setEndTime] = useState<string>(initialValues?.endTime || '');
 
   // Hiển thị nhãn ngày thông minh (Hôm nay, Ngày mai, hoặc Ngày/Tháng/Năm)
   const dateLabel = useMemo(() => {
@@ -89,25 +130,28 @@ export function QuickSearchBar() {
     }
 
     const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
-    const query = new URLSearchParams({
+    const params: QuickSearchParams = {
       ...(currentProvince ? { province: currentProvince.name } : {}),
       ...(selectedWard && selectedWard !== 'all' ? { district: selectedWard } : {}),
       ...(selectedSport && selectedSport !== 'all' ? { sport: selectedSport } : {}),
       ...(formattedDate ? { date: formattedDate } : {}),
       ...(startTime ? { startTime } : {}),
       ...(endTime ? { endTime } : {}),
-    }).toString();
+    };
 
-    navigate(`/courts?${query}`);
+    if (onSearch) {
+      onSearch(params);
+    } else {
+      const query = new URLSearchParams(params as Record<string, string>).toString();
+      navigate(`${targetUrl}?${query}`);
+    }
   };
 
-  return (
-    <section className="py-4 sm:py-6">
-      <div className="container mx-auto px-4 sm:px-8 max-w-7xl">
-        <form
-          onSubmit={handleSearch}
-          className="rounded-xl border border-border/80 bg-card p-3 sm:p-4 shadow-xl shadow-foreground/[0.03] transition-shadow hover:shadow-2xl hover:shadow-foreground/[0.05]"
-        >
+  const formElement = (
+    <form
+      onSubmit={handleSearch}
+      className={`rounded-xl border border-border/80 bg-card p-3 sm:p-4 shadow-xl shadow-foreground/[0.03] transition-shadow hover:shadow-2xl hover:shadow-foreground/[0.05] ${className}`}
+    >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 lg:gap-0 lg:divide-x lg:divide-border/60 items-center">
             {/* 1. THÀNH PHỐ (Hỗ trợ tìm kiếm theo tên) */}
             <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center">
@@ -296,15 +340,38 @@ export function QuickSearchBar() {
                 className="w-full h-10 bg-[#18231A] hover:bg-black text-white font-bold rounded-md text-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <Search className="size-4 shrink-0" />
-                <span className="lg:hidden xl:inline">Tìm</span>
+                <span className="lg:hidden xl:inline">{buttonText}</span>
               </Button>
             </div>
           </div>
         </form>
+  );
 
-        <p className="text-xs text-muted-foreground mt-3 font-medium pl-1">
-          Không cần tài khoản để đặt sân. Bạn chỉ để lại thông tin liên hệ ở bước xác nhận.
-        </p>
+  const defaultHelper = 'Không cần tài khoản để đặt sân. Bạn chỉ để lại thông tin liên hệ ở bước xác nhận.';
+  const renderedHelper = helperText !== undefined ? helperText : defaultHelper;
+
+  if (isEmbedded) {
+    return (
+      <div className="w-full">
+        {formElement}
+        {showHelperText && renderedHelper && (
+          <p className="text-xs text-muted-foreground mt-3 font-medium pl-1">
+            {renderedHelper}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <section className="py-4 sm:py-6">
+      <div className="container mx-auto px-4 sm:px-8 max-w-7xl">
+        {formElement}
+        {showHelperText && renderedHelper && (
+          <p className="text-xs text-muted-foreground mt-3 font-medium pl-1">
+            {renderedHelper}
+          </p>
+        )}
       </div>
     </section>
   );

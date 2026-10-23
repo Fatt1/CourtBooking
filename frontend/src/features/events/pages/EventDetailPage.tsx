@@ -195,65 +195,16 @@ export function EventDetailPage() {
               <h3 className="mt-1 font-heading text-xl font-bold text-foreground">
                 Một ngày chơi thật đã
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {event.description ||
-                  `Một buổi thi đấu và giao lưu dành cho tất cả người yêu ${event.sportTypeName}. Bạn sẽ được ghép trận theo trình độ (${skillLevelText}), thử sức với nhiều người chơi mới và cùng nhau tận hưởng không khí thể thao sôi động.`}
-              </p>
-            </div>
-
-            {/* 4. Side-by-side Cards: Lịch trình & Lưu ý */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {/* Lịch trình */}
-              <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-6 shadow-sm">
-                <span className="text-[11px] font-bold tracking-wider text-[#397B48] dark:text-[#a3e635] uppercase">
-                  CHƯƠNG TRÌNH
-                </span>
-                <h3 className="mt-1 font-heading text-xl font-bold text-foreground">
-                  Lịch trình trận đấu
-                </h3>
-                <ul className="mt-4 space-y-2.5 text-xs text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
-                    <span><strong>{event.startTime ? event.startTime.slice(0, 5) : '08:00'}</strong> · Đón khách, điểm danh nhận vé tham gia</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
-                    <span>Khởi động, chia nhóm giao lưu theo trình độ <strong>{skillLevelText}</strong></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
-                    <span>Thi đấu xoay vòng giao lưu tính điểm trên các sân</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
-                    <span><strong>{event.endTime ? event.endTime.slice(0, 5) : '12:00'}</strong> · Kết thúc trận đấu, tổng kết và trao giải giao lưu</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Lưu ý & quy định */}
-              <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-6 shadow-sm">
-                <span className="text-[11px] font-bold tracking-wider text-[#397B48] dark:text-[#a3e635] uppercase">
-                  THAM GIA CÙNG NHAU
-                </span>
-                <h3 className="mt-1 font-heading text-xl font-bold text-foreground">
-                  Lưu ý & quy định
-                </h3>
-                <ul className="mt-4 space-y-2.5 text-xs text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
-                    <span>Có mặt trước giờ bắt đầu ({event.startTime ? event.startTime.slice(0, 5) : '08:00'}) ít nhất 15 phút.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
-                    <span>Mang giày thể thao chuyên dụng; có thể mang theo vợt cá nhân.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 size-1.5 rounded-full bg-[#397B48] dark:bg-[#a3e635] shrink-0" />
-                    <span>Tôn trọng tinh thần fair-play và tuân thủ hướng dẫn của ban tổ chức.</span>
-                  </li>
-                </ul>
-              </div>
+              {event.description && event.description.trim() ? (
+                <div
+                  className="tiptap-rendered-content max-w-none mt-3 text-sm leading-relaxed text-muted-foreground prose prose-sm dark:prose-invert"
+                  dangerouslySetInnerHTML={{ __html: event.description }}
+                />
+              ) : (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Một buổi thi đấu và giao lưu dành cho tất cả người yêu {event.sportTypeName}. Bạn sẽ được ghép trận theo trình độ ({skillLevelText}), thử sức với nhiều người chơi mới và cùng nhau tận hưởng không khí thể thao sôi động.
+                </p>
+              )}
             </div>
 
             {/* 5. Card: Người sẽ cùng tham gia */}

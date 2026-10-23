@@ -105,6 +105,11 @@ export interface GetPublicEventsParams {
   sportTypeId?: string;
   branchId?: string;
   date?: string; // YYYY-MM-DD
+  province?: string;
+  district?: string;
+  sport?: string;
+  startTime?: string;
+  endTime?: string;
   page?: number;
   pageSize?: number;
 }
