@@ -28,6 +28,7 @@ public sealed record OwnerBranchDetailDto(
     TimeOnly OpenTime, TimeOnly CloseTime, string? Policy, string? Description, bool IsActive,
     ImageDto QrImage, string AccountNumber, string AccountName,
     IReadOnlyList<BranchSportDto> Sports, IReadOnlyList<ImageDto> Images,
-    double? AverageRating);
+    double? AverageRating,
+    string? BankName = null, string? BankCode = null);
 
 

@@ -66,6 +66,8 @@ internal sealed class UpdateBranchHandler(
         branch.QrImageId = request.QrImageId;
         branch.AccountNumber = request.AccountNumber.Trim();
         branch.AccountName = request.AccountName.Trim();
+        branch.BankName = request.BankName?.Trim();
+        branch.BankCode = request.BankCode?.Trim();
         branch.Policy = request.Policy?.Trim();
         branch.Description = request.Description?.Trim();
         branch.Latitude = request.Latitude;

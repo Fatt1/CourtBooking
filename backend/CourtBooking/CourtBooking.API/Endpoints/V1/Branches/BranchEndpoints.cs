@@ -245,7 +245,8 @@ public sealed class BranchEndpoints : IEndpointGroup
                 body.Name, body.Hotline, body.Province, body.District, body.Street,
                 body.GgMapUrl, body.OpenTime, body.CloseTime, body.QrImageId,
                 body.AccountNumber, body.AccountName, body.SportTypeIds,
-                body.Policy, body.Latitude, body.Longitude, body.ImageIds, body.Description), ct);
+                body.Policy, body.Latitude, body.Longitude, body.ImageIds, body.Description,
+                body.BankName, body.BankCode), ct);
             return result.IsSuccess
                 ? Results.Created($"/api/v1/owner/branches/{result.Value}", result.Value)
                 : result.ToProblemDetails();
@@ -264,7 +265,8 @@ public sealed class BranchEndpoints : IEndpointGroup
                 id, body.Name, body.Hotline, body.Province, body.District, body.Street,
                 body.GgMapUrl, body.OpenTime, body.CloseTime, body.QrImageId,
                 body.AccountNumber, body.AccountName, body.SportTypeIds,
-                body.Policy, body.Latitude, body.Longitude, body.ImageIds, body.Description), ct);
+                body.Policy, body.Latitude, body.Longitude, body.ImageIds, body.Description,
+                body.BankName, body.BankCode), ct);
             return result.IsSuccess ? Results.NoContent() : result.ToProblemDetails();
         })
         .WithName("UpdateOwnerBranch")

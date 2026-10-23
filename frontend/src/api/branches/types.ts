@@ -40,6 +40,8 @@ export interface OwnerBranchDetail {
   qrImage?: { key: string; id: string };
   accountNumber?: string;
   accountName?: string;
+  bankName?: string | null;
+  bankCode?: string | null;
   sports?: Array<{ id: string; name: string }>;
   images?: Array<{ key: string; id: string }>;
   averageRating?: number | null;
@@ -60,6 +62,8 @@ export interface CreateBranchPayload {
   qrImageId: string;
   accountNumber: string;
   accountName: string;
+  bankName?: string | null;
+  bankCode?: string | null;
   sportTypeIds: string[];
   policy?: string | null;
   description?: string | null;

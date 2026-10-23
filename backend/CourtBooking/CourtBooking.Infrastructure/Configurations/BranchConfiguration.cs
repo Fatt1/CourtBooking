@@ -68,6 +68,12 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
             .HasMaxLength(255)
             .IsRequired();
 
+        builder.Property(b => b.BankName)
+            .HasMaxLength(255);
+
+        builder.Property(b => b.BankCode)
+            .HasMaxLength(50);
+
         builder.Property(b => b.CreatedAt).IsRequired();
         builder.Property(b => b.UpdatedAt).IsRequired();
 
