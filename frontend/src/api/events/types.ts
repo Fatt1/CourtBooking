@@ -11,6 +11,64 @@ export enum EventStatus {
   Cancelled = 3,
 }
 
+/**
+ * Trạng thái vé tham gia sự kiện:
+ * 0 = AwaitingPayment (Chờ thanh toán), 1 = PendingApproval (Chờ duyệt), 2 = Confirmed (Đã xác nhận), 3 = Cancelled (Đã hủy)
+ */
+export enum EventTicketStatus {
+  AwaitingPayment = 0,
+  PendingApproval = 1,
+  Confirmed = 2,
+  Cancelled = 3,
+}
+
+/**
+ * Phương thức thanh toán vé:
+ * 1 = Cash, 2 = QrTransfer
+ */
+export enum PaymentMethodEnum {
+  Cash = 1,
+  QrTransfer = 2,
+  BankTransfer = 2,
+}
+
+export interface EventProofImageDto {
+  key?: string;
+  storageKey?: string;
+  id: string;
+}
+
+/**
+ * DTO từng dòng vé trong modal "Người tham gia"
+ */
+export interface EventParticipantItemDto {
+  ticketId: string;
+  playerId: string;
+  playerName: string;
+  playerPhone?: string | null;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  paymentMethod: PaymentMethodEnum;
+  status: EventTicketStatus;
+  proofImage?: EventProofImageDto | null;
+  refundNote?: string | null;
+  createdAt: string;
+  reviewedAt?: string | null;
+}
+
+/**
+ * DTO tổng hợp dữ liệu modal "Người tham gia: [Tên Sự Kiện]"
+ */
+export interface EventParticipantsResponse {
+  eventId: string;
+  eventTitle: string;
+  totalRevenue: number;
+  totalSlots: number;
+  soldSlots: number;
+  participants: EventParticipantItemDto[];
+}
+
 export interface CourtSummaryDto {
   courtId: string;
   courtName: string;
