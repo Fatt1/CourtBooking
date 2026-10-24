@@ -66,14 +66,15 @@ public sealed class RetailOrderEndpoints : IEndpointGroup
         [FromQuery] Guid? branchId,
         [FromQuery] DateOnly? fromDate,
         [FromQuery] DateOnly? toDate,
+        [FromQuery] string? search,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         ISender sender = default!,
         CancellationToken ct = default)
     {
         var result = await sender.Send(
-            new GetRetailOrdersQuery(branchId, fromDate, toDate, page, pageSize), ct);
-        return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+            new GetRetailOrdersQuery(branchId, fromDate, toDate, search, page, pageSize), ct);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 
     private static async Task<IResult> GetSummaryAsync(

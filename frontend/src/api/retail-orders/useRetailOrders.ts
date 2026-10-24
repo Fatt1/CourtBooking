@@ -15,15 +15,21 @@ export async function fetchAllRetailOrders(filters: RetailOrderFilters, signal?:
   let page = 1;
   let totalPages = 1;
   do {
-    const response = await apiClient.get<PagedList<RetailOrderListItemDto>>(API_ENDPOINTS.POS.ORDER_LIST,
-      { params: { ...params, page, pageSize: 100 }, signal });
+    const response = await apiClient.get<PagedList<RetailOrderListItemDto>>(API_ENDPOINTS.POS.ORDER_LIST, {
+      params: {
+        ...params,
+        search: search?.trim() || undefined,
+        page,
+        pageSize: 100,
+      },
+      signal,
+    });
     const data = response as unknown as PagedList<RetailOrderListItemDto>;
     items.push(...data.items);
     totalPages = data.totalPages;
     page += 1;
   } while (page <= totalPages);
-  const term = search?.trim().toLowerCase();
-  return term ? items.filter((item) => item.id.toLowerCase().includes(term) || retailOrderCode(item.id).toLowerCase().includes(term)) : items;
+  return items;
 }
 
 export function summarizeRetailOrders(items: RetailOrderListItemDto[]): RetailOrderSummaryDto {
@@ -34,18 +40,21 @@ export function summarizeRetailOrders(items: RetailOrderListItemDto[]): RetailOr
 
 export function useRetailOrdersQuery(filters: RetailOrderFilters, page: number, pageSize: number, enabled: boolean) {
   const authenticated = useAuthStore((state) => state.isAuthenticated);
+  const { branchId, fromDate, toDate, search } = filters;
   return useQuery({
     queryKey: ['owner', 'retail-orders', 'list', filters, page, pageSize],
-    queryFn: async ({ signal }): Promise<PagedList<RetailOrderListItemDto> & { summary?: RetailOrderSummaryDto }> => {
-      if (filters.search?.trim()) {
-        const all = await fetchAllRetailOrders(filters, signal);
-        const totalPages = Math.ceil(all.length / pageSize);
-        return { items: all.slice((page - 1) * pageSize, page * pageSize), totalCount: all.length,
-          page, pageSize, totalPages, hasPrevious: page > 1, hasNext: page < totalPages, summary: summarizeRetailOrders(all) };
-      }
-      const { search: _search, ...params } = filters;
-      const response = await apiClient.get<PagedList<RetailOrderListItemDto>>(API_ENDPOINTS.POS.ORDER_LIST,
-        { params: { ...params, page, pageSize }, signal });
+    queryFn: async ({ signal }): Promise<PagedList<RetailOrderListItemDto>> => {
+      const response = await apiClient.get<PagedList<RetailOrderListItemDto>>(API_ENDPOINTS.POS.ORDER_LIST, {
+        params: {
+          branchId,
+          fromDate,
+          toDate,
+          search: search?.trim() || undefined,
+          page,
+          pageSize,
+        },
+        signal,
+      });
       return response as unknown as PagedList<RetailOrderListItemDto>;
     },
     enabled: enabled && authenticated && Boolean(filters.branchId),

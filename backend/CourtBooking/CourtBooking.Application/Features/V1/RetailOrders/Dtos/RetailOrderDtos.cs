@@ -10,6 +10,7 @@ public sealed record RetailOrderItemDto(
 
 public sealed record RetailOrderDto(
     Guid Id,
+    string OrderCode,
     Guid BranchId,
     string BranchName,
     decimal Subtotal,
@@ -21,6 +22,7 @@ public sealed record RetailOrderDto(
 
 public sealed record RetailOrderListItemDto(
     Guid Id,
+    string OrderCode,
     Guid BranchId,
     string BranchName,
     int TotalQuantity,

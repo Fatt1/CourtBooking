@@ -109,7 +109,7 @@ function BranchProducts({ branchId, branchName }: { branchId: string; branchName
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-10 min-w-[170px] rounded-xl border border-input bg-card px-3 text-xs font-medium text-foreground">
+            <SelectTrigger className="h-9.5 w-[180px] shrink-0 rounded-xl border border-input bg-card px-3 text-xs font-medium text-foreground">
               <SelectValue placeholder="Tất cả danh mục" />
             </SelectTrigger>
             <SelectContent className="bg-popover border-border">
@@ -132,7 +132,7 @@ function BranchProducts({ branchId, branchName }: { branchId: string; branchName
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-10 min-w-[145px] rounded-xl border border-input bg-card px-3 text-xs font-medium text-foreground">
+            <SelectTrigger className="h-9.5 w-[140px] shrink-0 rounded-xl border border-input bg-card px-3 text-xs font-medium text-foreground">
               <SelectValue placeholder="Mọi trạng thái" />
             </SelectTrigger>
             <SelectContent className="bg-popover border-border">
