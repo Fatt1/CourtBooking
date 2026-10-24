@@ -59,6 +59,10 @@ try
     // Infrastructure layer: EF Core (SQL Server), interceptors
     builder.Services.AddInfrastructureServices();
 
+    // SignalR Real-time Notifications
+    builder.Services.AddSignalR();
+    builder.Services.AddScoped<CourtBooking.Application.Abstractions.Notifications.INotificationService, CourtBooking.API.Services.SignalRNotificationService>();
+
     // OpenAPI document at /openapi/v1.json with JWT Bearer Authentication
     builder.Services.AddOpenApi("v1", options =>
     {
@@ -118,6 +122,9 @@ try
     app.MapControllers();
 
     app.MapEndpoints();
+
+    // Map SignalR Notification Hub
+    app.MapHub<CourtBooking.API.Hubs.NotificationHub>("/hubs/notifications");
 
     // Automatically apply pending database migrations and seed data on startup
     await DatabaseInitializer.ApplyMigrationsAndSeedAsync(app.Services);

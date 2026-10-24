@@ -28,6 +28,10 @@ internal sealed class SubmitEventTicketProofCommandHandler(
 
         // 2. Tìm vé tham gia sự kiện theo Id và EventId
         var ticket = await dbContext.EventTickets
+            .Include(t => t.Player)
+            .Include(t => t.Event)
+                .ThenInclude(e => e.Order)
+                    .ThenInclude(o => o.Branch)
             .FirstOrDefaultAsync(
                 t => t.Id == request.TicketId && t.EventId == request.EventId,
                 cancellationToken);
@@ -58,6 +62,23 @@ internal sealed class SubmitEventTicketProofCommandHandler(
 
         // 6. Kích hoạt sự kiện lưu trữ hình ảnh minh chứng
         await publisher.Publish(new AttachImagesEvent(new List<Guid> { request.ProofImageId }), cancellationToken);
+
+        // 7. Kích hoạt sự kiện RequestedEventTicketEvent thông báo cho chủ sân
+        if (ticket.Event?.Order?.Branch != null)
+        {
+            await publisher.Publish(new CourtBooking.Application.Features.V1.Events.Events.RequestedEventTicket.RequestedEventTicketEvent(
+                ticket.Id,
+                ticket.EventId,
+                ticket.Event.Title,
+                ticket.Event.Order.BranchId,
+                ticket.Event.Order.Branch.Name,
+                ticket.Event.Order.Branch.CourtOwnerId,
+                ticket.Player?.FullName ?? "Khách hàng",
+                ticket.Quantity,
+                ticket.Price * ticket.Quantity,
+                DateTime.UtcNow
+            ), cancellationToken);
+        }
 
         return Result.Success();
     }

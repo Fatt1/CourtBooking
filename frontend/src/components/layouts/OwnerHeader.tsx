@@ -27,6 +27,8 @@ import { useAppThemeStore } from '@/stores/useAppThemeStore';
 import { useBranchStore } from '@/stores/useBranchStore';
 import { useOwnerBranchesQuery } from '@/api/branches';
 import { cn } from '@/lib/utils';
+import { useNotificationSignalR } from '@/features/court-owners/hooks/useNotificationSignalR';
+import { NotificationBellPopover } from '@/features/court-owners/components/notifications/NotificationBellPopover';
 
 interface OwnerHeaderProps {
   onMenuClick: () => void;
@@ -40,7 +42,9 @@ export function OwnerHeader({ onMenuClick }: OwnerHeaderProps) {
   const { data: branches = [], isLoading: isLoadingBranches } = useOwnerBranchesQuery();
 
   const navigate = useNavigate();
-  const [hasUnreadNotification, setHasUnreadNotification] = useState(true);
+
+  // Kích hoạt lắng nghe Realtime SignalR thông báo đơn mới & phát âm thanh
+  useNotificationSignalR();
 
   // Tự động đồng bộ danh sách chi nhánh vào store và chọn chi nhánh đầu tiên nếu chưa chọn
   useEffect(() => {
@@ -236,19 +240,8 @@ export function OwnerHeader({ onMenuClick }: OwnerHeaderProps) {
           </button>
         </div>
 
-        {/* Chuông thông báo (Notification Bell) màu vàng hổ phách có chấm đỏ theo Figma */}
-        <button
-          type="button"
-          onClick={() => setHasUnreadNotification(false)}
-          className="relative flex size-9 items-center justify-center rounded-full border border-border/60 bg-muted/30 text-amber-400 hover:bg-muted/70 transition-colors cursor-pointer"
-          aria-label="Thông báo"
-          title="Thông báo mới"
-        >
-          <Bell className="size-4.5 fill-amber-400/20" />
-          {hasUnreadNotification && (
-            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-rose-500 ring-2 ring-background" />
-          )}
-        </button>
+        {/* Chuông thông báo (Notification Bell) Realtime SignalR & LocalStorage */}
+        <NotificationBellPopover />
 
         {/* User Avatar MD Dropdown theo yêu cầu: Hover hiện popup (Thông tin cá nhân & Đăng xuất), click avatar vào trang Profile */}
         <div
