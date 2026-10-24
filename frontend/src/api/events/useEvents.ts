@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/axios';
 import { API_ENDPOINTS } from '@/constants/api-endpoints';
-import type { PagedList } from '@/types/api';
+import type { PagedList, ProblemDetails } from '@/types/api';
 import type {
   OwnerEventItemDto,
   OwnerEventDetailDto,
@@ -9,6 +9,8 @@ import type {
   CreateEventPayload,
   UpdateEventPayload,
   CancelEventPayload,
+  EventParticipantsResponse,
+  EventTicketStatus,
 } from './types';
 
 /**
@@ -133,6 +135,73 @@ export function useCancelEventMutation() {
         queryKey: ['owner', 'events', 'detail', variables.eventId],
       });
       queryClient.invalidateQueries({ queryKey: ['timeline'] });
+    },
+  });
+}
+
+/**
+ * Hook lấy danh sách người tham gia & vé trong Modal của Chủ sân
+ * Endpoint: GET /api/v1/owner/events/{id}/participants?status=...
+ */
+export function useEventParticipantsQuery(
+  eventId?: string | null,
+  status?: EventTicketStatus
+) {
+  return useQuery<EventParticipantsResponse, ProblemDetails>({
+    queryKey: ['owner', 'events', 'participants', eventId, status],
+    queryFn: async (): Promise<EventParticipantsResponse> => {
+      if (!eventId) throw new Error('Missing eventId');
+      const response = await apiClient.get<EventParticipantsResponse>(
+        API_ENDPOINTS.EVENTS.PARTICIPANTS(eventId),
+        status !== undefined ? { params: { status } } : undefined
+      );
+      return response as unknown as EventParticipantsResponse;
+    },
+    enabled: !!eventId,
+  });
+}
+
+/**
+ * Hook duyệt vé tham gia sự kiện
+ * Endpoint: PUT /api/v1/owner/events/{id}/tickets/{ticketId}/approve
+ */
+export function useApproveTicketMutation(eventId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, ProblemDetails, string>({
+    mutationFn: async (ticketId: string): Promise<void> => {
+      await apiClient.put(
+        API_ENDPOINTS.EVENTS.APPROVE_TICKET(eventId, ticketId)
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'events', 'participants', eventId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['owner', 'events'] });
+    },
+  });
+}
+
+/**
+ * Hook từ chối / hủy vé tham gia sự kiện
+ * Endpoint: PUT /api/v1/owner/events/{id}/tickets/{ticketId}/reject
+ */
+export function useRejectTicketMutation(eventId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, ProblemDetails, { ticketId: string; reason: string }>({
+    mutationFn: async ({ ticketId, reason }): Promise<void> => {
+      await apiClient.put(
+        API_ENDPOINTS.EVENTS.REJECT_TICKET(eventId, ticketId),
+        { reason }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'events', 'participants', eventId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['owner', 'events'] });
     },
   });
 }
