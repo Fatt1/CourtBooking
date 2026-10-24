@@ -20,6 +20,7 @@ public class EventTicket : EntityBase<Guid>
     public string? RefundNote { get; set; }
     public decimal Price { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }
 
     // Navigation
     public SportEvent Event { get; set; } = null!;

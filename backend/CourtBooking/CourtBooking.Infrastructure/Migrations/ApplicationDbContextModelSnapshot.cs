@@ -395,6 +395,10 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<Guid>("EventId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2")
+                        .HasComment("Thời điểm hết hạn thanh toán giữ vé sự kiện");
+
                     b.Property<byte>("PaymentMethod")
                         .HasColumnType("tinyint")
                         .HasComment("1=Tiền mặt, 2=Chuyển khoản QR");
@@ -1228,7 +1232,7 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
@@ -1260,6 +1264,10 @@ namespace CourtBooking.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("PhoneNumber", "AccountType")
+                        .IsUnique()
+                        .HasFilter("[PhoneNumber] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("Users", (string)null);
                 });
@@ -1310,9 +1318,6 @@ namespace CourtBooking.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AvatarImageId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1326,8 +1331,6 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AvatarImageId");
 
                     b.ToTable("PlayerProfiles", (string)null);
                 });
@@ -1955,18 +1958,11 @@ namespace CourtBooking.Infrastructure.Migrations
 
             modelBuilder.Entity("CourtBooking.Domain.Entities.Users.PlayerProfile", b =>
                 {
-                    b.HasOne("CourtBooking.Domain.Entities.Images.Image", "AvatarImage")
-                        .WithMany()
-                        .HasForeignKey("AvatarImageId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("CourtBooking.Domain.Entities.Users.ApplicationUser", "User")
                         .WithOne("PlayerProfile")
                         .HasForeignKey("CourtBooking.Domain.Entities.Users.PlayerProfile", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("AvatarImage");
 
                     b.Navigation("User");
                 });

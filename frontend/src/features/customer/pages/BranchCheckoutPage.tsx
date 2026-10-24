@@ -23,12 +23,17 @@ import {
 } from '@/features/court-owners/components/orders/timeline/pricingCalculator';
 import { formatCurrency } from '@/lib/utils';
 import { getImageUrl } from '@/api/storage';
+import { getApiErrorMessage } from '@/types/api';
 import { useBranchPricingConfigQuery } from '@/api/pricing';
 import {
   SelectBranchServicesModal,
   type SelectedServiceMapItem,
 } from '../components/checkout/SelectBranchServicesModal';
 import { BranchPaymentModal } from '../components/checkout/BranchPaymentModal';
+import { checkPhoneApi, useCurrentPlayerProfileQuery } from '@/api/auth/useAuth';
+import { QuickRegisterModal } from '../components/checkout/QuickRegisterModal';
+import { PhoneExistsModal } from '../components/checkout/PhoneExistsModal';
+import { checkoutCustomerSchema } from '../schemas/checkoutSchema';
 
 export interface GroupedBookingItem {
   courtId: string;
@@ -63,52 +68,88 @@ export function BranchCheckoutPage() {
   const { id: routeBranchId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated, updateUser } = useAuthStore();
+  const { data: playerProfile } = useCurrentPlayerProfileQuery({
+    enabled: !!isAuthenticated,
+  });
 
   const state = (location.state as CheckoutLocationState) || null;
   const branchId = state?.branchId || routeBranchId || '';
+
+  // Phục hồi và đồng bộ state đặt sân qua sessionStorage để không mất dữ liệu nếu chuyển sang trang đăng nhập
+  const savedStateKey = `checkout_state_${branchId}`;
+  const effectiveState = useMemo<CheckoutLocationState | null>(() => {
+    if (state && state.groupedBookings && state.groupedBookings.length > 0) {
+      return state;
+    }
+    const saved = sessionStorage.getItem(savedStateKey);
+    if (saved) {
+      try {
+        return JSON.parse(saved) as CheckoutLocationState;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }, [state, savedStateKey]);
+
+  useEffect(() => {
+    if (state && state.groupedBookings && state.groupedBookings.length > 0) {
+      sessionStorage.setItem(savedStateKey, JSON.stringify(state));
+    }
+  }, [state, savedStateKey]);
 
   // Lấy thêm thông tin chi nhánh nếu thiếu
   const { data: branchDetail } = usePublicBranchDetailQuery(branchId);
   const { data: pricingConfigs = [] } = useBranchPricingConfigQuery(branchId);
 
   const branchName =
-    state?.branchName || branchDetail?.name || 'Chi nhánh sân thể thao';
+    effectiveState?.branchName || branchDetail?.name || 'Chi nhánh sân thể thao';
   const branchAddress =
-    state?.branchAddress ||
+    effectiveState?.branchAddress ||
     (branchDetail
       ? `${branchDetail.street}, ${branchDetail.district}, ${branchDetail.province}`
       : 'Đang cập nhật địa chỉ');
   const branchBanner =
-    state?.branchBanner ||
+    effectiveState?.branchBanner ||
     (branchDetail?.images && branchDetail.images.length > 0
       ? getImageUrl(branchDetail.images[0].key || (branchDetail.images[0] as any).url)
       : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=80');
 
-  const selectedDate = state?.selectedDate || '';
-  const groupedBookings = state?.groupedBookings || [];
+  const selectedDate = effectiveState?.selectedDate || '';
+  const groupedBookings = effectiveState?.groupedBookings || [];
 
   // 1. Form thông tin người đặt
-  const [customerName, setCustomerName] = useState((user as any)?.fullName || user?.name || '');
-  const [customerPhone, setCustomerPhone] = useState(user?.phoneNumber || '');
-  const [customerEmail, setCustomerEmail] = useState(user?.email || '');
-  const [customerNote, setCustomerNote] = useState('');
+  const [customerName, setCustomerName] = useState<string>((user as any)?.fullName || user?.name || '');
+  const [customerPhone, setCustomerPhone] = useState<string>(user?.phoneNumber || '');
+  const [customerEmail, setCustomerEmail] = useState<string>(user?.email || '');
+  const [customerNote, setCustomerNote] = useState<string>('');
 
-  // Tự động điền thông tin nếu user đăng nhập
+  // Tự động điền thông tin khi user đăng nhập hoặc khi playerProfile được tải
   useEffect(() => {
-    if (user) {
-      const uName = (user as any)?.fullName || user?.name;
-      if (!customerName && uName) {
-        setCustomerName(uName);
-      }
-      if (!customerPhone && user.phoneNumber) {
-        setCustomerPhone(user.phoneNumber);
-      }
-      if (!customerEmail && user.email) {
-        setCustomerEmail(user.email);
-      }
+    const currentName = (user as any)?.fullName || user?.name || playerProfile?.fullName || '';
+    const currentPhone = user?.phoneNumber || playerProfile?.phoneNumber || '';
+    const currentEmail = user?.email || playerProfile?.email || '';
+
+    if (currentName) {
+      setCustomerName((prev: string) => (prev ? prev : currentName));
     }
-  }, [user]);
+    if (currentPhone) {
+      setCustomerPhone((prev: string) => (prev ? prev : currentPhone));
+    }
+    if (currentEmail) {
+      setCustomerEmail((prev: string) => (prev ? prev : currentEmail));
+    }
+
+    // Đồng bộ số điện thoại vào auth store nếu trước đó store chưa có
+    if (playerProfile?.phoneNumber && (!user?.phoneNumber || user.phoneNumber !== playerProfile.phoneNumber)) {
+      updateUser({
+        phoneNumber: playerProfile.phoneNumber,
+        name: playerProfile.fullName || user?.name,
+        email: playerProfile.email || user?.email,
+      });
+    }
+  }, [user, playerProfile, updateUser]);
 
   // 2. Dịch vụ đi kèm
   const [selectedServices, setSelectedServices] = useState<Record<string, SelectedServiceMapItem>>({});
@@ -117,9 +158,15 @@ export function BranchCheckoutPage() {
   // 3. Chính sách & Checkbox
   const [isPolicyAgreed, setIsPolicyAgreed] = useState(true);
 
-  // 4. Modal thanh toán
+  // 4. Modal thanh toán & Kiểm tra tài khoản
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [orderCreatedResponse, setOrderCreatedResponse] = useState<CreateOrderOnlineResponse | null>(null);
+
+  // Trạng thái kiểm tra số điện thoại và modal đăng ký/đăng nhập
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+  const [isPhoneExistsModalOpen, setIsPhoneExistsModalOpen] = useState(false);
+  const [isQuickRegisterModalOpen, setIsQuickRegisterModalOpen] = useState(false);
+  const [verifiedPhone, setVerifiedPhone] = useState('');
 
   // Mutation tạo đơn online
   const createOrderMutation = useCreateOrderOnlineMutation();
@@ -174,42 +221,67 @@ export function BranchCheckoutPage() {
     });
   };
 
-  // Nhấn nút "Thanh toán"
-  const handleCheckout = async () => {
-    if (!customerName.trim()) {
-      toast.error('Vui lòng nhập họ và tên người đặt sân!');
-      return;
+  // Chuyển sang trang đăng nhập và lưu lại đường dẫn kèm state để quay lại
+  const handleGoToLogin = () => {
+    if (effectiveState) {
+      sessionStorage.setItem(savedStateKey, JSON.stringify(effectiveState));
     }
+    const currentUrl = location.pathname;
+    navigate(`/login?redirect=${encodeURIComponent(currentUrl)}`);
+  };
 
-    if (!customerPhone.trim()) {
-      toast.error('Vui lòng nhập số điện thoại liên hệ!');
+  // Nhấn nút "Thanh toán"
+  const handleCheckout = async (targetPlayerId?: string) => {
+    // Xác thực thông tin khách hàng bằng Zod schema
+    const validationResult = checkoutCustomerSchema.safeParse({
+      customerName,
+      customerPhone,
+      customerEmail: customerEmail || undefined,
+      customerNote,
+      isPolicyAgreed,
+    });
+
+    if (!validationResult.success) {
+      toast.error(validationResult.error.issues[0].message);
       return;
     }
 
     // Làm sạch và chuẩn hóa số điện thoại
     let formattedPhone = customerPhone.replace(/[\s.-]/g, '');
-    if (formattedPhone.startsWith('+84')) {
-      // Giữ nguyên +84
-    } else if (formattedPhone.startsWith('84') && formattedPhone.length >= 11) {
+    if (formattedPhone.startsWith('84') && formattedPhone.length >= 11) {
       formattedPhone = '0' + formattedPhone.slice(2);
     } else if (/^[1-9][0-9]{8,9}$/.test(formattedPhone)) {
       formattedPhone = '0' + formattedPhone;
     }
 
-    if (!/^(0|\+84)[0-9]{9,10}$/.test(formattedPhone)) {
-      toast.error('Số điện thoại không đúng định dạng hợp lệ (10 số, bắt đầu bằng 0 hoặc +84)!');
-      return;
-    }
+    const effectivePlayerId = targetPlayerId || user?.id;
 
-    if (!isPolicyAgreed) {
-      toast.error('Vui lòng đồng ý với chính sách của chi nhánh trước khi thanh toán!');
+    // KIỂM TRA ĐĂNG NHẬP: Bắt buộc phải có tài khoản người chơi
+    if (!effectivePlayerId) {
+      setIsCheckingPhone(true);
+      try {
+        const checkResult = await checkPhoneApi(formattedPhone);
+        setVerifiedPhone(formattedPhone);
+
+        if (checkResult.exists) {
+          // Số điện thoại đã có tài khoản -> Thông báo và hướng dẫn đăng nhập
+          setIsPhoneExistsModalOpen(true);
+        } else {
+          // Số điện thoại chưa có tài khoản -> Mở popup đăng ký nhanh
+          setIsQuickRegisterModalOpen(true);
+        }
+      } catch (err: unknown) {
+        toast.error(getApiErrorMessage(err, 'Không thể kiểm tra số điện thoại. Vui lòng thử lại!'));
+      } finally {
+        setIsCheckingPhone(false);
+      }
       return;
     }
 
     // Lấy toàn bộ danh sách slot sân cụ thể
     const rawSlots: SelectedCourtSlot[] =
-      state?.selectedSlots && state.selectedSlots.length > 0
-        ? state.selectedSlots
+      effectiveState?.selectedSlots && effectiveState.selectedSlots.length > 0
+        ? effectiveState.selectedSlots
         : groupedBookings.flatMap((g) => g.slots || []);
 
     if (rawSlots.length === 0) {
@@ -234,13 +306,13 @@ export function BranchCheckoutPage() {
       mergedSlots.forEach((slot) => {
         const ctId = slot.courtTypeId;
         // Ưu tiên bảng giá người dùng đã chọn cho loại sân đó từ state
-        let ptId = state?.selectedPriceTableIds?.[ctId] || slot.priceTableId || '';
+        let ptId = effectiveState?.selectedPriceTableIds?.[ctId] || slot.priceTableId || '';
 
-        // 2. Tìm trong state.pricingConfigs hoặc pricingConfigs từ query
+        // 2. Tìm trong effectiveState.pricingConfigs hoặc pricingConfigs từ query
         if (!ptId || ptId.trim() === '') {
           const allConfigs =
-            state?.pricingConfigs && state.pricingConfigs.length > 0
-              ? state.pricingConfigs
+            effectiveState?.pricingConfigs && effectiveState.pricingConfigs.length > 0
+              ? effectiveState.pricingConfigs
               : pricingConfigs;
           const ct = allConfigs.find((c) => (c.courtTypeId || (c as any).id) === ctId);
           if (ct?.priceTables && ct.priceTables.length > 0) {
@@ -315,18 +387,15 @@ export function BranchCheckoutPage() {
         note: fullNote || undefined,
         courtSlots: Object.values(courtSlotsMap),
         services: servicesPayload.length > 0 ? servicesPayload : undefined,
-        playerId: user?.id || null,
+        playerId: effectivePlayerId,
       });
 
+      // Xóa cache đặt sân khi đã khởi tạo đơn hàng thành công
+      sessionStorage.removeItem(savedStateKey);
       setOrderCreatedResponse(response);
       setIsPaymentModalOpen(true);
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string; title?: string } }; message?: string };
-      const msg =
-        error.response?.data?.detail ||
-        error.response?.data?.title ||
-        error.message ||
-        'Không thể khởi tạo đơn đặt sân. Vui lòng thử lại!';
+      const msg = getApiErrorMessage(err, 'Không thể khởi tạo đơn đặt sân. Vui lòng thử lại!');
       toast.error(msg);
     }
   };
@@ -589,14 +658,14 @@ export function BranchCheckoutPage() {
               {/* Nút thanh toán nổi bật */}
               <button
                 type="button"
-                disabled={!isPolicyAgreed || createOrderMutation.isPending}
-                onClick={handleCheckout}
-                className="w-full py-4 rounded-xl bg-[#7CFF01] hover:bg-[#6ee400] text-black font-heading font-black text-sm tracking-wide transition-all shadow-xl shadow-[#7CFF01]/25 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2"
+                disabled={!isPolicyAgreed || createOrderMutation.isPending || isCheckingPhone}
+                onClick={() => handleCheckout()}
+                className="w-full py-4 rounded-xl bg-[#7CFF01] hover:bg-[#6ee400] text-black font-heading font-black text-sm tracking-wide transition-all shadow-xl shadow-[#7CFF01]/25 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer"
               >
-                {createOrderMutation.isPending ? (
+                {createOrderMutation.isPending || isCheckingPhone ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    <span>Đang khởi tạo đơn hàng...</span>
+                    <span>{isCheckingPhone ? 'Đang kiểm tra tài khoản...' : 'Đang khởi tạo đơn hàng...'}</span>
                   </>
                 ) : (
                   <span>Thanh toán</span>
@@ -734,7 +803,37 @@ export function BranchCheckoutPage() {
         branchId={branchId}
         onSuccess={() => {
           setIsPaymentModalOpen(false);
-          navigate(`/branches/${branchId}`);
+          navigate('/account?tab=orders');
+        }}
+      />
+
+      {/* Modal Thông Báo Số Điện Thoại Đã Có Tài Khoản */}
+      <PhoneExistsModal
+        isOpen={isPhoneExistsModalOpen}
+        onClose={() => setIsPhoneExistsModalOpen(false)}
+        phoneNumber={verifiedPhone || customerPhone}
+        onGoToLogin={() => {
+          setIsPhoneExistsModalOpen(false);
+          handleGoToLogin();
+        }}
+      />
+
+      {/* Modal Đăng Ký Tài Khoản Nhanh */}
+      <QuickRegisterModal
+        isOpen={isQuickRegisterModalOpen}
+        onClose={() => setIsQuickRegisterModalOpen(false)}
+        initialFullName={customerName}
+        initialPhone={verifiedPhone || customerPhone}
+        initialEmail={customerEmail}
+        onSuccess={() => {
+          setIsQuickRegisterModalOpen(false);
+          // Sau khi đăng ký và tự động đăng nhập xong, tiếp tục tạo đơn đặt sân ngay
+          const newUserId = useAuthStore.getState().user?.id;
+          handleCheckout(newUserId);
+        }}
+        onGoToLogin={() => {
+          setIsQuickRegisterModalOpen(false);
+          handleGoToLogin();
         }}
       />
     </div>

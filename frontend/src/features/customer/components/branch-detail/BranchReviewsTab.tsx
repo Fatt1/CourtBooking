@@ -4,6 +4,7 @@ import { useBranchReviewsQuery } from '@/api/reviews';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/format';
 
 interface BranchReviewsTabProps {
   branchId: string;
@@ -240,7 +241,7 @@ export function BranchReviewsTab({ branchId, branchName, reviewAverage = 0 }: Br
                             </span>
                           </div>
                           <div className="text-xs text-muted-foreground mt-0.5">
-                            {review.createdAt ? new Date(review.createdAt).toLocaleDateString('vi-VN') : 'Gần đây'}
+                            {review.createdAt ? formatDate(review.createdAt) : 'Gần đây'}
                           </div>
                         </div>
                       </div>

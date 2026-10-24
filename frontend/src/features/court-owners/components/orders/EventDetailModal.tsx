@@ -48,6 +48,7 @@ import { UpdateCustomerModal } from './UpdateCustomerModal';
 import { type SelectedCourtSlot, mergeAdjacentSlots, timeToMinutes } from './timeline';
 import { getApiErrorMessage } from '@/types/api';
 import { cn } from '@/lib/utils';
+import { formatDateTime } from '@/lib/format';
 
 interface EventDetailModalProps {
   open: boolean;
@@ -92,20 +93,7 @@ function formatEventTime(startTime?: string, endTime?: string): string {
   return `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}`;
 }
 
-/**
- * Format ISO datetime sang chuỗi hiển thị: HH:mm - dd/MM/yyyy
- */
-function formatDateTime(isoStr?: string): string {
-  if (!isoStr) return '—';
-  try {
-    const d = new Date(isoStr);
-    const datePart = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const timePart = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-    return `${timePart} - ${datePart}`;
-  } catch {
-    return isoStr;
-  }
-}
+
 
 /**
  * Format giờ: HH:mm:ss -> HHhMM (ví dụ: 10:00:00 -> 10h00)

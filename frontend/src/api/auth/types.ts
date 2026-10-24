@@ -15,6 +15,7 @@ export interface CourtOwnerLoginResponse {
   accessToken: string;
   roleName: UserRole;
   mustChangePassword?: boolean;
+  phoneNumber?: string;
 }
 
 export interface RefreshTokenResponse {
@@ -97,4 +98,21 @@ export interface UpdateOwnerProfileRequest {
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
+}
+
+export interface CurrentPlayerProfileResponse {
+  userId: string;
+  email: string;
+  fullName: string;
+  phoneNumber: string;
+  gender: number; // 0 = Male, 1 = Female, 2 = Other
+  dateOfBirth: string | null;
+}
+
+export interface UpdatePlayerProfileRequest {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  gender: number;
+  dateOfBirth?: string | null;
 }

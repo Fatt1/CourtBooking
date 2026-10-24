@@ -11,7 +11,8 @@ public sealed record LoginResponse(
     string FullName,
     string AccessToken,
     string RoleName,
-    bool MustChangePassword = false);
+    bool MustChangePassword = false,
+    string? PhoneNumber = null);
 
 /// <summary>
 /// DTO phản hồi sau khi làm mới Access Token thành công.
@@ -55,3 +56,13 @@ public sealed record OwnerProfileDto(
     string BusinessName,
     string? TaxCode,
     CurrentOwnerPackageDto? CurrentPackage);
+
+/// <summary>
+/// DTO yêu cầu cập nhật thông tin hồ sơ Người chơi
+/// </summary>
+public sealed record UpdatePlayerProfileRequest(
+    string FullName,
+    string Email,
+    string PhoneNumber,
+    Gender Gender,
+    DateOnly? DateOfBirth);

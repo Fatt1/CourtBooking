@@ -92,6 +92,7 @@ internal sealed class BookEventTicketHandler(
             }
 
             // 5. Khởi tạo bản ghi vé mới (Tuân thủ Guid.CreateVersion7())
+            var nowUtc = DateTime.UtcNow;
             var ticket = new EventTicket
             {
                 Id = Guid.CreateVersion7(),
@@ -99,10 +100,11 @@ internal sealed class BookEventTicketHandler(
                 PlayerId = currentUserId,
                 Quantity = request.Quantity,
                 Price = sportEvent.TicketPrice,
-                PaymentMethod = request.PaymentMethod,
-                ProofImageId = request.ProofImageId,
-                Status = EventTicketStatus.PendingApproval,
-                CreatedAt = DateTime.UtcNow
+                PaymentMethod = PaymentMethod.QrTransfer,
+                ProofImageId = null,
+                Status = EventTicketStatus.AwaitingPayment,
+                CreatedAt = nowUtc,
+                ExpiresAt = nowUtc.AddMinutes(15)
             };
 
             dbContext.EventTickets.Add(ticket);
@@ -126,7 +128,9 @@ internal sealed class BookEventTicketHandler(
                 ticket.PaymentMethod,
                 ticket.Status,
                 ticket.CreatedAt,
-                ticket.CreatedAt.AddMinutes(15),
+                ticket.ExpiresAt ?? ticket.CreatedAt.AddMinutes(15),
+                sportEvent.Order.Branch.BankName,
+                sportEvent.Order.Branch.BankCode,
                 sportEvent.Order.Branch.AccountNumber,
                 sportEvent.Order.Branch.AccountName,
                 sportEvent.Order.Branch.QrImage != null

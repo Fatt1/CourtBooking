@@ -98,10 +98,8 @@ export function EventCheckoutPage() {
     }
 
     try {
-      // 1: BankTransfer / VietQR
       const res = await bookMutation.mutateAsync({
         quantity,
-        paymentMethod: 1,
       });
 
       setTicketResponse(res);

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { userRegisterSchema, type UserRegisterValues } from '../schemas/userAuthSchema';
 import { useUserRegisterMutation } from '@/api/auth';
+import { getApiErrorMessage } from '@/types/api';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -44,8 +45,7 @@ export function UserRegisterForm() {
       toast.success('Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
       navigate('/login');
     } catch (err: unknown) {
-      const error = err as { detail?: string; message?: string };
-      toast.error(error?.detail || error?.message || 'Đăng ký tài khoản thất bại. Vui lòng thử lại!');
+      toast.error(getApiErrorMessage(err, 'Đăng ký tài khoản thất bại. Vui lòng thử lại!'));
     }
   };
 

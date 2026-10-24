@@ -8,5 +8,4 @@ namespace CourtBooking.Application.Features.V1.Identities.Commands.ForgotPasswor
 /// </summary>
 public sealed record ForgotPasswordCommand(
     string Email,
-    string? ClientResetUrl = null,
     AccountType? ExpectedAccountType = null) : ICommand;

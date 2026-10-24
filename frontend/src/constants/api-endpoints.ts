@@ -24,6 +24,8 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/identity/reset-password',
     CHANGE_PASSWORD: '/identity/change-password',
     ME: '/identity/me',
+    PROFILE: '/identity/profile',
+    CHECK_PHONE: '/identity/check-phone',
   },
 
   // 1c. Xác thực & Tài khoản Quản trị viên (Admin Identities)
@@ -148,6 +150,7 @@ export const API_ENDPOINTS = {
     PUBLIC_DETAIL: (id: string) => `/events/${id}`,
     BUY_TICKETS: (id: string) => `/events/${id}/tickets`,
     CANCEL_TICKET: (id: string, ticketId: string) => `/events/${id}/tickets/${ticketId}/cancel`,
+    SUBMIT_PROOF: (id: string, ticketId: string) => `/events/${id}/tickets/${ticketId}/proof`,
     MY_TICKETS: '/events/my-tickets',
 
     // Owner

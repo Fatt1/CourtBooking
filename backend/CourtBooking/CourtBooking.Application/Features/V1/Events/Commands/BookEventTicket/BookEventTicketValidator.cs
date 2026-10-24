@@ -13,9 +13,5 @@ public sealed class BookEventTicketValidator : AbstractValidator<BookEventTicket
         RuleFor(x => x.Quantity)
             .GreaterThan(0)
             .WithMessage("Số lượng vé mua phải từ 1 vé trở lên.");
-
-        RuleFor(x => x.PaymentMethod)
-            .IsInEnum()
-            .WithMessage("Phương thức thanh toán không hợp lệ (1: Tiền mặt, 2: Chuyển khoản QR).");
     }
 }

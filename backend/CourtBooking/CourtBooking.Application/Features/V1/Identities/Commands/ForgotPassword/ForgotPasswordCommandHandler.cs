@@ -7,11 +7,13 @@ using CourtBooking.SharedKernel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CourtBooking.Application.Features.V1.Identities.Commands.ForgotPassword;
 
 internal sealed class ForgotPasswordCommandHandler(
     UserManager<ApplicationUser> userManager,
+    ILogger<ForgotPasswordCommandHandler> logger,
     IEmailService emailService) : ICommandHandler<ForgotPasswordCommand>
 {
     public async Task<Result> Handle(ForgotPasswordCommand request, CancellationToken ct)
@@ -42,12 +44,13 @@ internal sealed class ForgotPasswordCommandHandler(
 
         // 4. Xây dựng đường link đặt lại mật khẩu riêng biệt cho từng portal (Chủ sân vs Người chơi)
         string defaultUrl = (user.AccountType == AccountType.CourtOwner)
-            ? "http://localhost:3001/owner/reset-password"
+            ? "http://localhost:3000/owner/reset-password"
             : "http://localhost:3000/reset-password";
 
-        var baseUrl = !string.IsNullOrWhiteSpace(request.ClientResetUrl)
-            ? request.ClientResetUrl.TrimEnd('/')
-            : defaultUrl;
+        var baseUrl = defaultUrl;
+
+        logger.LogInformation("ForgotPassword: Sending reset link to {Email} for account type {AccountType}. Reset URL: {ResetUrl}",
+            user.Email, user.AccountType, baseUrl);
 
         var resetLink = $"{baseUrl}?email={Uri.EscapeDataString(user.Email!)}&token={urlSafeToken}";
 

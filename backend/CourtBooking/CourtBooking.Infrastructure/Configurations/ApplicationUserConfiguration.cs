@@ -38,6 +38,10 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
 
         builder.HasQueryFilter(u => !u.IsDeleted);
 
+        builder.HasIndex(u => new { u.PhoneNumber, u.AccountType })
+            .IsUnique()
+            .HasFilter("[PhoneNumber] IS NOT NULL AND [IsDeleted] = 0");
+
         // Relationships
         builder.HasOne(u => u.PlayerProfile)
             .WithOne(p => p.User)

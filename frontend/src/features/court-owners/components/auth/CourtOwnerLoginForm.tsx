@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   courtOwnerLoginSchema,
   type CourtOwnerLoginValues,
 } from '../../schemas/courtOwnerAuthSchema';
 import { useCourtOwnerLoginMutation } from '@/api/auth';
+import { getApiErrorMessage } from '@/types/api';
 import {
   Form,
   FormField,
@@ -50,13 +51,7 @@ export function CourtOwnerLoginForm() {
       const redirectPath = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/owner/orders';
       navigate(redirectPath, { replace: true });
     } catch (err: unknown) {
-      // Backend trả về RFC ProblemDetails { title, detail } hoặc Error thông thường
-      const errorObj = err as { detail?: string; title?: string; message?: string };
-      const displayMsg =
-        errorObj?.detail ||
-        errorObj?.title ||
-        errorObj?.message ||
-        'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.';
+      const displayMsg = getApiErrorMessage(err, 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.');
       setErrorMessage(displayMsg);
     }
   };
@@ -113,13 +108,12 @@ export function CourtOwnerLoginForm() {
                     Mật khẩu
                   </FormLabel>
                   {/* Link Quên Mật Khẩu */}
-                  <button
-                    type="button"
-                    onClick={() => setForgotPasswordOpen(true)}
-                    className="text-xs font-medium text-[#a3e635] hover:text-[#b4f045] hover:underline transition-colors cursor-pointer"
+                  <Link
+                    to="/owner/forgot-password"
+                    className="text-xs font-medium text-[#a3e635] hover:text-[#b4f045] hover:underline transition-colors"
                   >
                     Quên mật khẩu?
-                  </button>
+                  </Link>
                 </div>
                 <FormControl>
                   <div className="relative">

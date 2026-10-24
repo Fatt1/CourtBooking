@@ -41,6 +41,8 @@ import { PosLayout } from '@/features/court-owners/components/pos/PosLayout';
 import { RetailOrdersPage } from '@/features/court-owners/pages/RetailOrdersPage';
 import { PricingPage } from '@/features/court-owners/pages/PricingPage';
 import { CourtOwnerLoginPage } from '@/features/court-owners/pages/CourtOwnerLoginPage';
+import { CourtOwnerForgotPasswordPage } from '@/features/court-owners/pages/CourtOwnerForgotPasswordPage';
+import { CourtOwnerResetPasswordPage } from '@/features/court-owners/pages/CourtOwnerResetPasswordPage';
 import { OwnerReportsPage } from '@/features/court-owners/pages/OwnerReportsPage';
 import { OwnerDashboardPage } from '@/features/court-owners/pages/OwnerDashboardPage';
 import { OwnerPackagesPage } from '@/features/court-owners/pages/OwnerPackagesPage';
@@ -100,6 +102,14 @@ export const router = createBrowserRouter([
   {
     path: '/owner/login',
     element: <CourtOwnerLoginPage />,
+  },
+  {
+    path: '/owner/forgot-password',
+    element: <CourtOwnerForgotPasswordPage />,
+  },
+  {
+    path: '/owner/reset-password',
+    element: <CourtOwnerResetPasswordPage />,
   },
   {
     path: '/admin/login',

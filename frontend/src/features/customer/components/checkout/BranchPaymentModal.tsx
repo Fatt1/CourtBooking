@@ -19,6 +19,8 @@ import {
 } from '@/api/orders';
 import { useUploadImageMutation, getImageUrl } from '@/api/storage';
 import { formatCurrency } from '@/lib/utils';
+import { toUtcDate } from '@/lib/format';
+import { getApiErrorMessage } from '@/types/api';
 
 interface BranchPaymentModalProps {
   isOpen: boolean;
@@ -62,7 +64,8 @@ export function BranchPaymentModal({
     }
 
     const calculateRemaining = () => {
-      const expiresAtMs = new Date(orderData.holdExpiresAt).getTime();
+      const expiresDate = toUtcDate(orderData.holdExpiresAt);
+      const expiresAtMs = expiresDate ? expiresDate.getTime() : 0;
       const nowMs = Date.now();
       const diffSec = Math.max(0, Math.floor((expiresAtMs - nowMs) / 1000));
       setRemainingSeconds(diffSec);
@@ -124,8 +127,7 @@ export function BranchPaymentModal({
         toast.error('Không lấy được mã định danh ảnh sau khi tải lên!');
       }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } }; message?: string };
-      toast.error(error.response?.data?.detail || error.message || 'Lỗi khi tải ảnh biên lai!');
+      toast.error(getApiErrorMessage(err, 'Lỗi khi tải ảnh biên lai!'));
       setProofImagePreview(null);
       setProofImageId(null);
     }
@@ -163,8 +165,7 @@ export function BranchPaymentModal({
       toast.success('Đã gửi thông tin thanh toán! Đơn đặt sân đang chờ chủ sân xác nhận.');
       onSuccess();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } }; message?: string };
-      toast.error(error.response?.data?.detail || error.message || 'Lỗi nộp xác nhận thanh toán!');
+      toast.error(getApiErrorMessage(err, 'Lỗi nộp xác nhận thanh toán!'));
     }
   };
 
@@ -173,11 +174,11 @@ export function BranchPaymentModal({
     setShowCancelConfirm(true);
   };
 
-  // Xác nhận hủy đơn hàng và trả về trang chi tiết chi nhánh
+  // Xác nhận hủy đơn hàng và trả về trang đơn hàng của tôi
   const handleConfirmCancel = async () => {
     if (!orderData?.orderId) {
       setShowCancelConfirm(false);
-      navigate(`/branches/${branchId}`);
+      navigate('/account?tab=orders');
       return;
     }
 
@@ -191,7 +192,7 @@ export function BranchPaymentModal({
       console.warn('Lỗi khi hủy đơn đặt:', err);
     } finally {
       setShowCancelConfirm(false);
-      navigate(`/branches/${branchId}`);
+      navigate('/account?tab=orders');
     }
   };
 

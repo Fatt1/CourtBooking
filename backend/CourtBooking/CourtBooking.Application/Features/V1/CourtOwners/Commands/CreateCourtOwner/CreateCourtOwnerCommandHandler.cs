@@ -29,6 +29,14 @@ internal sealed class CreateCourtOwnerCommandHandler(
             return Result.Failure<Guid>(new ConflictError("Email này đã được sử dụng trên hệ thống."));
         }
 
+        var phone = request.PhoneNumber.Trim();
+        var phoneExists = await userManager.Users
+            .AnyAsync(u => u.PhoneNumber == phone && u.AccountType == AccountType.CourtOwner && !u.IsDeleted, ct);
+        if (phoneExists)
+        {
+            return Result.Failure<Guid>(new ConflictError("Số điện thoại này đã được sử dụng cho một tài khoản chủ sân khác."));
+        }
+
         // 2. Xác định mật khẩu ban đầu
         var initialPassword = !string.IsNullOrWhiteSpace(request.Password)
             ? request.Password.Trim()

@@ -8,6 +8,7 @@ import {
   Plus,
   Loader2,
   Trophy,
+  LayoutGrid,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { getImageUrl } from '@/api/storage';
@@ -207,6 +208,47 @@ export function EventDetailPage() {
               )}
             </div>
 
+            {/* 4. Card: Danh sách sân dùng để chơi */}
+            {event.courts && event.courts.length > 0 && (
+              <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold tracking-wider text-[#397B48] dark:text-[#a3e635] uppercase">
+                      KHU VỰC THI ĐẤU
+                    </span>
+                    <h3 className="mt-1 font-heading text-xl font-bold text-foreground">
+                      Danh sách sân dùng để chơi
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Các sân thuộc chi nhánh {event.branch.branchName} được bố trí cho sự kiện này.
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#397B48]/10 text-[#397B48] dark:text-[#a3e635] border border-[#397B48]/20">
+                    {event.courts.length} sân
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {event.courts.map((court) => (
+                    <div
+                      key={court.courtId}
+                      className="flex items-center gap-3 p-3.5 rounded-xl border border-border/80 bg-muted/30 hover:border-[#397B48]/50 hover:bg-[#397B48]/5 transition-all"
+                    >
+                      <div className="size-8 rounded-lg bg-[#397B48]/15 text-[#397B48] dark:text-[#a3e635] flex items-center justify-center font-bold text-xs shrink-0">
+                        <LayoutGrid className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-bold text-sm text-foreground block truncate">
+                          {court.courtName}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">Sân chơi sự kiện</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* 5. Card: Người sẽ cùng tham gia */}
             <div className="rounded-2xl border border-border/80 bg-card text-card-foreground p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -299,6 +341,24 @@ export function EventDetailPage() {
                     <div className="text-muted-foreground text-[11px]">
                       {event.branch.address}
                     </div>
+                    {event.courts && event.courts.length > 0 && (
+                      <div className="mt-2.5 pt-2.5 border-t border-border/50">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center justify-between">
+                          <span>Sân sử dụng</span>
+                          <span className="text-[#397B48] dark:text-[#a3e635] font-semibold">{event.courts.length} sân</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {event.courts.map((c) => (
+                            <span
+                              key={c.courtId}
+                              className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#397B48]/10 text-[#397B48] dark:text-[#a3e635] border border-[#397B48]/20"
+                            >
+                              {c.courtName}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
