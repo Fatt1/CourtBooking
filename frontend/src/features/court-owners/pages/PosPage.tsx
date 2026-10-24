@@ -14,8 +14,13 @@ import { useBranchStore } from '@/stores/useBranchStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useServiceCategoriesQuery } from '@/api/service-categories';
 import { usePosProductsQuery, useCreateRetailOrderMutation, type RetailOrderDto } from '@/api/retail-orders';
+import { apiClient } from '@/lib/axios';
+import { API_ENDPOINTS } from '@/constants/api-endpoints';
+import type { PagedList } from '@/types/api';
+import type { OwnerServiceDto } from '@/api/services';
 import { getImageUrl } from '@/api/storage';
 import { getApiErrorMessage } from '@/types/api';
+import { useDebounce } from '@/hooks/useDebounce';
 import type { PosProduct } from '../types/pos';
 
 export function PosPage() {
@@ -29,12 +34,20 @@ export function PosPage() {
 }
 
 function BranchPos({ branchId, userId }: { branchId: string; userId: string }) {
-  const catalog = usePosProductsQuery(branchId);
+  const [search, setSearch] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const debouncedSearch = useDebounce(search, 350);
+
+  // Tìm kiếm và lọc danh mục trực tiếp qua API backend
+  const catalog = usePosProductsQuery({
+    branchId,
+    search: debouncedSearch,
+    categoryId: categoryId || undefined,
+  });
   const categories = useServiceCategoriesQuery();
   const checkout = useCreateRetailOrderMutation();
   const { draft, updateDraft } = usePosDraft(userId, branchId);
-  const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+
   useEffect(() => {
     if (categoryId && categories.isSuccess && !categories.data.some((item) => item.id === categoryId && item.isActive)) setCategoryId('');
   }, [categoryId, categories.isSuccess, categories.data]);
@@ -44,6 +57,9 @@ function BranchPos({ branchId, userId }: { branchId: string; userId: string }) {
   const searchRef = useRef<HTMLInputElement>(null);
   const checkoutLock = useRef(false);
 
+  // Bộ nhớ đệm các sản phẩm đã tải để giữ thông tin giỏ hàng không bị mất khi tìm kiếm từ khóa khác
+  const knownProductsRef = useRef<Map<string, PosProduct>>(new Map());
+
   useEffect(() => {
     const shortcut = (e: KeyboardEvent) => { if (e.key === 'F3') { e.preventDefault(); searchRef.current?.focus(); } };
     window.addEventListener('keydown', shortcut);
@@ -52,14 +68,22 @@ function BranchPos({ branchId, userId }: { branchId: string; userId: string }) {
 
   const products = useMemo<PosProduct[]>(() => {
     const activeCategories = new Set(categories.data?.filter((item) => item.isActive).map((item) => item.id));
-    return (catalog.data ?? []).flatMap((product) => {
+    const list = (catalog.data ?? []).flatMap((product) => {
       const branch = product.branches.find((item) => item.branchId === branchId);
       return branch ? [{ id: product.id, name: product.name, unit: product.unit, categoryId: product.categoryId,
         imageUrl: getImageUrl(product.image?.key || product.image?.url), price: branch.price,
         available: branch.isActive && activeCategories.has(product.categoryId) }] : [];
     });
+    list.forEach((p) => knownProductsRef.current.set(p.id, p));
+    return list;
   }, [catalog.data, categories.data, branchId]);
-  const productMap = new Map(products.map((item) => [item.id, item]));
+
+  const productMap = useMemo(() => {
+    const map = new Map(knownProductsRef.current);
+    products.forEach((item) => map.set(item.id, item));
+    return map;
+  }, [products]);
+
   const lines = draft.lines.map((line) => {
     const current = productMap.get(line.serviceId);
     return current ? { ...line, name: current.name, unit: current.unit, unitPrice: current.price,
@@ -70,9 +94,10 @@ function BranchPos({ branchId, userId }: { branchId: string; userId: string }) {
   const discount = draft.discount.trim() === '' ? 0 : Number(draft.discount);
   const validDiscount = Number.isFinite(discount) && discount >= 0 && discount <= subtotal
     && Math.abs(Math.round(discount * 100) - discount * 100) < 0.00001;
+
+  const isSearching = catalog.isFetching || search !== debouncedSearch;
   const ready = !catalog.isPending && !categories.isPending && !catalog.isError && !categories.isError;
-  const filtered = products.filter((product) => (!categoryId || product.categoryId === categoryId)
-    && product.name.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi')));
+  const filtered = products;
 
   const add = (product: PosProduct) => {
     if (checkoutLock.current || !product.available) return;
@@ -94,13 +119,17 @@ function BranchPos({ branchId, userId }: { branchId: string; userId: string }) {
     setError('');
     try {
       // Recheck availability and price before using the existing checkout API.
-      const fresh = await catalog.refetch();
-      if (fresh.isError) throw fresh.error;
       const freshCategories = await categories.refetch();
       if (freshCategories.isError) throw freshCategories.error;
       const activeIds = new Set(freshCategories.data?.filter((item) => item.isActive).map((item) => item.id));
+
+      const freshResponse = await apiClient.get<PagedList<OwnerServiceDto>>(API_ENDPOINTS.POS.SERVICES, {
+        params: { branchId, page: 1, pageSize: 100 },
+      });
+      const freshData = (freshResponse as unknown as PagedList<OwnerServiceDto>).items ?? [];
+
       const changed = lines.some((line) => {
-        const product = fresh.data?.find((item) => item.id === line.serviceId);
+        const product = freshData.find((item) => item.id === line.serviceId);
         const branch = product?.branches.find((item) => item.branchId === branchId);
         return !product || !branch?.isActive || !activeIds.has(product.categoryId) || branch.price !== line.unitPrice;
       });
@@ -137,18 +166,17 @@ function BranchPos({ branchId, userId }: { branchId: string; userId: string }) {
           contentClassName="bg-popover text-popover-foreground [&>div:first-child]:bg-muted/40 [&_input]:text-foreground [&_button]:text-foreground [&_button:hover]:bg-accent [&_button:hover]:text-foreground [&_svg]:text-brand-green"
           value={categoryId} onChange={(value) => setCategoryId(value)} disabled={categories.isPending}
           placeholder="Tất cả danh mục" searchPlaceholder="Tìm danh mục..." emptyText="Không tìm thấy danh mục"
-          options={[{ value: '', label: 'Tất cả danh mục', subLabel: `${products.length} sản phẩm` },
-            ...(categories.data ?? []).filter((item) => item.isActive).map((item) => ({ value: item.id, label: item.name,
-              subLabel: `${products.filter((product) => product.categoryId === item.id).length} sản phẩm` }))]} />
+          options={[{ value: '', label: 'Tất cả danh mục' },
+            ...(categories.data ?? []).filter((item) => item.isActive).map((item) => ({ value: item.id, label: item.name }))]} />
         </div>
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span>{ready ? `${filtered.length} sản phẩm` : 'Đang tải sản phẩm...'}</span>
+          <span>{ready ? (isSearching ? 'Đang tìm kiếm...' : `${filtered.length} sản phẩm`) : 'Đang tải sản phẩm...'}</span>
           {(categoryId || search) && <button type="button" onClick={() => { setCategoryId(''); setSearch(''); }} className="font-medium text-brand-green hover:underline dark:text-emerald-400">Xóa bộ lọc</button>}
         </div>
         {hasError ? <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm">
           <p>{getApiErrorMessage(catalog.error || categories.error, 'Không thể tải sản phẩm')}</p>
           <Button variant="outline" className="mt-3" onClick={() => { void catalog.refetch(); void categories.refetch(); }}>Thử lại</Button>
-        </div> : <PosProductGrid products={filtered} loading={!ready} disabled={busy} onAdd={add} />}
+        </div> : <PosProductGrid products={filtered} loading={!ready || isSearching} disabled={busy} onAdd={add} />}
       </section>
       <PosCart lines={lines} subtotal={subtotal} discount={draft.discount} discountAmount={Number.isFinite(discount) ? discount : 0}
         locked={busy} paying={busy} canPay={ready && lines.length > 0 && validDiscount && !unavailable.size}

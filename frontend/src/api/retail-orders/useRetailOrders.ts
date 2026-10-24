@@ -79,17 +79,36 @@ export function useRetailOrderDetailQuery(id: string | null, branchId: string) {
   });
 }
 
-export function usePosProductsQuery(branchId: string) {
+export interface PosProductsParams {
+  branchId: string;
+  search?: string;
+  categoryId?: string;
+}
+
+export function usePosProductsQuery(params: string | PosProductsParams) {
   const authenticated = useAuthStore((state) => state.isAuthenticated);
+  const branchId = typeof params === 'string' ? params : params.branchId;
+  const search = typeof params === 'string' ? undefined : (params.search?.trim() || undefined);
+  const categoryId = typeof params === 'string' ? undefined : (params.categoryId || undefined);
+
   return useQuery({
-    queryKey: ['owner', 'services', 'pos', branchId],
+    queryKey: ['owner', 'services', 'pos', branchId, search, categoryId],
     queryFn: async (): Promise<OwnerServiceDto[]> => {
       const items: OwnerServiceDto[] = [];
       let page = 1;
       let totalPages = 1;
       do {
-        const response = await apiClient.get<PagedList<OwnerServiceDto>>(API_ENDPOINTS.POS.SERVICES,
-          { params: { branchId, page, pageSize: 100 } });
+        const queryParams: Record<string, unknown> = {
+          branchId,
+          page,
+          pageSize: 100,
+        };
+        if (search) queryParams.search = search;
+        if (categoryId) queryParams.categoryId = categoryId;
+
+        const response = await apiClient.get<PagedList<OwnerServiceDto>>(API_ENDPOINTS.POS.SERVICES, {
+          params: queryParams,
+        });
         const data = response as unknown as PagedList<OwnerServiceDto>;
         items.push(...data.items);
         totalPages = data.totalPages;
