@@ -52,7 +52,7 @@ public sealed class LeaveMatchCommandHandler(
             match.AvailableSlots += 1;
         }
 
-        participant.Status = ParticipantStatus.Cancelled;
+        match.Participants.Remove(participant);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
