@@ -15,6 +15,7 @@ export interface RetailOrderItemDto {
 
 export interface RetailOrderDto {
   id: string;
+  orderCode: string;
   branchId: string;
   branchName: string;
   subtotal: number;
@@ -27,6 +28,7 @@ export interface RetailOrderDto {
 
 export interface RetailOrderListItemDto {
   id: string;
+  orderCode: string;
   branchId: string;
   branchName: string;
   totalQuantity: number;

@@ -79,6 +79,7 @@ internal sealed class CreateRetailOrderHandler(
 
         return Result.Success(new RetailOrderDto(
             order.Id,
+            order.OrderCode,
             order.BranchId,
             availableServices.Values.First().BranchName,
             subtotal,

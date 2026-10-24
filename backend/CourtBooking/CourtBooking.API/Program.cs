@@ -1,4 +1,5 @@
 using CourtBooking.API.Extensions;
+using CourtBooking.API.Hubs;
 using CourtBooking.API.Infrastructure;
 using CourtBooking.Application.DependencyInjections;
 using CourtBooking.Infrastructure.Database;
@@ -32,7 +33,9 @@ try
         options.AddDefaultPolicy(policy =>
         {
             policy.WithOrigins(
-                      "http://localhost:3001",
+                      "https://swearingly-pseudocubic-beth.ngrok-free.dev",
+                      "http://172.27.32.1:3000",
+                      "http://172.16.20.114:3000",
                       "http://localhost:3000")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
@@ -122,10 +125,7 @@ try
     app.MapControllers();
 
     app.MapEndpoints();
-
-    // Map SignalR Notification Hub
-    app.MapHub<CourtBooking.API.Hubs.NotificationHub>("/hubs/notifications");
-
+    app.MapHub<NotificationHub>("/hubs/notifications");
     // Automatically apply pending database migrations and seed data on startup
     await DatabaseInitializer.ApplyMigrationsAndSeedAsync(app.Services);
 
