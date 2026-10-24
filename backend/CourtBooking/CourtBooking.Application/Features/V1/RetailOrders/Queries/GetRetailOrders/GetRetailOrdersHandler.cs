@@ -38,9 +38,7 @@ internal sealed class GetRetailOrdersHandler(
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var term = request.Search.Trim().ToLower();
-            query = query.Where(order =>
-                order.OrderCode.ToLower().Contains(term)
-                || order.Items.Any(item => item.Service.Name.ToLower().Contains(term)));
+            query = query.Where(order => order.OrderCode.ToLower().Contains(term));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
