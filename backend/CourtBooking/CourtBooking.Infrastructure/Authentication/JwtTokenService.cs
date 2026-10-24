@@ -26,6 +26,12 @@ internal sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenS
             new("accountType", user.AccountType.ToString())
         };
 
+        if (!string.IsNullOrEmpty(user.PhoneNumber))
+        {
+            claims.Add(new Claim("phone_number", user.PhoneNumber));
+            claims.Add(new Claim(ClaimTypes.MobilePhone, user.PhoneNumber));
+        }
+
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));

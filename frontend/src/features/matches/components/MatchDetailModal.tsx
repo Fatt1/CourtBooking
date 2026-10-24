@@ -35,6 +35,7 @@ import {
   type MatchDto,
 } from '@/api/matches';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/types/api';
 
 interface MatchDetailModalProps {
   isOpen: boolean;
@@ -98,8 +99,7 @@ export function MatchDetailModal({
       refetch();
       onSuccess?.();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(error?.response?.data?.detail || 'Không thể tham gia kèo lúc này');
+      toast.error(getApiErrorMessage(err, 'Không thể tham gia kèo lúc này'));
     }
   };
 
@@ -112,8 +112,7 @@ export function MatchDetailModal({
       refetch();
       onSuccess?.();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(error?.response?.data?.detail || 'Không thể duyệt thành viên');
+      toast.error(getApiErrorMessage(err, 'Không thể duyệt thành viên'));
     }
   };
 
@@ -126,8 +125,7 @@ export function MatchDetailModal({
       refetch();
       onSuccess?.();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(error?.response?.data?.detail || 'Không thể từ chối thành viên');
+      toast.error(getApiErrorMessage(err, 'Không thể từ chối thành viên'));
     }
   };
 
@@ -142,8 +140,7 @@ export function MatchDetailModal({
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(error?.response?.data?.detail || 'Không thể rút lui lúc này');
+      toast.error(getApiErrorMessage(err, 'Không thể rút lui lúc này'));
     }
   };
 
@@ -158,8 +155,7 @@ export function MatchDetailModal({
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(error?.response?.data?.detail || 'Không thể xóa kèo');
+      toast.error(getApiErrorMessage(err, 'Không thể xóa kèo'));
     }
   };
 

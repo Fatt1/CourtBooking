@@ -38,6 +38,7 @@ import {
   useUpdatePlayerProfileMutation,
   usePlayerChangePasswordMutation,
 } from '@/api/auth';
+import { getApiErrorMessage } from '@/types/api';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -553,9 +554,8 @@ export function AccountBookingsPage() {
       });
       toast.success('Cập nhật thông tin cá nhân thành công!');
       setIsEditProfileOpen(false);
-    } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.message || 'Có lỗi xảy ra khi cập nhật hồ sơ.';
-      toast.error(msg);
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Có lỗi xảy ra khi cập nhật hồ sơ.'));
     }
   };
 
@@ -596,8 +596,8 @@ export function AccountBookingsPage() {
       });
       toast.success('Đổi mật khẩu thành công!');
       setIsChangePasswordOpen(false);
-    } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.message || 'Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu hiện tại.';
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, 'Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu hiện tại.');
       setPasswordError(msg);
     }
   };
@@ -676,9 +676,8 @@ export function AccountBookingsPage() {
       setIsCancelTicketDialogOpen(false);
       setCancelTicketTarget(null);
       refetchTickets();
-    } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.message || 'Có lỗi xảy ra khi hủy vé.';
-      toast.error(msg);
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Có lỗi xảy ra khi hủy vé.'));
     }
   };
 
@@ -794,8 +793,7 @@ export function AccountBookingsPage() {
       setIsLeaveDialogOpen(false);
       refetchJoinedMatches();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } }; message?: string };
-      toast.error(error.response?.data?.detail || error.message || 'Không thể rút lui khỏi kèo.');
+      toast.error(getApiErrorMessage(err, 'Không thể rút lui khỏi kèo.'));
     }
   };
 
@@ -822,8 +820,7 @@ export function AccountBookingsPage() {
       setIsCancelDialogOpen(false);
       refetch();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string; title?: string } }; message?: string };
-      toast.error(error.response?.data?.detail || error.message || 'Không thể thực hiện hủy đơn.');
+      toast.error(getApiErrorMessage(err, 'Không thể thực hiện hủy đơn.'));
     }
   };
 

@@ -7,6 +7,7 @@ import {
   type CourtOwnerLoginValues,
 } from '../../schemas/courtOwnerAuthSchema';
 import { useCourtOwnerLoginMutation } from '@/api/auth';
+import { getApiErrorMessage } from '@/types/api';
 import {
   Form,
   FormField,
@@ -50,13 +51,7 @@ export function CourtOwnerLoginForm() {
       const redirectPath = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/owner/orders';
       navigate(redirectPath, { replace: true });
     } catch (err: unknown) {
-      // Backend trả về RFC ProblemDetails { title, detail } hoặc Error thông thường
-      const errorObj = err as { detail?: string; title?: string; message?: string };
-      const displayMsg =
-        errorObj?.detail ||
-        errorObj?.title ||
-        errorObj?.message ||
-        'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.';
+      const displayMsg = getApiErrorMessage(err, 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.');
       setErrorMessage(displayMsg);
     }
   };

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/axios';
 import { API_ENDPOINTS } from '@/constants/api-endpoints';
 import { useAuthStore } from '@/stores/useAuthStore';
-import type { PagedList } from '@/types/api';
+import type { PagedList, ProblemDetails } from '@/types/api';
 import {
   type DailyOrderDto,
   type DailyOrderResponse,
@@ -577,7 +577,7 @@ export function useMyOrderDetailQuery(orderId: string | null | undefined, enable
 export function useCreateOrderOnlineMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<CreateOrderOnlineResponse, ProblemDetails, CreateOrderOnlinePayload>({
     mutationFn: async (payload: CreateOrderOnlinePayload): Promise<CreateOrderOnlineResponse> => {
       const response = await apiClient.post<CreateOrderOnlineResponse>(
         API_ENDPOINTS.ORDERS.CREATE_ONLINE,
@@ -598,7 +598,7 @@ export function useCreateOrderOnlineMutation() {
 export function useSubmitPaymentProofMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, SubmitPaymentProofPayload>({
     mutationFn: async ({ orderId, imageId }: SubmitPaymentProofPayload) => {
       return await apiClient.put(
         API_ENDPOINTS.ORDERS.SUBMIT_PAYMENT_PROOF(orderId),
@@ -617,7 +617,7 @@ export function useSubmitPaymentProofMutation() {
 export function useCancelOrderOnlineMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, CancelOrderOnlinePayload>({
     mutationFn: async ({ orderId, reason }: CancelOrderOnlinePayload) => {
       return await apiClient.put(
         API_ENDPOINTS.ORDERS.CANCEL_ONLINE(orderId),

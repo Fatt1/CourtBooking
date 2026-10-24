@@ -15,6 +15,7 @@ export interface CourtOwnerLoginResponse {
   accessToken: string;
   roleName: UserRole;
   mustChangePassword?: boolean;
+  phoneNumber?: string;
 }
 
 export interface RefreshTokenResponse {

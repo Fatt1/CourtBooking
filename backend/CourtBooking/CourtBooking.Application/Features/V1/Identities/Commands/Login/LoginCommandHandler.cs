@@ -86,6 +86,7 @@ internal sealed class LoginCommandHandler(
             user.FullName,
             accessToken,
             roleName,
-            mustChangePassword));
+            mustChangePassword,
+            user.PhoneNumber));
     }
 }

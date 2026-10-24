@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { formatVND } from '@/lib/format';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useJoinMatchMutation, type MatchDto } from '@/api/matches';
+import { getApiErrorMessage } from '@/types/api';
 import { toast } from 'sonner';
 
 interface JoinMatchModalProps {
@@ -64,15 +65,7 @@ export function JoinMatchModal({
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { detail?: string; title?: string } };
-        message?: string;
-      };
-      toast.error(
-        error.response?.data?.detail ||
-          error.message ||
-          'Không thể tham gia kèo giao lưu.'
-      );
+      toast.error(getApiErrorMessage(err, 'Không thể tham gia kèo giao lưu.'));
     }
   };
 

@@ -11,6 +11,7 @@ using CourtBooking.Application.Features.V1.Identities.Commands.UpdateOwnerProfil
 using CourtBooking.Application.Features.V1.Identities.Dtos;
 using CourtBooking.Application.Features.V1.Identities.Queries.GetCurrentUser;
 using CourtBooking.Application.Features.V1.Identities.Queries.GetOwnerProfile;
+using CourtBooking.Application.Features.V1.Identities.Queries.CheckPhone;
 using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
@@ -222,6 +223,27 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // 1b. GET /api/v1/identity/check-phone — Kiểm tra số điện thoại người chơi
+        group.MapGet("/check-phone", async (
+                [FromQuery] string phone,
+                [FromQuery] AccountType? accountType,
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var query = new CheckPhoneQuery(phone, accountType ?? AccountType.Player);
+            var result = await sender.Send(query, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .AllowAnonymous()
+            .WithName("PlayerCheckPhone")
+            .WithSummary("Kiểm tra số điện thoại đã có tài khoản hay chưa")
+            .WithTags(IdentityTag)
+            .Produces<CheckPhoneResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         // 2. POST /api/v1/player/auth/login — Đăng nhập người chơi
         group.MapPost("/login", async (

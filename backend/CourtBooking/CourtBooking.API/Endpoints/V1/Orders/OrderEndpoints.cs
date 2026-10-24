@@ -515,11 +515,13 @@ public class OrderEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
+            .RequireAuthorization()
             .WithName("CreateOrderOnline")
             .WithSummary("Tạo đơn đặt sân online")
             .WithTags(OrderTag)
             .Produces<CreateOrderOnlineResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest);
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
 
         // PUT /api/v1/orders/{id:guid}/payment-proof — Nộp chứng nhận thanh toán

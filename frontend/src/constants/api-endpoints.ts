@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     CHANGE_PASSWORD: '/identity/change-password',
     ME: '/identity/me',
     PROFILE: '/identity/profile',
+    CHECK_PHONE: '/identity/check-phone',
   },
 
   // 1c. Xác thực & Tài khoản Quản trị viên (Admin Identities)

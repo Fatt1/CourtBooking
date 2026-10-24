@@ -1232,7 +1232,7 @@ namespace CourtBooking.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
@@ -1264,6 +1264,10 @@ namespace CourtBooking.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("PhoneNumber", "AccountType")
+                        .IsUnique()
+                        .HasFilter("[PhoneNumber] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("Users", (string)null);
                 });

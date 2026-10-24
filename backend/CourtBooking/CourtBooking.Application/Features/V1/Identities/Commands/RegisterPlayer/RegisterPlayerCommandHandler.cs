@@ -16,22 +16,35 @@ internal sealed class RegisterPlayerCommandHandler(
     public async Task<Result> Handle(RegisterPlayerCommand request, CancellationToken cancellationToken)
     {
         // 1. Kiểm tra email và accountType đã tồn tại hay chưa
+        var trimmedEmail = request.Email.Trim();
         var existingUser = await userManager.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email && u.AccountType == AccountType.Player && !u.IsDeleted, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email == trimmedEmail && u.AccountType == AccountType.Player && !u.IsDeleted, cancellationToken);
 
         if (existingUser is not null)
         {
             return Result.Failure(new ConflictError("Email này đã được sử dụng trên hệ thống."));
         }
 
+        // 1.1 Kiểm tra số điện thoại và accountType đã tồn tại hay chưa
+        var trimmedPhone = request.PhoneNumber?.Trim();
+        if (!string.IsNullOrWhiteSpace(trimmedPhone))
+        {
+            var phoneExists = await userManager.Users
+                .AnyAsync(u => u.PhoneNumber == trimmedPhone && u.AccountType == AccountType.Player && !u.IsDeleted, cancellationToken);
+            if (phoneExists)
+            {
+                return Result.Failure(new ConflictError("Số điện thoại này đã được đăng ký cho tài khoản người chơi khác."));
+            }
+        }
+
         // 2. Tạo ApplicationUser
         var user = new ApplicationUser
         {
             Id = Guid.NewGuid(),
-            UserName = request.Email,
-            Email = request.Email,
-            FullName = request.FullName,
-            PhoneNumber = request.PhoneNumber,
+            UserName = trimmedEmail,
+            Email = trimmedEmail,
+            FullName = request.FullName.Trim(),
+            PhoneNumber = trimmedPhone,
             AccountType = AccountType.Player,
             Status = UserStatus.Active,
             CreatedAt = DateTime.UtcNow,

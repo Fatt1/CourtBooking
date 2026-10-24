@@ -52,10 +52,10 @@ public sealed class CreateOrderOnlineCommandHandler(
             }
 
             // 2.2 Khởi tạo Order và thêm các chi tiết đã tính toán sẵn
-            var playerId = request.PlayerId;
-            if (!playerId.HasValue && userContext.IsAuthenticated && userContext.UserId != Guid.Empty)
+            var playerId = userContext.UserId != Guid.Empty ? userContext.UserId : request.PlayerId;
+            if (!playerId.HasValue || playerId.Value == Guid.Empty)
             {
-                playerId = userContext.UserId;
+                return Result.Failure<CreateOrderOnlineResponse>(new ForbiddenError("Yêu cầu đăng nhập tài khoản để đặt lịch trực tuyến."));
             }
 
             var order = Order.CreateOrderOnline(

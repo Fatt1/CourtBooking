@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { userLoginSchema, type UserLoginValues } from '../schemas/userAuthSchema';
 import { useUserLoginMutation } from '@/api/auth';
+import { getApiErrorMessage } from '@/types/api';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,8 +33,7 @@ export function UserLoginForm() {
       const redirect = searchParams.get('redirect') || '/';
       navigate(redirect);
     } catch (err: unknown) {
-      const error = err as { detail?: string; message?: string };
-      toast.error(error?.detail || error?.message || 'Email hoặc mật khẩu không chính xác!');
+      toast.error(getApiErrorMessage(err, 'Email hoặc mật khẩu không chính xác!'));
     }
   };
 

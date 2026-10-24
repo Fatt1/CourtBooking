@@ -42,8 +42,19 @@ internal sealed class UpdatePlayerProfileCommandHandler(
             user.NormalizedUserName = trimmedEmail.ToUpperInvariant();
         }
 
+        var trimmedPhone = request.PhoneNumber?.Trim();
+        if (!string.IsNullOrWhiteSpace(trimmedPhone) && !string.Equals(user.PhoneNumber, trimmedPhone, StringComparison.OrdinalIgnoreCase))
+        {
+            var phoneExists = await userManager.Users
+                .AnyAsync(u => u.PhoneNumber == trimmedPhone && u.Id != userId && u.AccountType == user.AccountType && !u.IsDeleted, ct);
+            if (phoneExists)
+            {
+                return Result.Failure(new ConflictError($"Số điện thoại '{trimmedPhone}' đã được sử dụng bởi tài khoản khác."));
+            }
+        }
+
         user.FullName = request.FullName.Trim();
-        user.PhoneNumber = request.PhoneNumber.Trim();
+        user.PhoneNumber = trimmedPhone;
         user.UpdatedAt = DateTime.UtcNow;
 
         if (user.PlayerProfile is null)

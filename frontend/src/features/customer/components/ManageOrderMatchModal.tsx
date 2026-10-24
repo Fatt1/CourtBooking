@@ -39,6 +39,7 @@ import {
   ParticipantStatus,
 } from '@/api/matches';
 import type { MyOrderDto } from '@/api/orders';
+import { getApiErrorMessage } from '@/types/api';
 import { toast } from 'sonner';
 
 interface ManageOrderMatchModalProps {
@@ -119,15 +120,7 @@ export function ManageOrderMatchModal({
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { detail?: string; title?: string } };
-        message?: string;
-      };
-      toast.error(
-        error.response?.data?.detail ||
-        error.message ||
-        'Không thể mở kèo giao lưu.'
-      );
+      toast.error(getApiErrorMessage(err, 'Không thể mở kèo giao lưu.'));
     }
   };
 
@@ -154,15 +147,7 @@ export function ManageOrderMatchModal({
       refetchDetail();
       onSuccess?.();
     } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { detail?: string; title?: string } };
-        message?: string;
-      };
-      toast.error(
-        error.response?.data?.detail ||
-        error.message ||
-        'Không thể cập nhật kèo giao lưu.'
-      );
+      toast.error(getApiErrorMessage(err, 'Không thể cập nhật kèo giao lưu.'));
     }
   };
 
@@ -177,15 +162,7 @@ export function ManageOrderMatchModal({
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { detail?: string; title?: string } };
-        message?: string;
-      };
-      toast.error(
-        error.response?.data?.detail ||
-        error.message ||
-        'Không thể xóa kèo giao lưu.'
-      );
+      toast.error(getApiErrorMessage(err, 'Không thể xóa kèo giao lưu.'));
     }
   };
 
@@ -200,11 +177,7 @@ export function ManageOrderMatchModal({
       toast.success('Đã duyệt người tham gia vào kèo!');
       refetchDetail();
     } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { detail?: string } };
-        message?: string;
-      };
-      toast.error(error.response?.data?.detail || error.message || 'Lỗi khi duyệt.');
+      toast.error(getApiErrorMessage(err, 'Lỗi khi duyệt.'));
     }
   };
 
@@ -219,11 +192,7 @@ export function ManageOrderMatchModal({
       toast.success('Đã từ chối và xóa thành viên khỏi danh sách.');
       refetchDetail();
     } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { detail?: string } };
-        message?: string;
-      };
-      toast.error(error.response?.data?.detail || error.message || 'Lỗi khi từ chối.');
+      toast.error(getApiErrorMessage(err, 'Lỗi khi từ chối.'));
     }
   };
 

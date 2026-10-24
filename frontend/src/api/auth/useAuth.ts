@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/axios';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { API_ENDPOINTS } from '@/constants/api-endpoints';
+import type { ProblemDetails } from '@/types/api';
 import type {
   CourtOwnerLoginRequest,
   CourtOwnerLoginResponse,
@@ -29,7 +30,7 @@ import type {
 export function useCourtOwnerLoginMutation() {
   const { setCredentials } = useAuthStore();
 
-  return useMutation({
+  return useMutation<CourtOwnerLoginResponse, ProblemDetails, CourtOwnerLoginRequest>({
     mutationFn: async (credentials: CourtOwnerLoginRequest): Promise<CourtOwnerLoginResponse> => {
       const response = await apiClient.post<CourtOwnerLoginResponse>(
         API_ENDPOINTS.OWNER_AUTH.LOGIN,
@@ -43,6 +44,7 @@ export function useCourtOwnerLoginMutation() {
           id: data.userId,
           name: data.fullName,
           email: data.email,
+          phoneNumber: data.phoneNumber,
           role: data.roleName,
           mustChangePwd: data.mustChangePassword,
         },
@@ -59,7 +61,7 @@ export function useCourtOwnerLoginMutation() {
 export function useCourtOwnerLogoutMutation() {
   const { logout } = useAuthStore();
 
-  return useMutation({
+  return useMutation<void, ProblemDetails, void>({
     mutationFn: async () => {
       try {
         await apiClient.post(API_ENDPOINTS.OWNER_AUTH.LOGOUT);
@@ -77,7 +79,7 @@ export function useCourtOwnerLogoutMutation() {
  * Hook Mutation gửi yêu cầu quên mật khẩu cho Chủ sân
  */
 export function useOwnerForgotPasswordMutation() {
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, ForgotPasswordRequest>({
     mutationFn: async (payload: ForgotPasswordRequest) => {
       return apiClient.post(API_ENDPOINTS.OWNER_AUTH.FORGOT_PASSWORD, payload);
     },
@@ -88,7 +90,7 @@ export function useOwnerForgotPasswordMutation() {
  * Hook Mutation đặt lại mật khẩu bằng token cho Chủ sân
  */
 export function useOwnerResetPasswordMutation() {
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, ResetPasswordRequest>({
     mutationFn: async (payload: ResetPasswordRequest) => {
       return apiClient.post(API_ENDPOINTS.OWNER_AUTH.RESET_PASSWORD, payload);
     },
@@ -101,7 +103,7 @@ export function useOwnerResetPasswordMutation() {
  * Hook Query lấy thông tin hồ sơ của Chủ sân (kèm gói dịch vụ hiện tại)
  */
 export function useOwnerProfileQuery() {
-  return useQuery({
+  return useQuery<OwnerProfileResponse, ProblemDetails>({
     queryKey: ['owner-profile'],
     queryFn: async (): Promise<OwnerProfileResponse> => {
       const response = await apiClient.get<OwnerProfileResponse>(
@@ -119,7 +121,7 @@ export function useUpdateOwnerProfileMutation() {
   const queryClient = useQueryClient();
   const { updateUser } = useAuthStore();
 
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, UpdateOwnerProfileRequest>({
     mutationFn: async (payload: UpdateOwnerProfileRequest) => {
       const response = await apiClient.put(
         API_ENDPOINTS.OWNER_AUTH.PROFILE,
@@ -141,7 +143,7 @@ export function useUpdateOwnerProfileMutation() {
  * Hook Mutation đổi mật khẩu cho Chủ sân
  */
 export function useOwnerChangePasswordMutation() {
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, ChangePasswordRequest>({
     mutationFn: async (payload: ChangePasswordRequest) => {
       const response = await apiClient.post(
         API_ENDPOINTS.OWNER_AUTH.CHANGE_PASSWORD,
@@ -158,8 +160,8 @@ export function useOwnerChangePasswordMutation() {
 /**
  * Hook Query lấy thông tin chi tiết hồ sơ cá nhân của Người chơi
  */
-export function useCurrentPlayerProfileQuery() {
-  return useQuery({
+export function useCurrentPlayerProfileQuery(options?: { enabled?: boolean }) {
+  return useQuery<CurrentPlayerProfileResponse, ProblemDetails>({
     queryKey: ['player-profile'],
     queryFn: async (): Promise<CurrentPlayerProfileResponse> => {
       const response = await apiClient.get<CurrentPlayerProfileResponse>(
@@ -167,6 +169,7 @@ export function useCurrentPlayerProfileQuery() {
       );
       return response as unknown as CurrentPlayerProfileResponse;
     },
+    enabled: options?.enabled,
   });
 }
 
@@ -177,7 +180,7 @@ export function useUpdatePlayerProfileMutation() {
   const queryClient = useQueryClient();
   const { updateUser } = useAuthStore();
 
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, UpdatePlayerProfileRequest>({
     mutationFn: async (payload: UpdatePlayerProfileRequest) => {
       const response = await apiClient.put(
         API_ENDPOINTS.AUTH.PROFILE,
@@ -200,7 +203,7 @@ export function useUpdatePlayerProfileMutation() {
  * Hook Mutation đổi mật khẩu cho Người chơi
  */
 export function usePlayerChangePasswordMutation() {
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, ChangePasswordRequest>({
     mutationFn: async (payload: ChangePasswordRequest) => {
       const response = await apiClient.post(
         API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
@@ -218,7 +221,7 @@ export function usePlayerChangePasswordMutation() {
 export function useUserLoginMutation() {
   const { setCredentials } = useAuthStore();
 
-  return useMutation({
+  return useMutation<CourtOwnerLoginResponse, ProblemDetails, UserLoginRequest>({
     mutationFn: async (credentials: UserLoginRequest): Promise<CourtOwnerLoginResponse> => {
       const response = await apiClient.post<CourtOwnerLoginResponse>(
         API_ENDPOINTS.AUTH.LOGIN,
@@ -232,6 +235,7 @@ export function useUserLoginMutation() {
           id: data.userId,
           name: data.fullName,
           email: data.email,
+          phoneNumber: data.phoneNumber,
           role: data.roleName,
           mustChangePwd: data.mustChangePassword,
         },
@@ -245,7 +249,7 @@ export function useUserLoginMutation() {
  * Hook Mutation đăng ký tài khoản Người dùng / Người chơi
  */
 export function useUserRegisterMutation() {
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, UserRegisterRequest>({
     mutationFn: async (payload: UserRegisterRequest) => {
       const response = await apiClient.post(API_ENDPOINTS.AUTH.REGISTER, {
         fullName: payload.fullName,
@@ -259,11 +263,27 @@ export function useUserRegisterMutation() {
   });
 }
 
+export interface CheckPhoneResponse {
+  exists: boolean;
+  phoneNumber: string;
+  fullName?: string | null;
+}
+
+/**
+ * Kiểm tra số điện thoại đã tồn tại tài khoản người chơi hay chưa
+ */
+export async function checkPhoneApi(phone: string, accountType: number = 0): Promise<CheckPhoneResponse> {
+  const response = await apiClient.get<CheckPhoneResponse>(API_ENDPOINTS.AUTH.CHECK_PHONE, {
+    params: { phone, accountType },
+  });
+  return response as unknown as CheckPhoneResponse;
+}
+
 /**
  * Hook Mutation gửi yêu cầu quên mật khẩu cho Người chơi
  */
 export function useUserForgotPasswordMutation() {
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, ForgotPasswordRequest>({
     mutationFn: async (payload: ForgotPasswordRequest) => {
       return apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, payload);
     },
@@ -274,7 +294,7 @@ export function useUserForgotPasswordMutation() {
  * Hook Mutation đặt lại mật khẩu mới cho Người chơi
  */
 export function useUserResetPasswordMutation() {
-  return useMutation({
+  return useMutation<unknown, ProblemDetails, ResetPasswordRequest>({
     mutationFn: async (payload: ResetPasswordRequest) => {
       return apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, payload);
     },
@@ -291,7 +311,7 @@ export function useUserResetPasswordMutation() {
 export function useAdminLoginMutation() {
   const { setCredentials } = useAuthStore();
 
-  return useMutation({
+  return useMutation<CourtOwnerLoginResponse, ProblemDetails, AdminLoginRequest>({
     mutationFn: async (credentials: AdminLoginRequest): Promise<CourtOwnerLoginResponse> => {
       const email = credentials.email || credentials.usernameOrEmail || '';
       const response = await apiClient.post<CourtOwnerLoginResponse>(
@@ -309,6 +329,7 @@ export function useAdminLoginMutation() {
           id: data.userId,
           name: data.fullName,
           email: data.email,
+          phoneNumber: data.phoneNumber,
           role: data.roleName,
           mustChangePwd: data.mustChangePassword,
         },
@@ -324,7 +345,7 @@ export function useAdminLoginMutation() {
 export function useAdminLogoutMutation() {
   const { logout } = useAuthStore();
 
-  return useMutation({
+  return useMutation<void, ProblemDetails, void>({
     mutationFn: async () => {
       try {
         await apiClient.post(API_ENDPOINTS.ADMIN_AUTH.LOGOUT);
