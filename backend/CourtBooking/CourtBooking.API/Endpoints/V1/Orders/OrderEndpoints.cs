@@ -48,7 +48,9 @@ public class OrderEndpoints : IEndpointGroup
         MapToFixedOrder(groupFixedOrder);
 
 
-        var group = app.MapApiV1Group("orders");
+        var group = app.MapApiV1Group("orders")
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Player));
+
         MapToPublic(group);
     }
 
@@ -481,7 +483,6 @@ public class OrderEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-        .RequireAuthorization()
         .WithName("GetMyOrders")
         .WithSummary("Lấy danh sách các đơn đặt sân của người chơi đang đăng nhập có phân trang")
         .WithTags(OrderTag);
@@ -497,7 +498,6 @@ public class OrderEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-        .RequireAuthorization()
         .WithName("GetMyOrderDetail")
         .WithSummary("Lấy thông tin chi tiết đơn đặt sân của người chơi")
         .WithTags(OrderTag)
@@ -515,7 +515,6 @@ public class OrderEndpoints : IEndpointGroup
                 ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         })
-            .RequireAuthorization()
             .WithName("CreateOrderOnline")
             .WithSummary("Tạo đơn đặt sân online")
             .WithTags(OrderTag)
