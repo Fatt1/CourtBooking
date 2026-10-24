@@ -14,6 +14,8 @@ import type {
   OwnerProfileResponse,
   UpdateOwnerProfileRequest,
   ChangePasswordRequest,
+  CurrentPlayerProfileResponse,
+  UpdatePlayerProfileRequest,
 } from './types';
 
 // ==========================================
@@ -152,6 +154,63 @@ export function useOwnerChangePasswordMutation() {
 
 // 2. USER / PLAYER AUTH HOOKS
 // ==========================================
+
+/**
+ * Hook Query lấy thông tin chi tiết hồ sơ cá nhân của Người chơi
+ */
+export function useCurrentPlayerProfileQuery() {
+  return useQuery({
+    queryKey: ['player-profile'],
+    queryFn: async (): Promise<CurrentPlayerProfileResponse> => {
+      const response = await apiClient.get<CurrentPlayerProfileResponse>(
+        API_ENDPOINTS.AUTH.ME
+      );
+      return response as unknown as CurrentPlayerProfileResponse;
+    },
+  });
+}
+
+/**
+ * Hook Mutation cập nhật thông tin cá nhân của Người chơi
+ */
+export function useUpdatePlayerProfileMutation() {
+  const queryClient = useQueryClient();
+  const { updateUser } = useAuthStore();
+
+  return useMutation({
+    mutationFn: async (payload: UpdatePlayerProfileRequest) => {
+      const response = await apiClient.put(
+        API_ENDPOINTS.AUTH.PROFILE,
+        payload
+      );
+      return response;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['player-profile'] });
+      updateUser({
+        name: variables.fullName,
+        email: variables.email,
+        phoneNumber: variables.phoneNumber,
+      });
+    },
+  });
+}
+
+/**
+ * Hook Mutation đổi mật khẩu cho Người chơi
+ */
+export function usePlayerChangePasswordMutation() {
+  return useMutation({
+    mutationFn: async (payload: ChangePasswordRequest) => {
+      const response = await apiClient.post(
+        API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
+        payload
+      );
+      return response;
+    },
+  });
+}
+
 
 /**
  * Hook Mutation đăng nhập cho Người dùng / Người chơi (User/Player)

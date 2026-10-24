@@ -57,6 +57,11 @@ internal sealed class GetPublicEventByIdHandler(
                             img.DisplayOrder))
                         .ToList()
                 ),
+                // Danh sách các sân được dùng để chơi trong sự kiện
+                e.Order.Details
+                    .Select(d => new EventCourtDto(d.CourtId, d.Court.Name))
+                    .Distinct()
+                    .ToList(),
                 // Danh sách người đã đăng ký vé tham gia ("Người sẽ cùng tham gia")
                 e.Tickets
                     .Where(t => t.Status != EventTicketStatus.Cancelled)
@@ -64,9 +69,7 @@ internal sealed class GetPublicEventByIdHandler(
                     .Select(t => new EventParticipantDto(
                         t.PlayerId,
                         t.Player.FullName,
-                        t.Player.PlayerProfile != null && t.Player.PlayerProfile.AvatarImage != null
-                            ? new ImageDto(t.Player.PlayerProfile.AvatarImage.StorageKey, t.Player.PlayerProfile.AvatarImage.Id)
-                            : null,
+                        null,
                         t.Quantity,
                         t.CreatedAt))
                     .ToList()

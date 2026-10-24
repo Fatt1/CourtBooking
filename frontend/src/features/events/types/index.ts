@@ -54,6 +54,11 @@ export interface EventBranchInfoDto {
   images: BranchImageDto[];
 }
 
+export interface EventCourtDto {
+  courtId: string;
+  courtName: string;
+}
+
 export interface EventDetailDto {
   id: string;
   title: string;
@@ -71,13 +76,16 @@ export interface EventDetailDto {
   bookedSlots: number;
   status: number;
   branch: EventBranchInfoDto;
+  courts: EventCourtDto[];
   participants: EventParticipantDto[];
 }
 
 export interface BookEventTicketPayload {
   quantity: number;
-  paymentMethod: number; // 1: BankTransfer / QrTransfer
-  proofImageId?: string | null;
+}
+
+export interface SubmitEventTicketProofPayload {
+  proofImageId: string;
 }
 
 export interface BookEventTicketResponse {
@@ -95,6 +103,8 @@ export interface BookEventTicketResponse {
   status: number;
   createdAt: string;
   expiresAt: string;
+  bankName?: string | null;
+  bankCode?: string | null;
   accountNumber?: string | null;
   accountName?: string | null;
   qrImage?: ImageDto | null;
@@ -110,6 +120,48 @@ export interface GetPublicEventsParams {
   sport?: string;
   startTime?: string;
   endTime?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export enum EventTicketStatus {
+  AwaitingPayment = 0,
+  PendingApproval = 1,
+  Confirmed = 2,
+  Cancelled = 3,
+}
+
+export interface MyEventTicketDto {
+  ticketId: string;
+  eventId: string;
+  eventTitle: string;
+  sportTypeId: string;
+  sportTypeName: string;
+  branchId: string;
+  branchName: string;
+  branchAddress: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  quantity: number;
+  price: number;
+  totalAmount: number;
+  paymentMethod: number;
+  status: EventTicketStatus;
+  createdAt: string;
+  reviewedAt?: string | null;
+  refundNote?: string | null;
+  coverImage?: BranchImageDto | null;
+  bankName?: string | null;
+  bankCode?: string | null;
+  accountNumber?: string | null;
+  accountName?: string | null;
+  qrImage?: ImageDto | null;
+  expiresAt?: string | null;
+}
+
+export interface GetMyEventTicketsParams {
+  status?: EventTicketStatus;
   page?: number;
   pageSize?: number;
 }

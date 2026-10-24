@@ -15,8 +15,6 @@ public class PlayerProfileConfiguration : IEntityTypeConfiguration<PlayerProfile
 
         builder.Property(p => p.Id).ValueGeneratedNever();
 
-        builder.Property(p => p.AvatarImageId);
-
         builder.Property(p => p.Gender)
             .HasConversion<int>()
             .IsRequired();
@@ -25,11 +23,5 @@ public class PlayerProfileConfiguration : IEntityTypeConfiguration<PlayerProfile
             .IsRequired();
 
         builder.Property(p => p.UpdatedAt);
-
-        // Relationships
-        builder.HasOne(p => p.AvatarImage)
-            .WithMany()
-            .HasForeignKey(p => p.AvatarImageId)
-            .OnDelete(DeleteBehavior.SetNull);
     }
 }

@@ -1,3 +1,5 @@
+using CourtBooking.Application.Features.V1.Events.Commands.SubmitEventTicketProof;
+using CourtBooking.Application.Features.V1.Events.Queries.GetMyEventTickets;
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Extensions.Paginations;
 using CourtBooking.Application.Features.V1.Events.Commands.BookEventTicket;
@@ -109,11 +111,12 @@ public sealed class EventEndpoints : IEndpointGroup
         // 3. POST /api/v1/events/{id:guid}/tickets — Đặt mua vé sự kiện (Cần Auth & Pessimistic Lock)
         group.MapPost("/{id:guid}/tickets", async (
                 [FromRoute] Guid id,
-                [FromBody] BookEventTicketCommand command,
+                [FromBody] BookEventTicketRequest request,
                 ISender sender,
                 CancellationToken ct = default) =>
         {
-            var result = await sender.Send(command with { EventId = id }, ct);
+            var command = new BookEventTicketCommand(id, request.Quantity);
+            var result = await sender.Send(command, ct);
 
             return result.IsSuccess
                 ? Results.Ok(result.Value)
@@ -130,6 +133,56 @@ public sealed class EventEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // 3.1. POST /api/v1/events/{id:guid}/tickets/{ticketId:guid}/proof — Gửi bằng chứng thanh toán vé
+        group.MapPost("/{id:guid}/tickets/{ticketId:guid}/proof", async (
+                [FromRoute] Guid id,
+                [FromRoute] Guid ticketId,
+                [FromBody] SubmitEventTicketProofRequest request,
+                ISender sender,
+                CancellationToken ct = default) =>
+        {
+            var command = new SubmitEventTicketProofCommand(id, ticketId, request.ProofImageId);
+            var result = await sender.Send(command, ct);
+
+            return result.IsSuccess
+                ? Results.Ok()
+                : result.ToProblemDetails();
+        })
+            .RequireAuthorization()
+            .WithName("SubmitEventTicketProof")
+            .WithSummary("Gửi bằng chứng thanh toán cho vé sự kiện")
+            .WithDescription("Người chơi tải lên và gửi hình ảnh biên lai chuyển khoản để chuyển trạng thái vé sang Chờ duyệt.")
+            .WithTags(EventTag)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // 5. GET /api/v1/events/my-tickets — Lấy danh sách vé sự kiện của người chơi hiện tại
+        group.MapGet("/my-tickets", async (
+                [FromQuery] EventTicketStatus? status,
+                [FromQuery] int page = 1,
+                [FromQuery] int pageSize = 10,
+                ISender sender = default!,
+                CancellationToken ct = default) =>
+        {
+            var query = new GetMyEventTicketsQuery(status, page, pageSize);
+            var result = await sender.Send(query, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .RequireAuthorization()
+            .WithName("GetMyEventTickets")
+            .WithSummary("Lấy danh sách vé sự kiện của người chơi hiện tại")
+            .WithDescription("Lấy danh sách vé sự kiện thể thao mà người chơi đã mua, kèm phân trang và lọc theo trạng thái vé.")
+            .WithTags(EventTag)
+            .Produces<PagedList<MyEventTicketDto>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         // 4. POST /api/v1/events/{id:guid}/tickets/{ticketId:guid}/cancel — Hủy đơn vé đang chờ thanh toán
         group.MapPost("/{id:guid}/tickets/{ticketId:guid}/cancel", async (
@@ -367,3 +420,7 @@ public sealed class EventEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status409Conflict);
     }
 }
+
+
+public sealed record BookEventTicketRequest(int Quantity);
+public sealed record SubmitEventTicketProofRequest(Guid ProofImageId);

@@ -8,6 +8,8 @@ import type {
   BookEventTicketPayload,
   BookEventTicketResponse,
   GetPublicEventsParams,
+  MyEventTicketDto,
+  GetMyEventTicketsParams,
 } from '../types';
 
 /**
@@ -114,3 +116,86 @@ export function useCancelEventTicketMutation(eventId: string) {
   });
 }
 
+
+/**
+ * Hook lấy danh sách vé sự kiện của người chơi hiện tại (kèm phân trang và lọc trạng thái)
+ * Endpoint: GET /api/v1/events/my-tickets
+ */
+export function useMyEventTicketsQuery(params: GetMyEventTicketsParams = { page: 1, pageSize: 5 }) {
+  return useQuery<PagedList<MyEventTicketDto>>({
+    queryKey: ['my-events', 'tickets', params],
+    queryFn: async (): Promise<PagedList<MyEventTicketDto>> => {
+      const cleanParams: Record<string, string | number> = {};
+      if (params.status !== undefined) cleanParams.status = params.status;
+      cleanParams.page = params.page || 1;
+      cleanParams.pageSize = params.pageSize || 5;
+
+      const response = await apiClient.get<PagedList<MyEventTicketDto>>(
+        API_ENDPOINTS.EVENTS.MY_TICKETS,
+        { params: cleanParams }
+      );
+      return (
+        (response as unknown as PagedList<MyEventTicketDto>) || {
+          items: [],
+          totalCount: 0,
+          page: cleanParams.page as number,
+          pageSize: cleanParams.pageSize as number,
+          totalPages: 0,
+          hasPrevious: false,
+          hasNext: false,
+        }
+      );
+    },
+    staleTime: 1000 * 30,
+  });
+}
+
+/**
+ * Hook hủy vé sự kiện của người chơi
+ * Endpoint: POST /api/v1/events/{eventId}/tickets/{ticketId}/cancel
+ */
+export function useCancelMyEventTicketMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ success: boolean; message: string }, Error, { eventId: string; ticketId: string }>({
+    mutationFn: async ({ eventId, ticketId }): Promise<{ success: boolean; message: string }> => {
+      const response = await apiClient.post<{ success: boolean; message: string }>(
+        API_ENDPOINTS.EVENTS.CANCEL_TICKET(eventId, ticketId)
+      );
+      return response as unknown as { success: boolean; message: string };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['public', 'events'] });
+      queryClient.invalidateQueries({ queryKey: ['my-events', 'tickets'] });
+    },
+  });
+}
+
+/**
+ * Hook gửi bằng chứng thanh toán cho vé sự kiện
+ * Endpoint: POST /api/v1/events/{id}/tickets/{ticketId}/proof
+ */
+export function useSubmitEventTicketProofMutation(eventId?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    Error,
+    { eventId: string; ticketId: string; proofImageId: string }
+  >({
+    mutationFn: async ({ eventId: evId, ticketId, proofImageId }) => {
+      await apiClient.post(
+        API_ENDPOINTS.EVENTS.SUBMIT_PROOF(evId, ticketId),
+        { proofImageId }
+      );
+    },
+    onSuccess: (_, variables) => {
+      const targetEventId = variables.eventId || eventId;
+      queryClient.invalidateQueries({ queryKey: ['public', 'events'] });
+      if (targetEventId) {
+        queryClient.invalidateQueries({ queryKey: ['public', 'events', 'detail', targetEventId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['my-events', 'tickets'] });
+    },
+  });
+}

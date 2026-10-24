@@ -59,6 +59,13 @@ public sealed record EventBranchInfoDto(
     IReadOnlyList<BranchImageDto> Images);
 
 /// <summary>
+/// DTO thông tin sân được dùng để chơi trong sự kiện.
+/// </summary>
+public sealed record EventCourtDto(
+    Guid CourtId,
+    string CourtName);
+
+/// <summary>
 /// DTO chi tiết sự kiện (/events/{id}).
 /// </summary>
 public sealed record EventDetailDto(
@@ -78,6 +85,7 @@ public sealed record EventDetailDto(
     int BookedSlots,
     EventStatus Status,
     EventBranchInfoDto Branch,
+    IReadOnlyList<EventCourtDto> Courts,
     IReadOnlyList<EventParticipantDto> Participants);
 
 /// <summary>
@@ -98,6 +106,8 @@ public sealed record BookEventTicketResponse(
     EventTicketStatus Status,
     DateTime CreatedAt,
     DateTime ExpiresAt,
+    string? BankName,
+    string? BankCode,
     string? AccountNumber,
     string? AccountName,
     ImageDto? QrImage);

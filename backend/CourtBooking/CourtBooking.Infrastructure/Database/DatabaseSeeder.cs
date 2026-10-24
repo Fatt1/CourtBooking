@@ -263,7 +263,6 @@ public static class DatabaseSeeder
             Id = userPlayer1.Id,
             Gender = Gender.Male,
             DateOfBirth = new DateOnly(1995, 5, 20),
-            AvatarImageId = player1Avatar.Id,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -273,7 +272,6 @@ public static class DatabaseSeeder
             Id = userPlayer2.Id,
             Gender = Gender.Female,
             DateOfBirth = new DateOnly(1998, 10, 15),
-            AvatarImageId = player2Avatar.Id,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

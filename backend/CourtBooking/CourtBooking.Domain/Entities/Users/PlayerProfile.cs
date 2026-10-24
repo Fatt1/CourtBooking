@@ -11,7 +11,6 @@ public class PlayerProfile : EntityBase<Guid>, IAuditable
 {
     public PlayerProfile() { }
 
-    public Guid? AvatarImageId { get; set; }
     public DateOnly? DateOfBirth { get; set; }
     public Gender Gender { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -19,5 +18,4 @@ public class PlayerProfile : EntityBase<Guid>, IAuditable
 
     // Navigation
     public ApplicationUser User { get; set; } = null!;
-    public Images.Image? AvatarImage { get; set; }
 }

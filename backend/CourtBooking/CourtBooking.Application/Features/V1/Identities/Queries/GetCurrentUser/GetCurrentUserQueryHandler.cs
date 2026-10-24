@@ -18,7 +18,6 @@ internal sealed class GetCurrentUserQueryHandler(
         var userId = userContext.UserId;
         var user = await userManager.Users
             .Include(u => u.PlayerProfile)
-                .ThenInclude(p => p!.AvatarImage)
             .Include(u => u.CourtOwner)
             .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted, cancellationToken);
 
@@ -34,8 +33,8 @@ internal sealed class GetCurrentUserQueryHandler(
             user.Email ?? string.Empty,
             user.FullName,
             user.PhoneNumber ?? string.Empty,
-            profile?.AvatarImageId,
-            profile?.AvatarImage?.StorageKey,
+            null,
+            null,
             profile?.Gender ?? Gender.Other,
             profile?.DateOfBirth));
     }

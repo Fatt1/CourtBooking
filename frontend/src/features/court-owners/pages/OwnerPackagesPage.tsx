@@ -17,34 +17,22 @@ import {
 } from '@/api/subscriptions';
 import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 /**
  * Format ngày chuỗi sang chuẩn Việt Nam DD/MM/YYYY
  */
 function formatDateVN(dateStr?: string | null): string {
   if (!dateStr) return '--/--/----';
-  if (dateStr.includes('/')) return dateStr;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
+  return formatDate(dateStr);
 }
 
 /**
- * Format ngày giờ tạo DD/MM/YYYY HH:mm
+ * Format ngày giờ tạo DD/MM/YYYY HH:mm theo múi giờ Việt Nam
  */
 function formatDateTimeVN(dateStr?: string | null): string {
   if (!dateStr) return '--';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
+  return formatDateTime(dateStr);
 }
 
 /**

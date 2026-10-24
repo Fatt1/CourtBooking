@@ -60,8 +60,8 @@ internal sealed class CancelPendingTicketHandler(
                     return Result.Success();
                 }
 
-                // Chỉ cho phép hủy khi vé đang ở trạng thái Chờ thanh toán / Chờ duyệt (PendingApproval)
-                if (ticket.Status != EventTicketStatus.PendingApproval)
+                // Chỉ cho phép hủy khi vé đang ở trạng thái AwaitingPayment hoặc PendingApproval
+                if (ticket.Status != EventTicketStatus.AwaitingPayment && ticket.Status != EventTicketStatus.PendingApproval)
                 {
                     await transaction.RollbackAsync(cancellationToken);
                     return Result.Failure(new ConflictError("Chỉ có thể hủy đơn đặt vé khi đang trong trạng thái chờ thanh toán."));

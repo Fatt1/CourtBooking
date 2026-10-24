@@ -55,3 +55,13 @@ public sealed record OwnerProfileDto(
     string BusinessName,
     string? TaxCode,
     CurrentOwnerPackageDto? CurrentPackage);
+
+/// <summary>
+/// DTO yêu cầu cập nhật thông tin hồ sơ Người chơi
+/// </summary>
+public sealed record UpdatePlayerProfileRequest(
+    string FullName,
+    string Email,
+    string PhoneNumber,
+    Gender Gender,
+    DateOnly? DateOfBirth);

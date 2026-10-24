@@ -19,6 +19,7 @@ import {
 } from '@/api/orders';
 import { useUploadImageMutation, getImageUrl } from '@/api/storage';
 import { formatCurrency } from '@/lib/utils';
+import { toUtcDate } from '@/lib/format';
 
 interface BranchPaymentModalProps {
   isOpen: boolean;
@@ -62,7 +63,8 @@ export function BranchPaymentModal({
     }
 
     const calculateRemaining = () => {
-      const expiresAtMs = new Date(orderData.holdExpiresAt).getTime();
+      const expiresDate = toUtcDate(orderData.holdExpiresAt);
+      const expiresAtMs = expiresDate ? expiresDate.getTime() : 0;
       const nowMs = Date.now();
       const diffSec = Math.max(0, Math.floor((expiresAtMs - nowMs) / 1000));
       setRemainingSeconds(diffSec);

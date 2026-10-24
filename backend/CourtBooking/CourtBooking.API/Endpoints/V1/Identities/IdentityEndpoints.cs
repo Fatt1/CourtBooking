@@ -1,15 +1,16 @@
+using CourtBooking.Application.Features.V1.Identities.Commands.UpdatePlayerProfile;
 using CourtBooking.API.Extensions;
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Features.V1.Identities.Commands.ChangePassword;
-using CourtBooking.Application.Features.V1.Identities.Commands.UpdateOwnerProfile;
-using CourtBooking.Application.Features.V1.Identities.Queries.GetOwnerProfile;
 using CourtBooking.Application.Features.V1.Identities.Commands.ForgotPassword;
 using CourtBooking.Application.Features.V1.Identities.Commands.Login;
 using CourtBooking.Application.Features.V1.Identities.Commands.RefreshToken;
 using CourtBooking.Application.Features.V1.Identities.Commands.RegisterPlayer;
 using CourtBooking.Application.Features.V1.Identities.Commands.ResetPassword;
+using CourtBooking.Application.Features.V1.Identities.Commands.UpdateOwnerProfile;
 using CourtBooking.Application.Features.V1.Identities.Dtos;
 using CourtBooking.Application.Features.V1.Identities.Queries.GetCurrentUser;
+using CourtBooking.Application.Features.V1.Identities.Queries.GetOwnerProfile;
 using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel.Extensions;
@@ -70,7 +71,7 @@ public sealed class IdentityEndpoints : IEndpointGroup
                 ISender sender,
                 CancellationToken ct) =>
         {
-            var command = new ForgotPasswordCommand(request.Email, request.ClientResetUrl, AccountType.CourtOwner);
+            var command = new ForgotPasswordCommand(request.Email, AccountType.CourtOwner);
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
@@ -126,7 +127,8 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithTags(IdentityTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         // 5. GET /api/v1/owner/identity/profile — Lấy thông tin cá nhân của Chủ sân
         group.MapGet("/profile", async (
@@ -249,7 +251,7 @@ public sealed class IdentityEndpoints : IEndpointGroup
                 ISender sender,
                 CancellationToken ct) =>
         {
-            var command = new ForgotPasswordCommand(request.Email, request.ClientResetUrl, AccountType.Player);
+            var command = new ForgotPasswordCommand(request.Email, AccountType.Player);
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
@@ -305,7 +307,8 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithTags(IdentityTag)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         // 6. POST /api/v1/player/auth/refresh-token — Làm mới token
         group.MapPost("/refresh-token", async (
@@ -348,6 +351,35 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .Produces<CurrentPlayerDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        // 9. PUT /api/v1/identity/profile — Người chơi cập nhật thông tin cá nhân
+        group.MapPut("/profile", async (
+                [FromBody] UpdatePlayerProfileRequest request,
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var command = new UpdatePlayerProfileCommand(
+                request.FullName,
+                request.Email,
+                request.PhoneNumber,
+                request.Gender,
+                request.DateOfBirth);
+
+            var result = await sender.Send(command, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(new { message = "Cập nhật thông tin cá nhân thành công." })
+                : result.ToProblemDetails();
+        })
+            .RequireAuthorization()
+            .WithName("PlayerUpdateProfile")
+            .WithSummary("Cập nhật thông tin cá nhân của người chơi")
+            .WithDescription("Cập nhật Họ và tên, Số điện thoại, Giới tính, Ngày sinh.")
+            .WithTags(IdentityTag)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         // 8. POST /api/v1/identity/logout — Người chơi đăng xuất và xóa Refresh Token Cookie
         group.MapPost("/logout", (IAuthCookieService cookieService) =>

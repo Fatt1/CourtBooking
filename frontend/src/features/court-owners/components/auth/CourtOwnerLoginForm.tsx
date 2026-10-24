@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   courtOwnerLoginSchema,
   type CourtOwnerLoginValues,
@@ -113,13 +113,12 @@ export function CourtOwnerLoginForm() {
                     Mật khẩu
                   </FormLabel>
                   {/* Link Quên Mật Khẩu */}
-                  <button
-                    type="button"
-                    onClick={() => setForgotPasswordOpen(true)}
-                    className="text-xs font-medium text-[#a3e635] hover:text-[#b4f045] hover:underline transition-colors cursor-pointer"
+                  <Link
+                    to="/owner/forgot-password"
+                    className="text-xs font-medium text-[#a3e635] hover:text-[#b4f045] hover:underline transition-colors"
                   >
                     Quên mật khẩu?
-                  </button>
+                  </Link>
                 </div>
                 <FormControl>
                   <div className="relative">

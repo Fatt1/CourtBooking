@@ -28,7 +28,7 @@ public class EventTicketConfiguration : IEntityTypeConfiguration<EventTicket>
 
         builder.Property(t => t.Status)
             .HasConversion<byte>()
-            .HasDefaultValue(EventTicketStatus.PendingApproval);
+            .HasDefaultValue(EventTicketStatus.AwaitingPayment);
 
         builder.Property(t => t.RefundNote)
             .HasMaxLength(255)
@@ -37,6 +37,9 @@ public class EventTicketConfiguration : IEntityTypeConfiguration<EventTicket>
         builder.Property(t => t.Price)
             .HasPrecision(18, 2)
             .IsRequired();
+
+        builder.Property(t => t.ExpiresAt)
+            .HasComment("Thời điểm hết hạn thanh toán giữ vé sự kiện");
 
         builder.HasIndex(t => t.EventId)
             .HasDatabaseName("IX_EventTickets_EventId");
