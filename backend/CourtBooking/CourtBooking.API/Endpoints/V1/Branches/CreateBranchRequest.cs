@@ -5,4 +5,5 @@ public sealed record CreateBranchRequest(
     string? GgMapUrl, TimeOnly OpenTime, TimeOnly CloseTime, Guid QrImageId,
     string AccountNumber, string AccountName, IReadOnlyList<Guid> SportTypeIds,
     string? Policy, decimal Latitude, decimal Longitude, IReadOnlyList<Guid> ImageIds,
-    string? Description = null, string? BankName = null, string? BankCode = null);
+    string? Description = null, string? BankName = null, string? BankCode = null,
+    string? MapUrl = null);

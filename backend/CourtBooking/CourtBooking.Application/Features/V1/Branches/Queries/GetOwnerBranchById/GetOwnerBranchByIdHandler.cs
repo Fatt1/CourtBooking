@@ -27,6 +27,7 @@ internal sealed class GetOwnerBranchByIdHandler(IApplicationDbContext dbContext,
                 b.Street,
                 b.Latitude,
                 b.Longitude,
+                b.MapUrl,
                 b.OpenTime,
                 b.CloseTime,
                 b.Policy,
@@ -47,9 +48,9 @@ internal sealed class GetOwnerBranchByIdHandler(IApplicationDbContext dbContext,
         if (branch is null)
             return Result.Failure<OwnerBranchDetailDto>(new NotFoundError("Branch", request.Id));
 
-        var ggMapUrl = branch.Latitude.HasValue && branch.Longitude.HasValue
-            ? $"https://www.google.com/maps?q={branch.Latitude.Value},{branch.Longitude.Value}"
-            : null;
+        var ggMapUrl = !string.IsNullOrWhiteSpace(branch.MapUrl)
+            ? branch.MapUrl
+            : $"https://www.google.com/maps?q={branch.Latitude},{branch.Longitude}";
 
         var dto = new OwnerBranchDetailDto(
             Id: branch.Id,
@@ -73,7 +74,8 @@ internal sealed class GetOwnerBranchByIdHandler(IApplicationDbContext dbContext,
             Images: branch.Images,
             AverageRating: branch.AverageRating,
             BankName: branch.BankName,
-            BankCode: branch.BankCode);
+            BankCode: branch.BankCode,
+            MapUrl: branch.MapUrl);
 
         return Result.Success(dto);
     }

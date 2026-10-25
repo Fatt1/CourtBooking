@@ -1,4 +1,5 @@
 using CourtBooking.API.Extensions;
+using CourtBooking.API.Hubs;
 using CourtBooking.API.Infrastructure;
 using CourtBooking.Application.DependencyInjections;
 using CourtBooking.Infrastructure.Database;
@@ -31,9 +32,17 @@ try
     {
         options.AddDefaultPolicy(policy =>
         {
-            policy.WithOrigins(
-                      "http://localhost:3001",
-                      "http://localhost:3000")
+            policy.SetIsOriginAllowed(origin =>
+                  {
+                      if (string.IsNullOrEmpty(origin)) return false;
+                      if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                      {
+                          return uri.Host == "localhost" ||
+                                 uri.Host.EndsWith(".ngrok-free.dev", StringComparison.OrdinalIgnoreCase) ||
+                                 uri.Host.EndsWith(".trycloudflare.com", StringComparison.OrdinalIgnoreCase);
+                      }
+                      return false;
+                  })
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -113,7 +122,7 @@ try
                 : Serilog.Events.LogEventLevel.Information;
     });
 
-    app.UseHttpsRedirection();
+    //app.UseHttpsRedirection();
 
     app.UseCors();
     app.UseAuthentication();
@@ -122,10 +131,7 @@ try
     app.MapControllers();
 
     app.MapEndpoints();
-
-    // Map SignalR Notification Hub
-    app.MapHub<CourtBooking.API.Hubs.NotificationHub>("/hubs/notifications");
-
+    app.MapHub<NotificationHub>("/hubs/notifications");
     // Automatically apply pending database migrations and seed data on startup
     await DatabaseInitializer.ApplyMigrationsAndSeedAsync(app.Services);
 

@@ -37,4 +37,7 @@ public sealed record PublicBranchDetailDto(
     decimal? MaxPrice,
     double ReviewAverage,
     IReadOnlyList<ImageDto> Images,
-    IReadOnlyList<BranchSportDto> Sports);
+    IReadOnlyList<BranchSportDto> Sports,
+    decimal? Latitude = null,
+    decimal? Longitude = null,
+    string? MapUrl = null);

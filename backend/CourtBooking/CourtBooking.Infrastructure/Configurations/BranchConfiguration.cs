@@ -35,10 +35,15 @@ public class BranchConfiguration : IEntityTypeConfiguration<Branch>
             .IsRequired();
 
         builder.Property(b => b.Latitude)
-            .HasPrecision(9, 6);
+            .HasPrecision(9, 6)
+            .IsRequired();
 
         builder.Property(b => b.Longitude)
-            .HasPrecision(9, 6);
+            .HasPrecision(9, 6)
+            .IsRequired();
+
+        builder.Property(b => b.MapUrl)
+            .HasMaxLength(1000);
 
         builder.Property(b => b.IsActive)
             .HasDefaultValue(true);

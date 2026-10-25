@@ -9,7 +9,7 @@ export function RetailReceiptModal({ receipt, onClose }: { receipt: RetailOrderD
   return <OwnerModal open={Boolean(receipt)} onOpenChange={(open) => { if (!open) onClose(); }} title="Đã tạo hóa đơn" hideFooter icon={<CheckCircle2 className="size-5" />}>
     {receipt && <div className="space-y-4">
       <div className="space-y-1 text-xs text-muted-foreground"><p className="font-semibold text-foreground">{receipt.branchName}</p>
-        <p>Mã hóa đơn: {receipt.id}</p><p>{formatDateTime(receipt.createdAt)}</p>
+        <p>Mã hóa đơn: {receipt.orderCode || receipt.id}</p><p>{formatDateTime(receipt.createdAt)}</p>
       </div>
       <div className="divide-y divide-border">{receipt.items.map((item) => <div key={item.serviceId} className="flex justify-between gap-3 py-3 text-xs">
         <div><p className="font-semibold">{item.serviceName}</p><p className="mt-1 text-muted-foreground">{item.quantity} × {formatVND(item.unitPrice)}</p></div>

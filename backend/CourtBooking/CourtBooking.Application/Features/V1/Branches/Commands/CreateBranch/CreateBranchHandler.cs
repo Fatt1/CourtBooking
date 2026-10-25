@@ -45,7 +45,8 @@ internal sealed class CreateBranchHandler(IApplicationDbContext dbContext, IUser
             Policy = request.Policy?.Trim(),
             Description = request.Description?.Trim(),
             Latitude = request.Latitude,
-            Longitude = request.Longitude
+            Longitude = request.Longitude,
+            MapUrl = request.MapUrl?.Trim() ?? request.GgMapUrl?.Trim()
         };
         branch.UpdateImages(request.ImageIds);
         await dbContext.Branches.AddAsync(branch, ct);

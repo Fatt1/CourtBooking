@@ -1,3 +1,0 @@
-viết api xem danh sách sự kiện, xử lý flow xem mua đặt vé sự kiện
-sử dung pessimistic Lock trong viết api khi mua vé sự kiện
-

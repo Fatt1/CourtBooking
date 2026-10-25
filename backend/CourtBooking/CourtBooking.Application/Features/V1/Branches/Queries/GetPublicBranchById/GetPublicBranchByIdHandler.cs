@@ -28,6 +28,7 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
                 b.Street,
                 b.Latitude,
                 b.Longitude,
+                b.MapUrl,
                 b.OpenTime,
                 b.CloseTime,
                 b.Policy,
@@ -45,7 +46,7 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (branch == null)
+        if (branch is null)
         {
             return Result.Failure<PublicBranchDetailDto>(new NotFoundError("Branch", request.Id));
         }
@@ -54,19 +55,15 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
         var userLat = request.Latitude ?? GeoHelper.DefaultLatitude;
         var userLng = request.Longitude ?? GeoHelper.DefaultLongitude;
 
-        double? distanceKm = null;
-        if (branch.Latitude.HasValue && branch.Longitude.HasValue)
-        {
-            distanceKm = GeoHelper.CalculateDistanceKm(
-                (double)userLat,
-                (double)userLng,
-                (double)branch.Latitude.Value,
-                (double)branch.Longitude.Value);
-        }
+        double? distanceKm = GeoHelper.CalculateDistanceKm(
+            (double)userLat,
+            (double)userLng,
+            (double)branch.Latitude,
+            (double)branch.Longitude);
 
-        var ggMapUrl = branch.Latitude.HasValue && branch.Longitude.HasValue
-            ? $"https://www.google.com/maps?q={branch.Latitude.Value},{branch.Longitude.Value}"
-            : null;
+        var ggMapUrl = !string.IsNullOrWhiteSpace(branch.MapUrl)
+            ? branch.MapUrl
+            : $"https://www.google.com/maps?q={branch.Latitude},{branch.Longitude}";
 
         var dto = new PublicBranchDetailDto(
             branch.Id,
@@ -85,7 +82,10 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
             branch.MaxPrice,
             branch.ReviewAverage,
             branch.Images,
-            branch.Sports);
+            branch.Sports,
+            branch.Latitude,
+            branch.Longitude,
+            branch.MapUrl);
 
         return Result.Success(dto);
     }

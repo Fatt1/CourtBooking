@@ -14,6 +14,13 @@ public class RetailOrderConfiguration : IEntityTypeConfiguration<RetailOrder>
 
         builder.Property(r => r.Id).ValueGeneratedNever();
 
+        builder.Property(r => r.OrderCode)
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.HasIndex(r => r.OrderCode)
+            .HasDatabaseName("IX_RetailOrder_OrderCode");
+
         builder.Property(r => r.TotalAmount)
             .HasPrecision(18, 2)
             .IsRequired();

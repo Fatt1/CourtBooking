@@ -72,6 +72,7 @@ internal sealed class UpdateBranchHandler(
         branch.Description = request.Description?.Trim();
         branch.Latitude = request.Latitude;
         branch.Longitude = request.Longitude;
+        branch.MapUrl = request.MapUrl?.Trim() ?? request.GgMapUrl?.Trim();
 
         await dbContext.SaveChangesAsync(ct);
 

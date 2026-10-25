@@ -123,37 +123,56 @@ export function AddServiceModal({
   // Map categoryId sang tên danh mục từ API
   const categoryMap = useMemo(() => {
     const map = new Map<string, string>();
-    if (remoteCategories) {
+    if (Array.isArray(remoteCategories)) {
       remoteCategories.forEach((c) => {
-        map.set(c.id, c.name);
+        if (c?.id && c?.name) map.set(c.id, c.name);
       });
     }
     return map;
   }, [remoteCategories]);
 
   // Danh sách sản phẩm thực tế từ backend
+  // API trả về BranchCategoryServicesDto[]: { categoryId, categoryName, services: BranchServiceItemDto[] }
   const productList = useMemo<ProductCatalogItem[]>(() => {
-    if (!remoteServices || remoteServices.length === 0) {
+    if (!remoteServices || !Array.isArray(remoteServices) || remoteServices.length === 0) {
       return [];
     }
-    return remoteServices.flatMap((cat) =>
-      cat.services.map((s) => ({
-        id: s.id,
-        name: s.name,
-        price: s.price,
-        unit: s.unit,
-        category: cat.categoryName || categoryMap.get(cat.categoryId) || 'Khác',
-        imageUrl: s.image?.key ? getImageUrl(s.image.key) : (s.image?.url || null),
-      }))
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (remoteServices as any[]).flatMap((item) => {
+      // Dạng nhóm danh mục: { categoryId, categoryName, services: [...] }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (item && Array.isArray(item.services)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return item.services.filter((s: any) => s != null).map((s: any) => ({
+          id: s.id ?? s.serviceId ?? '',
+          name: s.name ?? s.serviceName ?? '',
+          price: s.price ?? s.unitPrice ?? 0,
+          unit: s.unit ?? '',
+          category: item.categoryName || (item.categoryId ? categoryMap.get(item.categoryId) : undefined) || 'Khác',
+          imageUrl: s.image?.key ? getImageUrl(s.image.key) : (s.image?.url ?? null),
+        }));
+      }
+      // Dạng phẳng từng dịch vụ: { id, name, price, categoryId, ... }
+      if (item && (item.id || item.serviceId)) {
+        return [{
+          id: item.id ?? item.serviceId ?? '',
+          name: item.name ?? item.serviceName ?? '',
+          price: item.price ?? item.unitPrice ?? 0,
+          unit: item.unit ?? '',
+          category: item.categoryName || (item.categoryId ? categoryMap.get(item.categoryId) : undefined) || 'Khác',
+          imageUrl: item.image?.key ? getImageUrl(item.image.key) : (item.image?.url ?? null),
+        }];
+      }
+      return [];
+    });
   }, [remoteServices, categoryMap]);
 
   // Lấy danh sách category duy nhất từ remoteCategories và productList
   const categories = useMemo(() => {
     const list = ['Tất cả'];
-    if (remoteCategories && remoteCategories.length > 0) {
+    if (Array.isArray(remoteCategories) && remoteCategories.length > 0) {
       remoteCategories.forEach((c) => {
-        if (c.name && !list.includes(c.name)) list.push(c.name);
+        if (c?.name && !list.includes(c.name)) list.push(c.name);
       });
       return list;
     }
@@ -431,43 +450,43 @@ export function AddServiceModal({
                     </div>
                   </div>
 
-                    {/* Bộ nút Stepper [-] [số lượng] [+] */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleDecrement(item.serviceId)}
-                        className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        <Minus className="size-3" />
-                      </button>
-                      <span className="w-5 text-center font-bold text-xs text-foreground">
-                        {item.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleIncrement(item.serviceId)}
-                        className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        <Plus className="size-3" />
-                      </button>
-                    </div>
-
-                    {/* Thành tiền */}
-                    <div className="text-right min-w-[65px] shrink-0 font-bold text-xs sm:text-sm text-foreground">
-                      {(item.quantity * item.unitPrice).toLocaleString('vi-VN')}đ
-                    </div>
-
-                    {/* Nút xóa món */}
+                  {/* Bộ nút Stepper [-] [số lượng] [+] */}
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
-                      onClick={() => handleRemoveItem(item.serviceId)}
-                      className="size-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-                      title="Xóa món này khỏi đơn"
+                      onClick={() => handleDecrement(item.serviceId)}
+                      className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
                     >
-                      <Trash2 className="size-3.5" />
+                      <Minus className="size-3" />
+                    </button>
+                    <span className="w-5 text-center font-bold text-xs text-foreground">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleIncrement(item.serviceId)}
+                      className="size-6 rounded-lg bg-card hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <Plus className="size-3" />
                     </button>
                   </div>
-                ))
+
+                  {/* Thành tiền */}
+                  <div className="text-right min-w-[65px] shrink-0 font-bold text-xs sm:text-sm text-foreground">
+                    {(item.quantity * item.unitPrice).toLocaleString('vi-VN')}đ
+                  </div>
+
+                  {/* Nút xóa món */}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveItem(item.serviceId)}
+                    className="size-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                    title="Xóa món này khỏi đơn"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              ))
             )}
           </div>
 

@@ -12,7 +12,7 @@ import { printRetailReceipt } from './receiptActions';
 function ReceiptContent({ receipt }: { receipt: RetailOrderDto }) {
   const copy = async () => { try { await navigator.clipboard.writeText(receipt.id); toast.success('Đã sao chép ID hóa đơn'); } catch { toast.error('Không thể sao chép. Bạn có thể chọn ID đầy đủ bên dưới.'); } };
   return <div className="space-y-5">
-    <div><div className="flex items-center justify-between gap-2"><h3 className="text-2xl font-bold text-brand-green dark:text-emerald-400">{retailOrderCode(receipt.id)}</h3>
+    <div><div className="flex items-center justify-between gap-2"><h3 className="text-2xl font-bold text-brand-green dark:text-emerald-400">{receipt.orderCode || retailOrderCode(receipt.id)}</h3>
       <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200">Đã ghi nhận</span></div>
       <p className="mt-2 text-xs text-muted-foreground">{formatDateTime(receipt.createdAt)}</p>
       <p className="mt-2 text-sm font-semibold">{receipt.branchName}</p>
