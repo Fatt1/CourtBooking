@@ -261,6 +261,7 @@ export function CourtOwnersPage() {
                 <th className="py-3.5 px-5 text-left">Họ và tên</th>
                 <th className="py-3.5 px-5 text-center">Số điện thoại</th>
                 <th className="py-3.5 px-5 text-center">Trạng thái</th>
+                <th className="py-3.5 px-5 text-center">Gói hiện tại</th>
                 <th className="py-3.5 px-5 text-center">Ngày bắt đầu gói</th>
                 <th className="py-3.5 px-5 text-center">Ngày hết hạn gói</th>
                 <th className="py-3.5 px-5 text-center">Gói đăng ký</th>
@@ -288,6 +289,9 @@ export function CourtOwnersPage() {
                       <Skeleton className="h-6 w-20 rounded-full mx-auto bg-zinc-800" />
                     </td>
                     <td className="py-4 px-5 text-center">
+                      <Skeleton className="h-5 w-16 rounded-md mx-auto bg-zinc-800" />
+                    </td>
+                    <td className="py-4 px-5 text-center">
                       <Skeleton className="h-3.5 w-24 mx-auto bg-zinc-800" />
                     </td>
                     <td className="py-4 px-5 text-center">
@@ -303,7 +307,7 @@ export function CourtOwnersPage() {
                 ))
               ) : owners.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-zinc-500">
+                  <td colSpan={8} className="py-12 text-center text-zinc-500">
                     <Building className="size-8 mx-auto mb-2 opacity-40 text-zinc-400" />
                     <p className="text-xs">Không tìm thấy chủ sân nào phù hợp với bộ lọc.</p>
                   </td>
@@ -355,12 +359,32 @@ export function CourtOwnersPage() {
                         )}
                       </td>
 
-                      {/* 4. Ngày bắt đầu gói */}
+                      {/* 4. Gói hiện tại */}
+                      <td className="py-3.5 px-5 text-center whitespace-nowrap">
+                        {owner.currentPackageName && owner.currentPackageName !== '—' ? (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold border ${
+                              owner.currentPackageName.toLowerCase().includes('ultra') ||
+                              owner.currentPackageName.toLowerCase().includes('vip')
+                                ? 'bg-purple-500/10 text-purple-300 border-purple-500/30'
+                                : owner.currentPackageName.toLowerCase().includes('pro')
+                                ? 'bg-teal-500/10 text-teal-300 border-teal-500/30'
+                                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            }`}
+                          >
+                            {owner.currentPackageName}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-500 text-xs italic">Chưa có gói</span>
+                        )}
+                      </td>
+
+                      {/* 5. Ngày bắt đầu gói */}
                       <td className="py-3.5 px-5 text-center whitespace-nowrap font-medium text-zinc-300">
                         {formatDateVN(owner.packageStartDate)}
                       </td>
 
-                      {/* 5. Ngày hết hạn gói */}
+                      {/* 6. Ngày hết hạn gói */}
                       <td className="py-3.5 px-5 text-center whitespace-nowrap font-medium text-zinc-300">
                         <div>{formatDateVN(owner.packageEndDate)}</div>
                         {owner.packageEndDate && owner.remainingDays !== undefined && (
@@ -376,7 +400,7 @@ export function CourtOwnersPage() {
                         )}
                       </td>
 
-                      {/* 6. Gói đăng ký: Chức năng Đổi gói */}
+                      {/* 7. Gói đăng ký: Chức năng Đổi gói */}
                       <td className="py-3.5 px-5 text-center whitespace-nowrap">
                         <button
                           type="button"
@@ -390,7 +414,7 @@ export function CourtOwnersPage() {
                         </button>
                       </td>
 
-                      {/* 7. Thao tác: Menu Dropdown 3 chấm (•••) */}
+                      {/* 8. Thao tác: Menu Dropdown 3 chấm (•••) */}
                       <td className="py-3.5 px-5 text-center">
                         <div className="flex items-center justify-center">
                           <DropdownMenu>

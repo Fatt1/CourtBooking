@@ -9,7 +9,7 @@ interface Props {
   totalCount: number;
   currentPage: number;
   totalPages: number;
-  onExtend: (sub: SubscriptionHistoryItem) => void;
+  onExtend?: (sub: SubscriptionHistoryItem) => void;
   onTogglePause?: (sub: SubscriptionHistoryItem) => void;
 }
 
@@ -19,8 +19,6 @@ export function SubscriptionHistoryTab({
   totalCount,
   currentPage,
   totalPages,
-  onExtend,
-  onTogglePause,
 }: Props) {
   const [search, setSearch] = useState('');
 
@@ -80,11 +78,8 @@ export function SubscriptionHistoryTab({
               <th scope="col" className="py-3.5 px-4">
                 GIÁ THANH TOÁN
               </th>
-              <th scope="col" className="py-3.5 px-4">
+              <th scope="col" className="py-3.5 px-5">
                 THỜI GIAN HIỆU LỰC
-              </th>
-              <th scope="col" className="py-3.5 px-5 text-right sm:text-left">
-                THAO TÁC
               </th>
             </tr>
           </thead>
@@ -105,17 +100,14 @@ export function SubscriptionHistoryTab({
                   <td className="py-4 px-4">
                     <Skeleton className="h-4 w-20 bg-[#14221a]" />
                   </td>
-                  <td className="py-4 px-4">
-                    <Skeleton className="h-4 w-28 bg-[#14221a]" />
-                  </td>
                   <td className="py-4 px-5">
-                    <Skeleton className="h-4 w-24 bg-[#14221a]" />
+                    <Skeleton className="h-4 w-28 bg-[#14221a]" />
                   </td>
                 </tr>
               ))
             ) : filteredSubscriptions.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-12 text-center text-zinc-400">
+                <td colSpan={4} className="py-12 text-center text-zinc-400">
                   <div className="max-w-xs mx-auto space-y-1.5">
                     <div className="text-sm font-semibold text-zinc-300">
                       Không tìm thấy lịch sử nào
@@ -171,24 +163,13 @@ export function SubscriptionHistoryTab({
                     </td>
 
                     {/* 4. Thời gian hiệu lực */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-3.5 px-5 whitespace-nowrap">
                       <div className="font-medium text-xs text-zinc-200">
                         {sub.startDate}
                       </div>
                       <div className="text-[11px] mt-0.5 text-zinc-400">
                         đến {sub.endDate}
                       </div>
-                    </td>
-
-                    {/* 5. Thao tác */}
-                    <td className="py-3.5 px-5 whitespace-nowrap text-right sm:text-left">
-                      <button
-                        type="button"
-                        onClick={() => onExtend(sub)}
-                        className="text-emerald-400 hover:text-emerald-300 font-bold text-xs cursor-pointer transition-colors"
-                      >
-                        Gia hạn
-                      </button>
                     </td>
                   </tr>
                 );
