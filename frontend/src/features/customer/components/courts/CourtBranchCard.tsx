@@ -27,14 +27,18 @@ export function CourtBranchCard({ branch, onOpenReviews }: CourtBranchCardProps)
     branch.availableCourtCount !== null && branch.availableCourtCount !== undefined;
   const isAlmostFull = branch.availableCourtCount === 1;
 
-  const locationText = branch.district || '';
+  const addressText =
+    branch.fullAddress ||
+    [branch.street, branch.district, branch.province].filter(Boolean).join(', ') ||
+    branch.district ||
+    'Chưa cập nhật địa chỉ';
 
   // Link Google Maps chỉ đường
   const mapLocationUrl =
     branch.latitude && branch.longitude
       ? `https://www.google.com/maps?q=${branch.latitude},${branch.longitude}`
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          `${branch.name}, ${branch.fullAddress || branch.district || ''}`
+          `${branch.name}, ${addressText}`
         )}`;
 
   return (
@@ -138,17 +142,18 @@ export function CourtBranchCard({ branch, onOpenReviews }: CourtBranchCardProps)
             {branch.name}
           </Link>
 
-          {/* Quận / Huyện & Khoảng cách */}
-          <p className="text-xs text-muted-foreground mt-1 font-medium line-clamp-1">
-            {locationText}
-            {branch.distanceKm !== null && branch.distanceKm !== undefined ? (
-              <span className="text-[#397B48] font-bold">
-                {locationText ? ' ' : ''}· {branch.distanceKm} km
+          {/* Địa chỉ chi nhánh & Khoảng cách */}
+          <div className="flex items-start gap-1.5 text-xs text-muted-foreground mt-1.5 font-medium">
+            <MapPin className="size-3.5 text-muted-foreground/80 shrink-0 mt-0.5" />
+            <span className="line-clamp-1 flex-1" title={addressText}>
+              {addressText}
+            </span>
+            {branch.distanceKm !== null && branch.distanceKm !== undefined && (
+              <span className="text-[#397B48] font-bold shrink-0">
+                · {branch.distanceKm} km
               </span>
-            ) : (
-              ''
             )}
-          </p>
+          </div>
 
           {/* Giờ hoạt động */}
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2 font-medium">

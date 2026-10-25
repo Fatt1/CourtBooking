@@ -40,9 +40,7 @@ internal sealed class GetPublicEventByIdHandler(
                     e.Order.BranchId,
                     e.Order.Branch.Name,
                     $"{e.Order.Branch.Street}, {e.Order.Branch.District}, {e.Order.Branch.Province}",
-                    e.Order.Branch.Latitude.HasValue && e.Order.Branch.Longitude.HasValue
-                        ? $"https://www.google.com/maps?q={e.Order.Branch.Latitude.Value},{e.Order.Branch.Longitude.Value}"
-                        : null,
+                    e.Order.Branch.MapUrl ?? $"https://www.google.com/maps?q={e.Order.Branch.Latitude},{e.Order.Branch.Longitude}",
                     e.Order.Branch.AccountNumber,
                     e.Order.Branch.AccountName,
                     e.Order.Branch.QrImage != null

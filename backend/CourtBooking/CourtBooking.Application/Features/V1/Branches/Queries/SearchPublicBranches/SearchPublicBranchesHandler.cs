@@ -100,13 +100,12 @@ internal sealed class SearchPublicBranchesHandler(IApplicationDbContext dbContex
         double kmPerDegLng = KmPerDegLngAtEquator * Math.Cos(lat * Math.PI / 180);
 
         var rows = from b in q
-                   let hasCoords = b.Latitude != null && b.Longitude != null
-                   let dy = hasCoords ? ((double)b.Latitude! - lat) * KmPerDegLat : 0
-                   let dx = hasCoords ? ((double)b.Longitude! - lng) * kmPerDegLng : 0
+                   let dy = ((double)b.Latitude - lat) * KmPerDegLat
+                   let dx = ((double)b.Longitude - lng) * kmPerDegLng
                    select new
                    {
                        Branch = b,
-                       DistanceKm = hasCoords ? (double?)Math.Sqrt(dx * dx + dy * dy) : null
+                       DistanceKm = (double?)Math.Sqrt(dx * dx + dy * dy)
                    };
 
         var totalCount = await rows.CountAsync(cancellationToken);

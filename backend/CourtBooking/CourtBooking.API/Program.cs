@@ -32,11 +32,17 @@ try
     {
         options.AddDefaultPolicy(policy =>
         {
-            policy.WithOrigins(
-                      "https://swearingly-pseudocubic-beth.ngrok-free.dev",
-                      "http://172.27.32.1:3000",
-                      "http://172.16.20.114:3000",
-                      "http://localhost:3000")
+            policy.SetIsOriginAllowed(origin =>
+                  {
+                      if (string.IsNullOrEmpty(origin)) return false;
+                      if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                      {
+                          return uri.Host == "localhost" ||
+                                 uri.Host.EndsWith(".ngrok-free.dev", StringComparison.OrdinalIgnoreCase) ||
+                                 uri.Host.EndsWith(".trycloudflare.com", StringComparison.OrdinalIgnoreCase);
+                      }
+                      return false;
+                  })
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -116,7 +122,7 @@ try
                 : Serilog.Events.LogEventLevel.Information;
     });
 
-    app.UseHttpsRedirection();
+    //app.UseHttpsRedirection();
 
     app.UseCors();
     app.UseAuthentication();

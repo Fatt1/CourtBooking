@@ -29,9 +29,10 @@ export interface OwnerBranchDetail {
   province: string;
   district: string;
   street: string;
+  mapUrl?: string | null;
   ggMapUrl?: string;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude: number;
+  longitude: number;
   openTime: string;
   closeTime: string;
   policy?: string | null;
@@ -56,6 +57,7 @@ export interface CreateBranchPayload {
   province: string;
   district: string;
   street: string;
+  mapUrl?: string;
   ggMapUrl?: string;
   openTime: string;
   closeTime: string;
@@ -67,8 +69,8 @@ export interface CreateBranchPayload {
   sportTypeIds: string[];
   policy?: string | null;
   description?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude: number;
+  longitude: number;
   imageIds: string[];
 }
 
@@ -143,6 +145,9 @@ export interface PublicBranchDetailDto {
   minPrice?: number | null;
   maxPrice?: number | null;
   reviewAverage: number;
+  mapUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   images: Array<{ key: string; id: string }>;
   sports: BranchSportDto[];
 }

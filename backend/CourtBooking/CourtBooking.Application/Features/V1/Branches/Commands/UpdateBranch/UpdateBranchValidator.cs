@@ -20,8 +20,14 @@ public sealed class UpdateBranchValidator : AbstractValidator<UpdateBranchComman
         RuleFor(x => x.QrImageId).NotEmpty();
         RuleFor(x => x.CloseTime).NotEqual(x => x.OpenTime)
             .WithMessage("Giờ đóng cửa phải khác giờ mở cửa.");
-        RuleFor(x => x.Latitude).InclusiveBetween(-90m, 90m).When(x => x.Latitude.HasValue);
-        RuleFor(x => x.Longitude).InclusiveBetween(-180m, 180m).When(x => x.Longitude.HasValue);
+        RuleFor(x => x.Latitude)
+            .InclusiveBetween(-90m, 90m)
+            .WithMessage("Vĩ độ (Latitude) phải nằm trong khoảng từ -90 đến 90 độ.");
+        RuleFor(x => x.Longitude)
+            .InclusiveBetween(-180m, 180m)
+            .WithMessage("Kinh độ (Longitude) phải nằm trong khoảng từ -180 đến 180 độ.");
+        RuleFor(x => x.MapUrl).MaximumLength(1000);
+        RuleFor(x => x.GgMapUrl).MaximumLength(1000);
         RuleFor(x => x.SportTypeIds).NotNull().Must(x => x is { Count: > 0 })
             .WithMessage("Chi nhánh phải có ít nhất một môn thể thao.");
         RuleFor(x => x.SportTypeIds).Must(x => x is null ||

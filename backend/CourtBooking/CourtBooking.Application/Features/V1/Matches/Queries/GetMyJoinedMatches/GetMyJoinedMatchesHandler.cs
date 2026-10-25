@@ -39,13 +39,12 @@ public sealed class GetMyJoinedMatchesHandler(
         double kmPerDegLng = KmPerDegLngAtEquator * Math.Cos(lat * Math.PI / 180);
 
         var rows = from m in query
-                   let hasCoords = m.Branch.Latitude != null && m.Branch.Longitude != null
-                   let dy = hasCoords ? ((double)m.Branch.Latitude! - lat) * KmPerDegLat : 0
-                   let dx = hasCoords ? ((double)m.Branch.Longitude! - lng) * kmPerDegLng : 0
+                   let dy = ((double)m.Branch.Latitude - lat) * KmPerDegLat
+                   let dx = ((double)m.Branch.Longitude - lng) * kmPerDegLng
                    select new
                    {
                        Match = m,
-                       DistanceKm = hasCoords ? (double?)Math.Sqrt(dx * dx + dy * dy) : null
+                       DistanceKm = (double?)Math.Sqrt(dx * dx + dy * dy)
                    };
 
         var items = await rows

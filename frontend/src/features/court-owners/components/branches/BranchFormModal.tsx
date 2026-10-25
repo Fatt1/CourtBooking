@@ -87,8 +87,8 @@ export function BranchFormModal({
   const [district, setDistrict] = useState('');
   const [street, setStreet] = useState('');
   const [ggMapUrl, setGgMapUrl] = useState('');
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
+  const [latitude, setLatitude] = useState<string>('');
+  const [longitude, setLongitude] = useState<string>('');
   const [hotline, setHotline] = useState('');
   const [openTime, setOpenTime] = useState('06:00');
   const [closeTime, setCloseTime] = useState('23:00');
@@ -155,9 +155,17 @@ export function BranchFormModal({
       }
 
       setStreet(branchDetail.street || '');
-      setGgMapUrl(branchDetail.ggMapUrl || '');
-      setLatitude(branchDetail.latitude ?? null);
-      setLongitude(branchDetail.longitude ?? null);
+      setGgMapUrl(branchDetail.mapUrl || branchDetail.ggMapUrl || '');
+      setLatitude(
+        branchDetail.latitude !== null && branchDetail.latitude !== undefined
+          ? String(branchDetail.latitude)
+          : ''
+      );
+      setLongitude(
+        branchDetail.longitude !== null && branchDetail.longitude !== undefined
+          ? String(branchDetail.longitude)
+          : ''
+      );
       setHotline(branchDetail.hotline || '');
       setOpenTime(branchDetail.openTime ? branchDetail.openTime.slice(0, 5) : '06:00');
       setCloseTime(branchDetail.closeTime ? branchDetail.closeTime.slice(0, 5) : '23:00');
@@ -209,8 +217,8 @@ export function BranchFormModal({
       setDistrict('');
       setStreet('');
       setGgMapUrl('');
-      setLatitude(null);
-      setLongitude(null);
+      setLatitude('');
+      setLongitude('');
       setHotline('');
       setOpenTime('06:00');
       setCloseTime('23:00');
@@ -231,8 +239,8 @@ export function BranchFormModal({
     setGgMapUrl(val);
     const coords = extractLatLngFromGoogleMapsUrl(val);
     if (coords) {
-      setLatitude(coords.latitude);
-      setLongitude(coords.longitude);
+      setLatitude(String(coords.latitude));
+      setLongitude(String(coords.longitude));
       toast.success(
         `Đã trích xuất tọa độ: [${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}]`
       );
@@ -412,11 +420,30 @@ export function BranchFormModal({
       return;
     }
 
-    // Đảm bảo URL Google Maps không vượt quá 255 ký tự (ràng buộc của Database)
-    // Nếu URL dài hơn 255 và đã có tọa độ, rút gọn về định dạng chuẩn maps?q=lat,lng
+    const parsedLat = parseFloat(latitude);
+    const parsedLng = parseFloat(longitude);
+
+    if (latitude.trim() === '' || isNaN(parsedLat)) {
+      toast.error('Vui lòng nhập Vĩ độ (Latitude) của chi nhánh!');
+      return;
+    }
+    if (parsedLat < -90 || parsedLat > 90) {
+      toast.error('Vĩ độ (Latitude) phải nằm trong khoảng từ -90 đến 90 độ!');
+      return;
+    }
+
+    if (longitude.trim() === '' || isNaN(parsedLng)) {
+      toast.error('Vui lòng nhập Kinh độ (Longitude) của chi nhánh!');
+      return;
+    }
+    if (parsedLng < -180 || parsedLng > 180) {
+      toast.error('Kinh độ (Longitude) phải nằm trong khoảng từ -180 đến 180 độ!');
+      return;
+    }
+
     let cleanGgMapUrl = ggMapUrl.trim();
-    if (cleanGgMapUrl.length > 255 && latitude && longitude) {
-      cleanGgMapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    if (!cleanGgMapUrl) {
+      cleanGgMapUrl = `https://www.google.com/maps?q=${parsedLat},${parsedLng}`;
     }
 
     const payload: CreateBranchPayload = {
@@ -425,7 +452,8 @@ export function BranchFormModal({
       province: selectedProvinceName,
       district: district.trim(),
       street: street.trim(),
-      ggMapUrl: cleanGgMapUrl || (latitude && longitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : undefined),
+      mapUrl: cleanGgMapUrl,
+      ggMapUrl: cleanGgMapUrl,
       openTime: openTime.length === 5 ? `${openTime}:00` : openTime,
       closeTime: closeTime.length === 5 ? `${closeTime}:00` : closeTime,
       qrImageId: qrImage.id,
@@ -436,8 +464,8 @@ export function BranchFormModal({
       sportTypeIds: selectedSportIds,
       policy: policy.trim() || null,
       description: description.trim() || null,
-      latitude: latitude ?? undefined,
-      longitude: longitude ?? undefined,
+      latitude: parsedLat,
+      longitude: parsedLng,
       imageIds: images.map((img) => img.id),
     };
 
@@ -546,42 +574,57 @@ export function BranchFormModal({
                 />
               </div>
 
-              {/* Google Maps URL & Tọa độ bóc tách */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-0.5">
-                <div className="sm:col-span-2 space-y-1.5">
+              {/* Google Maps URL & Tọa độ GPS */}
+              <div className="space-y-3 pt-0.5">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-foreground">
-                      Tọa độ GPS / Google Maps URL
+                      Đường dẫn Google Maps (Map URL)
                     </label>
-                    {latitude && longitude && (
+                    {latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude)) && (
                       <span className="text-[11px] text-emerald-700 dark:text-[#a3e635] flex items-center gap-1 font-medium">
                         <CheckCircle2 className="size-3" />
-                        Đã bóc tách tọa độ
+                        Đã có tọa độ
                       </span>
                     )}
                   </div>
                   <Input
                     value={ggMapUrl}
                     onChange={(e) => handleGgMapUrlChange(e.target.value)}
-                    placeholder="Dán link Google Maps vào đây (https://www.google.com/maps/...)"
+                    placeholder="Dán link Google Maps vào đây để tự động lấy tọa độ (https://www.google.com/maps/...)"
                     className="h-10 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 text-xs focus-visible:ring-[#a3e635]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium text-muted-foreground">
-                    Tọa độ GPS trích xuất
-                  </label>
-                  <div className="h-10 rounded-xl bg-muted/40 border border-border/40 px-3 flex items-center text-xs font-mono text-foreground">
-                    {latitude && longitude ? (
-                      <span className="text-emerald-700 dark:text-[#a3e635]">
-                        {latitude.toFixed(6)}, {longitude.toFixed(6)}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground/50 italic text-[11px]">
-                        Tự động bóc tách từ URL
-                      </span>
-                    )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Vĩ độ (Latitude) <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      required
+                      type="number"
+                      step="any"
+                      value={latitude}
+                      onChange={(e) => setLatitude(e.target.value)}
+                      placeholder="Ví dụ: 10.777026 (-90 đến 90)"
+                      className="h-10 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 text-xs focus-visible:ring-[#a3e635]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Kinh độ (Longitude) <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      required
+                      type="number"
+                      step="any"
+                      value={longitude}
+                      onChange={(e) => setLongitude(e.target.value)}
+                      placeholder="Ví dụ: 106.695427 (-180 đến 180)"
+                      className="h-10 rounded-xl bg-background border-border/60 text-foreground placeholder:text-muted-foreground/60 text-xs focus-visible:ring-[#a3e635]"
+                    />
                   </div>
                 </div>
               </div>
