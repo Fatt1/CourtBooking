@@ -88,3 +88,57 @@
 2026-10-26T07:02:20Z ERR Request failed error="stream 13557 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/node_modules/.vite/deps/lucide-react.js?v=dcc2757f event=0 ip=198.41.192.57 type=http
 2026-10-26T07:02:43Z ERR  error="stream 14081 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
 2026-10-26T07:02:43Z ERR Request failed error="stream 14081 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/node_modules/.vite/deps/date-fns_locale.js?v=dcc2757f event=0 ip=198.41.192.57 type=http
+2026/10/26 14:49:21 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 14:49:21 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 14:49:21 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 14:49:21 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 14:49:21 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 14:49:21 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026-10-26T07:54:32Z ERR  error="stream 20789 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR  error="stream 20765 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20765 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/api/retail-orders/useRetailOrders.ts event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20849 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR  error="stream 20801 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20801 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/branches/BranchFormModal.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20829 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20829 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/pos/PosProductGrid.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20841 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20841 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/schemas/retailOrderSchema.ts event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20809 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20809 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/branches/BranchTable.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20821 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20821 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/components/common/SearchableSelect.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20833 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR  error="stream 20805 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20805 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/branches/BranchDetailModal.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR Request failed error="stream 20789 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/api/courts/useCourts.ts event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20813 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20813 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/components/ui/table.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20837 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20837 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/hooks/usePosDraft.ts event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20845 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20845 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/node_modules/.vite/deps/embla-carousel-autoplay.js?v=dcc2757f event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20825 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20825 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/pos/PosCart.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20777 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20777 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/courts/CourtFormModal.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR  error="stream 20781 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR  error="stream 20797 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:54:32Z ERR Request failed error="stream 20797 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/branches/BranchCard.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR Request failed error="stream 20849 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/components/ui/carousel.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR Request failed error="stream 20781 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/courts/CourtTable.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:54:32Z ERR Request failed error="stream 20833 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/pos/RetailReceiptModal.tsx event=0 ip=198.41.192.57 type=http
+2026/10/26 15:04:21 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:26:52 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 15:39:22 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>

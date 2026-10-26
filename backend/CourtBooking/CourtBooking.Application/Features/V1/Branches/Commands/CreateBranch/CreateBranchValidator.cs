@@ -26,7 +26,6 @@ public sealed class CreateBranchValidator : AbstractValidator<CreateBranchComman
             .InclusiveBetween(-180m, 180m)
             .WithMessage("Kinh độ (Longitude) phải nằm trong khoảng từ -180 đến 180 độ.");
         RuleFor(x => x.MapUrl).MaximumLength(1000);
-        RuleFor(x => x.GgMapUrl).MaximumLength(1000);
         RuleFor(x => x.SportTypeIds).NotNull().Must(x => x is { Count: > 0 })
             .WithMessage("Chi nhánh phải có ít nhất một môn thể thao.");
         RuleFor(x => x.SportTypeIds).Must(x => x is null ||

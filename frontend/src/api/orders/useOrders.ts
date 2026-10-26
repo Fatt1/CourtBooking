@@ -8,6 +8,7 @@ import {
   type DailyOrderResponse,
   type GetDailyOrdersParams,
   type CancelOrderByOwnerPayload,
+  type RejectOrderCancellationPayload,
   type UpdateCustomerInfoPayload,
   type UpdateOrderServicesPayload,
   type AddPaymentTransactionPayload,
@@ -141,6 +142,28 @@ export function useCancelOrderByOwnerMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+    },
+  });
+}
+
+/**
+ * Hook từ chối duyệt hủy đơn đặt sân (PUT /api/v1/owner/orders/{orderId}/reject-cancellation)
+ * Trạng thái đơn sẽ chuyển về Confirmed (Đã nhận / Đã xác nhận)
+ */
+export function useRejectOrderCancellationMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ orderId, rejectionReason }: RejectOrderCancellationPayload) => {
+      return await apiClient.put(API_ENDPOINTS.ORDERS.REJECT_CANCELLATION(orderId), {
+        rejectionReason,
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
+      queryClient.invalidateQueries({
+        queryKey: ['owner', 'orders', 'daily-detail', variables.orderId],
+      });
     },
   });
 }

@@ -47,6 +47,7 @@ export interface EventBranchInfoDto {
   branchId: string;
   branchName: string;
   address: string;
+  mapUrl?: string | null;
   ggMapUrl?: string | null;
   accountNumber: string;
   accountName: string;

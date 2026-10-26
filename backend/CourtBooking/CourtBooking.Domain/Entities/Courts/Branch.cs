@@ -18,10 +18,6 @@ public class Branch : EntityBase<Guid>, IAuditable
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
     public string? MapUrl { get; set; }
-
-    public string? GgMapUrl => !string.IsNullOrWhiteSpace(MapUrl)
-        ? MapUrl
-        : $"https://www.google.com/maps?q={Latitude},{Longitude}";
     public bool IsActive { get; set; }
     public double ReviewAverage { get; set; }
     public decimal MinPrice { get; set; }

@@ -241,13 +241,12 @@ public sealed class BranchEndpoints : IEndpointGroup
 
         group.MapPost("/", async (CreateBranchRequest body, ISender sender, CancellationToken ct) =>
         {
-            var mapUrl = body.MapUrl ?? body.GgMapUrl;
             var result = await sender.Send(new CreateBranchCommand(
                 body.Name, body.Hotline, body.Province, body.District, body.Street,
-                mapUrl, body.OpenTime, body.CloseTime, body.QrImageId,
+                body.MapUrl, body.OpenTime, body.CloseTime, body.QrImageId,
                 body.AccountNumber, body.AccountName, body.SportTypeIds,
                 body.Policy, body.Latitude, body.Longitude, body.ImageIds, body.Description,
-                body.BankName, body.BankCode, mapUrl), ct);
+                body.BankName, body.BankCode), ct);
             return result.IsSuccess
                 ? Results.Created($"/api/v1/owner/branches/{result.Value}", result.Value)
                 : result.ToProblemDetails();
@@ -262,13 +261,12 @@ public sealed class BranchEndpoints : IEndpointGroup
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateBranchRequest body, ISender sender, CancellationToken ct) =>
         {
-            var mapUrl = body.MapUrl ?? body.GgMapUrl;
             var result = await sender.Send(new UpdateBranchCommand(
                 id, body.Name, body.Hotline, body.Province, body.District, body.Street,
-                mapUrl, body.OpenTime, body.CloseTime, body.QrImageId,
+                body.MapUrl, body.OpenTime, body.CloseTime, body.QrImageId,
                 body.AccountNumber, body.AccountName, body.SportTypeIds,
                 body.Policy, body.Latitude, body.Longitude, body.ImageIds, body.Description,
-                body.BankName, body.BankCode, mapUrl), ct);
+                body.BankName, body.BankCode), ct);
             return result.IsSuccess ? Results.NoContent() : result.ToProblemDetails();
         })
         .WithName("UpdateOwnerBranch")

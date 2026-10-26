@@ -100,6 +100,7 @@ export function BranchDetailPage() {
           province={branch.province}
           distanceKm={branch.distanceKm}
           hotline={branch.hotline}
+          mapUrl={branch.mapUrl || branch.ggMapUrl}
           ggMapUrl={branch.ggMapUrl}
           reviewAverage={realReviewAverage}
           reviewCount={realReviewCount}

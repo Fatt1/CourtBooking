@@ -12,6 +12,7 @@ using CourtBooking.Application.Features.V1.Orders.Commands.CreateFixedOrderByOwn
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderByOwner;
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderOnline;
 using CourtBooking.Application.Features.V1.Orders.Commands.DeleteFixedOrderCycle;
+using CourtBooking.Application.Features.V1.Orders.Commands.RejectOrderCancellation;
 using CourtBooking.Application.Features.V1.Orders.Commands.SubmitPaymentProof;
 using CourtBooking.Application.Features.V1.Orders.Commands.UpdateCustomerInfo;
 using CourtBooking.Application.Features.V1.Orders.Commands.UpdateFixedOrderCycle;
@@ -314,6 +315,28 @@ public class OrderEndpoints : IEndpointGroup
             .WithName("CancelOrderByOwner")
             .WithSummary("Chủ sân hủy đơn đặt sân")
             .WithDescription("Hủy đơn đặt sân, giải phóng các slot sân, ghi nhận lý do hủy và tự động tạo giao dịch hoàn tiền nếu có số tiền hoàn.")
+            .WithTags(OrderTag)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        // PUT /api/v1/owner/orders/{orderId:guid}/reject-cancellation — Chủ sân từ chối duyệt hủy đơn đặt sân
+        group.MapPut("/{orderId:guid}/reject-cancellation", async (
+                [FromRoute] Guid orderId,
+                [FromBody] RejectOrderCancellationCommand? command,
+                ISender sender = default!,
+                CancellationToken ct = default) =>
+        {
+            var cmd = (command ?? new RejectOrderCancellationCommand(orderId)) with { OrderId = orderId };
+            var result = await sender.Send(cmd, ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : result.ToProblemDetails();
+        })
+            .WithName("RejectOrderCancellation")
+            .WithSummary("Chủ sân từ chối duyệt hủy đơn đặt sân")
+            .WithDescription("Từ chối yêu cầu hủy đơn của khách, chuyển trạng thái đơn hàng trở lại Đã xác nhận (Confirmed/Đã nhận) và giữ nguyên các ca sân.")
             .WithTags(OrderTag)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)

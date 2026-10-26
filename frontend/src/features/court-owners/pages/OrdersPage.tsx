@@ -818,6 +818,7 @@ export function OrdersPage() {
           orderId={orderToCancel.id}
           orderCode={orderToCancel.orderCode}
           totalPaid={orderToCancel.totalAmount - orderToCancel.remainingAmount}
+          customerNote={orderToCancel.note || undefined}
           onSuccess={() => {
             setOrderToCancel(null);
             refetch();

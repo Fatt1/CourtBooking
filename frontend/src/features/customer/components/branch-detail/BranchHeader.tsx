@@ -11,6 +11,7 @@ interface BranchHeaderProps {
   province: string;
   distanceKm?: number | null;
   hotline?: string;
+  mapUrl?: string | null;
   ggMapUrl?: string | null;
   reviewAverage?: number;
   reviewCount?: number;
@@ -24,6 +25,7 @@ export function BranchHeader({
   province,
   distanceKm,
   hotline,
+  mapUrl,
   ggMapUrl,
   reviewAverage = 0,
   reviewCount = 0,
@@ -120,9 +122,9 @@ export function BranchHeader({
               </a>
             )}
 
-            {ggMapUrl && (
+            {(mapUrl || ggMapUrl) && (
               <a
-                href={ggMapUrl}
+                href={(mapUrl || ggMapUrl)!}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-colors"

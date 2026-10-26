@@ -207,6 +207,14 @@ export interface CancelOrderByOwnerPayload {
 }
 
 /**
+ * Payload từ chối duyệt hủy đơn bởi chủ sân (trạng thái chuyển về Confirmed)
+ */
+export interface RejectOrderCancellationPayload {
+  orderId: string;
+  rejectionReason?: string | null;
+}
+
+/**
  * Payload cập nhật thông tin khách hàng
  */
 export interface UpdateCustomerInfoPayload {

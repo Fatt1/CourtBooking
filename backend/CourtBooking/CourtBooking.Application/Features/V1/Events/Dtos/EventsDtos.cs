@@ -52,7 +52,7 @@ public sealed record EventBranchInfoDto(
     Guid BranchId,
     string BranchName,
     string Address,
-    string? GgMapUrl,
+    string? MapUrl,
     string AccountNumber,
     string AccountName,
     ImageDto? QrImage,

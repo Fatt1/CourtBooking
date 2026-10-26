@@ -48,7 +48,7 @@ internal sealed class GetOwnerBranchByIdHandler(IApplicationDbContext dbContext,
         if (branch is null)
             return Result.Failure<OwnerBranchDetailDto>(new NotFoundError("Branch", request.Id));
 
-        var ggMapUrl = !string.IsNullOrWhiteSpace(branch.MapUrl)
+        var mapUrl = !string.IsNullOrWhiteSpace(branch.MapUrl)
             ? branch.MapUrl
             : $"https://www.google.com/maps?q={branch.Latitude},{branch.Longitude}";
 
@@ -59,7 +59,7 @@ internal sealed class GetOwnerBranchByIdHandler(IApplicationDbContext dbContext,
             Province: branch.Province,
             District: branch.District,
             Street: branch.Street,
-            GgMapUrl: ggMapUrl,
+            MapUrl: mapUrl,
             Latitude: branch.Latitude,
             Longitude: branch.Longitude,
             OpenTime: branch.OpenTime,
@@ -74,8 +74,7 @@ internal sealed class GetOwnerBranchByIdHandler(IApplicationDbContext dbContext,
             Images: branch.Images,
             AverageRating: branch.AverageRating,
             BankName: branch.BankName,
-            BankCode: branch.BankCode,
-            MapUrl: branch.MapUrl);
+            BankCode: branch.BankCode);
 
         return Result.Success(dto);
     }
