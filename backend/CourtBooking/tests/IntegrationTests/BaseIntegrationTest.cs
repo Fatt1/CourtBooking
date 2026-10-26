@@ -7,9 +7,11 @@ public abstract class BaseIntegrationTest
 {
     protected BaseIntegrationTest(IntegrationTestWebAppFactory factory)
     {
+        Factory = factory;
         HttpClient = factory.CreateClient();
     }
 
+    protected IntegrationTestWebAppFactory Factory { get; }
     protected HttpClient HttpClient { get; }
 
     protected sealed record AccessTokens(string AccessToken, string RefreshToken);
@@ -19,5 +21,14 @@ public abstract class BaseIntegrationTest
     protected void Authenticate(string accessToken)
     {
         HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+    }
+
+    protected HttpClient CreateAuthenticatedClient(CourtBooking.Domain.Entities.Users.ApplicationUser user, IEnumerable<string> roles)
+    {
+        var client = Factory.CreateClient();
+        var tokenService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<CourtBooking.Application.Abstractions.Authentication.IJwtTokenService>(Factory.Services);
+        var token = tokenService.GenerateAccessToken(user, roles);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
     }
 }

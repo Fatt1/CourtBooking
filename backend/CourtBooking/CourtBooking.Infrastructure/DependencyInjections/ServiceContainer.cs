@@ -130,18 +130,27 @@ public static class ServiceContainer
         {
             var db = sp.GetRequiredService<IOptions<DatabaseOptions>>().Value;
 
-            options.UseSqlServer(db.DefaultConnection, sqlOptions =>
+            if (db.DefaultConnection.StartsWith("InMemory:", StringComparison.OrdinalIgnoreCase))
             {
-                sqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: db.MaxRetryCount,
-                    maxRetryDelay: TimeSpan.FromSeconds(10),
-                    errorNumbersToAdd: null);
+                var dbName = db.DefaultConnection["InMemory:".Length..];
+                options.UseInMemoryDatabase(string.IsNullOrWhiteSpace(dbName) ? "CourtBooking" : dbName);
+                options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
+            }
+            else
+            {
+                options.UseSqlServer(db.DefaultConnection, sqlOptions =>
+                {
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: db.MaxRetryCount,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorNumbersToAdd: null);
 
-                sqlOptions.CommandTimeout(db.CommandTimeoutSeconds);
+                    sqlOptions.CommandTimeout(db.CommandTimeoutSeconds);
 
-                // Migrations are generated and stored in the Infrastructure assembly
-                sqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.GetName().Name);
-            });
+                    // Migrations are generated and stored in the Infrastructure assembly
+                    sqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.GetName().Name);
+                });
+            }
 
             options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
