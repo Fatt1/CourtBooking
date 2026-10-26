@@ -9,7 +9,7 @@ public sealed record CreateCourtOwnerCommand(
     string FullName,
     string PhoneNumber,
     string Email,
+    string Password,
+    Guid ServicePackageId,
     bool MustChangePwd = true,
-    string? Password = null,
-    string? BusinessName = null,
-    Guid? ServicePackageId = null) : ICommand<Guid>;
+    string? BusinessName = null) : ICommand<Guid>;

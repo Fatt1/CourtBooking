@@ -27,7 +27,7 @@ public sealed record PublicBranchDetailDto(
     string Province,
     string District,
     string Street,
-    string? GgMapUrl,
+    string? MapUrl,
     double? DistanceKm,
     TimeOnly OpenTime,
     TimeOnly CloseTime,
@@ -39,5 +39,4 @@ public sealed record PublicBranchDetailDto(
     IReadOnlyList<ImageDto> Images,
     IReadOnlyList<BranchSportDto> Sports,
     decimal? Latitude = null,
-    decimal? Longitude = null,
-    string? MapUrl = null);
+    decimal? Longitude = null);

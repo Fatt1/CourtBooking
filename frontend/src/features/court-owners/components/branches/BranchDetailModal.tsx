@@ -144,10 +144,10 @@ export function BranchDetailModal({
               </div>
 
               {/* Google Maps link nếu có */}
-              {detail?.ggMapUrl && (
+              {(detail?.mapUrl || detail?.ggMapUrl) && (
                 <div className="sm:col-span-2 pt-1">
                   <a
-                    href={detail.ggMapUrl}
+                    href={(detail.mapUrl || detail.ggMapUrl)!}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1.5 text-[#a3e635] hover:underline font-semibold"

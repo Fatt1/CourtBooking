@@ -10,34 +10,48 @@ import {
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { cn } from '@/lib/utils';
+import { useMatchesQuery, type MatchDto } from '@/api/matches';
 
-interface HeroSlide {
-  image: string;
-  alt: string;
-  badgeTitle: string;
-  badgeSubtitle: string;
+interface HeroMatchInfo {
+  id: string;
+  title: string;
+  subtitle: string;
 }
 
-const HERO_SLIDES: HeroSlide[] = [
+const HERO_SLIDES = [
   {
     image: '/images/hero-1.jpg',
     alt: 'Nhóm bạn thư giãn sau giờ chơi thể thao tại công viên Vinhomes',
-    badgeTitle: 'Kèo bóng đá tối nay',
-    badgeSubtitle: '19:30 · Thủ Đức · còn 2 chỗ',
   },
   {
     image: '/images/hero-2.jpg',
     alt: 'Trận giao lưu pickleball sôi nổi tại cụm sân hiện đại',
-    badgeTitle: 'Kèo Pickleball đôi nam nữ',
-    badgeSubtitle: '18:00 · Quận 7 · còn 1 chỗ',
   },
   {
     image: '/images/hero-3.jpg',
     alt: 'Trận bóng đá giao hữu dưới ánh đèn sân cỏ nhân tạo',
-    badgeTitle: 'Kèo bóng đá sân 7',
-    badgeSubtitle: '20:00 · Bình Thạnh · còn 3 chỗ',
   },
 ];
+
+function formatMatchSimpleInfo(match: MatchDto): HeroMatchInfo {
+  const title =
+    match.description?.trim().split('\n')[0]?.slice(0, 45) ||
+    `Kèo ${match.sportTypeName || 'Giao lưu'}`;
+
+  const time = match.startTime ? match.startTime.slice(0, 5) : '';
+  const location =
+    match.branchAddress?.split(',').slice(-2, -1)[0]?.trim() || match.branchName;
+  const slots =
+    match.availableSlots > 0 ? `còn ${match.availableSlots} chỗ` : 'đã đủ người';
+
+  const subtitle = [time, location, slots].filter(Boolean).join(' · ');
+
+  return {
+    id: match.id,
+    title,
+    subtitle,
+  };
+}
 
 export function HeroSection() {
   const [api, setApi] = React.useState<CarouselApi>();
@@ -59,7 +73,20 @@ export function HeroSection() {
     });
   }, [api]);
 
-  const activeSlide = HERO_SLIDES[current] || HERO_SLIDES[0];
+  // Lấy tối đa 3 kèo giao lưu từ API hiện có
+  const { data: pagedMatches } = useMatchesQuery({
+    page: 1,
+    pageSize: 3,
+  });
+
+  const matches = pagedMatches?.items || [];
+  const totalMatchesCount = pagedMatches?.totalCount ?? matches.length;
+
+  const currentMatch = React.useMemo<HeroMatchInfo | null>(() => {
+    if (!matches.length) return null;
+    const match = matches[current % matches.length];
+    return match ? formatMatchSimpleInfo(match) : null;
+  }, [matches, current]);
 
   return (
     <section className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 overflow-hidden">
@@ -194,36 +221,40 @@ export function HeroSection() {
                   ))}
                 </div>
 
-                {/* Floating Badge 1: Top-Right (12 KÈO ĐANG CHỜ - Clickable) */}
-                <Link
-                  to="/matches"
-                  className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 bg-[#18231A]/95 hover:bg-[#203323] text-white backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-white/10 flex flex-col items-center min-w-[72px] transition-all hover:scale-105 active:scale-95 cursor-pointer group/badge"
-                  title="Xem các kèo giao lưu đang mở"
-                >
-                  <span className="font-heading font-black text-2xl sm:text-3xl leading-none text-[#51B367] group-hover/badge:text-emerald-400">
-                    12
-                  </span>
-                  <span className="text-[9px] font-bold tracking-wider uppercase text-slate-300 mt-1">
-                    KÈO ĐANG CHỜ
-                  </span>
-                </Link>
-
-                {/* Floating Card 2: Bottom-Left (Kèo thể thao - Clickable) */}
-                <Link
-                  to="/matches"
-                  className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 z-20 bg-card/95 hover:bg-card text-card-foreground backdrop-blur-md px-4 py-3 rounded-2xl shadow-2xl border border-border/70 max-w-[270px] transition-all duration-300 hover:scale-105 hover:border-[#397B48]/50 active:scale-95 cursor-pointer block"
-                  title="Xem chi tiết kèo"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="size-2 rounded-full bg-[#397B48] animate-pulse shrink-0" />
-                    <span className="font-bold text-xs sm:text-sm text-foreground truncate">
-                      {activeSlide.badgeTitle}
+                {/* Floating Badge 1: Top-Right (KÈO ĐANG CHỜ - Clickable) */}
+                {totalMatchesCount > 0 && (
+                  <Link
+                    to="/matches"
+                    className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 bg-[#18231A]/95 hover:bg-[#203323] text-white backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-white/10 flex flex-col items-center min-w-[72px] transition-all hover:scale-105 active:scale-95 cursor-pointer group/badge"
+                    title="Xem các kèo giao lưu đang mở"
+                  >
+                    <span className="font-heading font-black text-2xl sm:text-3xl leading-none text-[#51B367] group-hover/badge:text-emerald-400">
+                      {totalMatchesCount}
                     </span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-1 font-medium pl-4 truncate">
-                    {activeSlide.badgeSubtitle}
-                  </p>
-                </Link>
+                    <span className="text-[9px] font-bold tracking-wider uppercase text-slate-300 mt-1">
+                      KÈO ĐANG CHỜ
+                    </span>
+                  </Link>
+                )}
+
+                {/* Floating Card 2: Bottom-Left (Kèo thể thao thực tế từ API - Clickable) */}
+                {currentMatch && (
+                  <Link
+                    to={`/matches/${currentMatch.id}`}
+                    className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 z-20 bg-card/95 hover:bg-card text-card-foreground backdrop-blur-md px-4 py-3 rounded-2xl shadow-2xl border border-border/70 max-w-[270px] transition-all duration-300 hover:scale-105 hover:border-[#397B48]/50 active:scale-95 cursor-pointer block"
+                    title="Xem chi tiết kèo"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="size-2 rounded-full bg-[#397B48] animate-pulse shrink-0" />
+                      <span className="font-bold text-xs sm:text-sm text-foreground truncate">
+                        {currentMatch.title}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1 font-medium pl-4 truncate">
+                      {currentMatch.subtitle}
+                    </p>
+                  </Link>
+                )}
               </Carousel>
             </div>
           </div>

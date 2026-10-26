@@ -1,16 +1,16 @@
 ==========================================================
 THONG TIN 3 DUONG LINK CLOUDFLARE TUNNEL (DANG HOAT DONG)
-Thoi gian tao: 25/10/2026 14:05:24
+Thoi gian tao: 26/10/2026 13:44:27
 ==========================================================
 
 1. LINK TRANG WEB (Frontend - Chia se cho ban be truy cap):
-   https://amount-paul-reads-exclusion.trycloudflare.com
+   https://presently-musical-weed-moved.trycloudflare.com
 
 2. LINK BACKEND API (.NET):
-   https://cell-metric-biodiversity-motorola.trycloudflare.com/api/v1
+   https://fleet-rainbow-recommendations-gel.trycloudflare.com/api/v1
 
 3. LINK STORAGE (SeaweedFS):
-   https://synopsis-eat-upload-sociology.trycloudflare.com/buckets/courtbooking
+   https://performances-fountain-longest-remind.trycloudflare.com/buckets/courtbooking
 
 Luu y: De cac link nay hoat dong, hay giu cua so nay dang chay!
 ==========================================================

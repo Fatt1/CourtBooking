@@ -19,10 +19,11 @@ public sealed class CreateCourtOwnerValidator : AbstractValidator<CreateCourtOwn
             .EmailAddress().WithMessage("Địa chỉ Email không hợp lệ.")
             .MaximumLength(256).WithMessage("Email không được vượt quá 256 ký tự.");
 
-        When(x => !string.IsNullOrEmpty(x.Password), () =>
-        {
-            RuleFor(x => x.Password)
-                .MinimumLength(6).WithMessage("Mật khẩu khởi tạo phải có ít nhất 6 ký tự.");
-        });
+        RuleFor(x => x.Password)
+            .NotEmpty().WithMessage("Mật khẩu khởi tạo không được để trống.")
+            .MinimumLength(6).WithMessage("Mật khẩu khởi tạo phải có ít nhất 6 ký tự.");
+
+        RuleFor(x => x.ServicePackageId)
+            .NotEmpty().WithMessage("Gói dịch vụ không được để trống.");
     }
 }

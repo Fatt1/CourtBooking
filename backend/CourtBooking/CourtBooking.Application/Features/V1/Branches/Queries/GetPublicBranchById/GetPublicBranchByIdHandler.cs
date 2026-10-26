@@ -61,7 +61,7 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
             (double)branch.Latitude,
             (double)branch.Longitude);
 
-        var ggMapUrl = !string.IsNullOrWhiteSpace(branch.MapUrl)
+        var mapUrl = !string.IsNullOrWhiteSpace(branch.MapUrl)
             ? branch.MapUrl
             : $"https://www.google.com/maps?q={branch.Latitude},{branch.Longitude}";
 
@@ -72,7 +72,7 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
             branch.Province,
             branch.District,
             branch.Street,
-            ggMapUrl,
+            mapUrl,
             distanceKm,
             branch.OpenTime,
             branch.CloseTime,
@@ -84,8 +84,7 @@ internal sealed class GetPublicBranchByIdHandler(IApplicationDbContext dbContext
             branch.Images,
             branch.Sports,
             branch.Latitude,
-            branch.Longitude,
-            branch.MapUrl);
+            branch.Longitude);
 
         return Result.Success(dto);
     }

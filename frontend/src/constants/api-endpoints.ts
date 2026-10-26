@@ -111,6 +111,7 @@ export const API_ENDPOINTS = {
     CONFIRM: (id: string) => `/owner/orders/${id}/confirmation`,
     COMPLETE: (id: string) => `/owner/orders/${id}/completion`,
     CANCEL: (id: string) => `/owner/orders/${id}/cancellation`,
+    REJECT_CANCELLATION: (id: string) => `/owner/orders/${id}/reject-cancellation`,
     ADD_PAYMENT: (id: string) => `/owner/orders/${id}/payments`,
     UPDATE_ITEMS: (id: string) => `/owner/orders/${id}/items`,
     UPDATE_CUSTOMER: (id: string) => `/owner/orders/${id}/customer-info`,

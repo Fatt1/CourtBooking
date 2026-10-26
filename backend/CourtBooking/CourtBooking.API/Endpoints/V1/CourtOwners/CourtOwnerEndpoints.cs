@@ -58,10 +58,10 @@ public sealed class CourtOwnerEndpoints : IEndpointGroup
                 request.FullName,
                 request.PhoneNumber,
                 request.Email,
-                request.MustChangePwd,
                 request.Password,
-                request.BusinessName,
-                request.ServicePackageId);
+                request.ServicePackageId,
+                request.MustChangePwd,
+                request.BusinessName);
 
             var result = await sender.Send(command, ct);
 

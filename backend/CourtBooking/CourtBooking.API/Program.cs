@@ -124,6 +124,7 @@ try
 
     //app.UseHttpsRedirection();
 
+    app.UseWebSockets();
     app.UseCors();
     app.UseAuthentication();
     app.UseAuthorization();
@@ -146,3 +147,5 @@ finally
     // Flush async sinks (Seq, file) before the process exits.
     await Log.CloseAndFlushAsync();
 }
+
+public partial class Program;

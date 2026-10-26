@@ -16,11 +16,13 @@ export const createCourtOwnerSchema = z.object({
     .regex(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, 'Số điện thoại không hợp lệ (cần 10 chữ số, ví dụ 0912345678)'),
   businessName: z.string().trim().optional().or(z.literal('')),
   password: z
-    .string()
-    .min(6, 'Mật khẩu khởi tạo tối thiểu 6 ký tự')
-    .default('Owner@123456'),
+    .string({ required_error: 'Vui lòng nhập mật khẩu khởi tạo' })
+    .trim()
+    .min(1, 'Mật khẩu khởi tạo không được để trống')
+    .min(6, 'Mật khẩu khởi tạo tối thiểu 6 ký tự'),
   packageId: z
-    .string()
+    .string({ required_error: 'Vui lòng chọn 1 gói cước dịch vụ' })
+    .trim()
     .min(1, 'Vui lòng chọn 1 gói cước dịch vụ'),
   mustChangePwd: z.boolean().default(true),
 });

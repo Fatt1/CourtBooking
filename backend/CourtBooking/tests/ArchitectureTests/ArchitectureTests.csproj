@@ -7,33 +7,25 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit" />
-
-    <PackageReference Include="xunit.runner.visualstudio">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>
-        runtime; build; native; contentfiles; analyzers; buildtransitive
-      </IncludeAssets>
-    </PackageReference>
-
-    <PackageReference Include="coverlet.collector">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>
-        runtime; build; native; contentfiles; analyzers; buildtransitive
-      </IncludeAssets>
-    </PackageReference>
-
+    <PackageReference Include="NetArchTest.Rules" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
-    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\CourtBooking.API\CourtBooking.API.csproj" />
     <ProjectReference Include="..\..\CourtBooking.Application\CourtBooking.Application.csproj" />
     <ProjectReference Include="..\..\CourtBooking.Domain\CourtBooking.Domain.csproj" />
     <ProjectReference Include="..\..\CourtBooking.Infrastructure\CourtBooking.Infrastructure.csproj" />
     <ProjectReference Include="..\..\CourtBooking.SharedKernel\CourtBooking.SharedKernel.csproj" />
-    <ProjectReference Include="..\..\CourtBooking.API\CourtBooking.API.csproj" />
   </ItemGroup>
 
 </Project>
