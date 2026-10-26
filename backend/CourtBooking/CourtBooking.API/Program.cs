@@ -124,6 +124,7 @@ try
 
     //app.UseHttpsRedirection();
 
+    app.UseWebSockets();
     app.UseCors();
     app.UseAuthentication();
     app.UseAuthorization();

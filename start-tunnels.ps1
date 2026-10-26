@@ -23,13 +23,13 @@ $logStorage = Join-Path $logDir "tunnel-storage.log"
 Remove-Item $logFe, $logBe, $logStorage -ErrorAction SilentlyContinue
 
 Write-Host "1. Dang ket noi Cloudflare Tunnel cho Frontend (Port 3000)..." -ForegroundColor Yellow
-Start-Process -FilePath $cloudflaredPath -ArgumentList "tunnel --url http://localhost:3000" -RedirectStandardError $logFe -NoNewWindow
+Start-Process -FilePath $cloudflaredPath -ArgumentList "tunnel --url http://127.0.0.1:3000" -RedirectStandardError $logFe -NoNewWindow
 
 Write-Host "2. Dang ket noi Cloudflare Tunnel cho Backend API (Port 5067)..." -ForegroundColor Yellow
-Start-Process -FilePath $cloudflaredPath -ArgumentList "tunnel --url http://localhost:5067" -RedirectStandardError $logBe -NoNewWindow
+Start-Process -FilePath $cloudflaredPath -ArgumentList "tunnel --url http://127.0.0.1:5067" -RedirectStandardError $logBe -NoNewWindow
 
 Write-Host "3. Dang ket noi Cloudflare Tunnel cho Storage (Port 8888)..." -ForegroundColor Yellow
-Start-Process -FilePath $cloudflaredPath -ArgumentList "tunnel --url http://localhost:8888" -RedirectStandardError $logStorage -NoNewWindow
+Start-Process -FilePath $cloudflaredPath -ArgumentList "tunnel --url http://127.0.0.1:8888" -RedirectStandardError $logStorage -NoNewWindow
 
 Write-Host "`nDang doi Cloudflare cap ten mien (khoang 5-8 giay)..." -ForegroundColor DarkGray
 
