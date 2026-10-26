@@ -16,7 +16,14 @@ public static class DatabaseInitializer
         try
         {
             logger.LogInformation("Checking and applying pending database migrations...");
-            await context.Database.MigrateAsync();
+            if (context.Database.IsRelational())
+            {
+                await context.Database.MigrateAsync();
+            }
+            else
+            {
+                await context.Database.EnsureCreatedAsync();
+            }
             logger.LogInformation("Database migrations applied successfully.");
 
             var seederLogger = services.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DatabaseSeeder));

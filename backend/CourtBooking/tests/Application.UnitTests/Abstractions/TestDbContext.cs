@@ -62,4 +62,10 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
     public DbSet<CourtOwnerSubscription> CourtOwnerSubscriptions => Set<CourtOwnerSubscription>();
 
     public DbSet<Image> Images => Set<Image>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CourtBooking.Infrastructure.Database.ApplicationDbContext).Assembly);
+    }
 }

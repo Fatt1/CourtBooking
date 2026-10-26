@@ -829,6 +829,7 @@ public static class DatabaseSeeder
         var retailOrder = new RetailOrder
         {
             Id = Guid.NewGuid(),
+            OrderCode = "HD-SEEDED01",
             BranchId = branch1.Id,
             OrderDate = today,
             TotalAmount = 35000m,
