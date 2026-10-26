@@ -146,3 +146,5 @@ finally
     // Flush async sinks (Seq, file) before the process exits.
     await Log.CloseAndFlushAsync();
 }
+
+public partial class Program;

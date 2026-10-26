@@ -140,24 +140,28 @@ export function CreateCourtOwnerDialog({
       email: '',
       phoneNumber: '',
       businessName: '',
-      password: 'Owner@123456',
+      password: '',
       packageId: defaultPackageId,
       mustChangePwd: true,
     },
   });
 
   const handleSubmit = async (values: CreateCourtOwnerValues) => {
-    await onSubmit(values);
-    form.reset({
-      fullName: '',
-      email: '',
-      phoneNumber: '',
-      businessName: '',
-      password: 'Owner@123456',
-      packageId: defaultPackageId,
-      mustChangePwd: true,
-    });
-    onOpenChange(false);
+    try {
+      await onSubmit(values);
+      form.reset({
+        fullName: '',
+        email: '',
+        phoneNumber: '',
+        businessName: '',
+        password: '',
+        packageId: defaultPackageId,
+        mustChangePwd: true,
+      });
+      onOpenChange(false);
+    } catch {
+      // Giữ mở dialog để người dùng kiểm tra và sửa thông tin nếu gặp lỗi
+    }
   };
 
   return (
@@ -377,13 +381,13 @@ export function CreateCourtOwnerDialog({
               render={({ field }) => (
                 <FormItem className="space-y-1">
                   <FormLabel className="text-xs font-semibold text-zinc-300">
-                    Mật khẩu khởi tạo
+                    Mật khẩu khởi tạo <span className="text-rose-400">*</span>
                   </FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
                       <Input
-                        placeholder="Owner@123456"
+                        placeholder="Nhập mật khẩu khởi tạo (tối thiểu 6 ký tự)"
                         className="h-10 pl-9 rounded-xl bg-[#101f17] border-[#1a3828] text-xs text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500/50 font-mono transition-all"
                         {...field}
                       />

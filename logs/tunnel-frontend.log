@@ -1,51 +1,90 @@
-2026-10-25T07:05:18Z INF Thank you for trying Cloudflare Tunnel. Doing so, without a Cloudflare account, is a quick way to experiment and try it out. However, be aware that these account-less Tunnels have no uptime guarantee, are subject to the Cloudflare Online Services Terms of Use (https://www.cloudflare.com/website-terms/), and Cloudflare reserves the right to investigate your use of Tunnels for violations of such terms. If you intend to use Tunnels in production you should use a pre-created named tunnel by following: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps
-2026-10-25T07:05:18Z INF Requesting new quick Tunnel on trycloudflare.com...
-2026-10-25T07:05:22Z INF +--------------------------------------------------------------------------------------------+
-2026-10-25T07:05:22Z INF |  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |
-2026-10-25T07:05:22Z INF |  https://amount-paul-reads-exclusion.trycloudflare.com                                     |
-2026-10-25T07:05:22Z INF +--------------------------------------------------------------------------------------------+
-2026-10-25T07:05:22Z INF Cannot determine default configuration path. No file [config.yml config.yaml] in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp]
-2026-10-25T07:05:22Z INF Version 2026.10.3 (Checksum 76b2805253d0d6ffacb092a7acfbee99e7af6917835c0c5410e23f3ef5052da2)
-2026-10-25T07:05:22Z INF GOOS: windows, GOVersion: go1.27.3, GoArch: amd64
-2026-10-25T07:05:22Z INF Settings: map[ha-connections:1 protocol:quic url:http://localhost:3000]
-2026-10-25T07:05:22Z INF cloudflared will not automatically update on Windows systems.
-2026-10-25T07:05:22Z INF Generated Connector ID: 0e964b18-b872-4761-941e-cd65a16a11e5
-2026-10-25T07:05:22Z INF Initial protocol quic
-2026-10-25T07:05:22Z INF ICMP proxy will use 192.168.1.205 as source for IPv4
-2026-10-25T07:05:22Z INF ICMP proxy will use 2405:4803:d755:4720:98c1:8235:1512:4996 in zone Wi-Fi as source for IPv6
-2026-10-25T07:05:22Z INF cloudflared does not support loading the system root certificate pool on Windows. Please use --origin-ca-pool <PATH> to specify the path to the certificate pool
-2026-10-25T07:05:22Z INF ICMP proxy will use 192.168.1.205 as source for IPv4
-2026-10-25T07:05:22Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=0 event=0 ip=2606:4700:a0::7
-2026-10-25T07:05:22Z INF ICMP proxy will use 2405:4803:d755:4720:98c1:8235:1512:4996 in zone Wi-Fi as source for IPv6
-2026-10-25T07:05:22Z INF Starting metrics server on 127.0.0.1:20243/metrics
-2026-10-25T07:05:22Z INF +-------------------------------------------------------------------------------------+
-2026-10-25T07:05:22Z INF |                               CONNECTIVITY PRE-CHECKS                               |
-2026-10-25T07:05:22Z INF +-------------------------------------------------------------------------------------+
-2026-10-25T07:05:22Z INF |  COMPONENT         TARGET                     STATUS  DETAILS                       |
-2026-10-25T07:05:22Z INF |  DNS Resolution    region1.v2.argotunnel.com  PASS    DNS Resolved successfully     |
-2026-10-25T07:05:22Z INF |  DNS Resolution    region2.v2.argotunnel.com  PASS    DNS Resolved successfully     |
-2026-10-25T07:05:22Z INF |  UDP Connectivity  region1.v2.argotunnel.com  PASS    QUIC connection successful    |
-2026-10-25T07:05:22Z INF |  UDP Connectivity  region2.v2.argotunnel.com  PASS    QUIC connection successful    |
-2026-10-25T07:05:22Z INF |  TCP Connectivity  region1.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
-2026-10-25T07:05:22Z INF |  TCP Connectivity  region2.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
-2026-10-25T07:05:22Z INF |  Cloudflare API    api.cloudflare.com:443     PASS    API is reachable              |
-2026-10-25T07:05:22Z INF |                                                                                     |
-2026-10-25T07:05:22Z INF |  SUMMARY: Environment is healthy. cloudflared will use 'quic' as primary protocol.  |
-2026-10-25T07:05:22Z INF +-------------------------------------------------------------------------------------+
-2026-10-25T07:05:22Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=f861c095-5070-4d47-ac1e-2905be301786 status=pass target=region1.v2.argotunnel.com
-2026-10-25T07:05:22Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=f861c095-5070-4d47-ac1e-2905be301786 status=pass target=region2.v2.argotunnel.com
-2026-10-25T07:05:22Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=f861c095-5070-4d47-ac1e-2905be301786 status=pass target=region1.v2.argotunnel.com
-2026-10-25T07:05:22Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=f861c095-5070-4d47-ac1e-2905be301786 status=pass target=region2.v2.argotunnel.com
-2026-10-25T07:05:22Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=f861c095-5070-4d47-ac1e-2905be301786 status=pass target=region1.v2.argotunnel.com
-2026-10-25T07:05:22Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=f861c095-5070-4d47-ac1e-2905be301786 status=pass target=region2.v2.argotunnel.com
-2026-10-25T07:05:22Z INF precheck component="Cloudflare API" details="API is reachable" run_id=f861c095-5070-4d47-ac1e-2905be301786 status=pass target=api.cloudflare.com:443
-2026-10-25T07:05:22Z INF precheck complete hard_fail=false run_id=f861c095-5070-4d47-ac1e-2905be301786 suggested_protocol=quic
-2026-10-25T07:05:22Z INF Registered tunnel connection connIndex=0 connection=57e04e09-1c21-4488-8f35-ec2f6b8f1f35 event=0 ip=2606:4700:a0::7 location=hkg01 protocol=quic
-2026/10/25 14:09:59 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
-2026/10/25 14:09:59 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
-2026/10/25 14:09:59 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
-2026/10/25 15:26:00 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
-2026/10/25 15:26:00 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
-2026/10/25 15:26:00 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
-2026/10/25 15:45:31 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
-2026/10/25 15:45:31 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026-10-26T06:44:21Z INF Thank you for trying Cloudflare Tunnel. Doing so, without a Cloudflare account, is a quick way to experiment and try it out. However, be aware that these account-less Tunnels have no uptime guarantee, are subject to the Cloudflare Online Services Terms of Use (https://www.cloudflare.com/website-terms/), and Cloudflare reserves the right to investigate your use of Tunnels for violations of such terms. If you intend to use Tunnels in production you should use a pre-created named tunnel by following: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps
+2026-10-26T06:44:21Z INF Requesting new quick Tunnel on trycloudflare.com...
+2026-10-26T06:44:24Z INF +--------------------------------------------------------------------------------------------+
+2026-10-26T06:44:24Z INF |  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |
+2026-10-26T06:44:24Z INF |  https://presently-musical-weed-moved.trycloudflare.com                                    |
+2026-10-26T06:44:24Z INF +--------------------------------------------------------------------------------------------+
+2026-10-26T06:44:24Z INF Cannot determine default configuration path. No file [config.yml config.yaml] in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp]
+2026-10-26T06:44:24Z INF Version 2026.10.3 (Checksum 76b2805253d0d6ffacb092a7acfbee99e7af6917835c0c5410e23f3ef5052da2)
+2026-10-26T06:44:24Z INF GOOS: windows, GOVersion: go1.27.3, GoArch: amd64
+2026-10-26T06:44:24Z INF Settings: map[ha-connections:1 protocol:quic url:http://localhost:3000]
+2026-10-26T06:44:24Z INF cloudflared will not automatically update on Windows systems.
+2026-10-26T06:44:24Z INF Generated Connector ID: e336b7d2-e800-4501-afac-afe23f543317
+2026-10-26T06:44:24Z INF Initial protocol quic
+2026-10-26T06:44:24Z INF ICMP proxy will use 172.16.28.112 as source for IPv4
+2026-10-26T06:44:24Z INF ICMP proxy will use fe80::fded:124:5788:9837 in zone Wi-Fi as source for IPv6
+2026-10-26T06:44:24Z INF cloudflared does not support loading the system root certificate pool on Windows. Please use --origin-ca-pool <PATH> to specify the path to the certificate pool
+2026-10-26T06:44:24Z INF ICMP proxy will use 172.16.28.112 as source for IPv4
+2026-10-26T06:44:24Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=0 event=0 ip=198.41.192.57
+2026-10-26T06:44:24Z INF ICMP proxy will use fe80::fded:124:5788:9837 in zone Wi-Fi as source for IPv6
+2026-10-26T06:44:24Z INF Starting metrics server on 127.0.0.1:20241/metrics
+2026-10-26T06:44:24Z INF +-------------------------------------------------------------------------------------+
+2026-10-26T06:44:24Z INF |                               CONNECTIVITY PRE-CHECKS                               |
+2026-10-26T06:44:24Z INF +-------------------------------------------------------------------------------------+
+2026-10-26T06:44:24Z INF |  COMPONENT         TARGET                     STATUS  DETAILS                       |
+2026-10-26T06:44:24Z INF |  DNS Resolution    region1.v2.argotunnel.com  PASS    DNS Resolved successfully     |
+2026-10-26T06:44:24Z INF |  DNS Resolution    region2.v2.argotunnel.com  PASS    DNS Resolved successfully     |
+2026-10-26T06:44:24Z INF |  UDP Connectivity  region1.v2.argotunnel.com  PASS    QUIC connection successful    |
+2026-10-26T06:44:24Z INF |  UDP Connectivity  region2.v2.argotunnel.com  PASS    QUIC connection successful    |
+2026-10-26T06:44:24Z INF |  TCP Connectivity  region1.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
+2026-10-26T06:44:24Z INF |  TCP Connectivity  region2.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
+2026-10-26T06:44:24Z INF |  Cloudflare API    api.cloudflare.com:443     PASS    API is reachable              |
+2026-10-26T06:44:24Z INF |                                                                                     |
+2026-10-26T06:44:24Z INF |  SUMMARY: Environment is healthy. cloudflared will use 'quic' as primary protocol.  |
+2026-10-26T06:44:24Z INF +-------------------------------------------------------------------------------------+
+2026-10-26T06:44:24Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=ff974096-27fd-4a4b-b635-972f0c3dd075 status=pass target=region1.v2.argotunnel.com
+2026-10-26T06:44:24Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=ff974096-27fd-4a4b-b635-972f0c3dd075 status=pass target=region2.v2.argotunnel.com
+2026-10-26T06:44:24Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=ff974096-27fd-4a4b-b635-972f0c3dd075 status=pass target=region1.v2.argotunnel.com
+2026-10-26T06:44:24Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=ff974096-27fd-4a4b-b635-972f0c3dd075 status=pass target=region2.v2.argotunnel.com
+2026-10-26T06:44:24Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=ff974096-27fd-4a4b-b635-972f0c3dd075 status=pass target=region1.v2.argotunnel.com
+2026-10-26T06:44:24Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=ff974096-27fd-4a4b-b635-972f0c3dd075 status=pass target=region2.v2.argotunnel.com
+2026-10-26T06:44:24Z INF precheck component="Cloudflare API" details="API is reachable" run_id=ff974096-27fd-4a4b-b635-972f0c3dd075 status=pass target=api.cloudflare.com:443
+2026-10-26T06:44:24Z INF precheck complete hard_fail=false run_id=ff974096-27fd-4a4b-b635-972f0c3dd075 suggested_protocol=quic
+2026-10-26T06:44:25Z INF Registered tunnel connection connIndex=0 connection=98a484b7-2703-4963-80df-3f97715f92b8 event=0 ip=198.41.192.57 location=hkg01 protocol=quic
+2026-10-26T06:46:34Z ERR  error="stream 2989 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T06:46:34Z ERR Request failed error="stream 2989 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/node_modules/.vite/deps/chunk-UFPJCQGH.js?v=dcc2757f event=0 ip=198.41.192.57 type=http
+2026/10/26 13:50:50 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 13:50:50 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 13:50:50 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 13:50:50 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 13:55:20 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 13:55:20 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 13:55:20 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 13:55:20 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026/10/26 13:55:20 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2026-10-26T07:02:20Z ERR  error="stream 14285 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR Request failed error="stream 14285 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/shared/OwnerModal.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR  error="stream 14297 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR Request failed error="stream 14297 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/api/sport-types/useSportTypes.ts event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR  error="stream 13393 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR Request failed error="stream 13393 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/customer/pages/AccountBookingsPage.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR  error="stream 13321 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR Request failed error="stream 13321 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/node_modules/.vite/deps/react-router-dom.js?v=dcc2757f event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR  error="stream 14277 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR Request failed error="stream 14277 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/court-types/CourtTypeTable.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR  error="stream 14301 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR Request failed error="stream 14301 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/shared/OwnerStatusBadge.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR  error="stream 14305 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR  error="stream 14321 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR  error="stream 14333 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR  error="stream 14265 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR  error="stream 14325 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR  error="stream 14309 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR  error="stream 14329 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR  error="stream 13293 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR  error="stream 14293 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR  error="stream 14313 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR Request failed error="stream 14305 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/components/ui/table.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR Request failed error="stream 14321 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/branches/BranchFormModal.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR Request failed error="stream 14333 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/branches/BranchTable.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR Request failed error="stream 14265 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/shared/OwnerPagination.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR Request failed error="stream 14325 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/branches/BranchCard.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR Request failed error="stream 14309 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/court-types/CourtTypeFormModal.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR Request failed error="stream 14329 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/features/court-owners/components/branches/BranchDetailModal.tsx event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR Request failed error="stream 13293 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/node_modules/.vite/deps/react-dom_client.js?v=dcc2757f event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR Request failed error="stream 14293 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=dcc2757f event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR Request failed error="stream 14313 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/src/api/court-types/useCourtTypes.ts event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:20Z ERR  error="stream 13557 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:20Z ERR Request failed error="stream 13557 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/node_modules/.vite/deps/lucide-react.js?v=dcc2757f event=0 ip=198.41.192.57 type=http
+2026-10-26T07:02:43Z ERR  error="stream 14081 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:3000
+2026-10-26T07:02:43Z ERR Request failed error="stream 14081 canceled by remote with error code 0" connIndex=0 dest=https://presently-musical-weed-moved.trycloudflare.com/node_modules/.vite/deps/date-fns_locale.js?v=dcc2757f event=0 ip=198.41.192.57 type=http

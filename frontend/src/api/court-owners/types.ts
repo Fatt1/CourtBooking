@@ -53,10 +53,11 @@ export interface CreateCourtOwnerPayload {
   fullName: string;
   phoneNumber: string;
   email: string;
-  password?: string;
+  password: string;
+  servicePackageId: string;
+  packageId?: string;
   businessName?: string;
   mustChangePwd?: boolean;
-  packageId?: string;
 }
 
 export interface ChangeCourtOwnerPackagePayload {

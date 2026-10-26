@@ -117,10 +117,26 @@ export function CourtOwnersPage() {
   // 1. Xử lý tạo mới chủ sân
   const handleCreateOwner = async (values: any) => {
     try {
-      await createOwner(values);
+      await createOwner({
+        fullName: values.fullName,
+        phoneNumber: values.phoneNumber,
+        email: values.email,
+        password: values.password,
+        servicePackageId: values.packageId,
+        packageId: values.packageId,
+        businessName: values.businessName,
+        mustChangePwd: values.mustChangePwd,
+      });
       toast.success(`Đã khởi tạo tài khoản Chủ sân cho ${values.fullName} thành công!`);
-    } catch {
-      toast.error('Có lỗi xảy ra khi tạo tài khoản Chủ sân.');
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.detail ||
+        error?.response?.data?.title ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Có lỗi xảy ra khi tạo tài khoản Chủ sân.';
+      toast.error(message);
+      throw error;
     }
   };
 

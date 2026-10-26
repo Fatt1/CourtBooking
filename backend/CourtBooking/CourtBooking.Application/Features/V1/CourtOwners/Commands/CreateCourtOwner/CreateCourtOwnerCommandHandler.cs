@@ -14,8 +14,6 @@ internal sealed class CreateCourtOwnerCommandHandler(
     UserManager<ApplicationUser> userManager,
     IApplicationDbContext dbContext) : ICommandHandler<CreateCourtOwnerCommand, Guid>
 {
-    private const string DefaultInitialPassword = "Owner@123456";
-
     public async Task<Result<Guid>> Handle(CreateCourtOwnerCommand request, CancellationToken ct)
     {
         var email = request.Email.Trim().ToLowerInvariant();
@@ -37,12 +35,18 @@ internal sealed class CreateCourtOwnerCommandHandler(
             return Result.Failure<Guid>(new ConflictError("Số điện thoại này đã được sử dụng cho một tài khoản chủ sân khác."));
         }
 
-        // 2. Xác định mật khẩu ban đầu
-        var initialPassword = !string.IsNullOrWhiteSpace(request.Password)
-            ? request.Password.Trim()
-            : DefaultInitialPassword;
+        // 2. Kiểm tra Gói dịch vụ bắt buộc tồn tại
+        var selectedPackage = await dbContext.ServicePackages
+            .FirstOrDefaultAsync(p => p.Id == request.ServicePackageId, ct);
 
-        // 3. Khởi tạo tài khoản ApplicationUser
+        if (selectedPackage is null)
+        {
+            return Result.Failure<Guid>(new NotFoundError("ServicePackage", request.ServicePackageId));
+        }
+
+        // 3. Khởi tạo tài khoản ApplicationUser với mật khẩu bắt buộc
+        var initialPassword = request.Password.Trim();
+
         var user = new ApplicationUser
         {
             Id = Guid.NewGuid(),
@@ -65,51 +69,40 @@ internal sealed class CreateCourtOwnerCommandHandler(
 
         await userManager.AddToRoleAsync(user, RoleConstants.CourtOwner);
 
-        // 5. Khởi tạo hồ sơ Chủ sân (CourtOwner) kèm cờ MustChangePwd
+        // 4. Khởi tạo hồ sơ Chủ sân (CourtOwner) kèm cờ MustChangePwd và gói dịch vụ
         var businessName = !string.IsNullOrWhiteSpace(request.BusinessName)
             ? request.BusinessName.Trim()
             : $"Sân của {request.FullName.Trim()}";
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var endDate = today.AddMonths(selectedPackage.DurationMonths > 0 ? selectedPackage.DurationMonths : 1);
 
         var courtOwner = new CourtOwner
         {
             Id = user.Id,
             BusinessName = businessName,
             MustChangePwd = request.MustChangePwd,
+            ServicePackageId = selectedPackage.Id,
+            PackageStartDate = today,
+            PackageEndDate = endDate,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
         dbContext.CourtOwners.Add(courtOwner);
 
-        // 6. Gán gói dịch vụ ban đầu cho chủ sân mới (theo gói được chọn hoặc mặc định)
-        Domain.Entities.Subscriptions.ServicePackage? selectedPackage = null;
-        if (request.ServicePackageId.HasValue && request.ServicePackageId.Value != Guid.Empty)
+        // 5. Gán gói dịch vụ ban đầu cho chủ sân mới trong lịch sử đăng ký
+        var initialSub = new Domain.Entities.Subscriptions.CourtOwnerSubscription
         {
-            selectedPackage = await dbContext.ServicePackages
-                .FirstOrDefaultAsync(p => p.Id == request.ServicePackageId.Value, ct);
-        }
-
-        selectedPackage ??= await dbContext.ServicePackages
-            .FirstOrDefaultAsync(p => p.Price == 499000m, ct)
-            ?? await dbContext.ServicePackages
-                .FirstOrDefaultAsync(p => p.Name.Contains("Cơ Bản") || p.Name.Contains("Basic"), ct)
-            ?? await dbContext.ServicePackages.FirstOrDefaultAsync(ct);
-
-        if (selectedPackage is not null)
-        {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var initialSub = new Domain.Entities.Subscriptions.CourtOwnerSubscription
-            {
-                Id = Guid.NewGuid(),
-                CourtOwnerId = user.Id,
-                ServicePackageId = selectedPackage.Id,
-                PricePaid = selectedPackage.Price,
-                StartDate = today,
-                EndDate = today.AddMonths(selectedPackage.DurationMonths > 0 ? selectedPackage.DurationMonths : 1),
-                CreatedAt = DateTime.UtcNow
-            };
-            dbContext.CourtOwnerSubscriptions.Add(initialSub);
-        }
+            Id = Guid.NewGuid(),
+            CourtOwnerId = user.Id,
+            ServicePackageId = selectedPackage.Id,
+            PricePaid = selectedPackage.Price,
+            StartDate = today,
+            EndDate = endDate,
+            CreatedAt = DateTime.UtcNow
+        };
+        dbContext.CourtOwnerSubscriptions.Add(initialSub);
 
         await dbContext.SaveChangesAsync(ct);
 

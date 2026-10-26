@@ -82,14 +82,15 @@ export function useCreateCourtOwnerMutation() {
 
   return useMutation({
     mutationFn: async (payload: CreateCourtOwnerPayload) => {
+      const packageId = payload.servicePackageId || payload.packageId;
       return await apiClient.post(API_ENDPOINTS.ADMIN_COURT_OWNERS.CREATE, {
-        fullName: payload.fullName,
-        phoneNumber: payload.phoneNumber,
-        email: payload.email,
-        password: payload.password || 'Owner@123456',
-        businessName: payload.businessName || `Cụm sân ${payload.fullName}`,
+        fullName: payload.fullName.trim(),
+        phoneNumber: payload.phoneNumber.trim(),
+        email: payload.email.trim(),
+        password: payload.password,
+        servicePackageId: packageId,
+        businessName: payload.businessName?.trim() || `Cụm sân ${payload.fullName.trim()}`,
         mustChangePwd: payload.mustChangePwd ?? true,
-        servicePackageId: payload.packageId && payload.packageId.includes('-') ? payload.packageId : undefined,
       });
     },
     onSuccess: () => {
