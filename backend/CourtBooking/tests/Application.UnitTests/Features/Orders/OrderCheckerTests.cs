@@ -1,14 +1,13 @@
-using Application.UnitTests.Abstractions;
+using Application.UnitTests.Common.Abstractions;
+using Application.UnitTests.Common.Builders;
 using CourtBooking.Application.Abstractions.Courts;
 using CourtBooking.Application.Features.V1.Orders.Common;
 using CourtBooking.Application.Features.V1.Orders.SharedInputs;
 using CourtBooking.Domain.Entities.Courts;
-using CourtBooking.Domain.Entities.Images;
-using CourtBooking.Domain.Entities.Orders;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 
-namespace Application.UnitTests.Orders;
+namespace Application.UnitTests.Features.Orders;
 
 public sealed class OrderCheckerTests : BaseHandlerTest
 {
@@ -19,7 +18,7 @@ public sealed class OrderCheckerTests : BaseHandlerTest
     private static readonly DateOnly TargetDate = new(2026, 11, 20);
 
     [Fact]
-    public void FlattenSlots_Should_CorrectlyFlattenGroupedSlots()
+    public void FlattenSlots_WhenGroupedSlotsProvided_FlattensCorrectly()
     {
         // Arrange
         using TestDbContext context = CreateDbContext();
@@ -42,14 +41,14 @@ public sealed class OrderCheckerTests : BaseHandlerTest
         List<FlatSlotItem> flatSlots = checker.FlattenSlots(groupedSlots);
 
         // Assert
-        flatSlots.Count.ShouldBe(2);
-        flatSlots[0].StartTime.ShouldBe(new TimeOnly(8, 0));
-        flatSlots[1].StartTime.ShouldBe(new TimeOnly(9, 0));
-        flatSlots[0].CourtId.ShouldBe(SampleCourtId);
+        Assert.Equal(2, flatSlots.Count);
+        Assert.Equal(new TimeOnly(8, 0), flatSlots[0].StartTime);
+        Assert.Equal(new TimeOnly(9, 0), flatSlots[1].StartTime);
+        Assert.Equal(SampleCourtId, flatSlots[0].CourtId);
     }
 
     [Fact]
-    public async Task ValidateBranchAsync_Should_ReturnNotFound_WhenBranchDoesNotExist()
+    public async Task ValidateBranchAsync_WhenBranchDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -63,41 +62,24 @@ public sealed class OrderCheckerTests : BaseHandlerTest
             CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBeOfType<NotFoundError>();
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
     }
 
     [Fact]
-    public async Task ValidateBranchAsync_Should_ReturnBadError_WhenBranchIsInactive()
+    public async Task ValidateBranchAsync_WhenBranchIsInactive_ReturnsBadError()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
         var branchId = Guid.NewGuid();
-        var qrImage = new Image
-        {
-            Id = Guid.NewGuid(),
-            StorageKey = "test-qr.png",
-            StorageProvider = StorageProvider.S3,
-            Status = ImageStatus.Attached
-        };
-        context.Images.Add(qrImage);
+        var branch = new BranchBuilder()
+            .WithId(branchId)
+            .WithName("Sân Đang Đóng Cửa")
+            .WithActive(false)
+            .Build();
 
-        context.Branches.Add(new Branch
-        {
-            Id = branchId,
-            Name = "Sân Đang Đóng Cửa",
-            Hotline = "0900000000",
-            Province = "TP.HCM",
-            District = "Quận 1",
-            Street = "123 Lê Lợi",
-            AccountNumber = "111",
-            AccountName = "AAA",
-            IsActive = false,
-            OpenTime = new TimeOnly(6, 0),
-            CloseTime = new TimeOnly(22, 0),
-            QrImageId = qrImage.Id,
-            QrImage = qrImage
-        });
+        context.Images.Add(branch.QrImage!);
+        context.Branches.Add(branch);
         await context.SaveChangesAsync();
 
         IPriceCalculator priceCalculator = Substitute.For<IPriceCalculator>();
@@ -110,42 +92,26 @@ public sealed class OrderCheckerTests : BaseHandlerTest
             CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldNotBeNull();
-        result.Error.Message.ShouldContain("tạm ngưng hoạt động");
+        Assert.True(result.IsFailure);
+        Assert.NotNull(result.Error);
+        Assert.Contains("tạm ngưng hoạt động", result.Error.Message);
     }
 
     [Fact]
-    public async Task ValidateBranchAsync_Should_ReturnBadError_WhenSlotIsOutsideOperatingHours()
+    public async Task ValidateBranchAsync_WhenSlotIsOutsideOperatingHours_ReturnsBadError()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
         var branchId = Guid.NewGuid();
-        var qrImage = new Image
-        {
-            Id = Guid.NewGuid(),
-            StorageKey = "test-qr.png",
-            StorageProvider = StorageProvider.S3,
-            Status = ImageStatus.Attached
-        };
-        context.Images.Add(qrImage);
+        var branch = new BranchBuilder()
+            .WithId(branchId)
+            .WithName("Sân Quận 1")
+            .WithOperatingHours(new TimeOnly(7, 0), new TimeOnly(21, 0))
+            .WithActive(true)
+            .Build();
 
-        context.Branches.Add(new Branch
-        {
-            Id = branchId,
-            Name = "Sân Quận 1",
-            Hotline = "0900000000",
-            Province = "TP.HCM",
-            District = "Quận 1",
-            Street = "123 Lê Lợi",
-            AccountNumber = "111",
-            AccountName = "AAA",
-            IsActive = true,
-            OpenTime = new TimeOnly(7, 0),
-            CloseTime = new TimeOnly(21, 0),
-            QrImageId = qrImage.Id,
-            QrImage = qrImage
-        });
+        context.Images.Add(branch.QrImage!);
+        context.Branches.Add(branch);
         await context.SaveChangesAsync();
 
         IPriceCalculator priceCalculator = Substitute.For<IPriceCalculator>();
@@ -163,13 +129,13 @@ public sealed class OrderCheckerTests : BaseHandlerTest
             CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldNotBeNull();
-        result.Error.Message.ShouldContain("nằm ngoài giờ mở cửa");
+        Assert.True(result.IsFailure);
+        Assert.NotNull(result.Error);
+        Assert.Contains("nằm ngoài giờ mở cửa", result.Error.Message);
     }
 
     [Fact]
-    public async Task CheckConflictsAsync_Should_ReturnConflict_WhenSlotOverlapsWithExistingActiveOrder()
+    public async Task CheckConflictsAsync_WhenSlotOverlapsWithExistingActiveOrder_ReturnsConflict()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -193,14 +159,13 @@ public sealed class OrderCheckerTests : BaseHandlerTest
         Result result = await checker.CheckConflictsAsync(testSlots, CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBeOfType<ConflictError>();
-        result.Error.ShouldNotBeNull();
-        result.Error.Message.ShouldContain("đã có người đặt hoặc đang giữ chỗ");
+        Assert.True(result.IsFailure);
+        Assert.IsType<ConflictError>(result.Error);
+        Assert.Contains("đã có người đặt hoặc đang giữ chỗ", result.Error.Message);
     }
 
     [Fact]
-    public async Task CheckConflictsAsync_Should_ReturnSuccess_WhenSlotsDoNotOverlap()
+    public async Task CheckConflictsAsync_WhenSlotsDoNotOverlap_ReturnsSuccess()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -224,11 +189,11 @@ public sealed class OrderCheckerTests : BaseHandlerTest
         Result result = await checker.CheckConflictsAsync(testSlots, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
+        Assert.True(result.IsSuccess);
     }
 
     [Fact]
-    public async Task CheckConflictsAsync_Should_IgnoreCancelledOrders()
+    public async Task CheckConflictsAsync_WhenOrderIsCancelled_IgnoresCancelledOrder()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -252,11 +217,11 @@ public sealed class OrderCheckerTests : BaseHandlerTest
         Result result = await checker.CheckConflictsAsync(testSlots, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
+        Assert.True(result.IsSuccess);
     }
 
     [Fact]
-    public async Task CheckConflictsAsync_Should_IgnoreExpiredAwaitingPaymentOrders()
+    public async Task CheckConflictsAsync_WhenHoldIsExpired_IgnoresExpiredAwaitingPaymentOrder()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -280,7 +245,7 @@ public sealed class OrderCheckerTests : BaseHandlerTest
         Result result = await checker.CheckConflictsAsync(testSlots, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
+        Assert.True(result.IsSuccess);
     }
 
     private static async Task SeedCourtAndOrderAsync(
@@ -291,47 +256,26 @@ public sealed class OrderCheckerTests : BaseHandlerTest
         OrderStatus status,
         DateTime holdExpiresAt)
     {
-        var court = new Court
-        {
-            Id = SampleCourtId,
-            CourtTypeId = SampleCourtTypeId,
-            Name = "Sân 1",
-            Status = CourtStatus.Available
-        };
+        var court = new CourtBuilder()
+            .WithId(SampleCourtId)
+            .WithCourtTypeId(SampleCourtTypeId)
+            .WithName("Sân 1")
+            .WithStatus(CourtStatus.Available)
+            .Build();
 
-        var order = new Order
-        {
-            Id = Guid.NewGuid(),
-            OrderCode = "ORD-CONFLICT-TEST",
-            BranchId = SampleBranchId,
-            CustomerName = "Nguoi Dat Truoc",
-            CustomerPhone = "0909999999",
-            Status = status,
-            Channel = OrderChannel.Online,
-            OrderType = OrderType.Normal,
-            OrderDate = slotDate,
-            HoldExpiresAt = holdExpiresAt,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        var detail = new OrderDetail
-        {
-            Id = Guid.NewGuid(),
-            OrderId = order.Id,
-            CourtId = SampleCourtId,
-            Court = court,
-            Date = slotDate,
-            StartTime = startTime,
-            EndTime = endTime,
-            Price = 100_000m
-        };
-
-        order.Details.Add(detail);
+        var order = new OrderBuilder()
+            .WithId(Guid.NewGuid())
+            .WithOrderCode("ORD-CONFLICT-TEST")
+            .WithBranchId(SampleBranchId)
+            .WithCustomer("Nguoi Dat Truoc", "0909999999")
+            .WithStatus(status)
+            .WithHoldExpiresAt(holdExpiresAt)
+            .WithCourtAmount(100_000m)
+            .WithDetail(SampleCourtId, slotDate, startTime, endTime, 100_000m, court)
+            .Build();
 
         context.Courts.Add(court);
         context.Orders.Add(order);
-        context.OrderDetails.Add(detail);
         await context.SaveChangesAsync();
     }
 }

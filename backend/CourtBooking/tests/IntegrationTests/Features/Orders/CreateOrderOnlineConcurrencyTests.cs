@@ -5,33 +5,33 @@ using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderOnline;
 using CourtBooking.Application.Features.V1.Orders.SharedInputs;
 using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Entities.Courts;
+using CourtBooking.Domain.Entities.Images;
 using CourtBooking.Domain.Entities.Users;
 using CourtBooking.Domain.Enums;
 using CourtBooking.Infrastructure.Database;
+using IntegrationTests.Common;
+using IntegrationTests.Fixtures;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace IntegrationTests.Orders;
+namespace IntegrationTests.Features.Orders;
 
 public sealed class CreateOrderOnlineConcurrencyTests : BaseIntegrationTest
 {
-    public CreateOrderOnlineConcurrencyTests(IntegrationTestWebAppFactory factory) : base(factory)
+    public CreateOrderOnlineConcurrencyTests(ApiFixture fixture) : base(fixture)
     {
     }
 
     [Fact]
-    public async Task CreateOrderOnline_ConcurrentRequestsForSameSlot_OnlyOneSucceedsAndOtherReceivesConflict()
+    public async Task CreateOrderOnline_WhenConcurrentRequestsForSameSlot_OnlyOneSucceedsAndOtherReceivesConflict()
     {
         // Arrange
-        using var scope = Factory.Services.CreateScope();
+        using var scope = Fixture.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
         var (branch, courtType, court, priceTable) = await GetOrCreateBookingTestDataAsync(dbContext);
         var (player1, player2) = await GetPlayersAsync(dbContext);
-
-        var client1 = CreateAuthenticatedClient(player1, [RoleConstants.Player]);
-        var client2 = CreateAuthenticatedClient(player2, [RoleConstants.Player]);
 
         var targetDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10));
         var startTime = new TimeOnly(8, 0);
@@ -63,51 +63,60 @@ public sealed class CreateOrderOnlineConcurrencyTests : BaseIntegrationTest
                 )
             ]);
 
-        // Act - Gửi 2 request đặt lịch cùng 1 lúc cho cùng sân, cùng ngày, cùng khung giờ
-        var task1 = client1.PostAsJsonAsync("/api/v1/orders", command1);
-        var task2 = client2.PostAsJsonAsync("/api/v1/orders", command2);
+        var client1 = CreateAuthenticatedClient(player1, [RoleConstants.Player]);
+        var client2 = CreateAuthenticatedClient(player2, [RoleConstants.Player]);
+        HttpResponseMessage[] responses;
+        try
+        {
+            // Act - Concurrently send two booking requests for the same court, date, and timeslot
+            var task1 = client1.PostAsJsonAsync("/api/v1/orders", command1);
+            var task2 = client2.PostAsJsonAsync("/api/v1/orders", command2);
 
-        var responses = await Task.WhenAll(task1, task2);
+            responses = await Task.WhenAll(task1, task2);
+        }
+        finally
+        {
+            client1.Dispose();
+            client2.Dispose();
+        }
 
-        // Assert - Chính xác 1 request thành công (200 OK) và request còn lại phải bị từ chối do xung đột (409 Conflict)
+        // Assert - Exactly one request must succeed (200 OK) and the other must be rejected with 409 Conflict
         var okResponse = responses.SingleOrDefault(r => r.StatusCode == HttpStatusCode.OK);
         var conflictResponse = responses.SingleOrDefault(r => r.StatusCode == HttpStatusCode.Conflict);
 
-        okResponse.ShouldNotBeNull("Phải có đúng 1 request đặt sân thành công.");
-        conflictResponse.ShouldNotBeNull("Request thứ hai đặt trùng giờ phải bị từ chối với mã lỗi 409 Conflict.");
+        Assert.NotNull(okResponse);
+        Assert.NotNull(conflictResponse);
 
-        // Kiểm tra chi tiết lỗi xung đột trả về từ ProblemDetails
         var problem = await conflictResponse.Content.ReadFromJsonAsync<ProblemDetails>();
-        problem.ShouldNotBeNull();
-        problem.Detail.ShouldNotBeNull();
-        problem.Detail.ShouldContain("đã có người đặt hoặc đang giữ chỗ");
+        Assert.NotNull(problem);
+        Assert.NotNull(problem.Detail);
+        Assert.Contains("đã có người đặt hoặc đang giữ chỗ", problem.Detail);
 
-        // Kiểm tra trong database: chỉ tồn tại duy nhất 1 chi tiết đơn đặt sân cho khung giờ này
-        using var verificationScope = Factory.Services.CreateScope();
+        using var verificationScope = Fixture.Services.CreateScope();
         var verificationDb = verificationScope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
         var bookedSlotsCount = await verificationDb.OrderDetails
             .CountAsync(od => od.CourtId == court.Id && od.Date == targetDate && od.StartTime == startTime && od.EndTime == endTime);
 
-        bookedSlotsCount.ShouldBe(1, "Database chỉ được phép ghi nhận duy nhất 1 đơn hàng cho khung giờ này.");
+        Assert.Equal(1, bookedSlotsCount);
     }
 
     [Fact]
-    public async Task CreateOrderOnline_OverlappingTimeSlots_SecondRequestReturnsConflict()
+    public async Task CreateOrderOnline_WhenOverlappingTimeSlots_SecondRequestReturnsConflict()
     {
         // Arrange
-        using var scope = Factory.Services.CreateScope();
+        using var scope = Fixture.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
         var (branch, courtType, court, priceTable) = await GetOrCreateBookingTestDataAsync(dbContext);
         var (player1, player2) = await GetPlayersAsync(dbContext);
 
-        var client1 = CreateAuthenticatedClient(player1, [RoleConstants.Player]);
-        var client2 = CreateAuthenticatedClient(player2, [RoleConstants.Player]);
+        using var client1 = CreateAuthenticatedClient(player1, [RoleConstants.Player]);
+        using var client2 = CreateAuthenticatedClient(player2, [RoleConstants.Player]);
 
         var targetDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(11));
 
-        // Player 1 đặt 08:00 - 10:00
+        // Player 1 books 08:00 - 10:00
         var command1 = new CreateOrderOnlineCommand(
             branch.Id,
             player1.FullName,
@@ -121,7 +130,7 @@ public sealed class CreateOrderOnlineConcurrencyTests : BaseIntegrationTest
                 )
             ]);
 
-        // Player 2 cố tình đặt đè vào: 09:00 - 11:00 (giao nhau lúc 09:00 - 10:00)
+        // Player 2 attempts to overlap: 09:00 - 11:00 (overlaps at 09:00 - 10:00)
         var command2 = new CreateOrderOnlineCommand(
             branch.Id,
             player2.FullName,
@@ -135,33 +144,30 @@ public sealed class CreateOrderOnlineConcurrencyTests : BaseIntegrationTest
                 )
             ]);
 
-        // Act - Player 1 đặt trước thành công
+        // Act - First request completes successfully, then overlapping request is sent
         var res1 = await client1.PostAsJsonAsync("/api/v1/orders", command1);
-        res1.StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        // Player 2 đặt đè khung giờ
         var res2 = await client2.PostAsJsonAsync("/api/v1/orders", command2);
 
-        // Assert - Player 2 phải bị từ chối
-        res2.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, res1.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, res2.StatusCode);
 
         var problem = await res2.Content.ReadFromJsonAsync<ProblemDetails>();
-        problem.ShouldNotBeNull();
-        problem.Detail.ShouldNotBeNull();
-        problem.Detail.ShouldContain("đã có người đặt hoặc đang giữ chỗ");
+        Assert.NotNull(problem);
+        Assert.NotNull(problem.Detail);
+        Assert.Contains("đã có người đặt hoặc đang giữ chỗ", problem.Detail);
     }
 
     [Fact]
-    public async Task CreateOrderOnline_DifferentCourtsAtSameTime_BothSucceed()
+    public async Task CreateOrderOnline_WhenDifferentCourtsAtSameTime_BothSucceed()
     {
         // Arrange
-        using var scope = Factory.Services.CreateScope();
+        using var scope = Fixture.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
         var (branch, courtType, court1, priceTable) = await GetOrCreateBookingTestDataAsync(dbContext);
         var (player1, player2) = await GetPlayersAsync(dbContext);
 
-        // Tạo thêm court 2 trong cùng chi nhánh
         var court2 = await dbContext.Courts.FirstOrDefaultAsync(c => c.CourtTypeId == courtType.Id && c.Id != court1.Id);
         if (court2 == null)
         {
@@ -177,9 +183,6 @@ public sealed class CreateOrderOnlineConcurrencyTests : BaseIntegrationTest
             dbContext.Courts.Add(court2);
             await ((DbContext)dbContext).SaveChangesAsync();
         }
-
-        var client1 = CreateAuthenticatedClient(player1, [RoleConstants.Player]);
-        var client2 = CreateAuthenticatedClient(player2, [RoleConstants.Player]);
 
         var targetDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(12));
         var startTime = new TimeOnly(14, 0);
@@ -211,15 +214,26 @@ public sealed class CreateOrderOnlineConcurrencyTests : BaseIntegrationTest
                 )
             ]);
 
-        // Act - Cả hai cùng đặt cùng khung giờ nhưng ở 2 sân khác nhau
-        var task1 = client1.PostAsJsonAsync("/api/v1/orders", command1);
-        var task2 = client2.PostAsJsonAsync("/api/v1/orders", command2);
+        var client1 = CreateAuthenticatedClient(player1, [RoleConstants.Player]);
+        var client2 = CreateAuthenticatedClient(player2, [RoleConstants.Player]);
+        HttpResponseMessage[] responses;
+        try
+        {
+            // Act - Concurrently book different courts at the exact same time
+            var task1 = client1.PostAsJsonAsync("/api/v1/orders", command1);
+            var task2 = client2.PostAsJsonAsync("/api/v1/orders", command2);
 
-        var responses = await Task.WhenAll(task1, task2);
+            responses = await Task.WhenAll(task1, task2);
+        }
+        finally
+        {
+            client1.Dispose();
+            client2.Dispose();
+        }
 
-        // Assert - Cả 2 đều thành công vì không bị tranh chấp sân
-        responses[0].StatusCode.ShouldBe(HttpStatusCode.OK);
-        responses[1].StatusCode.ShouldBe(HttpStatusCode.OK);
+        // Assert - Both requests succeed without conflict
+        Assert.Equal(HttpStatusCode.OK, responses[0].StatusCode);
+        Assert.Equal(HttpStatusCode.OK, responses[1].StatusCode);
     }
 
     private static async Task<(ApplicationUser Player1, ApplicationUser Player2)> GetPlayersAsync(IApplicationDbContext dbContext)
@@ -270,7 +284,7 @@ public sealed class CreateOrderOnlineConcurrencyTests : BaseIntegrationTest
         var branch = await dbContext.Branches.Include(b => b.QrImage).FirstOrDefaultAsync(b => b.IsActive);
         if (branch == null)
         {
-            var qr = new CourtBooking.Domain.Entities.Images.Image
+            var qr = new Image
             {
                 Id = Guid.NewGuid(),
                 StorageKey = "branches/qr/test.png",

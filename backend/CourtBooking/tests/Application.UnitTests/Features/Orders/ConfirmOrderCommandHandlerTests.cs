@@ -1,4 +1,5 @@
-using Application.UnitTests.Abstractions;
+using Application.UnitTests.Common.Abstractions;
+using Application.UnitTests.Common.Builders;
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Features.V1.Orders.Commands.ConfirmOrder;
 using CourtBooking.Domain.Entities.Orders;
@@ -6,7 +7,7 @@ using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.UnitTests.Orders;
+namespace Application.UnitTests.Features.Orders;
 
 public sealed class ConfirmOrderCommandHandlerTests : BaseHandlerTest
 {
@@ -14,7 +15,7 @@ public sealed class ConfirmOrderCommandHandlerTests : BaseHandlerTest
     private static readonly Guid SampleBranchId = Guid.NewGuid();
 
     [Fact]
-    public async Task Handle_Should_ReturnNotFound_WhenOrderDoesNotExist()
+    public async Task Handle_WhenOrderDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -27,16 +28,22 @@ public sealed class ConfirmOrderCommandHandlerTests : BaseHandlerTest
         Result result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBeOfType<NotFoundError>();
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
     }
 
     [Fact]
-    public async Task Handle_Should_ReturnForbidden_WhenUserIsNotBranchOwner()
+    public async Task Handle_WhenUserIsNotBranchOwner_ReturnsForbidden()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
-        await SeedOrderAsync(context, SampleOrderId, OrderStatus.PendingConfirmation);
+        var order = new OrderBuilder()
+            .WithId(SampleOrderId)
+            .WithBranchId(SampleBranchId)
+            .WithStatus(OrderStatus.PendingConfirmation)
+            .Build();
+        context.Orders.Add(order);
+        await context.SaveChangesAsync();
 
         IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
         branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
@@ -49,16 +56,22 @@ public sealed class ConfirmOrderCommandHandlerTests : BaseHandlerTest
         Result result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBeOfType<ForbiddenError>();
+        Assert.True(result.IsFailure);
+        Assert.IsType<ForbiddenError>(result.Error);
     }
 
     [Fact]
-    public async Task Handle_Should_ConfirmOrderSuccessfully_WhenUserIsBranchOwner()
+    public async Task Handle_WhenUserIsBranchOwner_ConfirmsOrderSuccessfully()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
-        await SeedOrderAsync(context, SampleOrderId, OrderStatus.PendingConfirmation);
+        var order = new OrderBuilder()
+            .WithId(SampleOrderId)
+            .WithBranchId(SampleBranchId)
+            .WithStatus(OrderStatus.PendingConfirmation)
+            .Build();
+        context.Orders.Add(order);
+        await context.SaveChangesAsync();
 
         IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
         branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
@@ -71,31 +84,9 @@ public sealed class ConfirmOrderCommandHandlerTests : BaseHandlerTest
         Result result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
+        Assert.True(result.IsSuccess);
 
-        Order order = await context.Orders.SingleAsync(o => o.Id == SampleOrderId);
-        order.Status.ShouldBe(OrderStatus.Confirmed);
-    }
-
-    private static async Task SeedOrderAsync(TestDbContext context, Guid orderId, OrderStatus status)
-    {
-        var order = new Order
-        {
-            Id = orderId,
-            OrderCode = "ORD-TEST-002",
-            BranchId = SampleBranchId,
-            CustomerName = "Nguyen Van Test",
-            CustomerPhone = "0901234567",
-            Status = status,
-            Channel = OrderChannel.Online,
-            OrderType = OrderType.Normal,
-            OrderDate = DateOnly.FromDateTime(DateTime.UtcNow),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            HoldExpiresAt = DateTime.UtcNow.AddMinutes(15)
-        };
-
-        context.Orders.Add(order);
-        await context.SaveChangesAsync();
+        Order updatedOrder = await context.Orders.SingleAsync(o => o.Id == SampleOrderId);
+        Assert.Equal(OrderStatus.Confirmed, updatedOrder.Status);
     }
 }

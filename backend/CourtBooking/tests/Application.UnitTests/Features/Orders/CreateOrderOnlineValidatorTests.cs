@@ -1,7 +1,7 @@
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderOnline;
 using CourtBooking.Application.Features.V1.Orders.SharedInputs;
 
-namespace Application.UnitTests.Orders;
+namespace Application.UnitTests.Features.Orders;
 
 public sealed class CreateOrderOnlineValidatorTests
 {
@@ -14,7 +14,7 @@ public sealed class CreateOrderOnlineValidatorTests
     private static readonly Guid ValidServiceId = Guid.NewGuid();
 
     [Fact]
-    public void Validate_Should_Pass_WhenCommandIsValid()
+    public void Validate_WhenCommandIsValid_PassesValidation()
     {
         // Arrange
         var command = CreateValidCommand();
@@ -23,12 +23,12 @@ public sealed class CreateOrderOnlineValidatorTests
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.ShouldBeTrue();
-        result.Errors.ShouldBeEmpty();
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
     }
 
     [Fact]
-    public void Validate_Should_Fail_WhenBranchIdIsEmpty()
+    public void Validate_WhenBranchIdIsEmpty_ReturnsValidationError()
     {
         // Arrange
         var command = CreateValidCommand() with { BranchId = Guid.Empty };
@@ -37,14 +37,14 @@ public sealed class CreateOrderOnlineValidatorTests
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.PropertyName == nameof(CreateOrderOnlineCommand.BranchId));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateOrderOnlineCommand.BranchId));
     }
 
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
-    public void Validate_Should_Fail_WhenCustomerNameIsWhitespaceOrEmpty(string invalidName)
+    public void Validate_WhenCustomerNameIsWhitespaceOrEmpty_ReturnsValidationError(string invalidName)
     {
         // Arrange
         var command = CreateValidCommand() with { CustomerName = invalidName };
@@ -53,8 +53,8 @@ public sealed class CreateOrderOnlineValidatorTests
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.PropertyName == nameof(CreateOrderOnlineCommand.CustomerName));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateOrderOnlineCommand.CustomerName));
     }
 
     [Theory]
@@ -62,7 +62,7 @@ public sealed class CreateOrderOnlineValidatorTests
     [InlineData("090123")]
     [InlineData("abcdefghij")]
     [InlineData("1901234567")]
-    public void Validate_Should_Fail_WhenCustomerPhoneIsInvalid(string invalidPhone)
+    public void Validate_WhenCustomerPhoneIsInvalid_ReturnsValidationError(string invalidPhone)
     {
         // Arrange
         var command = CreateValidCommand() with { CustomerPhone = invalidPhone };
@@ -71,12 +71,12 @@ public sealed class CreateOrderOnlineValidatorTests
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.PropertyName == nameof(CreateOrderOnlineCommand.CustomerPhone));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateOrderOnlineCommand.CustomerPhone));
     }
 
     [Fact]
-    public void Validate_Should_Fail_WhenCourtSlotsIsEmpty()
+    public void Validate_WhenCourtSlotsIsEmpty_ReturnsValidationError()
     {
         // Arrange
         var command = CreateValidCommand() with { CourtSlots = [] };
@@ -85,12 +85,12 @@ public sealed class CreateOrderOnlineValidatorTests
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.PropertyName == nameof(CreateOrderOnlineCommand.CourtSlots));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateOrderOnlineCommand.CourtSlots));
     }
 
     [Fact]
-    public void Validate_Should_Fail_WhenDateIsInThePast()
+    public void Validate_WhenDateIsInThePast_ReturnsValidationError()
     {
         // Arrange
         var pastDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2));
@@ -108,12 +108,12 @@ public sealed class CreateOrderOnlineValidatorTests
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.ErrorMessage.Contains("quá khứ"));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.ErrorMessage.Contains("quá khứ"));
     }
 
     [Fact]
-    public void Validate_Should_Fail_WhenEndTimeIsNotAfterStartTime()
+    public void Validate_WhenEndTimeIsNotAfterStartTime_ReturnsValidationError()
     {
         // Arrange
         var futureDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
@@ -131,12 +131,12 @@ public sealed class CreateOrderOnlineValidatorTests
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.ErrorMessage.Contains("Giờ kết thúc phải sau giờ bắt đầu"));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.ErrorMessage.Contains("Giờ kết thúc phải sau giờ bắt đầu"));
     }
 
     [Fact]
-    public void Validate_Should_Fail_WhenDuplicateServicesProvided()
+    public void Validate_WhenDuplicateServicesProvided_ReturnsValidationError()
     {
         // Arrange
         var duplicateServices = new List<OrderServiceItem>
@@ -150,8 +150,8 @@ public sealed class CreateOrderOnlineValidatorTests
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.ErrorMessage.Contains("trùng lặp dịch vụ"));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.ErrorMessage.Contains("trùng lặp dịch vụ"));
     }
 
     private static CreateOrderOnlineCommand CreateValidCommand()

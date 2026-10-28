@@ -1,18 +1,18 @@
-using Application.UnitTests.Abstractions;
+using Application.UnitTests.Common.Abstractions;
+using Application.UnitTests.Common.Builders;
 using AsyncKeyedLock;
 using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Features.V1.Orders.Commands.CreateOrderOnline;
 using CourtBooking.Application.Features.V1.Orders.Common;
 using CourtBooking.Application.Features.V1.Orders.SharedInputs;
 using CourtBooking.Domain.Entities.Courts;
-using CourtBooking.Domain.Entities.Images;
 using CourtBooking.Domain.Entities.Orders;
 using CourtBooking.Domain.Entities.Services;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.UnitTests.Orders;
+namespace Application.UnitTests.Features.Orders;
 
 public sealed class CreateOrderOnlineCommandHandlerTests : BaseHandlerTest
 {
@@ -24,7 +24,7 @@ public sealed class CreateOrderOnlineCommandHandlerTests : BaseHandlerTest
     private static readonly Guid ServiceId = Guid.NewGuid();
 
     [Fact]
-    public async Task Handle_Should_ReturnFailure_WhenValidationFails()
+    public async Task Handle_WhenValidationFails_ReturnsFailure()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -49,12 +49,12 @@ public sealed class CreateOrderOnlineCommandHandlerTests : BaseHandlerTest
         Result<CreateOrderOnlineResponse> result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBe(error);
+        Assert.True(result.IsFailure);
+        Assert.Equal(error, result.Error);
     }
 
     [Fact]
-    public async Task Handle_Should_ReturnConflict_WhenCheckConflictsFails()
+    public async Task Handle_WhenCheckConflictsFails_ReturnsConflict()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -83,12 +83,12 @@ public sealed class CreateOrderOnlineCommandHandlerTests : BaseHandlerTest
         Result<CreateOrderOnlineResponse> result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBe(conflictError);
+        Assert.True(result.IsFailure);
+        Assert.Equal(conflictError, result.Error);
     }
 
     [Fact]
-    public async Task Handle_Should_ReturnForbidden_WhenPlayerNotAuthenticated()
+    public async Task Handle_WhenPlayerNotAuthenticated_ReturnsForbidden()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -116,12 +116,12 @@ public sealed class CreateOrderOnlineCommandHandlerTests : BaseHandlerTest
         Result<CreateOrderOnlineResponse> result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBeOfType<ForbiddenError>();
+        Assert.True(result.IsFailure);
+        Assert.IsType<ForbiddenError>(result.Error);
     }
 
     [Fact]
-    public async Task Handle_Should_CreateOrderSuccessfully_WhenValidRequest()
+    public async Task Handle_WhenRequestIsValid_CreatesOrderSuccessfully()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -149,32 +149,32 @@ public sealed class CreateOrderOnlineCommandHandlerTests : BaseHandlerTest
         Result<CreateOrderOnlineResponse> result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
-        result.Value.OrderId.ShouldNotBe(Guid.Empty);
-        result.Value.OrderCode.ShouldStartWith("ORD-");
-        result.Value.TotalAmount.ShouldBe(100_000m);
-        result.Value.AccountNumber.ShouldBe("123456789");
-        result.Value.AccountName.ShouldBe("NGUYEN VAN A");
-        result.Value.QrCodeImageKey.ShouldBe("branches/qr/branch1.png");
+        Assert.True(result.IsSuccess);
+        Assert.NotEqual(Guid.Empty, result.Value.OrderId);
+        Assert.StartsWith("ORD-", result.Value.OrderCode);
+        Assert.Equal(100_000m, result.Value.TotalAmount);
+        Assert.Equal("123456789", result.Value.AccountNumber);
+        Assert.Equal("NGUYEN VAN A", result.Value.AccountName);
+        Assert.Equal("branches/qr/branch1.png", result.Value.QrCodeImageKey);
 
         Order savedOrder = await context.Orders
             .Include(o => o.Details)
             .SingleAsync(o => o.Id == result.Value.OrderId);
 
-        savedOrder.BranchId.ShouldBe(BranchId);
-        savedOrder.PlayerId.ShouldBe(PlayerId);
-        savedOrder.CustomerName.ShouldBe("Nguyen Van B");
-        savedOrder.CustomerPhone.ShouldBe("0901234567");
-        savedOrder.Status.ShouldBe(OrderStatus.AwaitingPayment);
-        savedOrder.Channel.ShouldBe(OrderChannel.Online);
-        savedOrder.TotalCourtAmount.ShouldBe(100_000m);
-        savedOrder.Details.Count.ShouldBe(1);
-        savedOrder.Details[0].CourtId.ShouldBe(CourtId);
-        savedOrder.Details[0].Price.ShouldBe(100_000m);
+        Assert.Equal(BranchId, savedOrder.BranchId);
+        Assert.Equal(PlayerId, savedOrder.PlayerId);
+        Assert.Equal("Nguyen Van B", savedOrder.CustomerName);
+        Assert.Equal("0901234567", savedOrder.CustomerPhone);
+        Assert.Equal(OrderStatus.AwaitingPayment, savedOrder.Status);
+        Assert.Equal(OrderChannel.Online, savedOrder.Channel);
+        Assert.Equal(100_000m, savedOrder.TotalCourtAmount);
+        Assert.Single(savedOrder.Details);
+        Assert.Equal(CourtId, savedOrder.Details[0].CourtId);
+        Assert.Equal(100_000m, savedOrder.Details[0].Price);
     }
 
     [Fact]
-    public async Task Handle_Should_CreateOrderWithServicesSuccessfully_WhenServicesIncluded()
+    public async Task Handle_WhenServicesIncluded_CreatesOrderWithServicesSuccessfully()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -202,17 +202,18 @@ public sealed class CreateOrderOnlineCommandHandlerTests : BaseHandlerTest
         Result<CreateOrderOnlineResponse> result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.ShouldBeTrue();
+        Assert.True(result.IsSuccess);
+
         Order savedOrder = await context.Orders
             .Include(o => o.Services)
             .SingleAsync(o => o.Id == result.Value.OrderId);
 
-        savedOrder.Services.Count.ShouldBe(1);
-        savedOrder.Services[0].ServiceId.ShouldBe(ServiceId);
-        savedOrder.Services[0].UnitPrice.ShouldBe(15_000m);
-        savedOrder.Services[0].Quantity.ShouldBe(2);
-        savedOrder.TotalServiceAmount.ShouldBe(30_000m);
-        savedOrder.TotalAmount.ShouldBe(130_000m);
+        Assert.Single(savedOrder.Services);
+        Assert.Equal(ServiceId, savedOrder.Services[0].ServiceId);
+        Assert.Equal(15_000m, savedOrder.Services[0].UnitPrice);
+        Assert.Equal(2, savedOrder.Services[0].Quantity);
+        Assert.Equal(30_000m, savedOrder.TotalServiceAmount);
+        Assert.Equal(130_000m, savedOrder.TotalAmount);
     }
 
     private static CreateOrderOnlineCommand CreateSampleCommand(bool withService = false, Guid? playerId = null, bool useDefaultPlayer = true)
@@ -242,33 +243,17 @@ public sealed class CreateOrderOnlineCommandHandlerTests : BaseHandlerTest
 
     private static BookingValidationContext CreateSampleBookingContext(bool withService = false)
     {
-        var branch = new Branch
-        {
-            Id = BranchId,
-            Name = "Chi nhánh Tân Bình",
-            Hotline = "0900000000",
-            Province = "TP.HCM",
-            District = "Tân Bình",
-            Street = "123 Cộng Hòa",
-            AccountNumber = "123456789",
-            AccountName = "NGUYEN VAN A",
-            IsActive = true,
-            QrImage = new Image
-            {
-                Id = Guid.NewGuid(),
-                StorageKey = "branches/qr/branch1.png",
-                StorageProvider = StorageProvider.S3,
-                Status = ImageStatus.Attached
-            }
-        };
+        var branch = new BranchBuilder()
+            .WithId(BranchId)
+            .WithName("Chi nhánh Tân Bình")
+            .WithQrImage("branches/qr/branch1.png")
+            .Build();
 
-        var court = new Court
-        {
-            Id = CourtId,
-            CourtTypeId = CourtTypeId,
-            Name = "Sân 1",
-            Status = CourtStatus.Available
-        };
+        var court = new CourtBuilder()
+            .WithId(CourtId)
+            .WithCourtTypeId(CourtTypeId)
+            .WithName("Sân 1")
+            .Build();
 
         var calculatedSlots = new List<CalculatedSlotItem>
         {

@@ -11,7 +11,7 @@ using CourtBooking.Domain.Entities.Subscriptions;
 using CourtBooking.Domain.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.UnitTests.Abstractions;
+namespace Application.UnitTests.Common.Abstractions;
 
 /// <summary>
 /// A lightweight in-memory <see cref="DbContext"/> that implements <see cref="IApplicationDbContext"/>

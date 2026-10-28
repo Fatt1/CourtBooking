@@ -1,17 +1,19 @@
 using System.Net.Http.Headers;
+using IntegrationTests.Fixtures;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace IntegrationTests;
+namespace IntegrationTests.Common;
 
 [Collection(nameof(IntegrationTestCollection))]
 public abstract class BaseIntegrationTest
 {
-    protected BaseIntegrationTest(IntegrationTestWebAppFactory factory)
+    protected BaseIntegrationTest(ApiFixture fixture)
     {
-        Factory = factory;
-        HttpClient = factory.CreateClient();
+        Fixture = fixture;
+        HttpClient = fixture.CreateClient();
     }
 
-    protected IntegrationTestWebAppFactory Factory { get; }
+    protected ApiFixture Fixture { get; }
     protected HttpClient HttpClient { get; }
 
     protected sealed record AccessTokens(string AccessToken, string RefreshToken);
@@ -25,8 +27,8 @@ public abstract class BaseIntegrationTest
 
     protected HttpClient CreateAuthenticatedClient(CourtBooking.Domain.Entities.Users.ApplicationUser user, IEnumerable<string> roles)
     {
-        var client = Factory.CreateClient();
-        var tokenService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<CourtBooking.Application.Abstractions.Authentication.IJwtTokenService>(Factory.Services);
+        var client = Fixture.CreateClient();
+        var tokenService = Fixture.Services.GetRequiredService<CourtBooking.Application.Abstractions.Authentication.IJwtTokenService>();
         var token = tokenService.GenerateAccessToken(user, roles);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;

@@ -1,13 +1,13 @@
-using Application.UnitTests.Abstractions;
+using Application.UnitTests.Common.Abstractions;
+using Application.UnitTests.Common.Builders;
 using CourtBooking.Application.Abstractions.Authorization;
 using CourtBooking.Application.Features.V1.Orders.Commands.CompleteOrder;
 using CourtBooking.Domain.Entities.Orders;
-using CourtBooking.Domain.Entities.Payments;
 using CourtBooking.Domain.Enums;
 using CourtBooking.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.UnitTests.Orders;
+namespace Application.UnitTests.Features.Orders;
 
 public sealed class CompleteOrderCommandHandlerTests : BaseHandlerTest
 {
@@ -15,7 +15,7 @@ public sealed class CompleteOrderCommandHandlerTests : BaseHandlerTest
     private static readonly Guid SampleBranchId = Guid.NewGuid();
 
     [Fact]
-    public async Task Handle_Should_ReturnNotFound_WhenOrderDoesNotExist()
+    public async Task Handle_WhenOrderDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
@@ -28,16 +28,24 @@ public sealed class CompleteOrderCommandHandlerTests : BaseHandlerTest
         Result result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBeOfType<NotFoundError>();
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
     }
 
     [Fact]
-    public async Task Handle_Should_ReturnForbidden_WhenUserIsNotBranchOwner()
+    public async Task Handle_WhenUserIsNotBranchOwner_ReturnsForbidden()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
-        await SeedOrderAsync(context, SampleOrderId, OrderStatus.Confirmed, totalAmount: 100_000m, paidAmount: 100_000m);
+        var order = new OrderBuilder()
+            .WithId(SampleOrderId)
+            .WithBranchId(SampleBranchId)
+            .WithStatus(OrderStatus.Confirmed)
+            .WithCourtAmount(100_000m)
+            .WithPayment(100_000m)
+            .Build();
+        context.Orders.Add(order);
+        await context.SaveChangesAsync();
 
         IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
         branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
@@ -50,136 +58,132 @@ public sealed class CompleteOrderCommandHandlerTests : BaseHandlerTest
         Result result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBeOfType<ForbiddenError>();
+        Assert.True(result.IsFailure);
+        Assert.IsType<ForbiddenError>(result.Error);
     }
 
     [Fact]
-    public async Task Handle_Should_ReturnBadError_WhenOrderIsAlreadyCompleted()
+    public async Task Handle_WhenOrderIsAlreadyCompleted_ReturnsBadError()
     {
         // Arrange
         await using TestDbContext context = CreateDbContext();
-        await SeedOrderAsync(context, SampleOrderId, OrderStatus.Completed, totalAmount: 100_000m, paidAmount: 100_000m);
-
-        IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
-        branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var handler = new CompleteOrderCommandHandler(context, branchAuth);
-        var command = new CompleteOrderCommand(SampleOrderId);
-
-        // Act
-        Result result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldNotBeNull();
-        result.Error.Message.ShouldContain("Đơn hàng đã hoàn thành trước đó");
-    }
-
-    [Fact]
-    public async Task Handle_Should_ReturnBadError_WhenOrderIsNotConfirmed()
-    {
-        // Arrange
-        await using TestDbContext context = CreateDbContext();
-        await SeedOrderAsync(context, SampleOrderId, OrderStatus.AwaitingPayment, totalAmount: 100_000m, paidAmount: 100_000m);
-
-        IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
-        branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var handler = new CompleteOrderCommandHandler(context, branchAuth);
-        var command = new CompleteOrderCommand(SampleOrderId);
-
-        // Act
-        Result result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldNotBeNull();
-        result.Error.Message.ShouldContain("Chỉ có thể hoàn thành đơn hàng ở trạng thái đã xác nhận");
-    }
-
-    [Fact]
-    public async Task Handle_Should_ReturnBadError_WhenOrderHasUnpaidRemainingAmount()
-    {
-        // Arrange
-        await using TestDbContext context = CreateDbContext();
-        await SeedOrderAsync(context, SampleOrderId, OrderStatus.Confirmed, totalAmount: 200_000m, paidAmount: 100_000m);
-
-        IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
-        branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var handler = new CompleteOrderCommandHandler(context, branchAuth);
-        var command = new CompleteOrderCommand(SampleOrderId);
-
-        // Act
-        Result result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldNotBeNull();
-        result.Error.Message.ShouldContain("chưa thanh toán đủ");
-    }
-
-    [Fact]
-    public async Task Handle_Should_CompleteOrderSuccessfully_WhenOrderIsConfirmedAndFullyPaid()
-    {
-        // Arrange
-        await using TestDbContext context = CreateDbContext();
-        await SeedOrderAsync(context, SampleOrderId, OrderStatus.Confirmed, totalAmount: 150_000m, paidAmount: 150_000m);
-
-        IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
-        branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var handler = new CompleteOrderCommandHandler(context, branchAuth);
-        var command = new CompleteOrderCommand(SampleOrderId);
-
-        // Act
-        Result result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.ShouldBeTrue();
-
-        Order order = await context.Orders.SingleAsync(o => o.Id == SampleOrderId);
-        order.Status.ShouldBe(OrderStatus.Completed);
-    }
-
-    private static async Task SeedOrderAsync(TestDbContext context, Guid orderId, OrderStatus status, decimal totalAmount, decimal paidAmount)
-    {
-        var order = new Order
-        {
-            Id = orderId,
-            OrderCode = "ORD-TEST-003",
-            BranchId = SampleBranchId,
-            CustomerName = "Nguyen Van Test",
-            CustomerPhone = "0901234567",
-            Status = status,
-            Channel = OrderChannel.Online,
-            OrderType = OrderType.Normal,
-            OrderDate = DateOnly.FromDateTime(DateTime.UtcNow),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            TotalCourtAmount = totalAmount,
-            HoldExpiresAt = DateTime.UtcNow.AddMinutes(15)
-        };
-
-        if (paidAmount > 0)
-        {
-            order.PaymentTransactions.Add(new PaymentTransaction
-            {
-                Id = Guid.NewGuid(),
-                OrderId = orderId,
-                Amount = paidAmount,
-                Method = PaymentMethod.QrTransfer,
-                Type = PaymentTransactionType.Payment,
-                CreatedAt = DateTime.UtcNow
-            });
-        }
-
+        var order = new OrderBuilder()
+            .WithId(SampleOrderId)
+            .WithBranchId(SampleBranchId)
+            .WithStatus(OrderStatus.Completed)
+            .WithCourtAmount(100_000m)
+            .WithPayment(100_000m)
+            .Build();
         context.Orders.Add(order);
         await context.SaveChangesAsync();
+
+        IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
+        branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var handler = new CompleteOrderCommandHandler(context, branchAuth);
+        var command = new CompleteOrderCommand(SampleOrderId);
+
+        // Act
+        Result result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.NotNull(result.Error);
+        Assert.Contains("Đơn hàng đã hoàn thành trước đó", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task Handle_WhenOrderIsNotConfirmed_ReturnsBadError()
+    {
+        // Arrange
+        await using TestDbContext context = CreateDbContext();
+        var order = new OrderBuilder()
+            .WithId(SampleOrderId)
+            .WithBranchId(SampleBranchId)
+            .WithStatus(OrderStatus.AwaitingPayment)
+            .WithCourtAmount(100_000m)
+            .WithPayment(100_000m)
+            .Build();
+        context.Orders.Add(order);
+        await context.SaveChangesAsync();
+
+        IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
+        branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var handler = new CompleteOrderCommandHandler(context, branchAuth);
+        var command = new CompleteOrderCommand(SampleOrderId);
+
+        // Act
+        Result result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.NotNull(result.Error);
+        Assert.Contains("Chỉ có thể hoàn thành đơn hàng ở trạng thái đã xác nhận", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task Handle_WhenOrderHasUnpaidRemainingAmount_ReturnsBadError()
+    {
+        // Arrange
+        await using TestDbContext context = CreateDbContext();
+        var order = new OrderBuilder()
+            .WithId(SampleOrderId)
+            .WithBranchId(SampleBranchId)
+            .WithStatus(OrderStatus.Confirmed)
+            .WithCourtAmount(200_000m)
+            .WithPayment(100_000m)
+            .Build();
+        context.Orders.Add(order);
+        await context.SaveChangesAsync();
+
+        IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
+        branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var handler = new CompleteOrderCommandHandler(context, branchAuth);
+        var command = new CompleteOrderCommand(SampleOrderId);
+
+        // Act
+        Result result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.NotNull(result.Error);
+        Assert.Contains("chưa thanh toán đủ", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task Handle_WhenOrderIsConfirmedAndFullyPaid_CompletesOrderSuccessfully()
+    {
+        // Arrange
+        await using TestDbContext context = CreateDbContext();
+        var order = new OrderBuilder()
+            .WithId(SampleOrderId)
+            .WithBranchId(SampleBranchId)
+            .WithStatus(OrderStatus.Confirmed)
+            .WithCourtAmount(150_000m)
+            .WithPayment(150_000m)
+            .Build();
+        context.Orders.Add(order);
+        await context.SaveChangesAsync();
+
+        IBranchAuthorizationService branchAuth = Substitute.For<IBranchAuthorizationService>();
+        branchAuth.IsOwnerAsync(SampleBranchId, Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var handler = new CompleteOrderCommandHandler(context, branchAuth);
+        var command = new CompleteOrderCommand(SampleOrderId);
+
+        // Act
+        Result result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+
+        Order updatedOrder = await context.Orders.SingleAsync(o => o.Id == SampleOrderId);
+        Assert.Equal(OrderStatus.Completed, updatedOrder.Status);
     }
 }
