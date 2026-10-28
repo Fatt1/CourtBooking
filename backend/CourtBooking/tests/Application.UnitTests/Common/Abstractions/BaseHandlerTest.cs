@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Application.UnitTests.Abstractions;
+namespace Application.UnitTests.Common.Abstractions;
 
 public abstract class BaseHandlerTest
 {
