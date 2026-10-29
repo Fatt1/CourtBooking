@@ -19,6 +19,12 @@ public sealed class BranchBuilder
     private string _accountName = "NGUYEN VAN A";
     private bool _isActive = true;
     private Image? _qrImage;
+    private decimal _latitude = 10.7769m;
+    private decimal _longitude = 106.7009m;
+    private double _reviewAverage;
+    private decimal _minPrice = 0m;
+    private decimal _maxPrice = 0m;
+    private string? _mapUrl;
 
     public BranchBuilder WithId(Guid id)
     {
@@ -72,6 +78,32 @@ public sealed class BranchBuilder
         return this;
     }
 
+    public BranchBuilder WithCoordinates(decimal latitude, decimal longitude)
+    {
+        _latitude = latitude;
+        _longitude = longitude;
+        return this;
+    }
+
+    public BranchBuilder WithMapUrl(string? mapUrl)
+    {
+        _mapUrl = mapUrl;
+        return this;
+    }
+
+    public BranchBuilder WithReviewAverage(double rating)
+    {
+        _reviewAverage = rating;
+        return this;
+    }
+
+    public BranchBuilder WithPriceRange(decimal minPrice, decimal maxPrice)
+    {
+        _minPrice = minPrice;
+        _maxPrice = maxPrice;
+        return this;
+    }
+
     public BranchBuilder WithQrImage(string storageKey = "branches/qr/test.png")
     {
         _qrImage = new Image
@@ -110,6 +142,12 @@ public sealed class BranchBuilder
             AccountNumber = _accountNumber,
             AccountName = _accountName,
             IsActive = _isActive,
+            Latitude = _latitude,
+            Longitude = _longitude,
+            MapUrl = _mapUrl,
+            ReviewAverage = _reviewAverage,
+            MinPrice = _minPrice,
+            MaxPrice = _maxPrice,
             QrImageId = qr.Id,
             QrImage = qr,
             CreatedAt = DateTime.UtcNow,
