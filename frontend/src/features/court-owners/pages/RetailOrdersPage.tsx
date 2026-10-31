@@ -12,7 +12,7 @@ import { exportRetailOrders } from '../components/retail-orders/receiptActions';
 import { useBranchStore } from '@/stores/useBranchStore';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { fetchAllRetailOrders, useRetailOrdersQuery, useRetailOrderSummaryQuery } from '@/api/retail-orders';
+import { fetchAllRetailOrders, summarizeRetailOrders, useRetailOrdersQuery, useRetailOrderSummaryQuery } from '@/api/retail-orders';
 import { getApiErrorMessage } from '@/types/api';
 
 const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value))
@@ -102,7 +102,7 @@ export function RetailOrdersPage() {
           </div>
           <div className="space-y-3">
             {(debouncedSearch ? list.isError : summary.isError) ? <div className="space-y-2 text-sm text-muted-foreground"><p>Không thể tải tổng quan.</p><Button variant="outline" size="sm" onClick={() => { void summary.refetch(); void list.refetch(); }}>Thử lại tổng quan</Button></div>
-              : <RetailOrderSummary data={debouncedSearch ? list.data?.summary : summary.data} loading={debouncedSearch ? list.isPending : summary.isPending} />}
+              : <RetailOrderSummary data={debouncedSearch ? (list.data ? summarizeRetailOrders(list.data.items) : undefined) : summary.data} loading={debouncedSearch ? list.isPending : summary.isPending} />}
           </div>
         </>}
         {rawId && !selectedId && <p role="alert" className="text-sm text-destructive">ID hóa đơn trên đường dẫn không hợp lệ.</p>}
