@@ -151,7 +151,7 @@ public sealed class ServiceEndpointsTests : BaseIntegrationTest
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var result = await response.Content.ReadFromJsonAsync<PagedList<ServiceDto>>();
+        var result = await response.Content.ReadFromJsonAsync<PagedList<OwnerServiceDto>>();
         Assert.NotNull(result);
     }
 
