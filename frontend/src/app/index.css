@@ -145,20 +145,48 @@ html[data-theme-transition="light"]::view-transition-new(root) {
   scrollbar-width: none;
 }
 
-/* Tùy chỉnh thanh cuộn mặc định thành dạng mảnh, tối, hiện đại */
+/* Tùy chỉnh thanh cuộn mặc định thành dạng mảnh, tinh tế, tự thích ứng theo Light/Dark Mode */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.28);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* Thanh cuộn cho Dark Mode */
+.dark ::-webkit-scrollbar-track,
+html.dark ::-webkit-scrollbar-track,
+html.dark::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+.dark ::-webkit-scrollbar-thumb,
+html.dark ::-webkit-scrollbar-thumb,
+html.dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+}
+.dark ::-webkit-scrollbar-thumb:hover,
+html.dark ::-webkit-scrollbar-thumb:hover,
+html.dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Hỗ trợ chuẩn trình duyệt hiện đại (Firefox & W3C) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.28) rgba(0, 0, 0, 0.04);
+}
+.dark *,
+html.dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.22) rgba(255, 255, 255, 0.04);
 }
 
 /* Đảm bảo toàn bộ ứng dụng và giao diện nền (#root) luôn luôn hiển thị và trải rộng 100% */
