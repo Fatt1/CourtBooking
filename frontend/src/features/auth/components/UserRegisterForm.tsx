@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { SocialAuthSection } from './SocialAuthSection';
 
 export function UserRegisterForm() {
   const navigate = useNavigate();
@@ -154,6 +155,8 @@ export function UserRegisterForm() {
           {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
           {isPending ? 'Đang tạo tài khoản...' : 'Đăng ký tài khoản'}
         </Button>
+
+        <SocialAuthSection mode="register" />
 
         <div className="text-center text-xs text-muted-foreground pt-2">
           Đã có tài khoản?{' '}

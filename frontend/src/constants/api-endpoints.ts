@@ -26,6 +26,10 @@ export const API_ENDPOINTS = {
     ME: '/identity/me',
     PROFILE: '/identity/profile',
     CHECK_PHONE: '/identity/check-phone',
+    EXTERNAL_LOGIN: '/identity/external-login',
+    EXTERNAL_LOGINS: '/identity/external-logins',
+    LINK_EXTERNAL: '/identity/link-external',
+    UNLINK_EXTERNAL: (provider: string) => `/identity/unlink-external/${provider}`,
   },
 
   // 1c. Xác thực & Tài khoản Quản trị viên (Admin Identities)

@@ -60,6 +60,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { BranchPaymentModal } from '../components/checkout/BranchPaymentModal';
 import { ReviewOrderModal } from '../components/ReviewOrderModal';
 import { ManageOrderMatchModal } from '../components/ManageOrderMatchModal';
+import { SocialAccountLinkingSection } from '../components/SocialAccountLinkingSection';
 import { MatchDetailModal } from '@/features/matches/components/MatchDetailModal';
 import {
   useMyJoinedMatchesQuery,
@@ -1098,6 +1099,11 @@ export function AccountBookingsPage() {
                       <span>Người chơi (Player)</span>
                     </p>
                   </div>
+                </div>
+
+                {/* Khối liên kết tài khoản Google & Facebook */}
+                <div className="pt-2">
+                  <SocialAccountLinkingSection />
                 </div>
               </div>
             ) : activeTab === 'joined_matches' ? (
