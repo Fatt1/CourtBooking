@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { UserForgotPasswordDialog } from './UserForgotPasswordDialog';
+import { SocialAuthSection } from './SocialAuthSection';
 
 export function UserLoginForm() {
   const navigate = useNavigate();
@@ -82,6 +83,8 @@ export function UserLoginForm() {
             {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
             {isPending ? 'Đang xác thực...' : 'Đăng nhập'}
           </Button>
+
+          <SocialAuthSection mode="login" />
 
           <div className="text-center text-xs text-muted-foreground pt-2">
             Chưa có tài khoản người chơi?{' '}
