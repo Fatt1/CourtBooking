@@ -16,7 +16,7 @@ export interface BranchReviewsModalProps {
   onClose: () => void;
   branchId?: string;
   branchName?: string;
-  reviewAverage?: number;
+  reviewAverage?: number | null;
 }
 
 export function BranchReviewsModal({
@@ -38,11 +38,11 @@ export function BranchReviewsModal({
         <div className="p-6 sm:p-7 space-y-6">
           {/* Header */}
           <DialogHeader className="space-y-1 text-left border-b border-border/60 pb-4">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#397B48]">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-[#a3e635]">
               ĐÁNH GIÁ CƠ SỞ
             </span>
             <DialogTitle className="font-heading font-black text-2xl text-foreground flex items-center gap-2">
-              <Building2 className="size-6 text-[#397B48]" />
+              <Building2 className="size-6 text-emerald-600 dark:text-[#a3e635]" />
               <span>{branchName || 'Chi nhánh sân'}</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -79,7 +79,7 @@ export function BranchReviewsModal({
               </div>
             </div>
 
-            <div className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#397B48]/10 text-[#397B48] self-start sm:self-auto border border-[#397B48]/20">
+            <div className="text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-[#a3e635] self-start sm:self-auto border border-emerald-500/20 dark:border-[#a3e635]/30">
               Cơ sở được người chơi tin cậy
             </div>
           </div>
@@ -102,7 +102,7 @@ export function BranchReviewsModal({
                 <Star className="size-8 mx-auto mb-2 opacity-30 text-amber-400" />
                 <p className="text-sm font-semibold text-foreground">Chưa có nhận xét nào</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Hãy là người đầu tiên trải nghiệm ca chơi và gửi đánh giá cho sân này!
+                  Hiện chi nhánh chưa nhận được đánh giá nào từ người chơi.
                 </p>
               </div>
             ) : (

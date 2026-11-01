@@ -428,7 +428,7 @@ export function CreateEventModal({
                     <SelectTrigger className="h-9.5 rounded-xl bg-card border-border/60 text-foreground text-xs focus:border-[#a3e635]">
                       <SelectValue placeholder="Chọn bộ môn" />
                     </SelectTrigger>
-                    <SelectContent className="bg-muted/40 border-border/70 text-foreground">
+                    <SelectContent className="bg-white dark:bg-card border-border/80 text-foreground shadow-xl">
                       {sportTypes.map((st) => (
                         <SelectItem key={st.id} value={st.id} className="text-xs">
                           {st.name}
@@ -645,7 +645,7 @@ export function CreateEventModal({
                     <SelectTrigger className="h-9.5 rounded-xl bg-card border-border/60 text-foreground text-xs focus:border-[#a3e635]">
                       <SelectValue placeholder="Chọn trình độ" />
                     </SelectTrigger>
-                    <SelectContent className="bg-muted/40 border-border/70 text-foreground">
+                    <SelectContent className="bg-white dark:bg-card border-border/80 text-foreground shadow-xl">
                       {SKILL_LEVEL_OPTIONS.map((opt) => (
                         <SelectItem key={opt} value={opt} className="text-xs">
                           {opt}
@@ -663,7 +663,7 @@ export function CreateEventModal({
                     <SelectTrigger className="h-9.5 rounded-xl bg-card border-border/60 text-foreground text-xs focus:border-[#a3e635]">
                       <SelectValue placeholder="Chọn trình độ" />
                     </SelectTrigger>
-                    <SelectContent className="bg-muted/40 border-border/70 text-foreground">
+                    <SelectContent className="bg-white dark:bg-card border-border/80 text-foreground shadow-xl">
                       {SKILL_LEVEL_OPTIONS.map((opt) => (
                         <SelectItem key={opt} value={opt} className="text-xs">
                           {opt}

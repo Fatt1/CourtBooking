@@ -9,6 +9,7 @@ interface BranchCardProps {
   onToggleStatus: (branch: OwnerBranchListItem) => void;
   onEdit?: (branch: OwnerBranchListItem) => void;
   onDelete?: (branch: OwnerBranchListItem) => void;
+  onViewReviews?: (branch: OwnerBranchListItem) => void;
   isUpdatingStatus?: boolean;
 }
 
@@ -17,6 +18,7 @@ export function BranchCard({
   onToggleStatus,
   onEdit,
   onDelete,
+  onViewReviews,
   isUpdatingStatus = false,
 }: BranchCardProps) {
   const fullAddress = [branch.street, branch.district, branch.province]
@@ -42,12 +44,30 @@ export function BranchCard({
               </CardTitle>
               <div className="flex items-center gap-1.5 mt-0.5">
                 {branch.averageRating ? (
-                  <span className="inline-flex items-center gap-1 text-amber-400 font-semibold text-xs">
-                    <Star className="size-3 fill-amber-400" />
-                    {branch.averageRating.toFixed(1)} / 5.0
-                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewReviews?.(branch);
+                    }}
+                    title="Nhấn để xem chi tiết các đánh giá của chi nhánh này"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/40 font-semibold text-xs transition-all cursor-pointer group/rate"
+                  >
+                    <Star className="size-3 fill-amber-400 group-hover/rate:scale-110 transition-transform" />
+                    <span>{branch.averageRating.toFixed(1)} / 5.0</span>
+                  </button>
                 ) : (
-                  <span className="text-[11px] text-muted-foreground">Chưa có đánh giá</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewReviews?.(branch);
+                    }}
+                    title="Chưa có đánh giá nào, nhấn để xem"
+                    className="text-[11px] text-muted-foreground hover:text-foreground hover:underline transition-colors cursor-pointer"
+                  >
+                    Chưa có đánh giá
+                  </button>
                 )}
               </div>
             </div>
@@ -104,6 +124,21 @@ export function BranchCard({
         </Button>
 
         <div className="flex items-center gap-1.5">
+          {/* Nút xem đánh giá */}
+          {onViewReviews && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewReviews(branch);
+              }}
+              title="Xem đánh giá của khách hàng"
+              className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground hover:bg-accent hover:text-amber-400 transition-colors cursor-pointer"
+            >
+              <Star className="size-3.5 fill-amber-400/20 text-amber-400" />
+            </button>
+          )}
+
           {onEdit && (
             <button
               type="button"

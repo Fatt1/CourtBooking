@@ -11,7 +11,6 @@ const navLinks = [
   { label: 'Tìm sân', href: '/courts' },
   { label: 'Kèo giao lưu', href: '/matches' },
   { label: 'Sự kiện', href: '/events' },
-  { label: 'Trợ lý AI', href: '/ai-assistant' },
 ];
 
 export function PublicHeader() {

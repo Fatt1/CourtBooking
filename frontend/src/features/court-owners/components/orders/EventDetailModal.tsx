@@ -608,7 +608,7 @@ export function EventDetailModal({
                             <SelectTrigger className="h-8.5 rounded-lg bg-muted/30 border-border/60 text-xs text-foreground">
                               <SelectValue placeholder="Chọn môn" />
                             </SelectTrigger>
-                            <SelectContent className="bg-muted/40 border-border/70 text-foreground">
+                            <SelectContent className="bg-white dark:bg-card border-border/80 text-foreground shadow-xl">
                               {sportTypes.map((st) => (
                                 <SelectItem key={st.id} value={st.id} className="text-xs">
                                   {st.name}
@@ -629,7 +629,7 @@ export function EventDetailModal({
                             <SelectTrigger className="h-8.5 rounded-lg bg-muted/30 border-border/60 text-xs text-foreground">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-muted/40 border-border/70 text-foreground">
+                            <SelectContent className="bg-white dark:bg-card border-border/80 text-foreground shadow-xl">
                               <SelectItem value={String(EventStatus.Open)} className="text-xs">
                                 Đang mở đăng ký
                               </SelectItem>
@@ -691,7 +691,7 @@ export function EventDetailModal({
                             <SelectTrigger className="h-8.5 rounded-lg bg-muted/30 border-border/60 text-xs text-foreground">
                               <SelectValue placeholder="Chọn trình độ" />
                             </SelectTrigger>
-                            <SelectContent className="bg-muted/40 border-border/70 text-foreground">
+                            <SelectContent className="bg-white dark:bg-card border-border/80 text-foreground shadow-xl">
                               {SKILL_LEVEL_OPTIONS.map((opt) => (
                                 <SelectItem key={opt} value={opt} className="text-xs">
                                   {opt}
@@ -709,7 +709,7 @@ export function EventDetailModal({
                             <SelectTrigger className="h-8.5 rounded-lg bg-muted/30 border-border/60 text-xs text-foreground">
                               <SelectValue placeholder="Chọn trình độ" />
                             </SelectTrigger>
-                            <SelectContent className="bg-muted/40 border-border/70 text-foreground">
+                            <SelectContent className="bg-white dark:bg-card border-border/80 text-foreground shadow-xl">
                               {SKILL_LEVEL_OPTIONS.map((opt) => (
                                 <SelectItem key={opt} value={opt} className="text-xs">
                                   {opt}
