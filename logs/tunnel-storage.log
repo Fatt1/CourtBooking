@@ -47,3 +47,4 @@
 2026-11-01T07:05:10Z INF precheck component="TCP Connectivity" details="HTTP/2 connection is blocked or unreachable" run_id=a257f8f1-05f1-4cb0-8970-466d90ee835c status=fail target=region2.v2.argotunnel.com
 2026-11-01T07:05:10Z INF precheck component="Cloudflare API" details="API is reachable" run_id=a257f8f1-05f1-4cb0-8970-466d90ee835c status=pass target=api.cloudflare.com:443
 2026-11-01T07:05:10Z INF precheck complete hard_fail=true run_id=a257f8f1-05f1-4cb0-8970-466d90ee835c
+2026-11-01T07:30:20Z INF Initiating graceful shutdown due to signal interrupt ...

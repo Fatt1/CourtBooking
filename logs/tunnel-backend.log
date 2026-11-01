@@ -50,3 +50,4 @@
 2026-11-01T07:05:04Z INF Retrying connection in up to 4s connIndex=0 event=0 ip=2606:4700:a8::5
 2026-11-01T07:05:06Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=0 event=0 ip=198.41.192.37
 2026-11-01T07:05:07Z INF Registered tunnel connection connIndex=0 connection=23eca58b-e879-4085-9755-27416bc5b773 event=0 ip=198.41.192.37 location=sin16 protocol=quic
+2026-11-01T07:30:20Z INF Initiating graceful shutdown due to signal interrupt ...
