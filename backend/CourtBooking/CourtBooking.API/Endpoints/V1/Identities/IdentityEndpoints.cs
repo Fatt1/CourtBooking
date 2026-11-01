@@ -11,6 +11,10 @@ using CourtBooking.Application.Features.V1.Identities.Commands.UpdateOwnerProfil
 using CourtBooking.Application.Features.V1.Identities.Dtos;
 using CourtBooking.Application.Features.V1.Identities.Queries.GetCurrentUser;
 using CourtBooking.Application.Features.V1.Identities.Queries.GetOwnerProfile;
+using CourtBooking.Application.Features.V1.Identities.Commands.ExternalLogin;
+using CourtBooking.Application.Features.V1.Identities.Commands.LinkExternalLogin;
+using CourtBooking.Application.Features.V1.Identities.Commands.UnlinkExternalLogin;
+using CourtBooking.Application.Features.V1.Identities.Queries.GetExternalLogins;
 using CourtBooking.Application.Features.V1.Identities.Queries.CheckPhone;
 using CourtBooking.Domain.Constants;
 using CourtBooking.Domain.Enums;
@@ -414,6 +418,81 @@ public sealed class IdentityEndpoints : IEndpointGroup
             .WithSummary("Người chơi đăng xuất và xóa Refresh Token Cookie")
             .WithTags(IdentityTag)
             .Produces(StatusCodes.Status200OK);
+
+        // 9. POST /api/v1/identity/external-login — Đăng nhập / Đăng ký nhanh qua Google hoặc Facebook
+        group.MapPost("/external-login", async (
+                [FromBody] ExternalLoginRequest request,
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var command = new ExternalLoginCommand(request.Provider, request.Token, AccountType.Player);
+            var result = await sender.Send(command, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : result.ToProblemDetails();
+        })
+            .AllowAnonymous()
+            .WithName("PlayerExternalLogin")
+            .WithSummary("Đăng nhập bằng tài khoản Google hoặc Facebook")
+            .WithDescription("Xác thực ID Token (Google) hoặc Access Token (Facebook) và cấp JWT Token đăng nhập.")
+            .WithTags(IdentityTag)
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        // 10. GET /api/v1/identity/external-logins — Lấy danh sách liên kết mạng xã hội hiện tại
+        group.MapGet("/external-logins", async (
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetExternalLoginsQuery(), ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+            .RequireAuthorization()
+            .WithName("GetExternalLogins")
+            .WithSummary("Lấy danh sách các tài khoản mạng xã hội đã liên kết")
+            .WithTags(IdentityTag)
+            .Produces<IReadOnlyList<UserExternalLoginDto>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        // 11. POST /api/v1/identity/link-external — Liên kết tài khoản mạng xã hội với user đang đăng nhập
+        group.MapPost("/link-external", async (
+                [FromBody] ExternalLoginRequest request,
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var command = new LinkExternalLoginCommand(request.Provider, request.Token);
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess ? Results.Ok(new { message = "Liên kết tài khoản thành công." }) : result.ToProblemDetails();
+        })
+            .RequireAuthorization()
+            .WithName("LinkExternalLogin")
+            .WithSummary("Liên kết tài khoản Google hoặc Facebook vào người dùng hiện tại")
+            .WithTags(IdentityTag)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // 12. DELETE /api/v1/identity/unlink-external/{provider} — Hủy liên kết tài khoản mạng xã hội
+        group.MapDelete("/unlink-external/{provider}", async (
+                string provider,
+                ISender sender,
+                CancellationToken ct) =>
+        {
+            var command = new UnlinkExternalLoginCommand(provider);
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess ? Results.Ok(new { message = "Hủy liên kết thành công." }) : result.ToProblemDetails();
+        })
+            .RequireAuthorization()
+            .WithName("UnlinkExternalLogin")
+            .WithSummary("Hủy liên kết tài khoản Google hoặc Facebook")
+            .WithTags(IdentityTag)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     /// <summary>

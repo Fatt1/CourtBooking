@@ -66,3 +66,18 @@ public sealed record UpdatePlayerProfileRequest(
     string PhoneNumber,
     Gender Gender,
     DateOnly? DateOfBirth);
+
+/// <summary>
+/// DTO yêu cầu đăng nhập bằng tài khoản mạng xã hội (Google / Facebook)
+/// </summary>
+public sealed record ExternalLoginRequest(
+    string Provider,
+    string Token);
+
+/// <summary>
+/// DTO thông tin nhà cung cấp mạng xã hội đã liên kết
+/// </summary>
+public sealed record UserExternalLoginDto(
+    string Provider,
+    string ProviderDisplayName);
+
