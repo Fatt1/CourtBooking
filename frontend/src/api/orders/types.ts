@@ -106,6 +106,7 @@ export interface DailyOrderDto {
   paidAmount?: number;
   refundAmount?: number;
   note?: string | null;
+  cancelReason?: string | null;
   details: OrderDetailDto[];
 }
 
@@ -671,6 +672,7 @@ export interface SubmitPaymentProofPayload {
  */
 export interface CancelOrderOnlinePayload {
   orderId: string;
+  cancelReason?: string;
   reason?: string;
 }
 

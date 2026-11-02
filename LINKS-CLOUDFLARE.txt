@@ -1,16 +1,16 @@
 ==========================================================
 THONG TIN CAC DUONG LINK TUNNELS (DANG HOAT DONG)
-Thoi gian tao: 01/11/2026 14:05:01
+Thoi gian tao: 01/11/2026 22:30:23
 ==========================================================
 
 1. LINK TRANG WEB (Frontend - Ngrok URL Co Dinh):
    https://swearingly-pseudocubic-beth.ngrok-free.dev
 
 2. LINK BACKEND API (.NET - Cloudflare):
-   https://incl-dns-fitting-dentists.trycloudflare.com/api/v1
+   https://individuals-works-meaningful-tier.trycloudflare.com/api/v1
 
 3. LINK STORAGE (SeaweedFS - Cloudflare):
-   https://sin-power-rubber-biggest.trycloudflare.com/buckets/courtbooking
+   https://newly-throw-raise-essay.trycloudflare.com/buckets/courtbooking
 
 Luu y: De cac link nay hoat dong, hay giu cua so nay dang chay!
 ==========================================================

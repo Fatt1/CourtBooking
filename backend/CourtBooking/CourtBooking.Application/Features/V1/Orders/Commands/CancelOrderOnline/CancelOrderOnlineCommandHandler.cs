@@ -24,14 +24,16 @@ public sealed class CancelOrderOnlineCommandHandler(
             return Result.Success();
         }
 
+        var cancelReason = request.ResolvedCancelReason;
+
         if (order.Status == OrderStatus.AwaitingPayment)
         {
-            order.CancelOrder(request.CancelReason ?? "Khách hàng hủy thanh toán trực tuyến.");
+            order.CancelOrder(cancelReason ?? "Khách hàng hủy thanh toán trực tuyến.");
         }
         else if (order.Status == OrderStatus.PendingConfirmation || order.Status == OrderStatus.Confirmed)
         {
             order.Status = OrderStatus.RequestCancellation;
-            order.CancelReason = request.CancelReason ?? "Khách hàng yêu cầu hủy đơn đặt sân.";
+            order.CancelReason = cancelReason ?? "Khách hàng yêu cầu hủy đơn đặt sân.";
         }
         else if (order.Status == OrderStatus.RequestCancellation)
         {

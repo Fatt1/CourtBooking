@@ -811,6 +811,7 @@ export function AccountBookingsPage() {
     try {
       await cancelOrderMutation.mutateAsync({
         orderId: cancelOrderTarget.id,
+        cancelReason: cancelReason.trim() || undefined,
         reason: cancelReason.trim() || undefined,
       });
       toast.success(
