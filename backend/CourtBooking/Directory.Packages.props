@@ -6,6 +6,8 @@
   <ItemGroup>
     <!-- Static code analysis -->
     <PackageVersion Include="AsyncKeyedLock" Version="8.1.2" />
+    <PackageVersion Include="ClosedXML" Version="0.104.2" />
+    <PackageVersion Include="QuestPDF" Version="2024.12.1" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.27.0.140913" />
     <!-- Environment -->
     <PackageVersion Include="DotNetEnv" Version="3.1.1" />

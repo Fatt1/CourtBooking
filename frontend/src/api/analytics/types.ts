@@ -3,7 +3,7 @@
  * Khớp chuẩn cấu trúc trả về từ Backend ASP.NET Core API
  */
 
-export type TimeGrouping = 'Day' | 'Week' | 'Month' | 'Year';
+export type TimeGrouping = 'Day' | 'Month' | 'Year';
 
 export interface BranchRevenueItemDto {
   branchId: string;
@@ -107,4 +107,26 @@ export interface SubscriptionHistoryResponse {
     totalPages: number;
   } | SubscriptionHistoryItemDto[];
   expiringSoonCount: number;
+}
+
+
+// ── Report Export Job Types ──────────────────────────────────
+export type ReportExportFormat = 'Pdf' | 'Excel';
+
+export interface ReportJobResponseDto {
+  jobId: string;
+  format: 'Pdf' | 'Excel';
+  status: 'Pending' | 'Queued' | 'Processing' | 'Completed' | 'Failed';
+  fileName?: string;
+  downloadUrl?: string;
+  errorMessage?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface ExportReportParams {
+  fromDate: string;
+  toDate: string;
+  branchId?: string;
+  format: ReportExportFormat;
 }
