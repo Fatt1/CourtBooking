@@ -18,4 +18,5 @@ public sealed record DailyOrderDto(
     decimal PaidAmount,
     decimal RefundAmount,
     string? Note,
-    List<OrderDetailDto> Details);
+    List<OrderDetailDto> Details,
+    string? CancelReason = null);

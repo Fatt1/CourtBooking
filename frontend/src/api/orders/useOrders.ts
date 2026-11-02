@@ -641,15 +641,22 @@ export function useCancelOrderOnlineMutation() {
   const queryClient = useQueryClient();
 
   return useMutation<unknown, ProblemDetails, CancelOrderOnlinePayload>({
-    mutationFn: async ({ orderId, reason }: CancelOrderOnlinePayload) => {
+    mutationFn: async ({ orderId, cancelReason, reason }: CancelOrderOnlinePayload) => {
+      const finalReason = cancelReason ?? reason;
       return await apiClient.put(
         API_ENDPOINTS.ORDERS.CANCEL_ONLINE(orderId),
-        { orderId, reason }
+        {
+          orderId,
+          cancelReason: finalReason,
+          reason: finalReason,
+        }
       );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['owner', 'orders'] });
       queryClient.invalidateQueries({ queryKey: ['branches', 'from-time-booking'] });
+      queryClient.invalidateQueries({ queryKey: ['branches', 'one-time-booking'] });
     },
   });
 }
