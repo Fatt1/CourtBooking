@@ -35,6 +35,10 @@ public static class ServiceContainer
         services.AddScoped<CourtBooking.Application.Abstractions.Authorization.IBranchAuthorizationService, CourtBooking.Infrastructure.Authorization.BranchAuthorizationService>();
         services.AddScoped<CourtBooking.Application.Abstractions.Emails.IEmailService, CourtBooking.Infrastructure.Emails.SmtpmailService>();
 
+        services.AddOptions<ExternalAuthOptions>()
+            .BindConfiguration(ExternalAuthOptions.SectionName);
+        services.AddHttpClient<IExternalAuthService, ExternalAuthService>();
+
         // ── Background Jobs ──────────────────────────────────────────
         services.AddHostedService<CleanUpImagesBackgroundService>();
 

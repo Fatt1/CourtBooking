@@ -358,3 +358,100 @@ export function useAdminLogoutMutation() {
     },
   });
 }
+
+export interface ExternalLoginPayload {
+  provider: 'Google' | 'Facebook' | string;
+  token: string;
+}
+
+export interface UserExternalLoginDto {
+  provider: string;
+  providerDisplayName: string;
+}
+
+/**
+ * Hook Mutation đăng nhập / đăng ký nhanh bằng Google hoặc Facebook
+ */
+export function useExternalLoginMutation() {
+  const { setCredentials } = useAuthStore();
+
+  return useMutation<CourtOwnerLoginResponse, ProblemDetails, ExternalLoginPayload>({
+    mutationFn: async (payload: ExternalLoginPayload): Promise<CourtOwnerLoginResponse> => {
+      const response = await apiClient.post<CourtOwnerLoginResponse>(
+        API_ENDPOINTS.AUTH.EXTERNAL_LOGIN,
+        payload
+      );
+      return response as unknown as CourtOwnerLoginResponse;
+    },
+    onSuccess: (data) => {
+      setCredentials(
+        {
+          id: data.userId,
+          name: data.fullName,
+          email: data.email,
+          phoneNumber: data.phoneNumber,
+          role: data.roleName,
+          mustChangePwd: data.mustChangePassword,
+        },
+        data.accessToken
+      );
+    },
+  });
+}
+
+/**
+ * Hook Query lấy danh sách liên kết mạng xã hội của người dùng hiện tại
+ */
+export function useExternalLoginsQuery(enabled = true) {
+  return useQuery<UserExternalLoginDto[], ProblemDetails>({
+    queryKey: ['external-logins'],
+    queryFn: async (): Promise<UserExternalLoginDto[]> => {
+      const response = await apiClient.get<UserExternalLoginDto[]>(
+        API_ENDPOINTS.AUTH.EXTERNAL_LOGINS
+      );
+      return response as unknown as UserExternalLoginDto[];
+    },
+    enabled,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * Hook Mutation liên kết tài khoản Google hoặc Facebook cho người dùng hiện tại
+ */
+export function useLinkExternalLoginMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ message: string }, ProblemDetails, ExternalLoginPayload>({
+    mutationFn: async (payload: ExternalLoginPayload) => {
+      const response = await apiClient.post<{ message: string }>(
+        API_ENDPOINTS.AUTH.LINK_EXTERNAL,
+        payload
+      );
+      return response as unknown as { message: string };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['external-logins'] });
+    },
+  });
+}
+
+/**
+ * Hook Mutation hủy liên kết tài khoản Google hoặc Facebook
+ */
+export function useUnlinkExternalLoginMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ message: string }, ProblemDetails, string>({
+    mutationFn: async (provider: string) => {
+      const response = await apiClient.delete<{ message: string }>(
+        API_ENDPOINTS.AUTH.UNLINK_EXTERNAL(provider)
+      );
+      return response as unknown as { message: string };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['external-logins'] });
+    },
+  });
+}
+

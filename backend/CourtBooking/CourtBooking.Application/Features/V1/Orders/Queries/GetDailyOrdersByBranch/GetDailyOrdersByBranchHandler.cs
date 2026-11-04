@@ -84,7 +84,8 @@ public sealed class GetDailyOrdersByBranchHandler(
                 d.Court.Name,
                 d.Date,
                 d.StartTime,
-                d.EndTime)).ToList()))
+                d.EndTime)).ToList(),
+            o.CancelReason))
         .ToList();
 
         var pagedList = new PagedList<DailyOrderDto>(items, totalCount, request.Page, request.PageSize);

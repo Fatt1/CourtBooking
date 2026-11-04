@@ -367,15 +367,6 @@ export function OrdersPage() {
         title="Danh sách lịch đặt"
         actions={
           <div className="flex items-center gap-2.5">
-            {/* Nút Xuất báo cáo */}
-            <Button
-              variant="outline"
-              className="gap-2 border-border/60 bg-card/60 hover:bg-accent text-foreground text-xs md:text-sm font-semibold h-9.5 rounded-xl cursor-pointer"
-              onClick={() => toast.info('Đang tạo báo cáo danh sách lịch đặt...')}
-            >
-              <FileDown className="size-4" />
-              <span>Xuất báo cáo</span>
-            </Button>
 
             {/* Nút Đặt sân với Dropdown: Mượt mà không giật nháy, hỗ trợ cả Hover & Click */}
             <div
@@ -391,9 +382,8 @@ export function OrdersPage() {
                 <Plus className="size-4 stroke-[2.5]" />
                 <span>Đặt sân</span>
                 <ChevronDown
-                  className={`size-3.5 stroke-[2.5] ml-0.5 transition-transform duration-200 ${
-                    isDropdownOpen ? 'rotate-180' : ''
-                  }`}
+                  className={`size-3.5 stroke-[2.5] ml-0.5 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''
+                    }`}
                 />
               </Button>
 
@@ -518,16 +508,14 @@ export function OrdersPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className={`gap-1.5 h-9.5 border-border/60 bg-card/60 hover:bg-accent text-xs font-medium rounded-xl cursor-pointer ${
-                  currentFilter.dateRange?.from
+                className={`gap-1.5 h-9.5 border-border/60 bg-card/60 hover:bg-accent text-xs font-medium rounded-xl cursor-pointer ${currentFilter.dateRange?.from
                     ? 'border-[#a3e635]/60 text-[#a3e635] bg-[#a3e635]/10'
                     : 'text-foreground'
-                }`}
+                  }`}
               >
                 <CalendarIcon
-                  className={`size-3.5 ${
-                    currentFilter.dateRange?.from ? 'text-[#a3e635]' : 'text-muted-foreground'
-                  }`}
+                  className={`size-3.5 ${currentFilter.dateRange?.from ? 'text-[#a3e635]' : 'text-muted-foreground'
+                    }`}
                 />
                 <span>{dateRangeLabel}</span>
               </Button>
@@ -818,7 +806,7 @@ export function OrdersPage() {
           orderId={orderToCancel.id}
           orderCode={orderToCancel.orderCode}
           totalPaid={orderToCancel.totalAmount - orderToCancel.remainingAmount}
-          customerNote={orderToCancel.note || undefined}
+          customerNote={orderToCancel.cancelReason || orderToCancel.note || undefined}
           onSuccess={() => {
             setOrderToCancel(null);
             refetch();

@@ -514,17 +514,17 @@ export function BranchBookingTab({
                   </div>
 
                   {/* Vùng Bảng Grid cuộn ngang */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[700px]">
+                  <div className="overflow-x-auto pb-2">
+                    <table className="w-full text-left border-collapse min-w-[700px] border-b border-border/70">
                       <thead>
-                        <tr className="bg-muted/40 border-b border-border/60 text-xs text-muted-foreground">
-                          <th className="sticky left-0 z-20 bg-muted/90 backdrop-blur-xs p-3 w-32 min-w-32 font-bold text-foreground border-r border-border/60 uppercase text-[11px]">
+                        <tr className="bg-muted/70 dark:bg-muted/40 border-b border-border/70 text-xs text-muted-foreground">
+                          <th className="sticky left-0 z-20 bg-muted/95 dark:bg-muted/90 backdrop-blur-xs p-3 w-32 min-w-32 font-bold text-foreground border-r border-border/70 uppercase text-[11px]">
                             SÂN / GIỜ
                           </th>
                           {timeSlots.map((ts, idx) => (
                             <th
                               key={idx}
-                              className="p-2.5 text-center font-mono font-semibold text-muted-foreground text-xs min-w-16 border-r border-border/40"
+                              className="p-2.5 text-center font-mono font-semibold text-foreground/80 dark:text-muted-foreground text-xs min-w-16 border-r border-border/50"
                             >
                               {ts.timeLabel}
                             </th>
@@ -955,32 +955,36 @@ export function BranchBookingTab({
                                             ? 'Khung giờ đã được đặt'
                                             : `Trống: ${startTimeStr} - ${endTimeStr} • Giá: ${formatPrice(unitPrice)}`
                                         }
-                                        className={`h-11 min-w-16 p-1 text-center border-r border-border/40 transition-all select-none relative group ${
+                                        className={`h-11 min-w-16 p-1 text-center border-r border-border/60 transition-all select-none relative group ${
                                           isSelected
-                                            ? 'bg-emerald-700/80 cursor-pointer shadow-inner'
+                                            ? 'bg-emerald-700/85 text-white cursor-pointer shadow-inner'
                                             : isPastOrTooClose
-                                            ? 'bg-muted/90 text-slate-600 cursor-not-allowed border-slate-800/80'
+                                            ? 'bg-muted/90 text-slate-500 cursor-not-allowed border-slate-700/40'
                                             : isEvent
                                             ? 'bg-purple-900/60 cursor-not-allowed'
                                             : isLocked
                                             ? 'bg-muted/60 cursor-not-allowed'
                                             : isBooked
-                                            ? 'bg-muted/80 cursor-not-allowed'
-                                            : 'bg-muted/40 hover:bg-muted/80 hover:border-emerald-500/40 cursor-pointer'
+                                            ? 'bg-muted/70 cursor-not-allowed'
+                                            : 'bg-emerald-500/[0.05] dark:bg-muted/30 hover:bg-emerald-500/20 dark:hover:bg-muted/80 hover:border-emerald-500/50 cursor-pointer'
                                         }`}
                                       >
                                         <div className="size-full flex items-center justify-center">
                                           {isSelected ? (
                                             <div className="size-2.5 rounded-full bg-white shadow-xs animate-in zoom-in-50" />
                                           ) : isPastOrTooClose ? (
-                                            <div className="size-1.5 rounded-full bg-slate-700/80" />
+                                            <div className="size-1.5 rounded-full bg-slate-400 dark:bg-slate-700" />
                                           ) : isEvent ? (
                                             <Sparkles className="size-3 text-purple-300" />
                                           ) : isLocked ? (
                                             <Lock className="size-3 text-amber-700 dark:text-amber-400" />
                                           ) : isBooked ? (
                                             <span className="text-[10px] text-muted-foreground font-bold">•</span>
-                                          ) : null}
+                                          ) : (
+                                            <span className="text-[10px] font-mono font-medium text-emerald-800 dark:text-emerald-400 group-hover:font-bold transition-all">
+                                              {unitPrice > 0 ? formatPrice(unitPrice) : 'Trống'}
+                                            </span>
+                                          )}
                                         </div>
                                       </td>
                                     );
