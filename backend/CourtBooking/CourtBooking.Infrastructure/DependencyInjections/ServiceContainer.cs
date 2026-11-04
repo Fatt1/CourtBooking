@@ -4,6 +4,8 @@ using CourtBooking.Application.Abstractions.Authentication;
 using CourtBooking.Application.Abstractions.Storage;
 using CourtBooking.Application.Data;
 using CourtBooking.Domain.Entities.Users;
+using CourtBooking.Application.Features.V1.Analytics.Reports.Services;
+using CourtBooking.Infrastructure.Analytics.Reports;
 using CourtBooking.Infrastructure.Authentication;
 using CourtBooking.Infrastructure.BackgroundJobs;
 using CourtBooking.Infrastructure.Database;
@@ -39,6 +41,13 @@ public static class ServiceContainer
 
         // ── Background Jobs ──────────────────────────────────────────
         services.AddHostedService<CleanUpImagesBackgroundService>();
+
+        // ── Report Export Services (Async PDF & Excel Generation) ────
+        services.AddSingleton<IReportJobManager, InMemoryReportJobManager>();
+        services.AddSingleton<IBackgroundReportQueue, ChannelBackgroundReportQueue>();
+        services.AddScoped<IReportDataAggregator, ReportDataAggregator>();
+        services.AddScoped<IReportGeneratorService, ReportGeneratorService>();
+        services.AddHostedService<ReportExportBackgroundService>();
 
         return services;
     }

@@ -125,3 +125,119 @@ export function useRecentSubscriptionsQuery() {
     refetchOnWindowFocus: true,
   });
 }
+
+
+// ── Báo cáo xuất PDF & Excel (Background Job Async) ─────────────
+import type { ReportJobResponseDto, ReportExportFormat } from './types';
+
+/**
+ * Khởi tạo tiến trình xuất báo cáo (PDF hoặc Excel) chạy ngầm
+ * Endpoint: POST /api/v1/owner/analytics/reports/export
+ */
+export async function createReportExportJob(params: {
+  fromDate: string;
+  toDate: string;
+  branchId?: string;
+  format?: ReportExportFormat;
+}): Promise<ReportJobResponseDto> {
+  const formatValue = params.format === 'Excel' ? 1 : 0;
+  const queryParams: Record<string, string | number | undefined> = {
+    fromDate: params.fromDate,
+    toDate: params.toDate,
+    format: formatValue,
+  };
+  if (params.branchId && params.branchId !== 'all') {
+    queryParams.branchId = params.branchId;
+  }
+
+  const response = await apiClient.post<ReportJobResponseDto>(
+    '/owner/analytics/reports/export',
+    null,
+    { params: queryParams }
+  );
+  return response as unknown as ReportJobResponseDto;
+}
+
+/**
+ * Kiểm tra trạng thái của tiến trình xuất báo cáo
+ * Endpoint: GET /api/v1/owner/analytics/reports/jobs/{jobId}
+ */
+export async function getReportJobStatus(jobId: string): Promise<ReportJobResponseDto> {
+  const response = await apiClient.get<ReportJobResponseDto>(
+    `/owner/analytics/reports/jobs/${jobId}`
+  );
+  return response as unknown as ReportJobResponseDto;
+}
+
+/**
+ * Tải trực tiếp file báo cáo PDF hoặc Excel đã hoàn thành từ Backend
+ * Endpoint: GET /api/v1/owner/analytics/reports/jobs/{jobId}/download
+ */
+export async function downloadReportFile(jobId: string, fileName?: string): Promise<void> {
+  const response = await apiClient.get<Blob>(
+    `/owner/analytics/reports/jobs/${jobId}/download`,
+    { responseType: 'blob' }
+  );
+
+  const blob = response as unknown as Blob;
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  if (fileName) {
+    link.download = fileName;
+  }
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Quy trình xuất báo cáo trọn gói: Khởi tạo Job -> Polling kiểm tra tiến trình -> Tải file về máy
+ */
+export async function exportReportWorkflow(params: {
+  fromDate: string;
+  toDate: string;
+  branchId?: string;
+  format: ReportExportFormat;
+  onStatusChange?: (statusText: string) => void;
+}): Promise<void> {
+  const { fromDate, toDate, branchId, format, onStatusChange } = params;
+
+  onStatusChange?.(`Đang gửi yêu cầu xuất file ${format}...`);
+  const initialJob = await createReportExportJob({ fromDate, toDate, branchId, format });
+
+  if (!initialJob?.jobId) {
+    throw new Error('Không thể khởi tạo tiến trình xuất báo cáo.');
+  }
+
+  onStatusChange?.(`Đang xử lý dữ liệu và render báo cáo ${format}...`);
+
+  // Polling chờ Job hoàn thành
+  const maxAttempts = 30; // tối đa 30 lần * 1.5s = 45 giây
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    attempts++;
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    const currentJob = await getReportJobStatus(initialJob.jobId);
+
+    if (currentJob.status === 'Completed') {
+      onStatusChange?.(`Đang tải file ${format} về thiết bị...`);
+      const defaultName = format === 'Pdf'
+        ? `BaoCao_DoanhThu_${fromDate}_${toDate}.pdf`
+        : `BaoCao_DoanhThu_${fromDate}_${toDate}.xlsx`;
+      await downloadReportFile(initialJob.jobId, currentJob.fileName || defaultName);
+      return;
+    }
+
+    if (currentJob.status === 'Failed') {
+      throw new Error(currentJob.errorMessage || 'Tạo báo cáo thất bại trên máy chủ.');
+    }
+
+    onStatusChange?.(`Đang xử lý dữ liệu báo cáo ${format}... (${Math.min(95, attempts * 10)}%)`);
+  }
+
+  throw new Error('Tiến trình tạo báo cáo mất nhiều thời gian hơn dự kiến. Vui lòng kiểm tra lại sau.');
+}

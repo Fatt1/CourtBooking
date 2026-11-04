@@ -1,19 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import {
   Printer,
-  Download,
   Calendar,
   Building2,
   TrendingUp,
-  TrendingDown,
   DollarSign,
   Layers,
   AlertCircle,
   CheckCircle2,
   RefreshCw,
   FileSpreadsheet,
-  BarChart3,
   Percent,
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -28,6 +26,7 @@ import { formatVND } from '@/lib/format';
 import { useOwnerBranchesQuery } from '@/api/branches';
 import {
   useCourtOwnerRevenueQuery,
+  exportReportWorkflow,
   type TimeGrouping,
   type CourtOwnerRevenueDto,
 } from '@/api/analytics';
@@ -48,6 +47,12 @@ function getPresetDateRange(preset: string): { fromDate: string; toDate: string 
   if (preset === 'today') {
     return { fromDate: todayStr, toDate: todayStr };
   }
+  if (preset === 'yesterday') {
+    const yest = new Date(now);
+    yest.setDate(yest.getDate() - 1);
+    const yestStr = formatYMD(yest);
+    return { fromDate: yestStr, toDate: yestStr };
+  }
   if (preset === 'last7days') {
     const past = new Date(now);
     past.setDate(past.getDate() - 6);
@@ -61,6 +66,12 @@ function getPresetDateRange(preset: string): { fromDate: string; toDate: string 
   if (preset === 'lastMonth') {
     const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+    return { fromDate: formatYMD(firstDay), toDate: formatYMD(lastDay) };
+  }
+  if (preset === 'thisQuarter') {
+    const currentQuarter = Math.floor(now.getMonth() / 3);
+    const firstDay = new Date(now.getFullYear(), currentQuarter * 3, 1);
+    const lastDay = new Date(now.getFullYear(), (currentQuarter + 1) * 3, 0);
     return { fromDate: formatYMD(firstDay), toDate: formatYMD(lastDay) };
   }
   if (preset === 'thisYear') {
@@ -78,6 +89,10 @@ export function OwnerReportsPage() {
   const [customToDate, setCustomToDate] = useState<string>('');
   const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
   const [groupBy, setGroupBy] = useState<TimeGrouping>('Day');
+
+  // Trạng thái xuất báo cáo chạy ngầm (Background Job)
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
 
   // Lấy khoảng ngày thực tế để truyền API
   const { fromDate, toDate } = useMemo(() => {
@@ -112,8 +127,6 @@ export function OwnerReportsPage() {
     switch (groupBy) {
       case 'Day':
         return 'Theo ngày';
-      case 'Week':
-        return 'Theo tuần';
       case 'Month':
         return 'Theo tháng';
       case 'Year':
@@ -123,85 +136,57 @@ export function OwnerReportsPage() {
     }
   }, [groupBy]);
 
-  // 5. Xử lý In Thống kê
-  const handlePrint = () => {
-    window.print();
-  };
-
-  // 6. Xử lý Xuất file Excel / CSV báo cáo
-  const handleExportExcel = () => {
-    if (!revenueData) {
-      toast.error('Chưa có dữ liệu để xuất file.');
+  // 5. Xử lý Xuất file PDF (chuẩn A4 QuestPDF từ Backend Background Job)
+  const handleExportPdf = async () => {
+    if (!fromDate || !toDate) {
+      toast.error('Vui lòng chọn khoảng thời gian hợp lệ để xuất báo cáo.');
       return;
     }
 
     try {
-      // Tạo nội dung CSV chuẩn UTF-8 có BOM
-      let csvContent = '\uFEFF';
-      csvContent += 'BÁO CÁO THỐNG KÊ DOANH THU & VẬN HÀNH CHỦ SÂN\n';
-      csvContent += `Thời gian xuất: ${new Date().toLocaleString('vi-VN')}\n`;
-      csvContent += `Khoảng thời gian: ${fromDate || 'Tất cả'} đến ${toDate || 'Hiện tại'}\n`;
-      csvContent += `Chi nhánh: ${
-        selectedBranchId === 'all'
-          ? 'Tất cả chi nhánh'
-          : branches.find((b) => b.id === selectedBranchId)?.name || selectedBranchId
-      }\n\n`;
-
-      // 1. Tổng quan KPI
-      csvContent += '1. TỔNG HỢP CHỈ SỐ DOANH THU & VẬN HÀNH\n';
-      csvContent += 'Chỉ số,Giá trị (VNĐ / Đơn)\n';
-      csvContent += `Tổng doanh thu ròng,${revenueData.totalNetRevenue || 0}\n`;
-      csvContent += `Doanh thu tiền sân,${revenueData.courtRevenue || 0}\n`;
-      csvContent += `Doanh thu dịch vụ & POS,${revenueData.serviceRevenue || 0}\n`;
-      csvContent += `Doanh thu sự kiện,${revenueData.eventRevenue || 0}\n`;
-      csvContent += `Tổng giảm giá / voucher,${revenueData.totalDiscount || 0}\n`;
-      csvContent += `Tổng số đơn hoàn thành,${revenueData.totalBookings || 0}\n`;
-      csvContent += `Số đơn đặt online,${revenueData.onlineBookings || 0}\n`;
-      csvContent += `Số đơn tại quầy POS,${revenueData.posBookings || 0}\n`;
-      csvContent += `Số đơn bị hủy,${revenueData.cancelledBookings || 0}\n`;
-      csvContent += `Tỷ lệ hủy sân (%),${revenueData.cancellationRate || 0}%\n`;
-      csvContent += `Tổng tiền đơn hủy,${revenueData.totalCancelledAmount || 0}\n\n`;
-
-      // 2. Phân bổ theo chi nhánh
-      if (revenueData.byBranch && revenueData.byBranch.length > 0) {
-        csvContent += '2. PHÂN BỔ THEO CHI NHÁNH\n';
-        csvContent += 'Chi nhánh,Tiền sân,Dịch vụ,Tổng doanh thu,Số đơn\n';
-        revenueData.byBranch.forEach((b) => {
-          csvContent += `"${b.branchName}",${b.courtRevenue},${b.serviceRevenue},${b.totalRevenue},${
-            b.totalBookings ?? b.TotalBookings ?? 0
-          }\n`;
-        });
-        csvContent += '\n';
-      }
-
-      // 3. Chuỗi thời gian
-      if (revenueData.timeline && revenueData.timeline.length > 0) {
-        csvContent += `3. CHI TIẾT DOANH THU CHUỖI THỜI GIAN (${groupByLabel.toUpperCase()})\n`;
-        csvContent += 'Mốc thời gian,Ngày,Tiền sân,Dịch vụ,Tổng cộng,Số đơn\n';
-        revenueData.timeline.forEach((t) => {
-          csvContent += `"${t.period}","${t.date || ''}",${t.courtRevenue},${t.serviceRevenue},${
-            t.totalRevenue
-          },${t.bookingsCount}\n`;
-        });
-      }
-
-      // Tạo Blob và tải về
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute(
-        'download',
-        `Thong_Ke_Doanh_Thu_${fromDate || 'all'}_${toDate || 'all'}.csv`
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast.success('Xuất file thống kê doanh thu thành công!');
-    } catch (err) {
+      setIsExportingPdf(true);
+      await exportReportWorkflow({
+        fromDate,
+        toDate,
+        branchId: selectedBranchId !== 'all' ? selectedBranchId : undefined,
+        format: 'Pdf',
+        onStatusChange: (status) => {
+          toast.loading(status, { id: 'export-report-job' });
+        },
+      });
+      toast.success('Xuất báo cáo PDF thành công! Đã tải về máy.', { id: 'export-report-job' });
+    } catch (err: any) {
       console.error(err);
-      toast.error('Có lỗi khi tạo file xuất dữ liệu.');
+      toast.error(err?.message || 'Có lỗi xảy ra khi tạo báo cáo PDF.', { id: 'export-report-job' });
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  // 6. Xử lý Xuất file Excel (đa sheet ClosedXML từ Backend Background Job)
+  const handleExportExcel = async () => {
+    if (!fromDate || !toDate) {
+      toast.error('Vui lòng chọn khoảng thời gian hợp lệ để xuất file.');
+      return;
+    }
+
+    try {
+      setIsExportingExcel(true);
+      await exportReportWorkflow({
+        fromDate,
+        toDate,
+        branchId: selectedBranchId !== 'all' ? selectedBranchId : undefined,
+        format: 'Excel',
+        onStatusChange: (status) => {
+          toast.loading(status, { id: 'export-report-job' });
+        },
+      });
+      toast.success('Xuất file Excel thành công! Đã tải về máy.', { id: 'export-report-job' });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Có lỗi xảy ra khi xuất file Excel.', { id: 'export-report-job' });
+    } finally {
+      setIsExportingExcel(false);
     }
   };
 
@@ -218,25 +203,35 @@ export function OwnerReportsPage() {
           </p>
         </div>
 
-        {/* Nút In Thống kê & Xuất Excel */}
+        {/* Cụm nút Xuất Báo Cáo PDF & Excel (Gọi Backend Background Job) */}
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <Button
             variant="outline"
             size="sm"
-            onClick={handlePrint}
+            onClick={handleExportPdf}
+            disabled={isExportingPdf || isExportingExcel}
             className="border-border/80 bg-card hover:bg-muted text-foreground gap-2 font-medium"
           >
-            <Printer className="size-4" />
-            <span>In thống kê</span>
+            {isExportingPdf ? (
+              <RefreshCw className="size-4 animate-spin text-blue-500" />
+            ) : (
+              <Printer className="size-4 text-blue-500" />
+            )}
+            <span>{isExportingPdf ? 'Đang tạo PDF...' : 'Xuất PDF'}</span>
           </Button>
 
           <Button
             size="sm"
             onClick={handleExportExcel}
+            disabled={isExportingPdf || isExportingExcel}
             className="bg-[#a3e635] hover:bg-[#8fd028] text-slate-950 font-bold gap-2 shadow-xs"
           >
-            <FileSpreadsheet className="size-4" />
-            <span>Xuất Excel</span>
+            {isExportingExcel ? (
+              <RefreshCw className="size-4 animate-spin" />
+            ) : (
+              <FileSpreadsheet className="size-4" />
+            )}
+            <span>{isExportingExcel ? 'Đang tạo Excel...' : 'Xuất Excel'}</span>
           </Button>
         </div>
       </div>
@@ -244,7 +239,7 @@ export function OwnerReportsPage() {
       {/* ── 2. BỘ LỌC THỐNG KÊ (FILTER BAR) ───────────────────────────── */}
       <div className="rounded-xl border border-border/60 bg-card p-4 shadow-xs space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Lọc khoảng thời gian */}
+          {/* Lọc khoảng thời gian với đầy đủ Presets yêu cầu */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
               Khoảng thời gian
@@ -255,11 +250,13 @@ export function OwnerReportsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="today">Hôm nay</SelectItem>
+                <SelectItem value="yesterday">Hôm qua</SelectItem>
                 <SelectItem value="last7days">7 ngày qua</SelectItem>
                 <SelectItem value="thisMonth">Tháng này</SelectItem>
                 <SelectItem value="lastMonth">Tháng trước</SelectItem>
+                <SelectItem value="thisQuarter">Quý này</SelectItem>
                 <SelectItem value="thisYear">Năm nay</SelectItem>
-                <SelectItem value="custom">Tùy chọn ngày...</SelectItem>
+                <SelectItem value="custom">Tùy chọn khoảng ngày...</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -287,7 +284,7 @@ export function OwnerReportsPage() {
             </Select>
           </div>
 
-          {/* Nhóm chu kỳ biểu đồ (GroupBy) */}
+          {/* Nhóm chu kỳ biểu đồ (GroupBy: Day, Month, Year) */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
               Chu kỳ thống kê
@@ -301,14 +298,13 @@ export function OwnerReportsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Day">Theo ngày (Day)</SelectItem>
-                <SelectItem value="Week">Theo tuần (Week)</SelectItem>
                 <SelectItem value="Month">Theo tháng (Month)</SelectItem>
                 <SelectItem value="Year">Theo năm (Year)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Nút Làm mới / Đồng bộ */}
+          {/* Nút Làm mới / Cập nhật số liệu */}
           <div className="flex items-end">
             <Button
               variant="outline"
@@ -322,23 +318,27 @@ export function OwnerReportsPage() {
           </div>
         </div>
 
-        {/* Ô chọn ngày tùy biến nếu chọn 'custom' */}
+        {/* Ô chọn khoảng ngày tùy biến khi chọn 'custom' (Date Range Picker) */}
         {datePreset === 'custom' && (
           <div className="pt-2 border-t border-border/50 flex flex-wrap items-center gap-3 text-xs animate-in fade-in-0">
-            <span className="font-semibold text-muted-foreground">Từ ngày:</span>
-            <input
-              type="date"
-              value={customFromDate}
-              onChange={(e) => setCustomFromDate(e.target.value)}
-              className="px-3 py-1.5 rounded-md border border-border bg-background text-foreground text-sm font-mono focus:outline-none focus:ring-1 focus:ring-[#a3e635]"
-            />
-            <span className="font-semibold text-muted-foreground">Đến ngày:</span>
-            <input
-              type="date"
-              value={customToDate}
-              onChange={(e) => setCustomToDate(e.target.value)}
-              className="px-3 py-1.5 rounded-md border border-border bg-background text-foreground text-sm font-mono focus:outline-none focus:ring-1 focus:ring-[#a3e635]"
-            />
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-muted-foreground">Từ ngày:</span>
+              <input
+                type="date"
+                value={customFromDate}
+                onChange={(e) => setCustomFromDate(e.target.value)}
+                className="px-3 py-1.5 rounded-md border border-border bg-background text-foreground text-sm font-mono focus:outline-none focus:ring-1 focus:ring-[#a3e635]"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-muted-foreground">Đến ngày:</span>
+              <input
+                type="date"
+                value={customToDate}
+                onChange={(e) => setCustomToDate(e.target.value)}
+                className="px-3 py-1.5 rounded-md border border-border bg-background text-foreground text-sm font-mono focus:outline-none focus:ring-1 focus:ring-[#a3e635]"
+              />
+            </div>
           </div>
         )}
       </div>
