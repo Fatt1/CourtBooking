@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { MoreHorizontal } from 'lucide-react';
 import type { RevenueByPackageItemDto } from '@/api/analytics';
 
 interface PackageStructureDonutProps {
@@ -45,24 +44,14 @@ export function PackageStructureDonut({
 
   return (
     <div className="rounded-2xl border border-[#1a3828] bg-[#0f2218] p-5 md:p-6 flex flex-col justify-between select-none shadow-md shadow-emerald-950/20">
-      {/* 1. Header: Tiêu đề & Nút thao tác ... */}
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h2 className="text-base font-bold text-white tracking-tight">
-            Cơ cấu gói đăng ký
-          </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Phân bổ theo gói dịch vụ
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="size-7 rounded-lg text-zinc-500 hover:text-white hover:bg-[#16241c] flex items-center justify-center transition-colors cursor-pointer"
-          title="Tùy chọn hiển thị"
-        >
-          <MoreHorizontal className="size-4" />
-        </button>
+      {/* 1. Header: Tiêu đề */}
+      <div className="mb-2">
+        <h2 className="text-base font-bold text-white tracking-tight">
+          Cơ cấu gói đăng ký
+        </h2>
+        <p className="text-xs text-zinc-400 mt-0.5">
+          Phân bổ theo gói dịch vụ
+        </p>
       </div>
 
       {/* 2. Donut Chart SVG */}

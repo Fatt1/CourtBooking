@@ -2,18 +2,62 @@ import { z } from 'zod';
 
 export const createCourtOwnerSchema = z.object({
   fullName: z
-    .string()
+    .string({ required_error: 'Vui lòng nhập họ và tên chủ sân' })
     .trim()
+    .min(1, 'Họ và tên không được để trống')
     .min(2, 'Họ và tên phải có ít nhất 2 ký tự')
-    .max(50, 'Họ và tên không vượt quá 50 ký tự'),
+    .max(50, 'Họ và tên không vượt quá 50 ký tự')
+    .superRefine((val, ctx) => {
+      if (/\d/.test(val)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Họ và tên không được chứa chữ số.',
+        });
+      }
+    }),
   email: z
-    .string()
+    .string({ required_error: 'Vui lòng nhập email đăng nhập' })
     .trim()
+    .min(1, 'Email không được để trống')
     .email('Địa chỉ email không đúng định dạng'),
   phoneNumber: z
-    .string()
+    .string({ required_error: 'Vui lòng nhập số điện thoại' })
     .trim()
-    .regex(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, 'Số điện thoại không hợp lệ (cần 10 chữ số, ví dụ 0912345678)'),
+    .min(1, 'Số điện thoại không được để trống')
+    .superRefine((val, ctx) => {
+      // 1. Kiểm tra chứa chữ hoặc ký tự đặc biệt
+      if (/[^\d]/.test(val)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Số điện thoại không được chứa chữ hoặc ký tự đặc biệt.',
+        });
+        return;
+      }
+      // 2. Kiểm tra quá 10 số
+      if (val.length > 10) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Số điện thoại không được vượt quá 10 số.',
+        });
+        return;
+      }
+      // 3. Kiểm tra bắt đầu bằng số 0
+      if (!val.startsWith('0')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Số điện thoại phải bắt đầu bằng số 0.',
+        });
+        return;
+      }
+      // 4. Kiểm tra thiếu số (< 10 số)
+      if (val.length < 10) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Số điện thoại phải có đủ 10 số.',
+        });
+        return;
+      }
+    }),
   businessName: z.string().trim().optional().or(z.literal('')),
   password: z
     .string({ required_error: 'Vui lòng nhập mật khẩu khởi tạo' })

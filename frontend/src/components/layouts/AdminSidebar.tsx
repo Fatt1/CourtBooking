@@ -56,7 +56,6 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       label: 'Gói cước & đăng ký',
       href: '/admin/subscriptions',
       icon: CalendarCheck,
-      badge: 5,
     },
     {
       label: 'Môn thể thao',
@@ -128,7 +127,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 <span className="font-extrabold text-lg tracking-tight text-white leading-none">
                   Court<span className="text-emerald-400">OS</span>
                 </span>
-                <span className="text-[9px] tracking-[0.22em] font-extrabold text-zinc-400 uppercase mt-0.5">
+                <span className="text-[9px] tracking-[0.22em] font-extrabold text-emerald-400/80 uppercase mt-0.5">
                   ADMIN CONSOLE
                 </span>
               </div>
@@ -156,10 +155,10 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 </div>
                 <div className="truncate">
                   <div className="text-xs font-bold text-white truncate">CourtOS Workspace</div>
-                  <div className="text-[10px] text-zinc-400 truncate">Quản trị viên hệ thống</div>
+                  <div className="text-[10px] text-emerald-400/90 truncate">Quản trị viên hệ thống</div>
                 </div>
               </div>
-              <ChevronDown className="size-3.5 text-zinc-500 shrink-0 ml-1" />
+              <ChevronDown className="size-3.5 text-emerald-500/80 shrink-0 ml-1" />
             </div>
           </div>
         )}
@@ -167,7 +166,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         {/* 3. Navigation Menus */}
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
           {!sidebarCollapsed && (
-            <div className="px-2 pt-2 pb-1.5 text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+            <div className="px-2 pt-2 pb-1.5 text-[10px] font-bold tracking-wider text-emerald-500 uppercase">
               Không gian quản trị
             </div>
           )}
@@ -185,10 +184,10 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 to={item.href}
                 onClick={onClose}
                 className={cn(
-                  'flex items-center justify-between rounded-xl px-3 py-2.5 text-xs transition-all duration-150',
+                  'flex items-center justify-between rounded-xl px-3 py-2.5 text-xs transition-all duration-150 group',
                   isActive
-                    ? 'bg-[#0e2418] text-emerald-400 font-semibold border border-emerald-500/25 shadow-xs'
-                    : 'text-zinc-400 hover:bg-[#0d1712] hover:text-white font-medium',
+                    ? 'bg-[#0e2418] !text-emerald-400 font-semibold border border-emerald-500/25 shadow-xs'
+                    : '!text-emerald-400/80 hover:bg-[#0e2418]/60 hover:!text-emerald-300 font-medium',
                   sidebarCollapsed && 'justify-center px-2 py-2.5'
                 )}
                 title={sidebarCollapsed ? item.label : undefined}
@@ -197,14 +196,23 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                   <Icon
                     className={cn(
                       'size-4 shrink-0 transition-colors',
-                      isActive ? 'text-emerald-400' : 'text-zinc-400'
+                      isActive ? '!text-emerald-400' : '!text-emerald-400/80 group-hover:!text-emerald-300'
                     )}
                   />
-                  {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                  {!sidebarCollapsed && (
+                    <span
+                      className={cn(
+                        'truncate',
+                        isActive ? '!text-emerald-400' : '!text-emerald-400/80 group-hover:!text-emerald-300'
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                  )}
                 </div>
 
                 {!sidebarCollapsed && item.badge && (
-                  <span className="flex size-5 items-center justify-center rounded-md bg-[#132b1e] border border-emerald-500/20 text-[10px] font-bold text-emerald-400">
+                  <span className="flex size-5 items-center justify-center rounded-md bg-[#132b1e] border border-emerald-500/20 text-[10px] font-bold !text-emerald-400">
                     {item.badge}
                   </span>
                 )}
@@ -217,7 +225,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         <div className="mt-auto border-t border-[#141b16] p-3 space-y-2.5">
           {/* Trạng thái hệ thống */}
           {!sidebarCollapsed && (
-            <div className="flex items-center gap-2 px-1 text-[11px] text-zinc-400">
+            <div className="flex items-center gap-2 px-1 text-[11px] text-emerald-400">
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Hệ thống hoạt động ổn định</span>
             </div>
@@ -239,7 +247,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                   <div className="text-xs font-bold text-white truncate">
                     {user?.name || 'Hoàng Anh'}
                   </div>
-                  <div className="text-[10px] text-zinc-400 truncate">
+                  <div className="text-[10px] text-emerald-400/80 truncate">
                     {user?.role === 'SystemAdmin' ? 'System Administrator' : 'Quản trị viên'}
                   </div>
                 </div>
@@ -252,7 +260,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 size="icon"
                 onClick={handleLogout}
                 title="Đăng xuất khỏi CourtOS"
-                className="size-7 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+                className="size-7 text-emerald-500/80 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
               >
                 <LogOut className="size-3.5" />
               </Button>
@@ -261,15 +269,15 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
           {/* Link chuyển nhanh sang cổng chủ sân / khách hàng nếu cần */}
           {!sidebarCollapsed && (
-            <div className="flex items-center justify-between px-1 text-[11px] text-zinc-500">
+            <div className="flex items-center justify-between px-1 text-[11px]">
               <Link
                 to="/owner/orders"
-                className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
+                className="!text-emerald-500/80 hover:!text-emerald-300 transition-colors inline-flex items-center gap-1"
               >
                 <span>Cổng chủ sân</span>
                 <ExternalLink className="size-3" />
               </Link>
-              <Link to="/" className="hover:text-emerald-400 transition-colors">
+              <Link to="/" className="!text-emerald-500/80 hover:!text-emerald-300 transition-colors">
                 Trang khách
               </Link>
             </div>
