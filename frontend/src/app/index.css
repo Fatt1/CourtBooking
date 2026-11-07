@@ -125,6 +125,10 @@ html[data-theme-transition="light"]::view-transition-new(root) {
   * {
     border-color: hsl(var(--border));
   }
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -134,6 +138,11 @@ html[data-theme-transition="light"]::view-transition-new(root) {
     font-family: var(--font-heading);
     letter-spacing: 0.025em;
   }
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
 }
 
 /* Ẩn thanh cuộn xấu nhưng vẫn giữ tính năng cuộn mượt mà */

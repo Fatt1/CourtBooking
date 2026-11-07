@@ -219,7 +219,6 @@ export function UsersPage() {
                   </div>
                 </div>
                 <Skeleton className="h-4 w-28 bg-zinc-800" />
-                <Skeleton className="h-5 w-24 rounded-full bg-zinc-800" />
                 <Skeleton className="h-5 w-20 rounded-full bg-zinc-800" />
                 <Skeleton className="size-8 rounded-lg bg-zinc-800" />
               </div>
@@ -236,7 +235,6 @@ export function UsersPage() {
                 <tr>
                   <th className="px-5 py-3.5">Họ và tên</th>
                   <th className="px-5 py-3.5">Số điện thoại</th>
-                  <th className="px-5 py-3.5">Phân quyền</th>
                   <th className="px-5 py-3.5">Trạng thái</th>
                   <th className="px-5 py-3.5 text-right">Thao tác</th>
                 </tr>
@@ -269,14 +267,7 @@ export function UsersPage() {
                       {item.phoneNumber || '—'}
                     </td>
 
-                    {/* Cột 3: Phân quyền */}
-                    <td className="px-5 py-3.5">
-                      <span className="inline-flex items-center rounded-lg bg-[#14211a] px-2.5 py-1 text-[11px] font-semibold text-zinc-300 border border-[#1f3126]">
-                        Người dùng · User
-                      </span>
-                    </td>
-
-                    {/* Cột 4: Trạng thái (Hoạt động / Đã khóa / Đã xóa mềm) */}
+                    {/* Cột 3: Trạng thái (Hoạt động / Đã khóa / Đã xóa mềm) */}
                     <td className="px-5 py-3.5">
                       {item.isDeleted ? (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/60 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-400 border border-zinc-700/40">

@@ -56,41 +56,61 @@ export function PackageConfigTab({
 
   return (
     <div className="pt-2">
-      {/* 3 Cột Card Gói Cước Khớp 100% Theo Ảnh Giao Diện */}
+      {/* Header số lượng gói */}
+      <div className="mb-4">
+        <p className="text-xs text-zinc-400">
+          Hiện có <span className="text-emerald-400 font-bold">{packages.length}</span> gói dịch vụ đang mở bán
+        </p>
+      </div>
+
+      {/* Cột Card Gói Cước */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
         {packages.map((pkg) => {
-          const isPro = pkg.code === 'Pro' || pkg.popular;
-          const isUltra = pkg.code === 'Ultra' || pkg.code === 'VIP';
-          const isBasic = !isPro && !isUltra;
+          const duration = pkg.durationMonths || 1;
+          const is1M = duration === 1;
+          const is3M = duration === 3;
+          const is6M = duration === 6;
+          const is12M = duration === 12;
 
-          // Huy hiệu chuẩn: Basic -> KHỞI ĐẦU, Pro -> PHỔ BIẾN NHẤT, Ultra -> TOÀN DIỆN
-          const badgeText =
-            pkg.badge ||
-            (isPro ? 'PHỔ BIẾN NHẤT' : isUltra ? 'TOÀN DIỆN' : 'KHỞI ĐẦU');
+          let badgeText = 'KHỞI ĐẦU';
+          let badgeClass = 'bg-[#141d18] text-zinc-400 border-[#1e2c22]';
+          let cardBorder = 'border-[#17231b] hover:border-[#223528]';
 
-          const periodText = `/ ${pkg.durationMonths || 1} tháng · Đang mở bán`;
+          if (is3M) {
+            badgeText = 'PHỔ BIẾN NHẤT';
+            badgeClass = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40';
+            cardBorder = 'border-[#1b3024] hover:border-emerald-500/50 shadow-xl shadow-emerald-950/20';
+          } else if (is6M) {
+            badgeText = 'CAO CẤP';
+            badgeClass = 'bg-purple-500/15 text-purple-300 border-purple-500/40';
+            cardBorder = 'border-purple-950/60 hover:border-purple-500/50 shadow-xl shadow-purple-950/20';
+          } else if (is12M) {
+            badgeText = 'TOÀN DIỆN';
+            badgeClass = 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+            cardBorder = 'border-amber-950/60 hover:border-amber-500/50 shadow-xl shadow-amber-950/20';
+          } else if (duration > 6) {
+            badgeText = 'TOÀN DIỆN';
+            badgeClass = 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+            cardBorder = 'border-amber-950/60 hover:border-amber-500/50 shadow-xl shadow-amber-950/20';
+          } else if (duration > 3) {
+            badgeText = 'CAO CẤP';
+            badgeClass = 'bg-purple-500/15 text-purple-300 border-purple-500/40';
+            cardBorder = 'border-purple-950/60 hover:border-purple-500/50 shadow-xl shadow-purple-950/20';
+          }
+
+          const periodText = `/ ${duration} tháng · Đang mở bán`;
 
           return (
             <div
               key={pkg.id}
-              className={`rounded-2xl bg-[#0c1410] border p-6 flex flex-col justify-between min-h-[280px] transition-all duration-200 ${
-                isPro
-                  ? 'border-[#1b3024] hover:border-emerald-500/50 shadow-xl shadow-emerald-950/20'
-                  : 'border-[#17231b] hover:border-[#223528]'
-              }`}
+              className={`rounded-2xl bg-[#0c1410] border p-6 flex flex-col justify-between min-h-[280px] transition-all duration-200 ${cardBorder}`}
             >
               {/* Phần Nội Dung Trên */}
               <div>
                 {/* 1. Hàng đầu: Badge */}
                 <div className="flex items-center justify-start">
                   <span
-                    className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
-                      isPro
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                        : isUltra
-                        ? 'bg-purple-500/10 text-purple-300 border-purple-500/30'
-                        : 'bg-[#141d18] text-zinc-400 border-[#1e2c22]'
-                    }`}
+                    className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${badgeClass}`}
                   >
                     {badgeText}
                   </span>
@@ -121,12 +141,12 @@ export function PackageConfigTab({
 
               {/* Phần 2 Nút Hành Động Xếp Dọc Dưới Cùng */}
               <div className="pt-2 space-y-2.5">
-                {/* Nút 1: Chỉnh sửa gói dịch vụ (Gói Pro là màu xanh lục đặc trưng) */}
+                {/* Nút 1: Chỉnh sửa gói dịch vụ (Gói Phổ biến nhất 3 tháng là màu xanh lục đặc trưng) */}
                 <button
                   type="button"
                   onClick={() => handleOpenEdit(pkg)}
                   className={`w-full h-11 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
-                    isPro
+                    is3M
                       ? 'bg-[#00875a] hover:bg-[#00754e] text-white shadow-lg shadow-emerald-950/40'
                       : 'bg-[#121c16] hover:bg-[#18271e] text-zinc-200 hover:text-white border border-[#1e2d22]'
                   }`}

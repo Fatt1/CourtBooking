@@ -92,30 +92,48 @@ export function useServicePackagesConfigQuery() {
       const list = Array.isArray(res) ? res : res?.data || [];
       return list.map((pkg: any) => {
         const name = String(pkg.name || '').trim();
-        const nameLower = name.toLowerCase();
-        const isUltra =
-          nameLower.includes('ultra') ||
-          nameLower.includes('vip') ||
-          nameLower.includes('toàn diện') ||
-          nameLower.includes('doanh nghiệp');
-        const isPro =
-          nameLower.includes('pro') ||
-          nameLower.includes('phổ biến') ||
-          nameLower.includes('nâng cao');
-        const code = isUltra ? 'Ultra' : isPro ? 'Pro' : 'Basic';
-        const badge = isUltra ? 'TOÀN DIỆN' : isPro ? 'PHỔ BIẾN NHẤT' : 'KHỞI ĐẦU';
+        const duration = Number(pkg.durationMonths ?? 1);
+
+        let badge = 'KHỞI ĐẦU';
+        let code = 'Basic';
+        let isPopular = false;
+
+        if (duration === 1) {
+          badge = 'KHỞI ĐẦU';
+          code = 'Basic';
+        } else if (duration === 3) {
+          badge = 'PHỔ BIẾN NHẤT';
+          code = 'Pro';
+          isPopular = true;
+        } else if (duration === 6) {
+          badge = 'CAO CẤP';
+          code = 'Ultra';
+        } else if (duration === 12) {
+          badge = 'TOÀN DIỆN';
+          code = 'VIP';
+        } else if (duration > 6) {
+          badge = 'TOÀN DIỆN';
+          code = 'VIP';
+        } else if (duration > 3) {
+          badge = 'CAO CẤP';
+          code = 'Ultra';
+        } else if (duration > 1) {
+          badge = 'PHỔ BIẾN NHẤT';
+          code = 'Pro';
+          isPopular = true;
+        }
 
         return {
           id: String(pkg.id),
           code,
           name, // Tên gói từ backend database
           badge,
-          popular: isPro,
+          popular: isPopular,
           price: Number(pkg.price), // Giá gói từ database
-          durationMonths: Number(pkg.durationMonths ?? (isUltra ? 6 : isPro ? 3 : 1)),
+          durationMonths: duration,
           description: pkg.description || '',
-          maxCourts: isUltra ? 999 : isPro ? 20 : 5,
-          maxBranches: isUltra ? 999 : isPro ? 3 : 1,
+          maxCourts: 0,
+          maxBranches: 0,
           isActive: true,
           features: [],
         };

@@ -50,11 +50,8 @@ export function CreateServicePackageDialog({
     resolver: zodResolver(createServicePackageSchema),
     defaultValues: {
       name: '',
-      price: 999000,
+      price: 1000000,
       durationMonths: 3,
-      maxCourts: 8,
-      maxBranches: 2,
-      description: '',
     },
   });
 
@@ -62,11 +59,8 @@ export function CreateServicePackageDialog({
     if (open) {
       form.reset({
         name: '',
-        price: 999000,
+        price: 1000000,
         durationMonths: 3,
-        maxCourts: 8,
-        maxBranches: 2,
-        description: '',
       });
     }
   }, [open, form]);
@@ -76,9 +70,7 @@ export function CreateServicePackageDialog({
       name: values.name,
       price: values.price,
       durationMonths: values.durationMonths,
-      description: values.description || '',
-      maxCourts: values.maxCourts,
-      maxBranches: values.maxBranches,
+      description: '',
     });
 
     form.reset();
@@ -170,10 +162,10 @@ export function CreateServicePackageDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="border-[#1b2d22] bg-[#0c1410] text-zinc-200">
-                        <SelectItem value="1" className="text-xs cursor-pointer">1 tháng</SelectItem>
-                        <SelectItem value="3" className="text-xs cursor-pointer">3 tháng (1 quý)</SelectItem>
-                        <SelectItem value="6" className="text-xs cursor-pointer">6 tháng (Nửa năm)</SelectItem>
-                        <SelectItem value="12" className="text-xs cursor-pointer">12 tháng (1 năm)</SelectItem>
+                        <SelectItem value="1" className="text-xs cursor-pointer">1 tháng (Khởi đầu)</SelectItem>
+                        <SelectItem value="3" className="text-xs cursor-pointer">3 tháng (Phổ biến nhất)</SelectItem>
+                        <SelectItem value="6" className="text-xs cursor-pointer">6 tháng (Cao cấp)</SelectItem>
+                        <SelectItem value="12" className="text-xs cursor-pointer">12 tháng (Toàn diện)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage className="text-[11px] text-rose-400" />
@@ -181,73 +173,6 @@ export function CreateServicePackageDialog({
                 )}
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {/* Giới hạn sân */}
-              <FormField
-                control={form.control}
-                name="maxCourts"
-                render={({ field }) => (
-                  <FormItem className="space-y-1">
-                    <FormLabel className="text-xs font-semibold text-zinc-300">Số sân tối đa</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || Number(e.target.value) || 1)}
-                        placeholder="8"
-                        className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
-                      />
-                    </FormControl>
-                    <FormMessage className="text-[11px] text-rose-400" />
-                  </FormItem>
-                )}
-              />
-
-              {/* Giới hạn chi nhánh */}
-              <FormField
-                control={form.control}
-                name="maxBranches"
-                render={({ field }) => (
-                  <FormItem className="space-y-1">
-                    <FormLabel className="text-xs font-semibold text-zinc-300">Số chi nhánh tối đa</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || Number(e.target.value) || 1)}
-                        placeholder="2"
-                        className="h-10 rounded-xl bg-[#111915] border-[#1b2d22] text-xs text-white"
-                      />
-                    </FormControl>
-                    <FormMessage className="text-[11px] text-rose-400" />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Mô tả */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem className="space-y-1">
-                  <FormLabel className="text-xs font-semibold text-zinc-300">Mô tả & quyền lợi</FormLabel>
-                  <FormControl>
-                    <textarea
-                      rows={3}
-                      {...field}
-                      value={field.value ?? ''}
-                      placeholder="Quyền lợi của gói dịch vụ, đối tượng sử dụng..."
-                      className="w-full p-2.5 rounded-xl bg-[#111915] border border-[#1b2d22] text-xs text-white resize-none outline-none focus:border-emerald-500/50"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-[11px] text-rose-400" />
-                </FormItem>
-              )}
-            />
 
             <DialogFooter className="gap-2 pt-3 border-t border-[#1b2d22]">
               <Button

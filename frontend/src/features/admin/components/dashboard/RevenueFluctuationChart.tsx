@@ -132,7 +132,9 @@ export function RevenueFluctuationChart({
             Biến động doanh thu
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Doanh thu đăng ký gói dịch vụ theo ngày
+            {dataPoints.length > 0 && dataPoints[0].label.startsWith('T')
+              ? 'Doanh thu đăng ký gói dịch vụ theo tháng'
+              : 'Doanh thu đăng ký gói dịch vụ theo ngày'}
           </p>
         </div>
 
@@ -197,11 +199,13 @@ export function RevenueFluctuationChart({
             );
           })}
 
-          {/* Nhãn trục X (Ngày tháng) */}
+          {/* Nhãn trục X (Ngày tháng hoặc Các tháng trong năm) */}
           {dataPoints.map((point, idx) => {
+            // Khi xem theo năm (12 tháng) hoặc ít hơn hoặc bằng 12 điểm: Luôn hiển thị đầy đủ tất cả các tháng (T01 - T12)
+            const isYearlyOrFew = dataPoints.length <= 12;
             const step = Math.ceil(dataPoints.length / 7);
             const shouldShow =
-              dataPoints.length <= 8 ||
+              isYearlyOrFew ||
               idx % step === 0 ||
               idx === dataPoints.length - 1;
 
@@ -214,7 +218,7 @@ export function RevenueFluctuationChart({
                 x={x}
                 y={height - 6}
                 textAnchor="middle"
-                className="fill-zinc-500 text-[10px] font-medium"
+                className="fill-zinc-400 text-[10px] font-medium"
               >
                 {point.label}
               </text>
@@ -313,7 +317,9 @@ export function RevenueFluctuationChart({
             }}
           >
             <div className="font-semibold text-zinc-300 mb-1 text-[11px]">
-              Ngày {activePoint.label}
+              {activePoint.label.startsWith('T')
+                ? `Tháng ${parseInt(activePoint.label.slice(1), 10)}`
+                : `Ngày ${activePoint.label}`}
             </div>
             <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
               <span className="size-1.5 rounded-full bg-emerald-400" />
