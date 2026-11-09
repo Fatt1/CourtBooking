@@ -150,34 +150,40 @@ export function QuickSearchBar({
   const formElement = (
     <form
       onSubmit={handleSearch}
-      className={`rounded-xl border border-border/80 bg-card p-3 sm:p-4 shadow-xl shadow-foreground/[0.03] transition-shadow hover:shadow-2xl hover:shadow-foreground/[0.05] ${className}`}
+      className={`rounded-2xl border border-border/70 bg-card p-3 sm:p-4 shadow-lg shadow-black/[0.03] transition-shadow hover:shadow-xl ${className}`}
     >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 lg:gap-0 lg:divide-x lg:divide-border/60 items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 lg:gap-0 lg:divide-x lg:divide-border/60 items-center font-sans">
             {/* 1. THÀNH PHỐ (Hỗ trợ tìm kiếm theo tên) */}
-            <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center">
+            <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center font-sans">
+              <label className="font-sans font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                THÀNH PHỐ
+              </label>
               <ProvinceSelect
                 value={selectedProvinceCode}
                 onChange={(code) => handleProvinceChange(code)}
                 variant="bar"
-                label="THÀNH PHỐ"
+                label=""
               />
             </div>
 
             {/* 2. QUẬN / HUYỆN (Hỗ trợ tìm kiếm theo tên) */}
-            <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center">
+            <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center font-sans">
+              <label className="font-sans font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                QUẬN / HUYỆN
+              </label>
               <WardSelect
                 provinceCode={selectedProvinceCode}
                 value={selectedWard}
                 onChange={(wardVal) => setSelectedWard(wardVal)}
                 variant="bar"
-                label="QUẬN / HUYỆN"
+                label=""
                 includeAllOption
               />
             </div>
 
             {/* 3. MÔN THỂ THAO (Mặc định là tất cả, có tuỳ chọn Tất cả môn thể thao) */}
-            <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center">
-              <label className="font-heading font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+            <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center font-sans">
+              <label className="font-sans font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
                 MÔN THỂ THAO
               </label>
               {isLoadingSports ? (
@@ -186,10 +192,10 @@ export function QuickSearchBar({
                 </div>
               ) : (
                 <Select value={selectedSport} onValueChange={setSelectedSport}>
-                  <SelectTrigger className="w-full h-9 border-0 bg-transparent px-0 font-semibold text-sm focus:ring-0 focus:ring-offset-0 shadow-none">
+                  <SelectTrigger className="w-full h-9 border-0 bg-transparent px-0 font-semibold text-sm focus:ring-0 focus:ring-offset-0 shadow-none font-sans">
                     <SelectValue placeholder="Tất cả môn thể thao" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="font-sans">
                     <SelectGroup>
                       <SelectItem value="all">Tất cả môn thể thao</SelectItem>
                       {sportTypes && sportTypes.length > 0 ? (
@@ -214,15 +220,15 @@ export function QuickSearchBar({
             </div>
 
             {/* 4. NGÀY CHƠI (Mặc định để trống, chỉ chọn được ngày hôm nay & tương lai) */}
-            <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center">
-              <label className="font-heading font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+            <div className="lg:col-span-2 px-3 py-1 flex flex-col justify-center font-sans">
+              <label className="font-sans font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
                 NGÀY CHƠI
               </label>
               <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full h-9 flex items-center justify-between font-semibold text-sm bg-transparent cursor-pointer text-left focus:outline-none"
+                    className="w-full h-9 flex items-center justify-between font-semibold text-sm bg-transparent cursor-pointer text-left focus:outline-none font-sans"
                   >
                     <span
                       className={
@@ -253,7 +259,7 @@ export function QuickSearchBar({
                     </div>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 font-sans" align="start">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -277,11 +283,11 @@ export function QuickSearchBar({
             </div>
 
             {/* 5. TÁCH KHUNG GIỜ THÀNH 2 Ô: GIỜ BẮT ĐẦU & GIỜ KẾT THÚC (Chỉ chọn được khi đã có ngày chơi) */}
-            <div className="lg:col-span-3 px-3 py-1">
+            <div className="lg:col-span-3 px-3 py-1 font-sans">
               <div className="grid grid-cols-2 gap-2">
                 {/* Giờ bắt đầu */}
                 <div className="flex flex-col justify-center">
-                  <label className="font-heading font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                  <label className="font-sans font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
                     BẮT ĐẦU
                   </label>
                   <Select
@@ -289,10 +295,10 @@ export function QuickSearchBar({
                     onValueChange={(val) => setStartTime(val === 'clear' ? '' : val)}
                     disabled={!selectedDate}
                   >
-                    <SelectTrigger className="w-full h-9 border-0 bg-transparent px-0 font-semibold text-sm focus:ring-0 focus:ring-offset-0 shadow-none disabled:opacity-40 disabled:cursor-not-allowed">
+                    <SelectTrigger className="w-full h-9 border-0 bg-transparent px-0 font-semibold text-sm focus:ring-0 focus:ring-offset-0 shadow-none disabled:opacity-40 disabled:cursor-not-allowed font-sans">
                       <SelectValue placeholder={selectedDate ? 'Từ' : 'Chọn ngày trước'} />
                     </SelectTrigger>
-                    <SelectContent className="max-h-56">
+                    <SelectContent className="max-h-56 font-sans">
                       <SelectGroup>
                         {startTime && <SelectItem value="clear">Mặc định (Trống)</SelectItem>}
                         {TIME_OPTIONS.slice(0, -1).map((t) => (
@@ -307,7 +313,7 @@ export function QuickSearchBar({
 
                 {/* Giờ kết thúc */}
                 <div className="flex flex-col justify-center border-l pl-2 border-border/40">
-                  <label className="font-heading font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                  <label className="font-sans font-bold text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
                     KẾT THÚC
                   </label>
                   <Select
@@ -315,10 +321,10 @@ export function QuickSearchBar({
                     onValueChange={(val) => setEndTime(val === 'clear' ? '' : val)}
                     disabled={!selectedDate}
                   >
-                    <SelectTrigger className="w-full h-9 border-0 bg-transparent px-0 font-semibold text-sm focus:ring-0 focus:ring-offset-0 shadow-none disabled:opacity-40 disabled:cursor-not-allowed">
-                      <SelectValue placeholder={selectedDate ? 'Đến' : 'Chọn ngày trước'} />
+                    <SelectTrigger className="w-full h-9 border-0 bg-transparent px-0 font-semibold text-sm focus:ring-0 focus:ring-offset-0 shadow-none disabled:opacity-40 disabled:cursor-not-allowed font-sans">
+                      <SelectValue placeholder={selectedDate ? 'Đến' : 'Chọn ngày...'} />
                     </SelectTrigger>
-                    <SelectContent className="max-h-56">
+                    <SelectContent className="max-h-56 font-sans">
                       <SelectGroup>
                         {endTime && <SelectItem value="clear">Mặc định (Trống)</SelectItem>}
                         {TIME_OPTIONS.slice(1).map((t) => (
@@ -333,14 +339,14 @@ export function QuickSearchBar({
               </div>
             </div>
 
-            {/* 6. Nút Tìm Sân: Bo góc hơi vuông (rounded-md) */}
-            <div className="lg:col-span-1 px-2 flex justify-end">
+            {/* 6. Nút Tìm Sân: Bo góc gọn đẹp */}
+            <div className="lg:col-span-1 px-2 flex justify-end font-sans">
               <Button
                 type="submit"
-                className="w-full h-10 bg-[#18231A] hover:bg-black text-white font-bold rounded-md text-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                className="w-full h-10 bg-[#18231A] hover:bg-black !text-white font-bold rounded-lg text-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs font-sans select-none"
               >
-                <Search className="size-4 shrink-0" />
-                <span className="lg:hidden xl:inline">{buttonText}</span>
+                <Search className="size-4 shrink-0 text-white" />
+                <span className="font-sans font-bold text-white">{buttonText}</span>
               </Button>
             </div>
           </div>
@@ -352,10 +358,10 @@ export function QuickSearchBar({
 
   if (isEmbedded) {
     return (
-      <div className="w-full">
+      <div className="w-full font-sans">
         {formElement}
         {showHelperText && renderedHelper && (
-          <p className="text-xs text-muted-foreground mt-3 font-medium pl-1">
+          <p className="font-sans text-xs text-muted-foreground mt-3 font-normal pl-1">
             {renderedHelper}
           </p>
         )}
@@ -364,11 +370,11 @@ export function QuickSearchBar({
   }
 
   return (
-    <section className="py-4 sm:py-6">
+    <section className="py-4 sm:py-6 font-sans">
       <div className="container mx-auto px-4 sm:px-8 max-w-7xl">
         {formElement}
         {showHelperText && renderedHelper && (
-          <p className="text-xs text-muted-foreground mt-3 font-medium pl-1">
+          <p className="font-sans text-xs text-muted-foreground mt-3 font-normal pl-1">
             {renderedHelper}
           </p>
         )}
