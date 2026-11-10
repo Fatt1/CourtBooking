@@ -34,7 +34,7 @@ export function PublicHeader() {
         <div className="flex items-center gap-4 sm:gap-6">
           <Link
             to="/"
-            className="font-heading font-black text-3xl tracking-normal text-foreground transition-opacity hover:opacity-90"
+            className="font-sans font-black text-2xl sm:text-3xl tracking-tight text-foreground transition-opacity hover:opacity-90"
           >
             Matchday<span className="text-[#397B48]">.</span>
           </Link>
@@ -42,7 +42,7 @@ export function PublicHeader() {
           {/* Theme Switcher Pill [ Light | Dark ] */}
           <div
             className={cn(
-              'flex items-center rounded-full p-0.5 text-xs transition-all border',
+              'flex items-center rounded-full p-0.5 text-xs transition-all border font-sans',
               theme !== 'dark'
                 ? 'bg-[#E8ECE9] border-slate-300/70'
                 : 'bg-[#0B1324] border-slate-800'
@@ -87,7 +87,7 @@ export function PublicHeader() {
         </div>
 
         {/* Center: Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium font-sans">
           {navLinks.map((item) => (
             <Link
               key={item.href}
@@ -162,19 +162,19 @@ export function PublicHeader() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 font-sans">
               <Link
                 to="/login"
-                className="text-sm font-semibold text-foreground/90 hover:text-foreground px-3 py-2 transition-colors"
+                className="text-sm font-semibold text-foreground/90 hover:text-foreground px-3 py-2 transition-colors cursor-pointer"
               >
                 Đăng nhập
               </Link>
-              <Button
-                asChild
-                className="bg-[#18231A] text-white hover:bg-black font-semibold text-sm px-5 py-2.5 rounded-md shadow-xs transition-transform active:scale-95 cursor-pointer"
+              <Link
+                to="/register"
+                className="inline-flex items-center justify-center bg-[#18231A] hover:bg-black !text-white font-semibold text-sm px-5 py-2.5 rounded-lg shadow-xs transition-transform active:scale-95 cursor-pointer select-none"
               >
-                <Link to="/register">Tạo tài khoản</Link>
-              </Button>
+                Tạo tài khoản
+              </Link>
             </div>
           )}
         </div>
