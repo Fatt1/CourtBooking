@@ -20,12 +20,12 @@ interface HeroMatchInfo {
 
 const HERO_SLIDES = [
   {
-    image: '/images/hero-1.jpg',
-    alt: 'Nhóm bạn thư giãn sau giờ chơi thể thao tại công viên Vinhomes',
-  },
-  {
     image: '/images/hero-2.jpg',
     alt: 'Trận giao lưu pickleball sôi nổi tại cụm sân hiện đại',
+  },
+  {
+    image: '/images/hero-1.jpg',
+    alt: 'Nhóm bạn thư giãn sau giờ chơi thể thao tại công viên Vinhomes',
   },
   {
     image: '/images/hero-3.jpg',
@@ -95,32 +95,32 @@ export function HeroSection() {
           {/* Left Column: Headlines & CTA */}
           <div className="lg:col-span-6 space-y-6">
             {/* Sub-tag */}
-            <div className="font-heading font-bold text-xs sm:text-sm tracking-widest uppercase text-[#397B48]">
+            <div className="font-sans font-bold text-xs sm:text-sm tracking-widest uppercase text-[#397B48]">
               SÂN CHƠI ĐANG CHỜ BẠN
             </div>
 
             {/* Main Headline */}
-            <h1 className="font-heading font-black text-6xl sm:text-7xl lg:text-8xl uppercase tracking-normal sm:tracking-wide text-foreground leading-[1.05]">
+            <h1 className="font-sans font-black text-6xl sm:text-7xl lg:text-[5.5rem] xl:text-[6rem] uppercase tracking-tight text-foreground leading-[0.98] sm:leading-[1]">
               HÔM NAY<br />CHƠI GÌ?
             </h1>
 
             {/* Subtitle */}
-            <p className="text-muted-foreground text-base sm:text-lg max-w-md leading-relaxed font-normal">
+            <p className="font-sans text-muted-foreground text-base sm:text-lg max-w-md leading-relaxed font-normal">
               Đặt sân hoặc tham gia một kèo phù hợp chỉ trong vài phút.
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Button
-                asChild
-                className="bg-[#397B48] hover:bg-[#2D633A] text-white font-bold px-7 py-3 rounded-md text-base shadow-sm transition-transform active:scale-95 cursor-pointer"
+            <div className="flex flex-wrap items-center gap-4 pt-2 font-sans">
+              <Link
+                to="/courts"
+                className="inline-flex items-center justify-center bg-[#397B48] hover:bg-[#2D633A] !text-white font-bold px-7 py-3 rounded-xl text-base shadow-sm transition-transform active:scale-95 cursor-pointer select-none"
               >
-                <Link to="/courts">Tìm sân trống</Link>
-              </Button>
+                Tìm sân trống
+              </Link>
 
               <Link
                 to="/matches"
-                className="inline-flex items-center gap-1.5 font-bold text-foreground hover:text-[#397B48] transition-colors text-sm sm:text-base group"
+                className="inline-flex items-center gap-1.5 font-bold text-foreground hover:text-[#397B48] transition-colors text-sm sm:text-base group select-none"
               >
                 <span>Xem kèo tối nay</span>
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
@@ -128,9 +128,9 @@ export function HeroSection() {
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-4 pt-6 sm:pt-8 border-t border-border/50 max-w-md">
+            <div className="grid grid-cols-3 gap-4 pt-6 sm:pt-8 border-t border-border/40 max-w-md font-sans">
               <Link to="/courts" className="group block cursor-pointer">
-                <div className="font-heading font-black text-2xl sm:text-3xl text-foreground group-hover:text-[#397B48] transition-colors">
+                <div className="font-sans font-black text-2xl sm:text-3xl text-foreground group-hover:text-[#397B48] transition-colors">
                   300+
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5 font-medium group-hover:text-foreground transition-colors">
@@ -138,7 +138,7 @@ export function HeroSection() {
                 </div>
               </Link>
               <div>
-                <div className="font-heading font-black text-2xl sm:text-3xl text-foreground">
+                <div className="font-sans font-black text-2xl sm:text-3xl text-foreground">
                   4,8/5
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5 font-medium">
@@ -146,7 +146,7 @@ export function HeroSection() {
                 </div>
               </div>
               <Link to="/courts" className="group block cursor-pointer">
-                <div className="font-heading font-black text-2xl sm:text-3xl text-foreground group-hover:text-[#397B48] transition-colors">
+                <div className="font-sans font-black text-2xl sm:text-3xl text-foreground group-hover:text-[#397B48] transition-colors">
                   24/7
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5 font-medium group-hover:text-foreground transition-colors">
@@ -156,9 +156,9 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Right Column: Hero Image Carousel with Floating Badges */}
+          {/* Right Column: Hero Image Carousel with Clean Presentation */}
           <div className="lg:col-span-6 relative">
-            <div className="relative mx-auto max-w-md lg:max-w-none group">
+            <div className="relative mx-auto max-w-md lg:max-w-none">
               <Carousel
                 plugins={[autoplayPlugin.current]}
                 className="w-full relative"
@@ -179,29 +179,11 @@ export function HeroSection() {
                           loading={index === 0 ? 'eager' : 'lazy'}
                           draggable={false}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                       </div>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-
-                {/* Left/Right manual slide buttons on hover */}
-                <button
-                  type="button"
-                  onClick={() => api?.scrollPrev()}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 size-9 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-md"
-                  aria-label="Hình trước"
-                >
-                  <ChevronLeft className="size-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => api?.scrollNext()}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 size-9 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-md"
-                  aria-label="Hình kế tiếp"
-                >
-                  <ChevronRight className="size-5" />
-                </button>
 
                 {/* Slide Indicators / Dots */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 pointer-events-auto">
@@ -214,47 +196,12 @@ export function HeroSection() {
                         'h-1.5 rounded-full transition-all duration-300 cursor-pointer shadow-sm',
                         current === i
                           ? 'w-6 bg-white'
-                          : 'w-1.5 bg-white/50 hover:bg-white/80'
+                          : 'w-1.5 bg-white/60 hover:bg-white/80'
                       )}
                       aria-label={`Chuyển tới ảnh ${i + 1}`}
                     />
                   ))}
                 </div>
-
-                {/* Floating Badge 1: Top-Right (KÈO ĐANG CHỜ - Clickable) */}
-                {totalMatchesCount > 0 && (
-                  <Link
-                    to="/matches"
-                    className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 bg-[#18231A]/95 hover:bg-[#203323] text-white backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-white/10 flex flex-col items-center min-w-[72px] transition-all hover:scale-105 active:scale-95 cursor-pointer group/badge"
-                    title="Xem các kèo giao lưu đang mở"
-                  >
-                    <span className="font-heading font-black text-2xl sm:text-3xl leading-none text-[#51B367] group-hover/badge:text-emerald-400">
-                      {totalMatchesCount}
-                    </span>
-                    <span className="text-[9px] font-bold tracking-wider uppercase text-slate-300 mt-1">
-                      KÈO ĐANG CHỜ
-                    </span>
-                  </Link>
-                )}
-
-                {/* Floating Card 2: Bottom-Left (Kèo thể thao thực tế từ API - Clickable) */}
-                {currentMatch && (
-                  <Link
-                    to={`/matches/${currentMatch.id}`}
-                    className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 z-20 bg-card/95 hover:bg-card text-card-foreground backdrop-blur-md px-4 py-3 rounded-2xl shadow-2xl border border-border/70 max-w-[270px] transition-all duration-300 hover:scale-105 hover:border-[#397B48]/50 active:scale-95 cursor-pointer block"
-                    title="Xem chi tiết kèo"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-[#397B48] animate-pulse shrink-0" />
-                      <span className="font-bold text-xs sm:text-sm text-foreground truncate">
-                        {currentMatch.title}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1 font-medium pl-4 truncate">
-                      {currentMatch.subtitle}
-                    </p>
-                  </Link>
-                )}
               </Carousel>
             </div>
           </div>

@@ -34,17 +34,6 @@ export const createServicePackageSchema = z.object({
     .number({ invalid_type_error: 'Vui lòng chọn chu kỳ thanh toán.' })
     .min(1, 'Thời hạn tối thiểu là 1 tháng.')
     .max(36, 'Thời hạn tối đa là 36 tháng.'),
-  maxCourts: z.coerce
-    .number({ invalid_type_error: 'Số lượng sân phải là số nguyên.' })
-    .int('Số lượng sân phải là số nguyên.')
-    .min(1, 'Số sân tối thiểu là 1 sân.')
-    .default(8),
-  maxBranches: z.coerce
-    .number({ invalid_type_error: 'Số chi nhánh phải là số nguyên.' })
-    .int('Số chi nhánh phải là số nguyên.')
-    .min(1, 'Số chi nhánh tối thiểu là 1 chi nhánh.')
-    .default(2),
-  description: z.string().trim().max(500, 'Mô tả không được vượt quá 500 ký tự.').optional().default(''),
 });
 
 export type CreateServicePackageFormValues = z.infer<typeof createServicePackageSchema>;

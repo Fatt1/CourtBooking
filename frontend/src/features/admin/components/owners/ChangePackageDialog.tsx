@@ -38,8 +38,45 @@ interface PackageOption {
   price: number;
   durationMonths: number;
   badge?: string;
+  badgeClass?: string;
   description: string;
   features: string[];
+}
+
+function getPackageBadgeInfo(duration: number) {
+  if (duration === 1) {
+    return {
+      badge: 'KHỞI ĐẦU',
+      badgeClass: 'bg-zinc-800 text-zinc-300 border border-zinc-700',
+    };
+  }
+  if (duration === 3) {
+    return {
+      badge: 'PHỔ BIẾN NHẤT',
+      badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40',
+    };
+  }
+  if (duration === 6) {
+    return {
+      badge: 'CAO CẤP',
+      badgeClass: 'bg-purple-500/20 text-purple-300 border border-purple-500/40',
+    };
+  }
+  if (duration === 12) {
+    return {
+      badge: 'TOÀN DIỆN',
+      badgeClass: 'bg-amber-500/20 text-amber-300 border border-amber-500/40',
+    };
+  }
+  return {
+    badge: duration > 6 ? 'TOÀN DIỆN' : duration > 3 ? 'CAO CẤP' : 'KHỞI ĐẦU',
+    badgeClass:
+      duration > 6
+        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+        : duration > 3
+        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+        : 'bg-zinc-800 text-zinc-300 border border-zinc-700',
+  };
 }
 
 const DEFAULT_PACKAGES: PackageOption[] = [
@@ -50,6 +87,7 @@ const DEFAULT_PACKAGES: PackageOption[] = [
     price: 499000,
     durationMonths: 1,
     badge: 'KHỞI ĐẦU',
+    badgeClass: 'bg-zinc-800 text-zinc-300 border border-zinc-700',
     description: '',
     features: [],
   },
@@ -60,6 +98,7 @@ const DEFAULT_PACKAGES: PackageOption[] = [
     price: 1000000,
     durationMonths: 3,
     badge: 'PHỔ BIẾN NHẤT',
+    badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40',
     description: '',
     features: [],
   },
@@ -69,7 +108,19 @@ const DEFAULT_PACKAGES: PackageOption[] = [
     name: 'Ultra',
     price: 2000000,
     durationMonths: 6,
+    badge: 'CAO CẤP',
+    badgeClass: 'bg-purple-500/20 text-purple-300 border border-purple-500/40',
+    description: '',
+    features: [],
+  },
+  {
+    id: 'd9182374-1290-41ab-8712-892348912389',
+    code: 'VIP',
+    name: 'Toàn diện',
+    price: 3800000,
+    durationMonths: 12,
     badge: 'TOÀN DIỆN',
+    badgeClass: 'bg-amber-500/20 text-amber-300 border border-amber-500/40',
     description: '',
     features: [],
   },
@@ -87,19 +138,16 @@ export function ChangePackageDialog({
   const packages: PackageOption[] = useMemo(() => {
     if (dbPackages.length > 0) {
       return dbPackages.map((p) => {
-        const lower = p.name.toLowerCase();
-        const badge = lower.includes('pro')
-          ? 'PHỔ BIẾN NHẤT'
-          : lower.includes('ultra') || lower.includes('vip')
-          ? 'TOÀN DIỆN'
-          : 'KHỞI ĐẦU';
+        const duration = p.durationMonths || 1;
+        const { badge, badgeClass } = getPackageBadgeInfo(duration);
         return {
           id: p.id,
           code: p.name,
           name: p.name,
           price: p.price,
-          durationMonths: p.durationMonths,
+          durationMonths: duration,
           badge,
+          badgeClass,
           description: p.description,
           features: [],
         };
@@ -234,12 +282,8 @@ export function ChangePackageDialog({
                             <span className="font-bold text-sm text-white">{pkg.name}</span>
                             {pkg.badge && (
                               <span
-                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                                  pkg.id === 'pkg-pro'
-                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                                    : pkg.id === 'pkg-ultra'
-                                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                                    : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                                  pkg.badgeClass || 'bg-zinc-800 text-zinc-300 border-zinc-700'
                                 }`}
                               >
                                 {pkg.badge}
