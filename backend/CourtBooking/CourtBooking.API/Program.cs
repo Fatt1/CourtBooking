@@ -38,8 +38,10 @@ try
                       if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
                       {
                           return uri.Host == "localhost" ||
+                                 uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase) ||
                                  uri.Host.EndsWith(".ngrok-free.dev", StringComparison.OrdinalIgnoreCase) ||
-                                 uri.Host.EndsWith(".trycloudflare.com", StringComparison.OrdinalIgnoreCase);
+                                 uri.Host.EndsWith(".trycloudflare.com", StringComparison.OrdinalIgnoreCase) ||
+                                 uri.Host == "court-booking.duckdns.org";
                       }
                       return false;
                   })
