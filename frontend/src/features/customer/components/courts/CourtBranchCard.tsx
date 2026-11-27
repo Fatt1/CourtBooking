@@ -84,11 +84,11 @@ export function CourtBranchCard({ branch, onOpenReviews }: CourtBranchCardProps)
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 bg-[#18231C]/90 hover:bg-[#397B48] text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md border border-white/10 backdrop-blur-xs transition-all duration-200 cursor-pointer group/map"
+            className="inline-flex items-center gap-1.5 bg-[#18231C]/90 hover:bg-[#397B48] !text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md border border-white/20 backdrop-blur-xs transition-all duration-200 cursor-pointer group/map"
             title={`Xem vị trí của ${branch.name} trên Google Maps`}
           >
-            <MapPin className="size-3 text-emerald-400 group-hover/map:text-white transition-colors" />
-            <span>Chỉ đường</span>
+            <MapPin className="size-3.5 text-emerald-400 group-hover/map:text-white transition-colors shrink-0" />
+            <span className="!text-white font-bold text-[11px] leading-none">Chỉ đường</span>
           </a>
         </div>
       </div>

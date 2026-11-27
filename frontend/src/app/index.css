@@ -140,11 +140,6 @@ html[data-theme-transition="light"]::view-transition-new(root) {
   }
 }
 
-a {
-  color: inherit;
-  text-decoration: inherit;
-}
-
 /* Ẩn thanh cuộn xấu nhưng vẫn giữ tính năng cuộn mượt mà */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

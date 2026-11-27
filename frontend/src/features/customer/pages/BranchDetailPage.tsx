@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePublicBranchDetailQuery, type PublicBranchDetailDto } from '@/api/branches';
+import { getImageUrl } from '@/api/storage/useStorage';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BranchHeader } from '../components/branch-detail/BranchHeader';
 import { BranchGallery } from '../components/branch-detail/BranchGallery';
@@ -158,7 +159,7 @@ export function BranchDetailPage() {
               branchAddress={`${branch.street}, ${branch.district}, ${branch.province}`}
               branchBanner={
                 branch.images && branch.images.length > 0
-                  ? branch.images[0].key
+                  ? getImageUrl(branch.images[0].key || (branch.images[0] as any).url)
                   : undefined
               }
             />

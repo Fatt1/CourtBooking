@@ -12,8 +12,11 @@ export const STORAGE_BASE_URL: string =
 
 /**
  * Ghép đường dẫn hình ảnh từ Storage Key hoặc trả về URL hoàn chỉnh
- * - Nếu key đã là URL đầy đủ (http://, https://, blob:, data:), giữ nguyên
- * - Nếu key là path trong storage (ví dụ 'images/abc.jpg'), ghép với STORAGE_BASE_URL
+ * - Nếu key đã là URL đầy đủ (http://, https://, blob:, data:):
+ *   + Nếu là URL trỏ tới bucket courtbooking (dù là SeaweedFS nội bộ, Docker, Cloudflare Tunnel cũ hay IP):
+ *     tự động chuyển hướng về VITE_STORAGE_BASE_URL hiện tại để trình duyệt tải được ảnh.
+ *   + Nếu là URL bên ngoài (CDN, Unsplash, Google...), giữ nguyên.
+ * - Nếu key là path tương đối trong storage (ví dụ 'images/abc.jpg'), ghép với STORAGE_BASE_URL
  * - Nếu rỗng / null, trả về chuỗi fallback
  */
 export function getImageUrl(keyOrUrl?: string | null, fallback = ''): string {
@@ -33,21 +36,25 @@ export function getImageUrl(keyOrUrl?: string | null, fallback = ''): string {
     baseUrl = baseUrl.replace('/courtbooking', '/buckets/courtbooking');
   }
 
-  // Backend chạy trong Docker trả URL có hostname seaweedfs, chỉ container mới truy cập được.
-  // Đổi URL nội bộ và URL S3 local sang Filer public để trình duyệt tải được ảnh.
-  // chuẩn hóa lại về baseUrl hiện tại và lược bỏ query string chữ ký S3 nếu có
-  const localMatch = trimmed.match(/^https?:\/\/(?:localhost:(?:8333|8888)|127\.0\.0\.1:(?:8333|8888)|seaweedfs(?::(?:8333|8888))?)\/(?:buckets\/)?courtbooking(?:\/([^?#]*))?(?:[?#].*)?$/i);
-  if (localMatch) {
-    const cleanKey = (localMatch[1] || '').replace(/^\/+/, '');
-    return `${baseUrl}/${cleanKey}`;
+  // Nếu chuỗi chứa path của bucket courtbooking (dù là URL đầy đủ hay path tương đối)
+  // Trích xuất path thực tế sau courtbooking/ để chuẩn hóa theo baseUrl hiện tại và lược bỏ query string
+  const courtbookingMatch = trimmed.match(/(?:buckets\/)?courtbooking(?:\/([^?#]*))?(?:[?#].*)?$/i);
+  if (courtbookingMatch && courtbookingMatch[1] !== undefined) {
+    const cleanKey = (courtbookingMatch[1] || '').replace(/^\/+/, '');
+    return cleanKey ? `${baseUrl}/${cleanKey}` : baseUrl;
   }
 
-  // Nếu là URL bên ngoài (CDN, Google, Unsplash...), giữ nguyên
+  // Nếu là URL bên ngoài khác (CDN, Google, Unsplash...), giữ nguyên
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
 
-  const cleanKey = trimmed.replace(/^\/+/, '');
+  // Key dạng tương đối (ví dụ 'images/branches/saigon-star-1.webp')
+  const cleanKey = trimmed
+    .replace(/^\/+/, '')
+    .replace(/^buckets\/courtbooking\//i, '')
+    .replace(/^courtbooking\//i, '');
+
   return `${baseUrl}/${cleanKey}`;
 }
 

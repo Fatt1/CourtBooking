@@ -37,9 +37,11 @@ export function SocialMatchesSection() {
               <div className="pt-2">
                 <Button
                   asChild
-                  className="bg-white hover:bg-slate-100 text-[#132617] font-bold px-7 py-3 rounded-md text-sm shadow-md transition-transform active:scale-95 cursor-pointer"
+                  className="bg-white hover:bg-slate-100 !text-[#132617] font-bold px-7 py-3 rounded-md text-sm shadow-md transition-transform active:scale-95 cursor-pointer"
                 >
-                  <Link to="/events">Khám phá kèo</Link>
+                  <Link to="/matches" className="!text-[#132617] font-bold inline-flex items-center">
+                    <span className="!text-[#132617] font-bold">Khám phá kèo</span>
+                  </Link>
                 </Button>
               </div>
             </div>
