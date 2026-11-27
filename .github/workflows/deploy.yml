@@ -1,0 +1,105 @@
+name: CI/CD Pipeline - Test & Deploy to EC2
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # JOB 1: Kiểm thử tự động (Unit Tests & Architecture Tests)
+  # ─────────────────────────────────────────────────────────────
+  test:
+    name: Run Automated Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore backend/CourtBooking/CourtBooking.slnx
+
+      - name: Run Unit Tests (Application.UnitTests)
+        run: |
+          dotnet test backend/CourtBooking/tests/Application.UnitTests/Application.UnitTests.csproj \
+            --configuration Release \
+            --no-restore \
+            --verbosity normal
+
+      - name: Run Architecture Tests (ArchitectureTests)
+        run: |
+          dotnet test backend/CourtBooking/tests/ArchitectureTests/ArchitectureTests.csproj \
+            --configuration Release \
+            --no-restore \
+            --verbosity normal
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 2: Đóng gói Docker Image & Deploy lên AWS EC2
+  # Chạy khi push/merge vào main và Job 1 Test thành công 100%
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Build & Deploy to AWS EC2
+    needs: test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build image ngay trên GitHub Actions Runner (16GB RAM) để tránh làm nghẽn RAM EC2 (1GB)
+      - name: Build and Package Docker Image
+        run: |
+          echo "Building Docker Image: courtbookingapi:latest..."
+          docker build \
+            -t courtbookingapi:latest \
+            -f backend/CourtBooking/CourtBooking.API/Dockerfile \
+            backend/CourtBooking
+
+          echo "Exporting and Compressing Docker Image..."
+          docker save courtbookingapi:latest | gzip > courtbookingapi.tar.gz
+          ls -lh courtbookingapi.tar.gz
+
+      - name: Transfer Docker Image to EC2 via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "courtbookingapi.tar.gz"
+          target: "/home/ubuntu"
+
+      - name: Deploy on EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            echo "==== 1. Đang nạp Docker image mới vào EC2 ===="
+            docker load < /home/ubuntu/courtbookingapi.tar.gz
+            rm -f /home/ubuntu/courtbookingapi.tar.gz
+
+            echo "==== 2. Tái tạo và khởi động lại API Container ===="
+            cd /home/ubuntu/courtbooking
+            docker compose up -d --no-deps courtbooking.api
+
+            echo "==== 3. Dọn dẹp image cũ không dùng ===="
+            docker image prune -f
+
+            echo "==== 4. Kiểm tra trạng thái Container trên EC2 ===="
+            docker compose ps
+
+            echo "==== DEPLOY HOÀN TẤT THÀNH CÔNG ===="
