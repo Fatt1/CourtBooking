@@ -1,70 +1,50 @@
-2026-11-07T08:41:32Z INF Thank you for trying Cloudflare Tunnel. Doing so, without a Cloudflare account, is a quick way to experiment and try it out. However, be aware that these account-less Tunnels have no uptime guarantee, are subject to the Cloudflare Online Services Terms of Use (https://www.cloudflare.com/website-terms/), and Cloudflare reserves the right to investigate your use of Tunnels for violations of such terms. If you intend to use Tunnels in production you should use a pre-created named tunnel by following: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps
-2026-11-07T08:41:32Z INF Requesting new quick Tunnel on trycloudflare.com...
-2026-11-07T08:41:35Z INF +--------------------------------------------------------------------------------------------+
-2026-11-07T08:41:35Z INF |  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |
-2026-11-07T08:41:35Z INF |  https://souls-tasks-favourites-learned.trycloudflare.com                                  |
-2026-11-07T08:41:35Z INF +--------------------------------------------------------------------------------------------+
-2026-11-07T08:41:35Z INF Cannot determine default configuration path. No file [config.yml config.yaml] in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp]
-2026-11-07T08:41:35Z INF Version 2026.10.3 (Checksum 76b2805253d0d6ffacb092a7acfbee99e7af6917835c0c5410e23f3ef5052da2)
-2026-11-07T08:41:35Z INF GOOS: windows, GOVersion: go1.27.3, GoArch: amd64
-2026-11-07T08:41:35Z INF Settings: map[ha-connections:1 protocol:quic url:http://127.0.0.1:5067]
-2026-11-07T08:41:35Z INF cloudflared will not automatically update on Windows systems.
-2026-11-07T08:41:35Z INF Generated Connector ID: 16a191c4-0a67-4694-8c58-eae89eba4bc5
-2026-11-07T08:41:35Z INF Initial protocol quic
-2026-11-07T08:41:35Z INF ICMP proxy will use 172.16.20.115 as source for IPv4
-2026-11-07T08:41:36Z INF ICMP proxy will use fe80::fded:124:5788:9837 in zone Wi-Fi as source for IPv6
-2026-11-07T08:41:36Z INF cloudflared does not support loading the system root certificate pool on Windows. Please use --origin-ca-pool <PATH> to specify the path to the certificate pool
-2026-11-07T08:41:36Z INF ICMP proxy will use 172.16.20.115 as source for IPv4
-2026-11-07T08:41:36Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=0 event=0 ip=198.41.200.53
-2026-11-07T08:41:36Z INF ICMP proxy will use fe80::fded:124:5788:9837 in zone Wi-Fi as source for IPv6
-2026-11-07T08:41:36Z INF Starting metrics server on 127.0.0.1:20241/metrics
-2026-11-07T08:41:36Z INF +-------------------------------------------------------------------------------------+
-2026-11-07T08:41:36Z INF |                               CONNECTIVITY PRE-CHECKS                               |
-2026-11-07T08:41:36Z INF +-------------------------------------------------------------------------------------+
-2026-11-07T08:41:36Z INF |  COMPONENT         TARGET                     STATUS  DETAILS                       |
-2026-11-07T08:41:36Z INF |  DNS Resolution    region1.v2.argotunnel.com  PASS    DNS Resolved successfully     |
-2026-11-07T08:41:36Z INF |  DNS Resolution    region2.v2.argotunnel.com  PASS    DNS Resolved successfully     |
-2026-11-07T08:41:36Z INF |  UDP Connectivity  region1.v2.argotunnel.com  PASS    QUIC connection successful    |
-2026-11-07T08:41:36Z INF |  UDP Connectivity  region2.v2.argotunnel.com  PASS    QUIC connection successful    |
-2026-11-07T08:41:36Z INF |  TCP Connectivity  region1.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
-2026-11-07T08:41:36Z INF |  TCP Connectivity  region2.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
-2026-11-07T08:41:36Z INF |  Cloudflare API    api.cloudflare.com:443     PASS    API is reachable              |
-2026-11-07T08:41:36Z INF |                                                                                     |
-2026-11-07T08:41:36Z INF |  SUMMARY: Environment is healthy. cloudflared will use 'quic' as primary protocol.  |
-2026-11-07T08:41:36Z INF +-------------------------------------------------------------------------------------+
-2026-11-07T08:41:36Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=259f4c3f-3c8d-4699-b7d4-a4db5bd1e07a status=pass target=region1.v2.argotunnel.com
-2026-11-07T08:41:36Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=259f4c3f-3c8d-4699-b7d4-a4db5bd1e07a status=pass target=region2.v2.argotunnel.com
-2026-11-07T08:41:36Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=259f4c3f-3c8d-4699-b7d4-a4db5bd1e07a status=pass target=region1.v2.argotunnel.com
-2026-11-07T08:41:36Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=259f4c3f-3c8d-4699-b7d4-a4db5bd1e07a status=pass target=region2.v2.argotunnel.com
-2026-11-07T08:41:36Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=259f4c3f-3c8d-4699-b7d4-a4db5bd1e07a status=pass target=region1.v2.argotunnel.com
-2026-11-07T08:41:36Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=259f4c3f-3c8d-4699-b7d4-a4db5bd1e07a status=pass target=region2.v2.argotunnel.com
-2026-11-07T08:41:36Z INF precheck component="Cloudflare API" details="API is reachable" run_id=259f4c3f-3c8d-4699-b7d4-a4db5bd1e07a status=pass target=api.cloudflare.com:443
-2026-11-07T08:41:36Z INF precheck complete hard_fail=false run_id=259f4c3f-3c8d-4699-b7d4-a4db5bd1e07a suggested_protocol=quic
-2026-11-07T08:41:36Z INF Registered tunnel connection connIndex=0 connection=ff6393b7-08b3-4e0e-9f8a-31fba85167ef event=0 ip=198.41.200.53 location=hkg10 protocol=quic
-2026-11-07T08:42:45Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:45Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/branches?page=1&pageSize=6 event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:45Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:45Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/sport-types event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:46Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:46Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/matches?page=1&pageSize=3 event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:47Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:47Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/matches?page=1&pageSize=3 event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:47Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:47Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/branches?page=1&pageSize=6 event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:53Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:53Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/events/my-tickets?page=1&pageSize=5 event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:53Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:53Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/orders/my-orders?page=1&pageSize=5 event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:53Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:53Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/identity/me event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:53Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:53Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/matches/my-joined event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:54Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:54Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/events/my-tickets?page=1&pageSize=5 event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:54Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:54Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/orders/my-orders?page=1&pageSize=5 event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:55Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:55Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/matches/my-joined event=0 ip=198.41.200.53 type=http
-2026-11-07T08:42:55Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 event=1 ingressRule=0 originService=http://127.0.0.1:5067
-2026-11-07T08:42:55Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5067: connectex: No connection could be made because the target machine actively refused it." connIndex=0 dest=https://souls-tasks-favourites-learned.trycloudflare.com/api/v1/identity/me event=0 ip=198.41.200.53 type=http
-2026-11-07T10:02:17Z INF Initiating graceful shutdown due to signal terminated ...
+2026-11-20T15:04:22Z INF Thank you for trying Cloudflare Tunnel. Doing so, without a Cloudflare account, is a quick way to experiment and try it out. However, be aware that these account-less Tunnels have no uptime guarantee, are subject to the Cloudflare Online Services Terms of Use (https://www.cloudflare.com/website-terms/), and Cloudflare reserves the right to investigate your use of Tunnels for violations of such terms. If you intend to use Tunnels in production you should use a pre-created named tunnel by following: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps
+2026-11-20T15:04:22Z INF Requesting new quick Tunnel on trycloudflare.com...
+2026-11-20T15:04:26Z INF +--------------------------------------------------------------------------------------------+
+2026-11-20T15:04:26Z INF |  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |
+2026-11-20T15:04:26Z INF |  https://men-adam-fare-conversations.trycloudflare.com                                     |
+2026-11-20T15:04:26Z INF +--------------------------------------------------------------------------------------------+
+2026-11-20T15:04:26Z INF Cannot determine default configuration path. No file [config.yml config.yaml] in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp]
+2026-11-20T15:04:26Z INF Version 2026.10.3 (Checksum 76b2805253d0d6ffacb092a7acfbee99e7af6917835c0c5410e23f3ef5052da2)
+2026-11-20T15:04:26Z INF GOOS: windows, GOVersion: go1.27.3, GoArch: amd64
+2026-11-20T15:04:26Z INF Settings: map[ha-connections:1 protocol:quic url:http://127.0.0.1:5067]
+2026-11-20T15:04:26Z INF cloudflared will not automatically update on Windows systems.
+2026-11-20T15:04:26Z INF Generated Connector ID: 7247a4d9-c568-4b1c-968d-5cd98bb1d5fa
+2026-11-20T15:04:26Z INF Initial protocol quic
+2026-11-20T15:04:26Z INF ICMP proxy will use 192.168.1.205 as source for IPv4
+2026-11-20T15:04:26Z INF ICMP proxy will use 2405:4803:c7ce:84c0:ac26:694c:84b:56b2 in zone Wi-Fi as source for IPv6
+2026-11-20T15:04:26Z INF cloudflared does not support loading the system root certificate pool on Windows. Please use --origin-ca-pool <PATH> to specify the path to the certificate pool
+2026-11-20T15:04:26Z INF ICMP proxy will use 192.168.1.205 as source for IPv4
+2026-11-20T15:04:26Z INF ICMP proxy will use 2405:4803:c7ce:84c0:ac26:694c:84b:56b2 in zone Wi-Fi as source for IPv6
+2026-11-20T15:04:26Z INF Starting metrics server on 127.0.0.1:20241/metrics
+2026-11-20T15:04:26Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=0 event=0 ip=198.41.192.167
+2026-11-20T15:04:27Z INF +-------------------------------------------------------------------------------------+
+2026-11-20T15:04:27Z INF |                               CONNECTIVITY PRE-CHECKS                               |
+2026-11-20T15:04:27Z INF +-------------------------------------------------------------------------------------+
+2026-11-20T15:04:27Z INF |  COMPONENT         TARGET                     STATUS  DETAILS                       |
+2026-11-20T15:04:27Z INF |  DNS Resolution    region1.v2.argotunnel.com  PASS    DNS Resolved successfully     |
+2026-11-20T15:04:27Z INF |  DNS Resolution    region2.v2.argotunnel.com  PASS    DNS Resolved successfully     |
+2026-11-20T15:04:27Z INF |  UDP Connectivity  region1.v2.argotunnel.com  PASS    QUIC connection successful    |
+2026-11-20T15:04:27Z INF |  UDP Connectivity  region2.v2.argotunnel.com  PASS    QUIC connection successful    |
+2026-11-20T15:04:27Z INF |  TCP Connectivity  region1.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
+2026-11-20T15:04:27Z INF |  TCP Connectivity  region2.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
+2026-11-20T15:04:27Z INF |  Cloudflare API    api.cloudflare.com:443     PASS    API is reachable              |
+2026-11-20T15:04:27Z INF |                                                                                     |
+2026-11-20T15:04:27Z INF |  SUMMARY: Environment is healthy. cloudflared will use 'quic' as primary protocol.  |
+2026-11-20T15:04:27Z INF +-------------------------------------------------------------------------------------+
+2026-11-20T15:04:27Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=25add39b-e34c-4bac-a752-11070ecc3e89 status=pass target=region1.v2.argotunnel.com
+2026-11-20T15:04:27Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=25add39b-e34c-4bac-a752-11070ecc3e89 status=pass target=region2.v2.argotunnel.com
+2026-11-20T15:04:27Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=25add39b-e34c-4bac-a752-11070ecc3e89 status=pass target=region1.v2.argotunnel.com
+2026-11-20T15:04:27Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=25add39b-e34c-4bac-a752-11070ecc3e89 status=pass target=region2.v2.argotunnel.com
+2026-11-20T15:04:27Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=25add39b-e34c-4bac-a752-11070ecc3e89 status=pass target=region1.v2.argotunnel.com
+2026-11-20T15:04:27Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=25add39b-e34c-4bac-a752-11070ecc3e89 status=pass target=region2.v2.argotunnel.com
+2026-11-20T15:04:27Z INF precheck component="Cloudflare API" details="API is reachable" run_id=25add39b-e34c-4bac-a752-11070ecc3e89 status=pass target=api.cloudflare.com:443
+2026-11-20T15:04:27Z INF precheck complete hard_fail=false run_id=25add39b-e34c-4bac-a752-11070ecc3e89 suggested_protocol=quic
+2026-11-20T15:04:27Z INF Registered tunnel connection connIndex=0 connection=8d0f490d-1449-405a-9ed8-e6a1c10ba212 event=0 ip=198.41.192.167 location=sin17 protocol=quic
+2026-11-20T17:29:23Z INF Initiating graceful shutdown due to signal terminated ...
+2026-11-20T17:29:23Z ERR Serve tunnel error error="datagram manager error: Application error 0x0 (remote)" connIndex=0 event=0 ip=198.41.192.167
+2026-11-20T17:29:23Z INF Retrying connection in up to 2s connIndex=0 event=0 ip=198.41.192.167
+2026-11-20T17:29:23Z ERR Connection terminated connIndex=0
+2026-11-20T17:29:23Z ERR no more connections active and exiting
+2026-11-20T17:29:23Z INF Tunnel server stopped
+2026-11-20T17:29:23Z INF Metrics server stopped
