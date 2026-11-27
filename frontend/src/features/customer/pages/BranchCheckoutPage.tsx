@@ -110,11 +110,13 @@ export function BranchCheckoutPage() {
     (branchDetail
       ? `${branchDetail.street}, ${branchDetail.district}, ${branchDetail.province}`
       : 'Đang cập nhật địa chỉ');
-  const branchBanner =
+  const branchBanner = getImageUrl(
     effectiveState?.branchBanner ||
-    (branchDetail?.images && branchDetail.images.length > 0
-      ? getImageUrl(branchDetail.images[0].key || (branchDetail.images[0] as any).url)
-      : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=80');
+      (branchDetail?.images && branchDetail.images.length > 0
+        ? branchDetail.images[0].key || (branchDetail.images[0] as any).url
+        : undefined),
+    'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=80'
+  );
 
   const selectedDate = effectiveState?.selectedDate || '';
   const groupedBookings = effectiveState?.groupedBookings || [];

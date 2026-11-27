@@ -1,16 +1,20 @@
 ==========================================================
-THONG TIN CAC DUONG LINK TUNNELS (DANG HOAT DONG)
-Thoi gian tao: 01/11/2026 22:30:23
+THÔNG TIN HỆ THỐNG COURTS BOOKING TRÊN CLOUD EC2 (24/7)
+Thời gian cập nhật: 21/11/2026
+Địa chỉ IP EC2: 16.178.71.188
 ==========================================================
 
-1. LINK TRANG WEB (Frontend - Ngrok URL Co Dinh):
-   https://swearingly-pseudocubic-beth.ngrok-free.dev
+1. LINK BACKEND API (HTTPS - Cloudflare Tunnel chạy trên EC2):
+   https://dana-parliament-stud-named.trycloudflare.com/api/v1
+   (Hoặc trực tiếp qua HTTP: http://16.178.71.188/api/v1)
 
-2. LINK BACKEND API (.NET - Cloudflare):
-   https://individuals-works-meaningful-tier.trycloudflare.com/api/v1
+2. LINK OBJECT STORAGE (SeaweedFS - Hình ảnh):
+   https://dana-parliament-stud-named.trycloudflare.com/buckets/courtbooking
+   (Hoặc trực tiếp qua HTTP: http://16.178.71.188/buckets/courtbooking)
 
-3. LINK STORAGE (SeaweedFS - Cloudflare):
-   https://newly-throw-raise-essay.trycloudflare.com/buckets/courtbooking
-
-Luu y: De cac link nay hoat dong, hay giu cua so nay dang chay!
+3. BIẾN MÔI TRƯỜNG KHI DEPLOY FRONTEND LÊN VERCEL:
+   VITE_API_BASE_URL=https://dana-parliament-stud-named.trycloudflare.com/api/v1
+   VITE_STORAGE_BASE_URL=https://dana-parliament-stud-named.trycloudflare.com/buckets/courtbooking
+   VITE_GOOGLE_CLIENT_ID=215553515097-h52qs7fuamv6s0cbq8l667gat4g2tsan.apps.googleusercontent.com
+   VITE_FACEBOOK_APP_ID=1118021847817546
 ==========================================================
